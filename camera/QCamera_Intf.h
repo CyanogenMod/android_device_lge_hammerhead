@@ -231,11 +231,17 @@ typedef struct {
   uint16_t orig_thumb_height;
   uint16_t raw_picture_height;
   uint16_t raw_picture_width;
+  uint16_t rdi0_height;
+  uint16_t rdi0_width;
+  uint16_t rdi1_height;
+  uint16_t rdi1_width;
   uint32_t hjr_xtra_buff_for_bayer_filtering;
   cam_format_t    prev_format;
   cam_format_t    enc_format;
   cam_format_t    thumb_format;
   cam_format_t    main_img_format;
+  cam_format_t    rdi0_format;
+  cam_format_t    rdi1_format;
   cam_pad_format_t prev_padding_format;
   cam_pad_format_t enc_padding_format;
   cam_pad_format_t thumb_padding_format;
@@ -261,6 +267,7 @@ typedef struct {
   cam_frame_len_offset_t video_frame_offset;
   cam_frame_len_offset_t picture_frame_offset;
   cam_frame_len_offset_t thumb_frame_offset;
+  uint32_t channel_interface_mask;
 } cam_ctrl_dimension_t;
 
 /* Add enumenrations at the bottom but before MM_CAMERA_PARM_MAX */
@@ -321,6 +328,7 @@ typedef enum {
     MM_CAMERA_PARM_3D_DISPLAY_DISTANCE,
     MM_CAMERA_PARM_3D_VIEW_ANGLE,
     MM_CAMERA_PARM_PREVIEW_FORMAT,
+    MM_CAMERA_PARM_RDI_FORMAT,
     MM_CAMERA_PARM_HFR_SIZE, /* 55 */
     MM_CAMERA_PARM_3D_EFFECT,
     MM_CAMERA_PARM_3D_MANUAL_CONV_RANGE,
@@ -364,12 +372,21 @@ typedef enum {
     MM_CAMERA_PARM_DEFAULT_PREVIEW_HEIGHT,
     MM_CAMERA_PARM_FOCUS_MODE,
     MM_CAMERA_PARM_HFR_FRAME_SKIP,
+    MM_CAMERA_PARM_CH_INTERFACE,
     //or single output enabled to differentiate 7x27a with others
     MM_CAMERA_PARM_BESTSHOT_RECONFIGURE,
     MM_CAMERA_MAX_NUM_FACES_DECT,
     MM_CAMERA_PARM_FPS_RANGE,
     MM_CAMERA_PARM_MAX
 } mm_camera_parm_type_t;
+
+typedef enum {
+  STREAM_IMAGE,
+  STREAM_RAW,
+  STREAM_IMAGE_AND_RAW,
+  STREAM_RAW_AND_RAW,
+  STREAM_MAX,
+} mm_camera_channel_stream_info_t;
 
 typedef enum {
   CAMERA_SET_PARM_DISPLAY_INFO,
@@ -498,6 +515,8 @@ typedef enum {
   CAMERA_SET_PREVIEW_HFR, /*120*/
   CAMERA_GET_MAX_DIMENSION,
   CAMERA_GET_MAX_NUM_FACES_DECT,
+  CAMERA_SET_CHANNEL_STREAM,
+  CAMERA_GET_CHANNEL_STREAM,
   CAMERA_CTRL_PARM_MAX
 } cam_ctrl_type;
 

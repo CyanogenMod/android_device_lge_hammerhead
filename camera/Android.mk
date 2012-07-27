@@ -4,7 +4,15 @@ ifneq ($(USE_CAMERA_STUB),true)
     # When zero we link against libmmcamera; when 1, we dlopen libmmcamera.
     DLOPEN_LIBMMCAMERA:=1
     ifneq ($(BUILD_TINY_ANDROID),true)
-      V4L2_BASED_LIBCAM := true
+      V4L2_BASED_LIBCAM := false
+      MM_STILL_V4L2_DRIVER_LIST := msm7627a
+      #MM_STILL_V4L2_DRIVER_LIST += msm7630_surf
+      #MM_STILL_V4L2_DRIVER_LIST += msm7630_fusion
+      MM_STILL_V4L2_DRIVER_LIST += msm8660
+      MM_STILL_V4L2_DRIVER_LIST += msm8960
+      ifeq ($(call is-board-platform-in-list,$(MM_STILL_V4L2_DRIVER_LIST)),true)
+        V4L2_BASED_LIBCAM := true
+      endif
 
       LOCAL_PATH:= $(call my-dir)
 
@@ -13,24 +21,55 @@ ifneq ($(USE_CAMERA_STUB),true)
       LOCAL_CFLAGS:= -DDLOPEN_LIBMMCAMERA=$(DLOPEN_LIBMMCAMERA)
 
       #define BUILD_UNIFIED_CODE
-      BUILD_UNIFIED_CODE := false
+      ifeq ($(call is-board-platform,msm7627a),true)
+        BUILD_UNIFIED_CODE := true
+      else
+        BUILD_UNIFIED_CODE := false
+      endif
 
-      LOCAL_CFLAGS += -DUSE_ION
+      ifeq ($(call is-board-platform,msm7627a),true)
+        LOCAL_CFLAGS+= -DVFE_7X27A
+      endif
+
+      ifeq ($(strip $(TARGET_USES_ION)),true)
+        LOCAL_CFLAGS += -DUSE_ION
+      endif
 
       LOCAL_CFLAGS += -DCAMERA_ION_HEAP_ID=ION_CP_MM_HEAP_ID # 8660=SMI, Rest=EBI
       LOCAL_CFLAGS += -DCAMERA_ZSL_ION_HEAP_ID=ION_CP_MM_HEAP_ID
-      LOCAL_CFLAGS += -DCAMERA_GRALLOC_HEAP_ID=GRALLOC_USAGE_PRIVATE_MM_HEAP
-      LOCAL_CFLAGS += -DCAMERA_GRALLOC_FALLBACK_HEAP_ID=GRALLOC_USAGE_PRIVATE_IOMMU_HEAP
-      LOCAL_CFLAGS += -DCAMERA_ION_FALLBACK_HEAP_ID=ION_IOMMU_HEAP_ID
-      LOCAL_CFLAGS += -DCAMERA_ZSL_ION_FALLBACK_HEAP_ID=ION_IOMMU_HEAP_ID
-      LOCAL_CFLAGS += -DCAMERA_GRALLOC_CACHING_ID=0
+      ifeq ($(call is-board-platform,msm8960),true)
+        LOCAL_CFLAGS += -DCAMERA_GRALLOC_HEAP_ID=GRALLOC_USAGE_PRIVATE_MM_HEAP
+        LOCAL_CFLAGS += -DCAMERA_GRALLOC_FALLBACK_HEAP_ID=GRALLOC_USAGE_PRIVATE_IOMMU_HEAP
+        LOCAL_CFLAGS += -DCAMERA_ION_FALLBACK_HEAP_ID=ION_IOMMU_HEAP_ID
+        LOCAL_CFLAGS += -DCAMERA_ZSL_ION_FALLBACK_HEAP_ID=ION_IOMMU_HEAP_ID
+        LOCAL_CFLAGS += -DCAMERA_GRALLOC_CACHING_ID=0
+      else ifeq ($(call is-chipset-prefix-in-board-platform,msm8660),true)
+        LOCAL_CFLAGS += -DCAMERA_GRALLOC_HEAP_ID=GRALLOC_USAGE_PRIVATE_CAMERA_HEAP
+        LOCAL_CFLAGS += -DCAMERA_GRALLOC_FALLBACK_HEAP_ID=GRALLOC_USAGE_PRIVATE_CAMERA_HEAP # Don't Care
+        LOCAL_CFLAGS += -DCAMERA_ION_FALLBACK_HEAP_ID=ION_CAMERA_HEAP_ID # EBI
+        LOCAL_CFLAGS += -DCAMERA_ZSL_ION_FALLBACK_HEAP_ID=ION_CAMERA_HEAP_ID
+        LOCAL_CFLAGS += -DCAMERA_GRALLOC_CACHING_ID=0
+      else
+        LOCAL_CFLAGS += -DCAMERA_GRALLOC_HEAP_ID=GRALLOC_USAGE_PRIVATE_ADSP_HEAP
+        LOCAL_CFLAGS += -DCAMERA_GRALLOC_FALLBACK_HEAP_ID=GRALLOC_USAGE_PRIVATE_ADSP_HEAP # Don't Care
+        LOCAL_CFLAGS += -DCAMERA_GRALLOC_CACHING_ID=GRALLOC_USAGE_PRIVATE_UNCACHED #uncached
+      endif
 
       ifeq ($(V4L2_BASED_LIBCAM),true)
+        ifeq ($(call is-board-platform,msm7627a),true)
+          LOCAL_HAL_FILES := QCameraHAL.cpp QCameraHWI_Parm.cpp\
+            QCameraHWI.cpp QCameraHWI_Preview.cpp \
+            QCameraHWI_Record_7x27A.cpp QCameraHWI_Still.cpp \
+            QCameraHWI_Mem.cpp QCameraHWI_Display.cpp \
+            QCameraStream.cpp QualcommCamera2.cpp
+        else
           LOCAL_HAL_FILES := QCameraHAL.cpp QCameraHWI_Parm.cpp\
             QCameraHWI.cpp QCameraHWI_Preview.cpp \
             QCameraHWI_Record.cpp QCameraHWI_Still.cpp \
             QCameraHWI_Mem.cpp QCameraHWI_Display.cpp \
             QCameraStream.cpp QualcommCamera2.cpp QCameraParameters.cpp
+        endif
+
       else
         LOCAL_HAL_FILES := QualcommCamera.cpp QualcommCameraHardware.cpp
       endif
@@ -43,7 +82,11 @@ ifneq ($(USE_CAMERA_STUB),true)
 
       LOCAL_SRC_FILES := $(MM_CAM_FILES) $(LOCAL_HAL_FILES)
 
-      LOCAL_CFLAGS+= -DNUM_PREVIEW_BUFFERS=4 -D_ANDROID_
+      ifeq ($(call is-chipset-prefix-in-board-platform,msm7627),true)
+        LOCAL_CFLAGS+= -DNUM_PREVIEW_BUFFERS=6 -D_ANDROID_
+      else
+        LOCAL_CFLAGS+= -DNUM_PREVIEW_BUFFERS=4 -D_ANDROID_
+      endif
 
       # To Choose neon/C routines for YV12 conversion
       LOCAL_CFLAGS+= -DUSE_NEON_CONVERSION
