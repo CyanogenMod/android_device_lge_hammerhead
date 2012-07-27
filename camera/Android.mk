@@ -1,3 +1,5 @@
+ifeq (mako,$(TARGET_DEVICE))
+
 ifneq ($(USE_CAMERA_STUB),true)
     # When zero we link against libmmcamera; when 1, we dlopen libmmcamera.
     DLOPEN_LIBMMCAMERA:=1
@@ -91,4 +93,6 @@ endif # USE_CAMERA_STUB
 
 ifeq ($(V4L2_BASED_LIBCAM),true)
 include $(LOCAL_PATH)/mm-camera-interface/Android.mk
+endif
+
 endif
