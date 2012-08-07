@@ -1,4 +1,4 @@
-ifeq (mako,$(TARGET_DEVICE))
+ifeq ($(TARGET_BOARD_PLATFORM),msm8960)
 
 ifneq ($(USE_CAMERA_STUB),true)
     # When zero we link against libmmcamera; when 1, we dlopen libmmcamera.
