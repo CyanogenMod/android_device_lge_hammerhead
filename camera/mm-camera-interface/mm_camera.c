@@ -392,6 +392,10 @@ int32_t mm_camera_set_general_parm(mm_camera_obj_t * my_obj, mm_camera_parm_t *p
       return mm_camera_send_native_ctrl_cmd(my_obj,
                         CAMERA_SET_PARM_HDR, sizeof(exp_bracketing_t), (void *)parm->p_value);
 
+    case MM_CAMERA_PARM_CAF_LOCK_CANCEL:
+      return mm_camera_send_native_ctrl_cmd(my_obj,
+                  CAMERA_SET_CAF_LOCK_CANCEL, sizeof(uint32_t), (void *)parm->p_value);
+
     default:
         CDBG("%s: default: parm %d not supported\n", __func__, parm->parm_type);
         break;
