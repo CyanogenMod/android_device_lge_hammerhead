@@ -617,6 +617,7 @@ private:
     status_t setPowerMode(const QCameraParameters& params);
     void takePicturePrepareHardware( );
     status_t setNoDisplayMode(const QCameraParameters& params);
+    status_t setCAFLockCancel(void);
 
     isp3a_af_mode_t getAutoFocusMode(const QCameraParameters& params);
     bool isValidDimension(int w, int h);

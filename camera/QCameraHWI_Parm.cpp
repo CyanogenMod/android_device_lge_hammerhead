@@ -1383,6 +1383,7 @@ status_t QCameraHardwareInterface::setParameters(const QCameraParameters& params
     if ((rc = setZSLBurstLookBack(params))) final_rc = rc;
     if ((rc = setZSLBurstInterval(params))) final_rc = rc;
     if ((rc = setNoDisplayMode(params))) final_rc = rc;
+    if ((rc = setCAFLockCancel())) final_rc = rc;
     
     //Update Exiftag values.
     setExifTags();
@@ -4076,6 +4077,20 @@ status_t QCameraHardwareInterface::setNoDisplayMode(const QCameraParameters& par
     ALOGD("prop mNoDisplayMode =%d", mNoDisplayMode);
   }
   return NO_ERROR;
+}
+
+status_t QCameraHardwareInterface::setCAFLockCancel(void)
+{
+    ALOGD("%s : E", __func__);
+    status_t rc = NO_ERROR;
+    int32_t value;
+
+    //for CAF unlock
+    value = 1;
+    rc = (native_set_parms(MM_CAMERA_PARM_CAF_LOCK_CANCEL, sizeof(int32_t), (void *)(&value))) ?
+                        NO_ERROR : UNKNOWN_ERROR;
+    ALOGD("%s : X", __func__);
+    return rc;
 }
 
 }; /*namespace android */
