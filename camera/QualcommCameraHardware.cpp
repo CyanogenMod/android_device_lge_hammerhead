@@ -18,7 +18,7 @@
 
 #define ALOG_NDEBUG 0
 #define ALOG_NIDEBUG 0
-#define ALOG_TAG "QualcommCameraHardware"
+#define LOG_TAG "QualcommCameraHardware"
 #include <utils/Log.h>
 #include "QualcommCameraHardware.h"
 

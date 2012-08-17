@@ -18,7 +18,7 @@
 
 //#define ALOG_NDEBUG 0
 #define ALOG_NIDEBUG 0
-#define ALOG_TAG "QCameraHWI_Mem"
+#define LOG_TAG "QCameraHWI_Mem"
 #include <utils/Log.h>
 
 #include <utils/Errors.h>
