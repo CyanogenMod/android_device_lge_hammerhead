@@ -15,7 +15,7 @@
 ** limitations under the License.
 */
 
-#define ALOG_TAG "QCameraParams"
+#define LOG_TAG "QCameraParams"
 #include <utils/Log.h>
 #include <string.h>
 #include <stdlib.h>

@@ -18,7 +18,7 @@
 
 //#define ALOG_NDEBUG 0
 #define ALOG_NIDEBUG 0
-#define ALOG_TAG "QCameraHWI_Record"
+#define LOG_TAG "QCameraHWI_Record"
 #include <utils/Log.h>
 #include <utils/threads.h>
 #include <cutils/properties.h>
@@ -340,7 +340,7 @@ status_t QCameraStream_record::processRecordFrame(void *data)
 	nsecs_t timeStamp = nsecs_t(frame->video.video.frame->ts.tv_sec)*1000000000LL + \
                       frame->video.video.frame->ts.tv_nsec;
 
-  ALOGE("Send Video frame to services/encoder TimeStamp : %lld",timeStamp);
+  ALOGV("Send Video frame to services/encoder TimeStamp : %lld",timeStamp);
   mRecordedFrames[frame->video.video.idx] = *frame;
 
 #ifdef USE_ION
