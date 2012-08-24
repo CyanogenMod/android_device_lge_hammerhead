@@ -217,6 +217,11 @@ uint32_t mm_camera_get_msm_frame_len(cam_format_t fmt_type,
         plane[0] = PAD_TO_WORD(width * height);
         size = plane[0];
         break;
+    case CAMERA_YUV_422_YUYV:
+        *num_planes = 1;
+        plane[0] = PAD_TO_WORD(width * height);
+        size = plane[0];
+        break;
     case CAMERA_YUV_422_NV16:
     case CAMERA_YUV_422_NV61:
       if( image_type == OUTPUT_TYPE_S || image_type == OUTPUT_TYPE_V) {
