@@ -229,6 +229,8 @@ public:
 
 
    static const char KEY_SINGLE_ISP_OUTPUT_ENABLED[];
+   static const char KEY_SUPPORTED_CAMERA_FEATURES[];
+   static const char KEY_MAX_NUM_REQUESTED_FACES[];
 
     enum {
         CAMERA_ORIENTATION_UNKNOWN = 0,

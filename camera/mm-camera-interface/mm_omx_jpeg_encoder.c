@@ -266,12 +266,12 @@ int8_t omxJpegOpen()
     return TRUE;
 }
 
-int8_t omxJpegStart()
+int8_t omxJpegStart(uint8_t hw_encode_enable)
 {
     int rc = 0;
     ALOGE("%s", __func__);
     pthread_mutex_lock(&jpege_mutex);
-    hw_encode = true;
+    hw_encode = hw_encode_enable;
     callbacks.EmptyBufferDone = etbdone;
     callbacks.FillBufferDone = ftbdone;
     callbacks.EventHandler = eventHandler;
