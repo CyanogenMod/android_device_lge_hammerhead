@@ -81,7 +81,8 @@ typedef enum {
   CAMERA_RDI,
   CAMERA_YUV_420_YV12,
   CAMERA_YUV_422_NV16,
-  CAMERA_YUV_422_NV61
+  CAMERA_YUV_422_NV61,
+  CAMERA_YUV_422_YUYV,
 } cam_format_t;
 
 typedef enum {
@@ -208,6 +209,7 @@ typedef struct {
   uint32_t default_preview_width;
   uint32_t default_preview_height;
   uint32_t bestshot_reconfigure;
+  uint32_t pxlcode;
 }cam_prop_t;
 
 typedef struct {
@@ -242,6 +244,7 @@ typedef struct {
   cam_format_t    main_img_format;
   cam_format_t    rdi0_format;
   cam_format_t    rdi1_format;
+  cam_format_t    raw_img_format;
   cam_pad_format_t prev_padding_format;
   cam_pad_format_t enc_padding_format;
   cam_pad_format_t thumb_padding_format;
@@ -269,6 +272,31 @@ typedef struct {
   cam_frame_len_offset_t thumb_frame_offset;
   uint32_t channel_interface_mask;
 } cam_ctrl_dimension_t;
+
+typedef struct {
+  uint8_t cid;
+  uint8_t dt;
+  uint32_t inst_handle;
+} cam_cid_entry_t;
+
+#define CAM_MAX_CID_NUM    8
+typedef struct {
+  /*should we hard code max CIDs? if not we need to have two CMD*/
+  uint8_t num_cids;
+  cam_cid_entry_t cid_entries[CAM_MAX_CID_NUM];
+} cam_cid_info_t;
+
+typedef struct {
+  /* we still use prev, video, main,
+   * thumb to interprete image types */
+  uint32_t image_mode;                 /* input */
+  cam_format_t format;                 /* input */
+  cam_pad_format_t padding_format;     /* input */
+  int rotation;                        /* input */
+  uint16_t width;                      /* input/output */
+  uint16_t height;                     /* input/output */
+  cam_frame_len_offset_t frame_offset; /* output */
+} cam_frame_resolution_t;
 
 /* Add enumenrations at the bottom but before MM_CAMERA_PARM_MAX */
 typedef enum {
@@ -375,8 +403,12 @@ typedef enum {
     MM_CAMERA_PARM_CH_INTERFACE,
     //or single output enabled to differentiate 7x27a with others
     MM_CAMERA_PARM_BESTSHOT_RECONFIGURE,
-    MM_CAMERA_MAX_NUM_FACES_DECT,
+    MM_CAMERA_PARM_MAX_NUM_FACES_DECT,
     MM_CAMERA_PARM_FPS_RANGE,
+    MM_CAMERA_PARM_CID,
+    MM_CAMERA_PARM_FRAME_RESOLUTION,
+    MM_CAMERA_PARM_RAW_SNAPSHOT_FMT,
+    MM_CAMERA_PARM_FACIAL_FEATURE_INFO,
     MM_CAMERA_PARM_CAF_LOCK_CANCEL,
     MM_CAMERA_PARM_MAX
 } mm_camera_parm_type_t;
@@ -518,6 +550,9 @@ typedef enum {
   CAMERA_GET_MAX_NUM_FACES_DECT,
   CAMERA_SET_CHANNEL_STREAM,
   CAMERA_GET_CHANNEL_STREAM,
+  CAMERA_SET_PARM_CID, /*125*/
+  CAMERA_GET_PARM_FRAME_RESOLUTION,
+  CAMERA_GET_FACIAL_FEATURE_INFO,
   CAMERA_SET_CAF_LOCK_CANCEL,
   CAMERA_CTRL_PARM_MAX
 } cam_ctrl_type;
@@ -583,6 +618,10 @@ typedef enum {
   CAMERA_ISO_MAX
 } camera_iso_mode_type;
 
+typedef enum {
+  MM_CAMERA_FACIAL_FEATURE_FD, // facial detection
+  MM_CAMERA_FACIAL_FEATURE_MAX
+} camera_facial_features;
 
 typedef enum {
   AEC_ROI_OFF,
@@ -826,6 +865,11 @@ typedef enum {
   FD_ROI_TYPE_HEADER,
   FD_ROI_TYPE_DATA
 } fd_roi_type_t;
+
+typedef struct {
+  int fd_mode;
+  int num_fd;
+} fd_set_parm_t;
 
 typedef struct {
   uint32_t frame_id;

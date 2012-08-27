@@ -486,6 +486,7 @@ initRawSnapshotChannel(cam_ctrl_dimension_t *dim,
     status_t ret = NO_ERROR;
     mm_camera_ch_image_fmt_parm_t fmt;
     mm_camera_channel_attr_t ch_attr;
+    cam_format_t raw_fmt;
 
     mm_camera_raw_streaming_type_t raw_stream_type =
         MM_CAMERA_RAW_STREAMING_CAPTURE_SINGLE;
@@ -512,9 +513,17 @@ initRawSnapshotChannel(cam_ctrl_dimension_t *dim,
         goto end;
     }
 
+    ret = cam_config_get_parm(mCameraId,
+        MM_CAMERA_PARM_RAW_SNAPSHOT_FMT, &raw_fmt);
+    if (NO_ERROR != ret) {
+        ALOGE("%s: error - can't get raw snapshot fmt!", __func__);
+        ret = FAILED_TRANSACTION;
+        goto end;
+    }
+
     memset(&fmt, 0, sizeof(mm_camera_ch_image_fmt_parm_t));
     fmt.ch_type = MM_CAMERA_CH_RAW;
-    fmt.def.fmt = CAMERA_BAYER_SBGGR10;
+    fmt.def.fmt = raw_fmt;
     fmt.def.dim.width = dim->raw_picture_width;
     fmt.def.dim.height = dim->raw_picture_height;
 
@@ -646,6 +655,7 @@ initRawSnapshotBuffers(cam_ctrl_dimension_t *dim, int num_of_buf)
     uint8_t num_planes;
     uint32_t planes[VIDEO_MAX_PLANES];
     mm_camera_reg_buf_t reg_buf;
+    cam_format_t raw_fmt;
 
     ALOGD("%s: E", __func__);
     memset(&reg_buf,  0,  sizeof(mm_camera_reg_buf_t));
@@ -665,8 +675,16 @@ initRawSnapshotBuffers(cam_ctrl_dimension_t *dim, int num_of_buf)
     }
     memset(reg_buf.def.buf.mp, 0, num_of_buf * sizeof(mm_camera_mp_buf_t));
 
+    ret = cam_config_get_parm(mCameraId,
+        MM_CAMERA_PARM_RAW_SNAPSHOT_FMT, &raw_fmt);
+    if (NO_ERROR != ret) {
+        ALOGE("%s: error - can't get raw snapshot fmt!", __func__);
+        ret = FAILED_TRANSACTION;
+        goto end;
+    }
+
     /* Get a frame len for buffer to be allocated*/
-    frame_len = mm_camera_get_msm_frame_len(CAMERA_BAYER_SBGGR10,
+    frame_len = mm_camera_get_msm_frame_len(raw_fmt,
                                             myMode,
                                             dim->raw_picture_width,
                                             dim->raw_picture_height,
@@ -1487,6 +1505,8 @@ encodeData(mm_camera_ch_data_buf_t* recvd_frame,
     int width, height;
     uint8_t *thumbnail_buf;
     uint32_t thumbnail_fd;
+    uint8_t hw_encode = true;
+    int mNuberOfVFEOutputs = 0;
 
     omx_jpeg_encode_params encode_params;
 
@@ -1577,7 +1597,25 @@ encodeData(mm_camera_ch_data_buf_t* recvd_frame,
         set_callbacks(snapshot_jpeg_fragment_cb, snapshot_jpeg_cb, this,
              mHalCamCtrl->mJpegMemory.camera_memory[0]->data, &mJpegOffset);
 
-        if(omxJpegStart() != NO_ERROR){
+        if (isLiveSnapshot() || isFullSizeLiveshot()) {
+            /* determine the target type */
+            ret = cam_config_get_parm(mCameraId,MM_CAMERA_PARM_VFE_OUTPUT_ENABLE,
+                                 &mNuberOfVFEOutputs);
+            if (ret != MM_CAMERA_OK) {
+                ALOGE("get parm MM_CAMERA_PARM_VFE_OUTPUT_ENABLE  failed");
+                ret = BAD_VALUE;
+            }
+            /* VFE 2x has hardware limitation:
+             * It can't support concurrent
+             * video encoding and jpeg encoding
+             * So switch to software for liveshot
+             */
+            if (mNuberOfVFEOutputs == 1)
+                hw_encode = false;
+        }
+        ALOGD("%s: hw_encode: %d\n",__func__, hw_encode);
+
+        if(omxJpegStart(hw_encode) != NO_ERROR){
             ALOGE("Error In omxJpegStart!!! Return");
             ret = FAILED_TRANSACTION;
             goto end;
