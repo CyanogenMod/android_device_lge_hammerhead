@@ -43,6 +43,18 @@ extern "C" {
 } /* extern C*/
 
 
+
+typedef struct snap_hdr_record_t_ {
+  bool hdr_on;
+  int  num_frame;
+  int  num_raw_received;
+
+  /*in terms of 2^(n/6), e.g -6 means (1/2)x, while 12 is 4x*/
+  int  exp[MAX_HDR_EXP_FRAME_NUM];
+  mm_camera_ch_data_buf_t *recvd_frame[MAX_HDR_EXP_FRAME_NUM];
+} snap_hdr_record_t;
+
+
 namespace android {
 
 class QCameraHardwareInterface;
@@ -119,8 +131,10 @@ public:
     /* Set the ANativeWindow */
     virtual int setPreviewWindow(preview_stream_ops_t* window) {return NO_ERROR;}
     virtual void notifyROIEvent(fd_roi_t roi) {;}
-    virtual void notifyWDenoiseEvent(cam_ctrl_status_t status, void * cookie) {;}
+    virtual void notifyWDenoiseEvent(cam_ctrl_status_t status, void * cookie) {};
     virtual void resetSnapshotCounters(void ){};
+    virtual void InitHdrInfoForSnapshot(bool HDR_on, int number_frames, int *exp ) {};
+    virtual void notifyHdrEvent(cam_ctrl_status_t status, void * cookie) {};
 
     QCameraStream();
     QCameraStream(int, camera_mode_t);
@@ -275,6 +289,8 @@ public:
     void notifyWDenoiseEvent(cam_ctrl_status_t status, void * cookie);
     friend void liveshot_callback(mm_camera_ch_data_buf_t *frame,void *user_data);
     void resetSnapshotCounters(void );
+    void InitHdrInfoForSnapshot(bool HDR_on, int number_frames, int *exp );
+    void notifyHdrEvent(cam_ctrl_status_t status, void * cookie);
 
 private:
     QCameraStream_Snapshot(int, camera_mode_t);
@@ -318,6 +334,7 @@ private:
     status_t doWaveletDenoise(mm_camera_ch_data_buf_t* frame);
     status_t sendWDenoiseStartMsg(mm_camera_ch_data_buf_t * frame);
     void lauchNextWDenoiseFromQueue();
+    status_t doHdrProcessing( );
 
     /* Member variables */
 
@@ -367,6 +384,7 @@ private:
     bool                    mIsDoingWDN; // flag to indicate if WDN is going on (one frame is sent out for WDN)
 	bool                    mDropThumbnail;
 	int                     mJpegQuality;
+    snap_hdr_record_t       mHdrInfo;
 }; // QCameraStream_Snapshot
 
 

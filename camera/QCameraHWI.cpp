@@ -801,6 +801,9 @@ void QCameraHardwareInterface::processCtrlEvent(mm_camera_ctrl_event_t *event, a
         case MM_CAMERA_CTRL_EVT_WDN_DONE:
             wdenoiseEvent(event->status, (void *)(event->cookie));
             break;
+        case MM_CAMERA_CTRL_EVT_HDR_DONE:
+            hdrEvent(event->status, (void *)(event->cookie));
+            break;
         case MM_CAMERA_CTRL_EVT_ERROR:
             app_cb->notifyCb  = mNotifyCb;
             app_cb->argm_notify.msg_type = CAMERA_MSG_ERROR;
@@ -1581,8 +1584,13 @@ status_t  QCameraHardwareInterface::takePicture()
     status_t ret = MM_CAMERA_OK;
     int mNuberOfVFEOutputs = 0;
     Mutex::Autolock lock(mLock);
+    bool hdr;
+    int  frm_num = 1;
+    int  exp[MAX_HDR_EXP_FRAME_NUM];
 
-    mStreamSnap->resetSnapshotCounters( );
+    hdr = getHdrInfoAndSetExp(MAX_HDR_EXP_FRAME_NUM, &frm_num, exp);
+    mStreamSnap->resetSnapshotCounters();
+    mStreamSnap->InitHdrInfoForSnapshot(hdr, frm_num, exp);
     switch(mPreviewState) {
     case QCAMERA_HAL_PREVIEW_STARTED:
         mStreamSnap->setFullSizeLiveshot(false);
@@ -2537,5 +2545,60 @@ void QCameraHardwareInterface::pausePreviewForZSL()
         mRestartPreview = false;
     }
 }
+
+/**/
+bool QCameraHardwareInterface::getHdrInfoAndSetExp( int max_num_frm, int *num_frame, int *exp)
+{
+    bool rc = FALSE;
+
+    if (mHdrMode == HDR_MODE && num_frame != NULL && exp != NULL &&
+      mRecordingHint != TRUE &&
+      mPreviewState != QCAMERA_HAL_RECORDING_STARTED ) {
+        int ret = 0;
+        *num_frame = 1;
+        exp_bracketing_t temp;
+        memset(&temp, 0, sizeof(exp_bracketing_t));
+        ret = cam_config_get_parm(mCameraId, MM_CAMERA_PARM_HDR, (void *)&temp );
+        if (ret == NO_ERROR && max_num_frm > 0) {
+            /*set as AE Bracketing mode*/
+            temp.hdr_enable = FALSE;
+            temp.mode = HDR_MODE;
+            temp.total_hal_frames = temp.total_frames;
+            ret = native_set_parms(MM_CAMERA_PARM_HDR,
+                                   sizeof(exp_bracketing_t), (void *)&temp);
+            if (ret) {
+                char *val, *exp_value, *prev_value;
+                int i;
+                exp_value = (char *) temp.values;
+                i = 0;
+                val = strtok_r(exp_value,",", &prev_value);
+                while (val != NULL ){
+                  exp[i++] = atoi(val);
+                  if(i >= max_num_frm )
+                    break;
+                  val = strtok_r(NULL, ",", &prev_value);
+                }
+                *num_frame =temp.total_frames;
+                rc = TRUE;
+            }
+        } else {
+            temp.total_frames = 1;
+        }
+        /* Application waits until this many snapshots before restarting preview */
+        mParameters.set("num-snaps-per-shutter", 2);
+    }
+    return rc;
+}
+
+void QCameraHardwareInterface::hdrEvent(cam_ctrl_status_t status, void *cookie)
+{
+    QCameraStream * snapStream = (QCameraStream *)cookie;
+    ALOGI("HdrEvent: preview state: E");
+    if (snapStream != NULL && mStreamSnap != NULL) {
+        ALOGI("HdrEvent to snapshot stream");
+        snapStream->notifyHdrEvent(status, cookie);
+    }
+}
+
 }; // namespace android
 
