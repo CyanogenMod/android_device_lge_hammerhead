@@ -1167,7 +1167,7 @@ void QCameraHardwareInterface::initDefaultParameters()
 
     //Set Denoise
     mParameters.set(QCameraParameters::KEY_DENOISE,
-                    QCameraParameters::DENOISE_OFF);
+                    QCameraParameters::DENOISE_ON);
     mParameters.set(QCameraParameters::KEY_SUPPORTED_DENOISE,
                         denoise_value);
     //Set Touch AF/AEC
