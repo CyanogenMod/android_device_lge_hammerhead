@@ -59,7 +59,7 @@ extern "C" {
 #include <sys/system_properties.h>
 #include <sys/time.h>
 #include <stdlib.h>
-#include <linux/ion.h>
+#include <linux/msm_ion.h>
 #include <camera.h>
 #include <cam_fifo.h>
 #include <jpege.h>
