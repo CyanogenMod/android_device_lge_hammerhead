@@ -385,6 +385,8 @@ private:
 	bool                    mDropThumbnail;
 	int                     mJpegQuality;
     snap_hdr_record_t       mHdrInfo;
+    int hdrRawCount;
+    int hdrJpegCount;
 }; // QCameraStream_Snapshot
 
 
