@@ -5,13 +5,13 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-ifeq ($(strip $(TARGET_USES_ION)),true)
-LOCAL_CFLAGS += -DUSE_ION
-endif
-
 DLOPEN_LIBMMCAMERA:=0
 
 LOCAL_CFLAGS:= -DDLOPEN_LIBMMCAMERA=$(DLOPEN_LIBMMCAMERA)
+
+ifeq ($(strip $(TARGET_USES_ION)),true)
+        LOCAL_CFLAGS += -DUSE_ION
+endif
 
 LOCAL_CFLAGS += -DCAMERA_ION_HEAP_ID=ION_CP_MM_HEAP_ID # 8660=SMI, Rest=EBI
 LOCAL_CFLAGS += -DCAMERA_ZSL_ION_HEAP_ID=ION_CP_MM_HEAP_ID
@@ -39,34 +39,30 @@ endif
 
 LOCAL_HAL_FILES := \
         src/QCameraHAL.cpp \
-        src/QCameraHWI_Parm.cpp \
         src/QCameraHWI.cpp \
-        src/QCameraHWI_Preview.cpp \
-        src/QCameraHWI_Record.cpp \
-        src/QCameraHWI_Still.cpp \
-        src/QCameraHWI_Mem.cpp \
-        src/QCameraStream.cpp
+        src/QCameraStream.cpp \
+        src/QCameraHWI_Metatags.cpp \
+       src/QCameraStream_Preview.cpp
 
 LOCAL_HAL_WRAPPER_FILES := ../wrapper/QualcommCamera.cpp
 
 LOCAL_C_INCLUDES := \
         $(LOCAL_PATH)/../wrapper \
         $(LOCAL_PATH)/inc \
+        $(LOCAL_PATH)/../../stack/mm-camera-interface/inc\
+        $(LOCAL_PATH)/../../stack/mm-jpeg-interface/inc\
         $(TARGET_OUT_INTERMEDIATES)/include/mm-camera-interface_badger \
 
-# may need remove this includes 
-LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/mm-camera 
+# may need remove this includes
+LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/mm-camera
 LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/mm-still \
-                    $(TARGET_OUT_HEADERS)/mm-still/jpeg 
+                    $(TARGET_OUT_HEADERS)/mm-still/jpeg
 #end
-
-LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
-LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/media
-LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 
 LOCAL_C_INCLUDES += hardware/qcom/display/libgralloc \
         hardware/qcom/display/libgenlock \
-        hardware/qcom/media/libstagefrighthw
+        hardware/qcom/media/libstagefrighthw \
+	system/media/camera/include
 
 # if debug service layer and up , use stub camera!
 LOCAL_C_INCLUDES += \
@@ -77,13 +73,13 @@ LOCAL_SRC_FILES := \
         $(LOCAL_HAL_FILES)
 
 LOCAL_SHARED_LIBRARIES := libutils libui libcamera_client liblog libcutils
-LOCAL_SHARED_LIBRARIES += libmmcamera_interface_badger
-LOCAL_SHARED_LIBRARIES+= libgenlock libbinder
+LOCAL_SHARED_LIBRARIES += libmmcamera_interface
+LOCAL_SHARED_LIBRARIES+= libgenlock libbinder libcamera_metadata
 
 LOCAL_CFLAGS += -include bionic/libc/kernel/common/linux/socket.h
 
 LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
-LOCAL_MODULE:= camera_badger.$(TARGET_BOARD_PLATFORM)
+LOCAL_MODULE:= camera.$(TARGET_BOARD_PLATFORM)
 LOCAL_MODULE_TAGS := optional
 include $(BUILD_SHARED_LIBRARY)
 

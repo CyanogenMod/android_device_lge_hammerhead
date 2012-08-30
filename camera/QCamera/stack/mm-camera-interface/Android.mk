@@ -46,7 +46,7 @@ LOCAL_CFLAGS += -include bionic/libc/kernel/common/linux/un.h
 
 LOCAL_SRC_FILES := $(MM_CAM_FILES)
 
-LOCAL_MODULE           := libmmcamera_interface_badger
+LOCAL_MODULE           := libmmcamera_interface
 LOCAL_PRELINK_MODULE   := false
 LOCAL_SHARED_LIBRARIES := libdl libcutils liblog
 LOCAL_MODULE_TAGS := optional
