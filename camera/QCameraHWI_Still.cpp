@@ -401,7 +401,7 @@ configSnapshotDimension(cam_ctrl_dimension_t* dim)
       mPostviewWidth = mHalCamCtrl->mParameters.getInt(QCameraParameters::KEY_JPEG_THUMBNAIL_WIDTH);
       mPostviewHeight =  mHalCamCtrl->mParameters.getInt(QCameraParameters::KEY_JPEG_THUMBNAIL_HEIGHT);
     }
-    /*If application requested thumbnail size to be (0,0) 
+    /*If application requested thumbnail size to be (0,0)
        then configure second outout to a default size.
        Jpeg encoder will drop thumbnail as reflected in encodeParams.
     */
@@ -852,7 +852,7 @@ initSnapshotBuffers(cam_ctrl_dimension_t *dim, int num_of_buf)
                     mHalCamCtrl->releaseHeapMem(&mHalCamCtrl->mJpegMemory);
     	        goto end;
     	    }
-        } 
+        }
         /* register the streaming buffers for the channel*/
         reg_buf.ch_type = MM_CAMERA_CH_SNAPSHOT;
         reg_buf.snapshot.main.num = mSnapshotStreamBuf.num;
@@ -861,7 +861,7 @@ initSnapshotBuffers(cam_ctrl_dimension_t *dim, int num_of_buf)
             reg_buf.snapshot.thumbnail.num = mPostviewStreamBuf.num;
         else
             reg_buf.snapshot.thumbnail.num = 0;
-    
+
         ret = cam_config_prepare_buf(mCameraId, &reg_buf);
         if(ret != NO_ERROR) {
             ALOGV("%s:reg snapshot buf err=%d\n", __func__, ret);
@@ -1063,8 +1063,7 @@ status_t QCameraStream_Snapshot::initJPEGSnapshot(int num_of_snapshots)
         goto end;
     }
 
-    if (!isZSLMode() &&
-    ((mHalCamCtrl->getHDRMode() == HDR_MODE) || (mHalCamCtrl->isWDenoiseEnabled()))) {
+    {
       /*register main and thumbnail buffers at back-end for frameproc*/
         for (int i = 0; i < num_of_snapshots; i++) {
           if (NO_ERROR != mHalCamCtrl->sendMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_MAIN, i,
@@ -1905,6 +1904,15 @@ status_t QCameraStream_Snapshot::receiveRawPicture(mm_camera_ch_data_buf_t* recv
                     mIsDoingWDN = FALSE;
                 }
             }
+        } else if (mHdrInfo.hdr_on) {
+            mHdrInfo.recvd_frame[mHdrInfo.num_raw_received] = frame;
+            mHdrInfo.num_raw_received++;
+		    ALOGI("%s Total %d Received %d frames, still need to receive %d frames", __func__,
+			mHdrInfo.num_frame, mHdrInfo.num_raw_received, (mHdrInfo.num_frame - mHdrInfo.num_raw_received));
+            if (mHdrInfo.num_raw_received == mHdrInfo.num_frame) {
+                ALOGI(" Received all %d YUV frames, Invoke HDR", mHdrInfo.num_raw_received);
+                doHdrProcessing();
+            }
         }
         else {
           ALOGD("%s: encodeDisplayAndSave ", __func__);
@@ -2102,6 +2110,7 @@ QCameraStream_Snapshot(int cameraId, camera_mode_t mode)
 
     /*initialize snapshot queue*/
     mSnapshotQueue.init();
+    memset (&mHdrInfo, 0, sizeof(snap_hdr_record_t ));
 
     /*initialize WDN queue*/
     mWDNQueue.init();
@@ -2255,7 +2264,11 @@ status_t QCameraStream_Snapshot::start(void) {
     }else{
         //JPEG
         mSnapshotFormat = PICTURE_FORMAT_JPEG;
-        ret = initJPEGSnapshot(mNumOfSnapshot);
+        if (mHdrInfo.hdr_on) {
+            ret = initJPEGSnapshot(mHdrInfo.num_frame);
+        } else {
+            ret = initJPEGSnapshot(mNumOfSnapshot);
+        }
     }
     if(ret != NO_ERROR) {
         ALOGE("%s : Error while Initializing snapshot",__func__);
@@ -2440,11 +2453,13 @@ void QCameraStream_Snapshot::notifyWDenoiseEvent(cam_ctrl_status_t status, void 
     if (frame == NULL) {
         ALOGE("%s: cookie is returned NULL", __func__);
     } else {
+        #if 0
         // first unmapping the fds
         mHalCamCtrl->sendUnMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_MAIN, frame->snapshot.main.idx, mCameraId,
                                       CAM_SOCK_MSG_TYPE_FD_UNMAPPING);
         mHalCamCtrl->sendUnMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_THUMBNAIL, frame->snapshot.thumbnail.idx, mCameraId,
                                       CAM_SOCK_MSG_TYPE_FD_UNMAPPING);
+        #endif
 
         // then do JPEG encoding
         rc = encodeDisplayAndSave(frame, 0);
@@ -2534,6 +2549,7 @@ status_t QCameraStream_Snapshot::doWaveletDenoise(mm_camera_ch_data_buf_t* frame
 
     ALOGD("%s: E", __func__);
 
+    #if 0
     // get dim on the fly
     memset(&dim, 0, sizeof(cam_ctrl_dimension_t));
     ret = cam_config_get_parm(mCameraId, MM_CAMERA_PARM_DIMENSION, &dim);
@@ -2564,6 +2580,7 @@ status_t QCameraStream_Snapshot::doWaveletDenoise(mm_camera_ch_data_buf_t* frame
         goto end;
     }
 
+#endif
     // ask deamon to start wdn operation
     if (NO_ERROR != sendWDenoiseStartMsg(frame)) {
         ALOGE("%s: sending thumbnail frame mapping buf msg Failed", __func__);
@@ -2592,6 +2609,123 @@ status_t QCameraStream_Snapshot::sendWDenoiseStartMsg(mm_camera_ch_data_buf_t * 
         return FAILED_TRANSACTION;
     }
     return NO_ERROR;
+}
+
+status_t QCameraStream_Snapshot::doHdrProcessing( )
+{
+    status_t rc = NO_ERROR;
+    cam_sock_packet_t packet;
+    int i;
+    memset(&packet, 0, sizeof(cam_sock_packet_t));
+    packet.msg_type = CAM_SOCK_MSG_TYPE_HDR_START;
+    packet.payload.hdr_pkg.cookie = (unsigned long)this;
+    packet.payload.hdr_pkg.num_hdr_frames = mHdrInfo.num_frame;
+    ALOGI("%s num frames = %d ", __func__, mHdrInfo.num_frame);
+    for (i = 0; i < mHdrInfo.num_frame; i++) {
+        packet.payload.hdr_pkg.hdr_main_idx[i] =mHdrInfo.recvd_frame[i]->snapshot.main.idx;
+        packet.payload.hdr_pkg.hdr_thm_idx[i] = mHdrInfo.recvd_frame[i]->snapshot.thumbnail.idx;
+        packet.payload.hdr_pkg.exp[i] = mHdrInfo.exp[i];
+        ALOGI("%s Adding buffer M %d T %d Exp %d into hdr pkg ", __func__,
+            packet.payload.hdr_pkg.hdr_main_idx[i],
+            packet.payload.hdr_pkg.hdr_thm_idx[i],
+            packet.payload.hdr_pkg.exp[i]);
+    }
+    if (cam_ops_sendmsg(mCameraId, &packet, sizeof(packet), 0) <= 0) {
+        ALOGE("%s: sending start HDR msg failed", __func__);
+        rc= FAILED_TRANSACTION;
+    }
+    return rc;
+}
+
+void QCameraStream_Snapshot::InitHdrInfoForSnapshot(bool Hdr_on, int number_frames, int *exp )
+{
+    mHdrInfo.hdr_on = Hdr_on;
+    mHdrInfo.num_frame = number_frames;
+    mHdrInfo.num_raw_received = 0;
+
+    if(number_frames) {
+        memcpy(mHdrInfo.exp, exp, sizeof(int)*number_frames);
+    }
+    memset(&mHdrInfo.recvd_frame, 0,
+      sizeof(mm_camera_ch_data_buf_t *)*MAX_HDR_EXP_FRAME_NUM);
+}
+
+
+void QCameraStream_Snapshot::notifyHdrEvent(cam_ctrl_status_t status, void * cookie)
+{
+    camera_notify_callback         notifyCb;
+    camera_data_callback           dataCb, jpgDataCb;
+    int rc[2];
+    mm_camera_ch_data_buf_t *frame;
+    int i;
+
+    ALOGI("%s: HDR Done status (%d) received",__func__,status);
+    Mutex::Autolock lock(mStopCallbackLock);
+    /* Regular frame */
+    frame = mHdrInfo.recvd_frame[0];
+    rc[0] = encodeDisplayAndSave(frame, 0);
+    /* HDR frame */
+    frame = mHdrInfo.recvd_frame[2];
+    rc[2] = encodeDisplayAndSave(frame,0);
+
+    // send upperlayer callback for raw image (data or notify, not both)
+    if((mHalCamCtrl->mDataCb) && (mHalCamCtrl->mMsgEnabled & CAMERA_MSG_RAW_IMAGE)){
+      dataCb = mHalCamCtrl->mDataCb;
+    } else {
+      dataCb = NULL;
+    }
+    if((mHalCamCtrl->mNotifyCb) && (mHalCamCtrl->mMsgEnabled & CAMERA_MSG_RAW_IMAGE_NOTIFY)){
+      notifyCb = mHalCamCtrl->mNotifyCb;
+    } else {
+      notifyCb = NULL;
+    }
+    if(mHalCamCtrl->mDataCb &&
+        (mHalCamCtrl->mMsgEnabled & CAMERA_MSG_COMPRESSED_IMAGE)) {
+        /* get picture failed. Give jpeg callback with NULL data
+         * to the application to restore to preview mode
+         */
+        jpgDataCb = mHalCamCtrl->mDataCb;
+    } else {
+      jpgDataCb = NULL;
+    }
+
+    mStopCallbackLock.unlock();
+
+    for (i =0; i<= 2; i++) {
+        if(i==1)
+          continue;
+        if (rc[i] != NO_ERROR)
+        {
+            ALOGE("%s: Error while encoding/displaying/saving image", __func__);
+            if (frame) {
+                cam_evt_buf_done(mCameraId,  mHdrInfo.recvd_frame[i]);
+            }
+
+            if (dataCb) {
+              dataCb(CAMERA_MSG_RAW_IMAGE, mHalCamCtrl->mSnapshotMemory.camera_memory[0],
+                                   1, NULL, mHalCamCtrl->mCallbackCookie);
+            }
+            if (notifyCb) {
+              notifyCb(CAMERA_MSG_RAW_IMAGE_NOTIFY, 0, 0, mHalCamCtrl->mCallbackCookie);
+            }
+            if (jpgDataCb) {
+              jpgDataCb(CAMERA_MSG_COMPRESSED_IMAGE,
+                                       NULL, 0, NULL,
+                                       mHalCamCtrl->mCallbackCookie);
+            }
+
+            if ( mHdrInfo.recvd_frame[i] != NULL) {
+                free( mHdrInfo.recvd_frame[i]);
+                mHdrInfo.recvd_frame[i] = NULL;
+            }
+        }
+    }
+
+    if (mHdrInfo.recvd_frame[1]) {
+        cam_evt_buf_done(mCameraId,  mHdrInfo.recvd_frame[1]);
+        free( mHdrInfo.recvd_frame[1]);
+        mHdrInfo.recvd_frame[1] = NULL;
+    }
 }
 
 }; // namespace android
