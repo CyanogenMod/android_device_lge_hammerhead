@@ -116,8 +116,19 @@ typedef enum {
   CAM_SOCK_MSG_TYPE_WDN_START,
   CAM_SOCK_MSG_TYPE_HIST_MAPPING,
   CAM_SOCK_MSG_TYPE_HIST_UNMAPPING,
+  CAM_SOCK_MSG_TYPE_HDR_START,
   CAM_SOCK_MSG_TYPE_MAX
 }mm_camera_socket_msg_type;
+
+
+#define MAX_HDR_EXP_FRAME_NUM   5
+typedef struct {
+  unsigned long cookie;
+  int num_hdr_frames;
+  int hdr_main_idx[MAX_HDR_EXP_FRAME_NUM];
+  int hdr_thm_idx[MAX_HDR_EXP_FRAME_NUM];
+  int exp[MAX_HDR_EXP_FRAME_NUM];
+} mm_camera_hdr_start_type;
 
 #define MM_MAX_WDN_NUM 2
 typedef struct {
@@ -133,6 +144,7 @@ typedef struct {
     mm_camera_frame_map_type frame_fd_map;
     mm_camera_frame_unmap_type frame_fd_unmap;
     mm_camera_wdn_start_type wdn_start;
+    mm_camera_hdr_start_type hdr_pkg;
   } payload;
 } cam_sock_packet_t;
 
@@ -554,6 +566,7 @@ typedef enum {
   CAMERA_GET_PARM_FRAME_RESOLUTION,
   CAMERA_GET_FACIAL_FEATURE_INFO,
   CAMERA_SET_CAF_LOCK_CANCEL,
+  CAMERA_GET_PARM_HDR,
   CAMERA_CTRL_PARM_MAX
 } cam_ctrl_type;
 
@@ -825,6 +838,7 @@ typedef enum {
   MM_CAMERA_CTRL_EVT_PREP_SNAPSHOT,
   MM_CAMERA_CTRL_EVT_SNAPSHOT_CONFIG_DONE,
   MM_CAMERA_CTRL_EVT_WDN_DONE, // wavelet denoise done
+  MM_CAMERA_CTRL_EVT_HDR_DONE, // wavelet denoise done
   MM_CAMERA_CTRL_EVT_ERROR,
   MM_CAMERA_CTRL_EVT_MAX
 }mm_camera_ctrl_event_type_t;

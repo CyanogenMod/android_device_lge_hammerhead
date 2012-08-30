@@ -3034,12 +3034,6 @@ status_t QCameraHardwareInterface::setAEBracket(const QCameraParameters& params)
             case HDR_MODE:
                 {
                     mHdrMode = HDR_MODE;
-                    temp.hdr_enable= TRUE;
-                    temp.mode = HDR_MODE;
-                    temp.total_frames = 3;
-                    temp.total_hal_frames = getNumOfSnapshots();
-                    ALOGV("%s: setting HDR frames (%d)", __FUNCTION__, temp.total_hal_frames);
-                    native_set_parms(MM_CAMERA_PARM_HDR, sizeof(exp_bracketing_t), (void *)&temp);
                 }
                 break;
             case EXP_BRACKETING_MODE:

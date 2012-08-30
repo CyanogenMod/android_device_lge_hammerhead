@@ -647,6 +647,8 @@ private:
     exif_tags_info_t* getExifData(){ return mExifData; }
     int getExifTableNumEntries() { return mExifTableNumEntries; }
     void parseGPSCoordinate(const char *latlonString, rat_t* coord);
+    bool getHdrInfoAndSetExp( int max_num_frm, int *num_frame, int *exp);
+    void hdrEvent(cam_ctrl_status_t status, void *cookie);
 
     int           mCameraId;
     camera_mode_t myMode;
