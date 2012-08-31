@@ -128,7 +128,7 @@ ifneq ($(USE_CAMERA_STUB),true)
       LOCAL_CFLAGS += -include bionic/libc/kernel/common/linux/socket.h
 
       LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
-      LOCAL_MODULE:= camera.$(TARGET_BOARD_PLATFORM)
+      LOCAL_MODULE:= camera.$(TARGET_DEVICE)
       LOCAL_MODULE_TAGS := optional
       include $(BUILD_SHARED_LIBRARY)
 
