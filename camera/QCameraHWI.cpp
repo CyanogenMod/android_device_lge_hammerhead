@@ -1029,6 +1029,13 @@ status_t QCameraHardwareInterface::startPreview2()
         return NO_ERROR;
     }
 
+    if (mRecordingHint) {
+        mParameters.set(QCameraParameters::KEY_CAMERA_MODE, 0);
+        myMode = (camera_mode_t)(myMode & ~CAMERA_ZSL_MODE);
+     } else {
+        mParameters.set(QCameraParameters::KEY_CAMERA_MODE, 1);
+        myMode = (camera_mode_t)(myMode | CAMERA_ZSL_MODE);
+    }
     /*  get existing preview information, by qury mm_camera*/
     memset(&dim, 0, sizeof(cam_ctrl_dimension_t));
     ret = cam_config_get_parm(mCameraId, MM_CAMERA_PARM_DIMENSION,&dim);

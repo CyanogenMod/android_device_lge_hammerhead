@@ -1022,7 +1022,7 @@ void QCameraHardwareInterface::initDefaultParameters()
     mParameters.set(QCameraParameters::KEY_POWER_MODE,"Normal_Power");
 
     //Set Camera Mode
-    mParameters.set(QCameraParameters::KEY_CAMERA_MODE,0);
+    mParameters.set(QCameraParameters::KEY_CAMERA_MODE,1);
     mParameters.set(QCameraParameters::KEY_AE_BRACKET_HDR,"Off");
 
     //Set Antibanding
