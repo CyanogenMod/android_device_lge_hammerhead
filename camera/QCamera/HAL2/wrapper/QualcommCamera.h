@@ -90,6 +90,11 @@ namespace android {
         uint32_t *consumer_usage,
         uint32_t *max_buffers);
 
+  int allocate_reprocess_stream_from_stream(const struct camera2_device *,
+        uint32_t output_stream_id,
+        const camera2_stream_in_ops_t *stream_ops,
+        uint32_t *stream_id);
+
   int release_reprocess_stream(
         const struct camera2_device *,
         uint32_t stream_id);
@@ -112,4 +117,3 @@ namespace android {
 } //extern "C"
 
 #endif
-

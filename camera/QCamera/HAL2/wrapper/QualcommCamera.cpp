@@ -86,6 +86,7 @@ camera2_device_ops_t camera_ops = {
     release_stream:                      android::release_stream,
 
     allocate_reprocess_stream:           android::allocate_reprocess_stream,
+    allocate_reprocess_stream_from_stream: android::allocate_reprocess_stream_from_stream,
     release_reprocess_stream:            android::release_reprocess_stream,
 
     trigger_action:                      android::trigger_action,
@@ -327,6 +328,14 @@ int allocate_reprocess_stream(const struct camera2_device *,
         uint32_t *stream_id,
         uint32_t *consumer_usage,
         uint32_t *max_buffers)
+{
+    return INVALID_OPERATION;
+}
+
+int allocate_reprocess_stream_from_stream(const struct camera2_device *,
+        uint32_t output_stream_id,
+        const camera2_stream_in_ops_t *reprocess_stream_ops,
+        uint32_t *stream_id)
 {
     return INVALID_OPERATION;
 }
