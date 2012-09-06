@@ -237,13 +237,12 @@ int8_t mm_jpeg_encoder_get_buffer_offset(uint32_t width, uint32_t height,
         uint32_t padded_size = width * CEILING16(height);
         *p_y_offset = 0;
         *p_cbcr_offset = 0;
-        if(!isZSLMode){
+        //if(!isZSLMode){
         if ((jpegRotation == 90) || (jpegRotation == 180)) {
             *p_y_offset = padded_size - actual_size;
             *p_cbcr_offset = ((padded_size - actual_size) >> 1);
           }
-        }
-        *p_buf_size = padded_size * 3/2;
+        *p_buf_size = (padded_size + (padded_size - actual_size)) * 3/2;
         planes[0] = width * CEILING16(height);
         planes[1] = width * CEILING16(height)/2;
     } else {
@@ -633,44 +632,11 @@ int8_t omxJpegEncode(omx_jpeg_encode_params *encode_params)
     OMX_GetParameter(pHandle, thumbnailQualityType, &thumbnailQuality);
     thumbnailQuality.nQFactor = jpegThumbnailQuality;
     OMX_SetParameter(pHandle, thumbnailQualityType, &thumbnailQuality);
-
-    ALOGE("isZSLMode is %d\n",isZSLMode);
-    if(!isZSLMode){
-    //Pass rotation if not ZSL mode
     rotType.nPortIndex = OUTPUT_PORT;
     rotType.nRotation = jpegRotation;
     OMX_SetConfig(pHandle, OMX_IndexConfigCommonRotate, &rotType);
-    ALOGE("Set rotation to %d\n",jpegRotation);
-    }
-
+    ALOGI("Set rotation to %d\n",jpegRotation);
     OMX_GetExtensionIndex(pHandle, "omx.qcom.jpeg.exttype.exif", &exif);
-    /*temporarily set rotation in EXIF data. This is done to avoid image corruption
-      issues in ZSL mode since roation is known before hand. The orientation is set in the
-      exif tag and decoder will decode it will the right orientation. need to add double
-      padding to fix the issue */
-    if(isZSLMode){
-
-      //Get the orientation tag values depending on rotation
-      switch(jpegRotation){
-        case 0: orientation =1; //Normal
-                break;
-        case 90: orientation =6; //Rotated 90 CCW
-                 break;
-        case 180: orientation =3; //Rotated 180
-                  break;
-        case 270: orientation =8; //Rotated 90 CW
-                  break;
-        default: orientation =1;
-                 break;
-     }
-      tag.tag_id = EXIFTAGID_ORIENTATION;
-      tag.tag_entry.type = EXIFTAGTYPE_ORIENTATION;
-      tag.tag_entry.count =1;
-      tag.tag_entry.copy = 1;
-      tag.tag_entry.data._short = orientation;
-      ALOGE("%s jpegRotation = %d , orientation value =%d\n",__func__,jpegRotation,orientation);
-      OMX_SetParameter(pHandle, exif, &tag);
-      }
 
     //Set omx parameter for all exif tags
     int i;
