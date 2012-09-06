@@ -957,7 +957,7 @@ status_t QCameraStream_preview::processPreviewFrameWithDisplay(
       }
      }
   } else
-      ALOGE("%s: error in dequeue_buffer, enqueue_buffer idx = %d, no free buffer now", __func__, frame->def.idx);
+      ALOGV("%s: error in dequeue_buffer, enqueue_buffer idx = %d, no free buffer now", __func__, frame->def.idx);
   /* Save the last displayed frame. We'll be using it to fill the gap between
      when preview stops and postview start during snapshot.*/
   mLastQueuedFrame = &(mDisplayStreamBuf.frame[frame->def.idx]);
@@ -1100,7 +1100,7 @@ status_t QCameraStream_preview::processPreviewFrameWithOutDisplay(
   mHalCamCtrl->mCallbackLock.lock();
   camera_data_callback pcb = mHalCamCtrl->mDataCb;
   mHalCamCtrl->mCallbackLock.unlock();
-  ALOGD("Message enabled = 0x%x", mHalCamCtrl->mMsgEnabled);
+  ALOGV("Message enabled = 0x%x", mHalCamCtrl->mMsgEnabled);
 
   camera_memory_t *previewMem = NULL;
   int previewWidth, previewHeight;
