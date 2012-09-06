@@ -1019,7 +1019,7 @@ void QCameraHardwareInterface::initDefaultParameters()
     }
 
     //Set default power mode
-    mParameters.set(QCameraParameters::KEY_POWER_MODE,"Normal_Power");
+    mParameters.set(QCameraParameters::KEY_POWER_MODE,"Low_Power");
 
     //Set Camera Mode
     mParameters.set(QCameraParameters::KEY_CAMERA_MODE,1);
