@@ -400,38 +400,38 @@ void QCameraHardwareInterface::setCallbacks(
     camera_request_memory get_memory,
     void *user)
 {
-    ALOGE("setCallbacks: E");
+    ALOGV("setCallbacks: E");
     Mutex::Autolock lock(mLock);
     mNotifyCb        = notify_cb;
     mDataCb          = data_cb;
     mDataCbTimestamp = data_cb_timestamp;
     mGetMemory       = get_memory;
     mCallbackCookie  = user;
-    ALOGI("setCallbacks: X");
+    ALOGV("setCallbacks: X");
 }
 
 void QCameraHardwareInterface::enableMsgType(int32_t msgType)
 {
-    ALOGI("enableMsgType: E, msgType =0x%x", msgType);
+    ALOGV("enableMsgType: E, msgType =0x%x", msgType);
     Mutex::Autolock lock(mLock);
     mMsgEnabled |= msgType;
-    ALOGI("enableMsgType: X, msgType =0x%x, mMsgEnabled=0x%x", msgType, mMsgEnabled);
+    ALOGV("enableMsgType: X, msgType =0x%x, mMsgEnabled=0x%x", msgType, mMsgEnabled);
 }
 
 void QCameraHardwareInterface::disableMsgType(int32_t msgType)
 {
-    ALOGI("disableMsgType: E");
+    ALOGV("disableMsgType: E");
     Mutex::Autolock lock(mLock);
     mMsgEnabled &= ~msgType;
-    ALOGI("disableMsgType: X, msgType =0x%x, mMsgEnabled=0x%x", msgType, mMsgEnabled);
+    ALOGV("disableMsgType: X, msgType =0x%x, mMsgEnabled=0x%x", msgType, mMsgEnabled);
 }
 
 int QCameraHardwareInterface::msgTypeEnabled(int32_t msgType)
 {
-    ALOGI("msgTypeEnabled: E");
+    ALOGV("msgTypeEnabled: E");
     Mutex::Autolock lock(mLock);
     return (mMsgEnabled & msgType);
-    ALOGI("msgTypeEnabled: X");
+    ALOGV("msgTypeEnabled: X");
 }
 #if 0
 status_t QCameraHardwareInterface::dump(int fd, const Vector<String16>& args) const
@@ -456,7 +456,7 @@ int QCameraHardwareInterface::dump(int fd)
 status_t QCameraHardwareInterface::sendCommand(int32_t command, int32_t arg1,
                                          int32_t arg2)
 {
-    ALOGI("sendCommand: E");
+    ALOGV("sendCommand: E");
     status_t rc = NO_ERROR;
     Mutex::Autolock l(&mLock);
 
@@ -550,13 +550,13 @@ status_t QCameraHardwareInterface::sendCommand(int32_t command, int32_t arg1,
         default:
             break;
     }
-    ALOGI("sendCommand: X");
+    ALOGV("sendCommand: X");
     return rc;
 }
 
 void QCameraHardwareInterface::setMyMode(int mode)
 {
-    ALOGI("setMyMode: E");
+    ALOGV("setMyMode: E");
     //if (mode & CAMERA_SUPPORT_MODE_3D) {
     //    myMode = CAMERA_MODE_3D;
     //}else {
@@ -569,8 +569,8 @@ void QCameraHardwareInterface::setMyMode(int mode)
     //}else {
        myMode = (camera_mode_t) (myMode | CAMERA_NONZSL_MODE);
     //}
-    ALOGI("setMyMode: Set mode to %d (passed mode: %d)", myMode, mode);
-    ALOGI("setMyMode: X");
+    ALOGV("setMyMode: Set mode to %d (passed mode: %d)", myMode, mode);
+    ALOGV("setMyMode: X");
 }
 /* static factory function */
 QCameraHardwareInterface *QCameraHardwareInterface::createInstance(int cameraId, int mode)
@@ -1978,17 +1978,17 @@ void QCameraHardwareInterface::handleZoomEventForPreview(app_notify_cb_t *app_cb
 {
     mm_camera_ch_crop_t v4l2_crop;
 
-    ALOGI("%s: E", __func__);
+    ALOGV("%s: E", __func__);
 
     /*regular zooming or smooth zoom stopped*/
     if (!mSmoothZoomRunning && mPreviewWindow) {
         memset(&v4l2_crop, 0, sizeof(v4l2_crop));
         v4l2_crop.ch_type = MM_CAMERA_CH_PREVIEW;
 
-        ALOGI("%s: Fetching crop info", __func__);
+        ALOGV("%s: Fetching crop info", __func__);
         cam_config_get_parm(mCameraId,MM_CAMERA_PARM_CROP,&v4l2_crop);
 
-        ALOGI("%s: Crop info received: %d, %d, %d, %d ", __func__,
+        ALOGV("%s: Crop info received: %d, %d, %d, %d ", __func__,
              v4l2_crop.crop.left,
              v4l2_crop.crop.top,
              v4l2_crop.crop.width,
@@ -1999,16 +1999,16 @@ void QCameraHardwareInterface::handleZoomEventForPreview(app_notify_cb_t *app_cb
                         v4l2_crop.crop.top,
                         v4l2_crop.crop.left + v4l2_crop.crop.width,
                         v4l2_crop.crop.top + v4l2_crop.crop.height);
-        ALOGI("%s: Done setting crop", __func__);
-        ALOGI("%s: Currrent zoom :%d",__func__, mCurrentZoom);
+        ALOGV("%s: Done setting crop", __func__);
+        ALOGV("%s: Currrent zoom :%d",__func__, mCurrentZoom);
     }
 
-    ALOGI("%s: X", __func__);
+    ALOGV("%s: X", __func__);
 }
 
 void QCameraHardwareInterface::zoomEvent(cam_ctrl_status_t *status, app_notify_cb_t *app_cb)
 {
-    ALOGI("zoomEvent: state:%d E",mPreviewState);
+    ALOGV("zoomEvent: state:%d E",mPreviewState);
     switch (mPreviewState) {
     case QCAMERA_HAL_PREVIEW_STOPPED:
         break;
@@ -2032,7 +2032,7 @@ void QCameraHardwareInterface::zoomEvent(cam_ctrl_status_t *status, app_notify_c
     default:
         break;
     }
-    ALOGI("zoomEvent: X");
+    ALOGV("zoomEvent: X");
 }
 
 void QCameraHardwareInterface::dumpFrameToFile(const void * data, uint32_t size, char* name, char* ext, int index)
