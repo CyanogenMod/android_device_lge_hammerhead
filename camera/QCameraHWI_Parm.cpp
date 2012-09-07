@@ -221,6 +221,7 @@ static const str_map scenemode[] = {
     { QCameraParameters::SCENE_MODE_BACKLIGHT,      CAMERA_BESTSHOT_BACKLIGHT },
     { QCameraParameters::SCENE_MODE_FLOWERS,        CAMERA_BESTSHOT_FLOWERS },
     { QCameraParameters::SCENE_MODE_AR,             CAMERA_BESTSHOT_AR },
+    { QCameraParameters::SCENE_MODE_HDR,            CAMERA_BESTSHOT_AUTO },
 };
 
 static const str_map scenedetect[] = {
@@ -1331,7 +1332,6 @@ status_t QCameraHardwareInterface::setParameters(const QCameraParameters& params
 //    Mutex::Autolock l(&mLock);
     status_t rc, final_rc = NO_ERROR;
 
-    if ((rc = setCameraMode(params)))                   final_rc = rc;
     if ((rc = setPowerMode(params)))                    final_rc = rc;
     if ((rc = setPreviewSize(params)))                  final_rc = rc;
     if ((rc = setVideoSize(params)))                    final_rc = rc;
@@ -2070,11 +2070,33 @@ status_t QCameraHardwareInterface::setSceneMode(const QCameraParameters& params)
         return NO_ERROR;
     }
     const char *str = params.get(QCameraParameters::KEY_SCENE_MODE);
+    const char *oldstr = mParameters.get(QCameraParameters::KEY_SCENE_MODE);
+
     ALOGV("Scene Mode string : %s",str);
 
-    if (str != NULL) {
+    if (str != NULL && oldstr != NULL) {
         int32_t value = attr_lookup(scenemode, sizeof(scenemode) / sizeof(str_map), str);
         if (value != NOT_FOUND) {
+
+            /* Check to see if there was a change of scene mode */
+            if(strcmp(str,oldstr)) {
+                ALOGE("%s: valued changed from %s to %s",__func__,oldstr, str);
+
+                /* Check if we are either transitioning to/from HDR state
+                   if yes preview needs restart*/
+                if(!strcmp(str, "hdr") || !strcmp(oldstr, "hdr") ) {
+                    ALOGE("Changed between HDR/non-HDR states");
+
+                    /* Restart only if preview already running*/
+                    if (mPreviewState == QCAMERA_HAL_PREVIEW_STARTED) {
+                        ALOGE("Preview in progress,restarting for HDR transition");
+                        mParameters.set(QCameraParameters::KEY_SCENE_MODE, str);
+                        mRestartPreview = 1;
+                        pausePreviewForZSL();
+                    }
+                }
+            }
+
             mParameters.set(QCameraParameters::KEY_SCENE_MODE, str);
             bool ret = native_set_parms(MM_CAMERA_PARM_BESTSHOT_MODE, sizeof(value),
                                        (void *)&value);
@@ -2085,6 +2107,7 @@ status_t QCameraHardwareInterface::setSceneMode(const QCameraParameters& params)
                 if (mBestShotMode != value) {
                      mBestShotMode = value;
                      if (mPreviewState == QCAMERA_HAL_PREVIEW_STARTED && ret) {
+                           ALOGE("%s:Bestshot trigerring restart",__func__);
                            mRestartPreview = 1;
                            pausePreviewForZSL();
                       }
@@ -3034,6 +3057,7 @@ status_t QCameraHardwareInterface::setAEBracket(const QCameraParameters& params)
         }
         return NO_ERROR;
     }
+
     const char *str = params.get(QCameraParameters::KEY_AE_BRACKET_HDR);
 
     if (str != NULL) {
