@@ -363,7 +363,6 @@ static const str_map zsl_modes[] = {
 static const str_map hdr_bracket[] = {
     { QCameraParameters::AE_BRACKET_HDR_OFF,HDR_BRACKETING_OFF},
     { QCameraParameters::AE_BRACKET_HDR,HDR_MODE },
-    { QCameraParameters::AE_BRACKET,EXP_BRACKETING_MODE }
 };
 
 typedef enum {
@@ -3043,6 +3042,7 @@ status_t QCameraHardwareInterface::setFaceDetection(const char *str)
 
 status_t QCameraHardwareInterface::setAEBracket(const QCameraParameters& params)
 {
+    const char *str;
     if(!cam_config_is_parm_supported(mCameraId,MM_CAMERA_PARM_HDR) || (myMode & CAMERA_ZSL_MODE)) {
         ALOGV("Parameter HDR is not supported for this sensor/ ZSL mode");
 
@@ -3058,7 +3058,12 @@ status_t QCameraHardwareInterface::setAEBracket(const QCameraParameters& params)
         return NO_ERROR;
     }
 
-    const char *str = params.get(QCameraParameters::KEY_AE_BRACKET_HDR);
+    const char *str2 = params.get(QCameraParameters::KEY_SCENE_MODE);
+    if(!strcmp(str2, "hdr")) {
+        str="HDR";
+    }   else {
+        str = params.get(QCameraParameters::KEY_AE_BRACKET_HDR);
+    }
 
     if (str != NULL) {
         int value = attr_lookup(hdr_bracket,

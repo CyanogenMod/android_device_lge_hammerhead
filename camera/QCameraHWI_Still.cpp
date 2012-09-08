@@ -31,7 +31,6 @@
 
 #define THUMBNAIL_DEFAULT_WIDTH 512
 #define THUMBNAIL_DEFAULT_HEIGHT 384
-
 /* following code implement the still image capture & encoding logic of this class*/
 namespace android {
 
@@ -275,7 +274,8 @@ receiveCompleteJpegPicture(jpeg_event_t event)
     camera_memory_t *encodedMem = NULL;
     camera_data_callback jpg_data_cb = NULL;
     bool fail_cb_flag = false;
-
+    if (mHalCamCtrl->mHdrMode == HDR_MODE)
+        hdrJpegCount++;
     //Mutex::Autolock l(&snapshotLock);
     mStopCallbackLock.lock( );
     if(!mActive && !isLiveSnapshot()) {
@@ -307,7 +307,6 @@ end:
         free(mCurrentFrameEncoded);
         mCurrentFrameEncoded = NULL;
     }
-
     /* Before leaving check the jpeg queue. If it's not empty give the available
        frame for encoding*/
     if (!mSnapshotQueue.isEmpty()) {
@@ -319,6 +318,7 @@ end:
           fail_cb_flag = true;
         }
     }  else if (mNumOfSnapshot == mNumOfRecievedJPEG )  { /* finished */
+      ALOGD("nusnap %d, mNumjpeg %d", mNumOfSnapshot, mNumOfRecievedJPEG);
       ALOGD("%s: Before omxJpegFinish", __func__);
       omxJpegFinish();
       ALOGD("%s: After omxJpegFinish", __func__);
@@ -357,6 +357,9 @@ end:
         }
         memcpy(encodedMem->data, mHalCamCtrl->mJpegMemory.camera_memory[0]->data, mJpegOffset );
         mStopCallbackLock.unlock( );
+        if(mHalCamCtrl->mHdrMode == HDR_MODE && (hdrJpegCount%2) != 0)
+          return;
+
         if ((mActive || isLiveSnapshot()) && jpg_data_cb != NULL) {
             ALOGV("%s: Calling upperlayer callback to store JPEG image", __func__);
             jpg_data_cb (msg_type,encodedMem, 0, NULL,mHalCamCtrl->mCallbackCookie);
@@ -1268,6 +1271,10 @@ takePictureJPEG(void)
 
     ALOGD("%s: E", __func__);
 
+    if (mHalCamCtrl->mHdrMode == HDR_MODE) {
+        hdrRawCount = 0;
+        hdrJpegCount = 0;
+    }
     /* Take snapshot */
     ALOGD("%s: Call MM_CAMERA_OPS_SNAPSHOT", __func__);
     if (NO_ERROR != cam_ops_action(mCameraId,
@@ -1939,6 +1946,12 @@ status_t QCameraStream_Snapshot::receiveRawPicture(mm_camera_ch_data_buf_t* recv
         notifyShutter(&crop, FALSE);
         mHalCamCtrl->mShutterSoundPlayed = FALSE;
 
+        if(mHalCamCtrl->mHdrMode == HDR_MODE) {
+            if ((hdrRawCount % 3) != 2)
+                return NO_ERROR;
+            else
+                hdrRawCount++;
+        }
 
         if (rc != NO_ERROR)
         {
