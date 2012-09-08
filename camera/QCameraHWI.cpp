@@ -1051,13 +1051,18 @@ status_t QCameraHardwareInterface::startPreview2()
         return NO_ERROR;
     }
 
-    if (mRecordingHint) {
+    const char *str = mParameters.get(QCameraParameters::KEY_SCENE_MODE);
+
+    if (mRecordingHint || !strcmp(str, "hdr")) {
+        ALOGE("%s:Setting non-ZSL mode",__func__);
         mParameters.set(QCameraParameters::KEY_CAMERA_MODE, 0);
         myMode = (camera_mode_t)(myMode & ~CAMERA_ZSL_MODE);
      } else {
+        ALOGE("%s:Setting ZSL mode",__func__);
         mParameters.set(QCameraParameters::KEY_CAMERA_MODE, 1);
         myMode = (camera_mode_t)(myMode | CAMERA_ZSL_MODE);
     }
+
     /*  get existing preview information, by qury mm_camera*/
     memset(&dim, 0, sizeof(cam_ctrl_dimension_t));
     ret = cam_config_get_parm(mCameraId, MM_CAMERA_PARM_DIMENSION,&dim);
@@ -1665,7 +1670,6 @@ status_t  QCameraHardwareInterface::takePicture()
             }
             return ret;
         }
-
         /*prepare snapshot, e.g LED*/
         takePicturePrepareHardware( );
         /* There's an issue where we have a glimpse of corrupted data between
@@ -2594,6 +2598,7 @@ bool QCameraHardwareInterface::isNoDisplayMode()
 void QCameraHardwareInterface::pausePreviewForZSL()
 {
     if(mRestartPreview) {
+        ALOGE("%s: Restarting Preview",__func__);
         stopPreviewInternal();
         mPreviewState = QCAMERA_HAL_PREVIEW_STOPPED;
         startPreview2();
