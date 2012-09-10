@@ -1164,6 +1164,8 @@ status_t QCameraHardwareInterface::startPreview2()
         mPostPreviewHeap = NULL;
     }
 
+    mRestartPreview = false;
+
     ALOGI("startPreview: X");
     return ret;
 }
@@ -2597,13 +2599,13 @@ bool QCameraHardwareInterface::isNoDisplayMode()
 
 void QCameraHardwareInterface::pausePreviewForZSL()
 {
+    ALOGV("%s: mRestartPreview %d", __func__, mRestartPreview);
     if(mRestartPreview) {
         ALOGE("%s: Restarting Preview",__func__);
         stopPreviewInternal();
         mPreviewState = QCAMERA_HAL_PREVIEW_STOPPED;
         startPreview2();
         mPreviewState = QCAMERA_HAL_PREVIEW_STARTED;
-        mRestartPreview = false;
     }
 }
 
