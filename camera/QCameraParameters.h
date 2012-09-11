@@ -134,6 +134,7 @@ public:
     static const char SCENE_MODE_BACKLIGHT[];
     static const char SCENE_MODE_FLOWERS[];
     static const char SCENE_MODE_AR[];
+    static const char SCENE_MODE_HDR[];
 	static const char SCENE_DETECT_OFF[];
     static const char SCENE_DETECT_ON[];
     static const char PIXEL_FORMAT_YUV420SP_ADRENO[]; // ADRENO

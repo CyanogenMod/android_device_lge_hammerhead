@@ -77,6 +77,7 @@ const char QCameraParameters::SCENE_MODE_ASD[] = "asd";   // corresponds to CAME
 const char QCameraParameters::SCENE_MODE_BACKLIGHT[] = "backlight";
 const char QCameraParameters::SCENE_MODE_FLOWERS[] = "flowers";
 const char QCameraParameters::SCENE_MODE_AR[] = "AR";
+const char QCameraParameters::SCENE_MODE_HDR[] = "hdr";
 
 // Values for auto scene detection settings.
 const char QCameraParameters::SCENE_DETECT_OFF[] = "off";
