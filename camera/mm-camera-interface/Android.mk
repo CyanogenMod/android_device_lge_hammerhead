@@ -27,8 +27,8 @@ LOCAL_C_INCLUDES+= \
     $(TARGET_OUT_HEADERS)/mm-still/mm-omx
 
 LOCAL_C_INCLUDES+= hardware/qcom/media/mm-core/inc
-LOCAL_CFLAGS += -include bionic/libc/kernel/common/linux/socket.h
-LOCAL_CFLAGS += -include bionic/libc/kernel/common/linux/un.h
+LOCAL_CFLAGS += -include bionic/libc/include/sys/socket.h
+LOCAL_CFLAGS += -include bionic/libc/include/sys/un.h
 
 LOCAL_SRC_FILES := $(MM_CAM_FILES)
 
