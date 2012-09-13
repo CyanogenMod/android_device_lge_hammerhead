@@ -974,7 +974,7 @@ bool QCameraHardwareInterface::preview_parm_config (cam_ctrl_dimension_t* dim,
     if(value != NOT_FOUND && value != dim->prev_format ) {
         //Setting to Parameter requested by the Upper layer
         dim->prev_format = value;
-    }else{
+    } else if (value == NOT_FOUND) {
         //Setting to default Format.
         dim->prev_format = CAMERA_YUV_420_NV21;
     }
