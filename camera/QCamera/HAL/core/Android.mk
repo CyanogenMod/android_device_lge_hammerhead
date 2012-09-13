@@ -80,7 +80,7 @@ LOCAL_SHARED_LIBRARIES := libutils libui libcamera_client liblog libcutils
 LOCAL_SHARED_LIBRARIES += libmmcamera_interface_badger
 LOCAL_SHARED_LIBRARIES+= libgenlock libbinder
 
-LOCAL_CFLAGS += -include bionic/libc/kernel/common/linux/socket.h
+LOCAL_CFLAGS += -include bionic/libc/include/sys/socket.h
 
 LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
 LOCAL_MODULE:= camera_badger.$(TARGET_BOARD_PLATFORM)
