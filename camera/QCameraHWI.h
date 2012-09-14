@@ -832,6 +832,7 @@ private:
      exif_values_t          mExifValues;                        //Exif values in usable format
      int                    mExifTableNumEntries;            //NUmber of entries in mExifData
      int                 mNoDisplayMode;
+     int                 mIsoValue;
 };
 
 }; // namespace android

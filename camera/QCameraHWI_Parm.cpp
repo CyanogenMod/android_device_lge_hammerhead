@@ -1209,13 +1209,13 @@ void QCameraHardwareInterface::initDefaultParameters()
                     mZslValues);
 
     //Set Focal length, horizontal and vertical view angles
-    float focalLength = 0.0f;
+    focus_distances_info_t focalLength;
     float horizontalViewAngle = 0.0f;
     float verticalViewAngle = 0.0f;
     cam_config_get_parm(mCameraId, MM_CAMERA_PARM_FOCAL_LENGTH,
             (void *)&focalLength);
     mParameters.setFloat(QCameraParameters::KEY_FOCAL_LENGTH,
-                    focalLength);
+                    focalLength.focus_distance[0]);
     cam_config_get_parm(mCameraId, MM_CAMERA_PARM_HORIZONTAL_VIEW_ANGLE,
             (void *)&horizontalViewAngle);
     mParameters.setFloat(QCameraParameters::KEY_HORIZONTAL_VIEW_ANGLE,
@@ -1644,12 +1644,12 @@ status_t  QCameraHardwareInterface::setISOValue(const QCameraParameters& params)
         return NO_ERROR;
     }
     const char *str = params.get(QCameraParameters::KEY_ISO_MODE);
-    ALOGV("ISO string : %s",str);
+    ALOGV("ISO string : %s", str);
     int8_t temp_hjr;
     if (str != NULL) {
         int value = (camera_iso_mode_type)attr_lookup(
           iso, sizeof(iso) / sizeof(str_map), str);
-        ALOGV("ISO Value : %d",value);
+        ALOGV("ISO string : %s", str);
         if (value != NOT_FOUND) {
             camera_iso_mode_type temp = (camera_iso_mode_type) value;
             if (value == CAMERA_ISO_DEBLUR) {
@@ -1667,6 +1667,7 @@ status_t  QCameraHardwareInterface::setISOValue(const QCameraParameters& params)
 
             mParameters.set(QCameraParameters::KEY_ISO_MODE, str);
             native_set_parms(MM_CAMERA_PARM_ISO, sizeof(camera_iso_mode_type), (void *)&temp);
+            mIsoValue = (int)temp;
             return NO_ERROR;
         }
     }
@@ -3982,9 +3983,23 @@ void QCameraHardwareInterface::setExifTags()
 
     mExifValues.focalLength = getRational(focalLengthValue, FOCAL_LENGTH_DECIMAL_PRECISION);
 
-    //Set ISO Speed
-    mExifValues.isoSpeed = getISOSpeedValue();
-
+    focus_distances_info_t focusDistances;
+    status_t rc = NO_ERROR;
+    rc = cam_config_get_parm(mCameraId, MM_CAMERA_PARM_FOCAL_LENGTH,(void *)&focusDistances);
+    if (rc == MM_CAMERA_OK){
+        uint16_t temp1;
+        if(mIsoValue == 0) // ISO is auto
+        {
+            temp1 = (uint16_t)(focusDistances.real_gain + 0.5)*100;
+            mExifValues.isoSpeed = temp1;
+            ALOGE("zc: The new ISO value is %d", temp1);
+        }
+        else{
+            temp1 = iso_speed_values[mIsoValue];
+            mExifValues.isoSpeed = temp1;
+            ALOGE("zc: else The new ISO value is %d", temp1);
+        }
+    }
     //get time and date from system
     time_t rawtime;
     struct tm * timeinfo;
