@@ -91,7 +91,7 @@ public:
     virtual void        stop();
     virtual void        release();
 
-    status_t setFormat(uint8_t ch_type_mask);
+    status_t setFormat(uint8_t ch_type_mask, cam_format_t previewFmt);
     status_t setMode(int enable);
 
     virtual void        setHALCameraControl(QCameraHardwareInterface* ctrl);

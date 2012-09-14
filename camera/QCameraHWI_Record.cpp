@@ -159,7 +159,7 @@ status_t QCameraStream_record::start()
     return BAD_VALUE;
   }
 
-  setFormat(MM_CAMERA_CH_VIDEO_MASK);
+  setFormat(MM_CAMERA_CH_VIDEO_MASK , (cam_format_t)0);
   //mRecordFreeQueueLock.lock();
   //mRecordFreeQueue.clear();
   //mRecordFreeQueueLock.unlock();

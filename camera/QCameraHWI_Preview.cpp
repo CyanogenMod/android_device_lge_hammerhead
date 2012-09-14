@@ -513,7 +513,7 @@ status_t QCameraStream_preview::initDisplayBuffers()
   int width = 0;  /* width of channel  */
   int height = 0; /* height of channel */
   uint32_t frame_len = 0; /* frame planner length */
-  int buffer_num = 4; /* number of buffers for display */
+  int buffer_num = 4, i; /* number of buffers for display */
   const char *pmem_region;
   uint8_t num_planes = 0;
   uint32_t planes[VIDEO_MAX_PLANES];
@@ -553,9 +553,10 @@ status_t QCameraStream_preview::initDisplayBuffers()
   memset(&mDisplayStreamBuf, 0, sizeof(mDisplayStreamBuf));
   this->mDisplayStreamBuf.num = mHalCamCtrl->mPreviewMemory.buffer_count;
   this->myMode=myMode; /*Need to assign this in constructor after translating from mask*/
-  num_planes = 2;
-  planes[0] = dim.display_frame_offset.mp[0].len;
-  planes[1] = dim.display_frame_offset.mp[1].len;
+  num_planes = dim.display_frame_offset.num_planes;
+  for(i =0; i< num_planes; i++) {
+     planes[i] = dim.display_frame_offset.mp[i].len;
+  }
   this->mDisplayStreamBuf.frame_len = dim.display_frame_offset.frame_len;
 
   memset(&mDisplayBuf, 0, sizeof(mDisplayBuf));
@@ -982,10 +983,15 @@ status_t QCameraStream_preview::processPreviewFrameWithDisplay(
           /* The preview buffer size sent back in the callback should be (width*height*bytes_per_pixel)
            * As all preview formats we support, use 12 bits per pixel, buffer size = previewWidth * previewHeight * 3/2.
            * We need to put a check if some other formats are supported in future. (punits) */
-          if((mHalCamCtrl->mPreviewFormat == CAMERA_YUV_420_NV21) || (mHalCamCtrl->mPreviewFormat == CAMERA_YUV_420_NV12) ||
+          if ((mHalCamCtrl->mPreviewFormat == CAMERA_YUV_420_NV21) || (mHalCamCtrl->mPreviewFormat == CAMERA_YUV_420_NV12) ||
                     (mHalCamCtrl->mPreviewFormat == CAMERA_YUV_420_YV12))
           {
-              previewBufSize = mHalCamCtrl->mPreviewWidth * mHalCamCtrl->mPreviewHeight * 3/2;
+              if (mHalCamCtrl->mPreviewFormat == CAMERA_YUV_420_YV12) {
+                previewBufSize = ((mHalCamCtrl->mPreviewWidth+15)/16) *16* mHalCamCtrl->mPreviewHeight +
+                  ((mHalCamCtrl->mPreviewWidth/2+15)/16)*16* mHalCamCtrl->mPreviewHeight;
+              } else {
+                previewBufSize = mHalCamCtrl->mPreviewWidth * mHalCamCtrl->mPreviewHeight * 3/2;
+              }
               if(previewBufSize != mHalCamCtrl->mPreviewMemory.private_buffer_handle[frame->def.idx]->size) {
                   previewMem = mHalCamCtrl->mGetMemory(mHalCamCtrl->mPreviewMemory.private_buffer_handle[frame->def.idx]->fd,
                   previewBufSize, 1, mHalCamCtrl->mCallbackCookie);
@@ -1249,12 +1255,13 @@ status_t QCameraStream_preview::start()
 {
     ALOGV("%s: E", __func__);
     status_t ret = NO_ERROR;
-
+    cam_format_t previewFmt;
     Mutex::Autolock lock(mStopCallbackLock);
 
     /* call start() in parent class to start the monitor thread*/
     //QCameraStream::start ();
-    setFormat(MM_CAMERA_CH_PREVIEW_MASK);
+    previewFmt = mHalCamCtrl->getPreviewFormat();
+    setFormat(MM_CAMERA_CH_PREVIEW_MASK, previewFmt);
 
     if (mHalCamCtrl->isNoDisplayMode()) {
         if(NO_ERROR!=initPreviewOnlyBuffers()){
