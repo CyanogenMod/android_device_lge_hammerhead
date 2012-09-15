@@ -2324,14 +2324,30 @@ status_t QCameraHardwareInterface::setAntibanding(const QCameraParameters& param
 
 status_t QCameraHardwareInterface::setPreviewFrameRate(const QCameraParameters& params)
 {
-    ALOGI("%s: E",__func__);
+    ALOGI("%s",__func__);
     status_t rc = NO_ERROR;
+    rc = cam_config_is_parm_supported(mCameraId, MM_CAMERA_PARM_FPS);
+    if(!rc) {
+       ALOGE("MM_CAMERA_PARM_FPS is not supported for this sensor");
+       return NO_ERROR;
+    }
+    uint16_t previousFps = (uint16_t)mParameters.getPreviewFrameRate();
     uint16_t fps = (uint16_t)params.getPreviewFrameRate();
-    ALOGV("%s: requested preview frame rate  is %d", __func__, fps);
+    ALOGV("requested preview frame rate  is %u", fps);
 
-    mParameters.setPreviewFrameRate(fps);
-    ALOGE("%s: X",__func__);
-    return NO_ERROR;
+    if(mInitialized && (fps == previousFps)){
+        ALOGV("No change is FPS Value %d",fps );
+        return NO_ERROR;
+    }
+
+    if(MINIMUM_FPS <= fps && fps <=MAXIMUM_FPS){
+        mParameters.setPreviewFrameRate(fps);
+        bool ret = native_set_parms(MM_CAMERA_PARM_FPS,
+                sizeof(fps), (void *)&fps);
+        return ret ? NO_ERROR : UNKNOWN_ERROR;
+    }
+
+    return BAD_VALUE;
 }
 
 status_t QCameraHardwareInterface::setPreviewFrameRateMode(const QCameraParameters& params) {
