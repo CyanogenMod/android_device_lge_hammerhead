@@ -2046,6 +2046,21 @@ status_t QCameraHardwareInterface::setFocusMode(const QCameraParameters& params)
                 if(!strcmp(str, QCameraParameters::FOCUS_MODE_CONTINUOUS_VIDEO) ||
                    !strcmp(str, QCameraParameters::FOCUS_MODE_CONTINUOUS_PICTURE)){
                     cafSupport = TRUE;
+#ifdef FAST_AF
+                    int caf_type=0;
+                    bool rc = false;
+                    if(!strcmp(str, QCameraParameters::FOCUS_MODE_CONTINUOUS_VIDEO))
+                    {
+                        caf_type = 1;
+                        rc = native_set_parms(MM_CAMERA_PARM_CAF_TYPE, sizeof(caf_type), (void *)&caf_type);
+                    }
+                    else if(!strcmp(str, QCameraParameters::FOCUS_MODE_CONTINUOUS_PICTURE))
+                    {
+                        caf_type = 2;
+                        rc = native_set_parms(MM_CAMERA_PARM_CAF_TYPE, sizeof(caf_type), (void *)&caf_type);
+                    }
+                    ALOGE("SM: caf_type %d rc %d", caf_type, rc);
+#endif
                 }
                 ALOGV("Continuous Auto Focus %d", cafSupport);
                 ret = native_set_parms(MM_CAMERA_PARM_CONTINUOUS_AF, sizeof(cafSupport),
