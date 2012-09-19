@@ -811,6 +811,14 @@ void QCameraHardwareInterface::processCtrlEvent(mm_camera_ctrl_event_t *event, a
             app_cb->argm_notify.ext1 = CAMERA_ERROR_UNKNOWN;
             app_cb->argm_notify.cookie =  mCallbackCookie;
             break;
+      case MM_CAMERA_CTRL_EVT_SNAPSHOT_CONFIG_DONE:
+          ALOGV("%s: MM_CAMERA_CTRL_EVT_SNAPSHOT_CONFIG_DONE", __func__);
+          app_cb->notifyCb  = mNotifyCb;
+          app_cb->argm_notify.msg_type = CAMERA_MSG_SHUTTER;
+          app_cb->argm_notify.ext1 = 0;
+          app_cb->argm_notify.ext2 = TRUE;
+          app_cb->argm_notify.cookie =  mCallbackCookie;
+          mShutterSoundPlayed = TRUE;
        default:
             break;
     }
