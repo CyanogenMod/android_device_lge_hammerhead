@@ -534,6 +534,7 @@ private:
     void handleZoomEventForPreview(app_notify_cb_t *);
     void handleZoomEventForSnapshot(void);
     status_t autoFocusEvent(cam_ctrl_status_t *, app_notify_cb_t *);
+    status_t autoFocusMoveEvent(cam_ctrl_status_t *, app_notify_cb_t *);
 
     void filterPictureSizes();
     bool supportsSceneDetection();
@@ -665,7 +666,6 @@ private:
     camera_request_memory          mGetMemory;
     void                           *mCallbackCookie;
 
-    //sp<MemoryHeapBase>  mPreviewHeap;  //@Guru : Need to remove
     sp<AshmemPool>      mMetaDataHeap;
 
     mutable Mutex       mLock;
