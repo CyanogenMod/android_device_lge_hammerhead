@@ -1523,6 +1523,10 @@ encodeData(mm_camera_ch_data_buf_t* recvd_frame,
        queued up there)*/
     ALOGD("%s: getSnapshotState()=%d, enqueued =%d, Q empty=%d", __func__, getSnapshotState(), enqueued, mSnapshotQueue.isEmpty());
     ALOGD("%s: mNumOfRecievedJPEG=%d, mNumOfSnapshot =%d", __func__, mNumOfRecievedJPEG, mNumOfSnapshot);
+    if(mHalCamCtrl->thumbnailWidth == 0 ||  mHalCamCtrl->thumbnailHeight == 0) {
+      ALOGI("Snapshot thumbnail will be dropped as indicated by application");
+      mDropThumbnail = true;
+    }
     if((getSnapshotState() == SNAPSHOT_STATE_JPEG_ENCODING) ||
        (!mSnapshotQueue.isEmpty() && !enqueued)){ /*busy and new buffer*/
         /* encoding is going on. Just queue the frame for now.*/
