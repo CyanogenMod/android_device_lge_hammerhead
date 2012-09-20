@@ -2472,26 +2472,26 @@ status_t QCameraHardwareInterface::setVideoSize(const QCameraParameters& params)
         //If application didn't set this parameter string, use the values from
         //getPreviewSize() as video dimensions.
         ALOGE("No Record Size requested, use the preview dimensions");
-        videoWidth = mPreviewWidth;
-        videoHeight = mPreviewHeight;
+        mVideoWidth = mPreviewWidth;
+        mVideoHeight = mPreviewHeight;
     } else {
         //Extract the record witdh and height that application requested.
         ALOGV("%s: requested record size %s", __func__, str);
-        if(!parse_size(str, videoWidth, videoHeight)) {
+        if(!parse_size(str, mVideoWidth, mVideoHeight)) {
             parse_size(str_t, old_vid_w, old_vid_h);
-            if(old_vid_w != videoWidth || old_vid_h != videoHeight) {
+            if(old_vid_w != mVideoWidth || old_vid_h != mVideoHeight) {
                 mRestartPreview = true; 
                 ALOGE("%s: Video sizes changes, Restart preview...", __func__, str);
             }
             mParameters.set(QCameraParameters::KEY_VIDEO_SIZE, str);
             //VFE output1 shouldn't be greater than VFE output2.
-            if( (mPreviewWidth > videoWidth) || (mPreviewHeight > videoHeight)) {
+            if( (mPreviewWidth > mVideoWidth) || (mPreviewHeight > mVideoHeight)) {
                 //Set preview sizes as record sizes.
                 ALOGE("Preview size %dx%d is greater than record size %dx%d,\
                         resetting preview size to record size",mPreviewWidth,
-                        mPreviewHeight, videoWidth, videoHeight);
-                mPreviewWidth = videoWidth;
-                mPreviewHeight = videoHeight;
+                        mPreviewHeight, mVideoWidth, mVideoHeight);
+                mPreviewWidth = mVideoWidth;
+                mPreviewHeight = mVideoHeight;
                 mParameters.setPreviewSize(mPreviewWidth, mPreviewHeight);
             }
 
@@ -2503,8 +2503,8 @@ status_t QCameraHardwareInterface::setVideoSize(const QCameraParameters& params)
                  * request different preview sizes like 768x432
                  */
                 ALOGE("3D mod is on");
-                mPreviewWidth = videoWidth;
-                mPreviewHeight = videoHeight;
+                mPreviewWidth = mVideoWidth;
+                mPreviewHeight = mVideoHeight;
                 mParameters.setPreviewSize(mPreviewWidth, mPreviewHeight);
             }
         } else {
@@ -2514,13 +2514,7 @@ status_t QCameraHardwareInterface::setVideoSize(const QCameraParameters& params)
         }
     }
     ALOGE("%s: preview dimensions: %dx%d", __func__, mPreviewWidth, mPreviewHeight);
-    ALOGE("%s: video dimensions: %dx%d", __func__, videoWidth, videoHeight);
-    mDimension.display_width = mPreviewWidth;
-    mDimension.display_height= mPreviewHeight;
-    mDimension.orig_video_width = videoWidth;
-    mDimension.orig_video_height = videoHeight;
-    mDimension.video_width = videoWidth;
-    mDimension.video_height = videoHeight;
+    ALOGE("%s: video dimensions: %dx%d", __func__, mVideoWidth, mVideoHeight);
 
     ALOGV("%s: X", __func__);
     return NO_ERROR;
@@ -2581,8 +2575,14 @@ status_t QCameraHardwareInterface::setPreviewSize(const QCameraParameters& param
             ALOGE("setPreviewSize:  width: %d   heigh: %d", width, height);
             mPreviewWidth = width;
             mPreviewHeight = height;
-            mDimension.display_width = width;
-            mDimension.display_height = height;
+
+            mDimension.display_width = mPreviewWidth;
+            mDimension.display_height= mPreviewHeight;
+            mDimension.orig_video_width = mPreviewWidth;
+            mDimension.orig_video_height = mPreviewHeight;
+            mDimension.video_width = mPreviewWidth;
+            mDimension.video_height = mPreviewHeight;
+
             return NO_ERROR;
         }
     }

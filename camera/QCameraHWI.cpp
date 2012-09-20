@@ -1289,21 +1289,7 @@ status_t QCameraHardwareInterface::startRecording()
     case QCAMERA_HAL_PREVIEW_STARTED:
         //remember recordinghint value set by app
         mAppRecordingHint = mRecordingHint;
-        if (mRecordingHint == FALSE || mRestartPreview) {
-            ALOGE("%s: start recording when hint is false, stop preview first", __func__);
-            stopPreviewInternal();
-            mPreviewState = QCAMERA_HAL_PREVIEW_STOPPED;
-
-            // Set recording hint to TRUE
-            mRecordingHint = TRUE;
-            setRecordingHintValue(mRecordingHint);
-
-            // start preview again
-            mPreviewState = QCAMERA_HAL_PREVIEW_START;
-            if (startPreview2() == NO_ERROR)
-                mPreviewState = QCAMERA_HAL_PREVIEW_STARTED;
-            mRestartPreview = false;
-        }
+        pausePreviewForVideo();
         ret =  mStreamRecord->start();
         if (MM_CAMERA_OK != ret){
             ALOGE("%s: error - mStreamRecord->start!", __func__);
@@ -1612,10 +1598,11 @@ void liveshot_callback(mm_camera_ch_data_buf_t *recvd_frame,
        frame->snapshot.thumbnail.idx = frame->video.video.idx;
     }
 
-    dim.picture_width = pme->mDimension.video_width;
-    dim.picture_height = pme->mDimension.video_height;
-    dim.ui_thumbnail_width = pme->mDimension.video_width;
-    dim.ui_thumbnail_height = pme->mDimension.video_height;
+    dim.picture_width = pme->mVideoWidth;
+    dim.picture_height = pme->mVideoHeight;
+    dim.ui_thumbnail_width = pme->mVideoWidth;
+    dim.ui_thumbnail_height = pme->mVideoHeight;
+
     if (mNuberOfVFEOutputs == 1){
        dim.main_img_format = pme->mDimension.prev_format;
        dim.thumb_format = pme->mDimension.prev_format;
@@ -1624,7 +1611,7 @@ void liveshot_callback(mm_camera_ch_data_buf_t *recvd_frame,
        dim.thumb_format = pme->mDimension.enc_format;
     }
 
-    mJpegMaxSize = pme->mDimension.video_width * pme->mDimension.video_width * 1.5;
+    mJpegMaxSize = dim.picture_width * dim.picture_height * 1.5;
 
     ALOGE("Picture w = %d , h = %d, size = %d",dim.picture_width,dim.picture_height,mJpegMaxSize);
      if (pme->mStreamLiveSnap){
@@ -1649,10 +1636,6 @@ void liveshot_callback(mm_camera_ch_data_buf_t *recvd_frame,
     ((QCameraStream_Snapshot*)(pme->mStreamLiveSnap))->takePictureLiveshot(frame,&dim,mJpegMaxSize);
 
 #else
-
-
-
-
   if(MM_CAMERA_OK != cam_evt_buf_done(pme->mCameraId,frame )) {
     ALOGE(" BUF DONE FAILED");
   }
@@ -2656,6 +2639,60 @@ void QCameraHardwareInterface::pausePreviewForZSL()
         mPreviewState = QCAMERA_HAL_PREVIEW_STOPPED;
         startPreview2();
         mPreviewState = QCAMERA_HAL_PREVIEW_STARTED;
+    }
+}
+
+void QCameraHardwareInterface::pausePreviewForVideo()
+{
+    status_t ret = NO_ERROR;
+    bool restart = FALSE;
+    cam_ctrl_dimension_t dim;
+
+    /*  get existing preview information, by qury mm_camera*/
+    memset(&dim, 0, sizeof(cam_ctrl_dimension_t));
+    ret = cam_config_get_parm(mCameraId, MM_CAMERA_PARM_DIMENSION,&dim);
+
+    if (MM_CAMERA_OK != ret) {
+      ALOGE("%s: X error- can't get preview dimension!", __func__);
+      return;
+    }
+
+    if (mRestartPreview) {
+        mRestartPreview = false;
+        ALOGE("%s: Restarting Preview. Video Size changed",__func__);
+        restart |= TRUE;
+    }
+    if (mRecordingHint == FALSE) {
+        // Set recording hint to TRUE
+        mRecordingHint = TRUE;
+        setRecordingHintValue(mRecordingHint);
+        ALOGE("%s: Restarting Preview. Hint not set",__func__);
+        restart |= TRUE;
+    }
+
+    if(dim.video_width != mVideoWidth || dim.video_height != mVideoHeight){
+        ALOGE("%s: Restarting Preview. New Video Size set",__func__);
+        restart |= TRUE;
+    }
+
+    if (restart) {
+        stopPreviewInternal();
+        mPreviewState = QCAMERA_HAL_PREVIEW_STOPPED;
+
+        mDimension.display_width = mPreviewWidth;
+        mDimension.display_height= mPreviewHeight;
+        mDimension.orig_video_width = mVideoWidth;
+        mDimension.orig_video_height = mVideoHeight;
+        mDimension.video_width = mVideoWidth;
+        mDimension.video_height = mVideoHeight;
+
+        // start preview again
+        mPreviewState = QCAMERA_HAL_PREVIEW_START;
+        if (startPreview2() == NO_ERROR){
+            mPreviewState = QCAMERA_HAL_PREVIEW_STARTED;
+        }else{
+            ALOGE("%s: Restart for Video Failed",__func__);
+        }
     }
 }
 
