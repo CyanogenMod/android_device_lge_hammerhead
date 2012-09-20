@@ -550,6 +550,7 @@ private:
     //status_t startPreviewZSL();
     void pausePreviewForSnapshot();
     void pausePreviewForZSL();
+    void pausePreviewForVideo();
     status_t resumePreviewAfterSnapshot();
 
     status_t runFaceDetection();
@@ -688,7 +689,7 @@ private:
 
     cam_ctrl_dimension_t mDimension;
     int  mPreviewWidth, mPreviewHeight;
-    int  videoWidth, videoHeight;
+    int  mVideoWidth, mVideoHeight;
     int  thumbnailWidth, thumbnailHeight;
     int  maxSnapshotWidth, maxSnapshotHeight;
     int  mPreviewFormat;
