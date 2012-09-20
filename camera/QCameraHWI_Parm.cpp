@@ -1020,7 +1020,8 @@ void QCameraHardwareInterface::initDefaultParameters()
 
     //Set default power mode
     mParameters.set(QCameraParameters::KEY_POWER_MODE,"Low_Power");
-
+    //Set Wnr on
+    mParameters.set(QCameraParameters::KEY_DENOISE,TRUE);
     //Set Camera Mode
     mParameters.set(QCameraParameters::KEY_CAMERA_MODE,1);
     mParameters.set(QCameraParameters::KEY_AE_BRACKET_HDR,"Off");
@@ -2441,7 +2442,7 @@ status_t QCameraHardwareInterface::setWaveletDenoise(const QCameraParameters& pa
 
             char prop[PROPERTY_VALUE_MAX];
             memset(prop, 0, sizeof(prop));
-            property_get("persist.denoise.process.plates", prop, "0");
+            property_get("persist.denoise.process.plates", prop, "1");
 
             denoise_param_t temp;
             memset(&temp, 0, sizeof(denoise_param_t));

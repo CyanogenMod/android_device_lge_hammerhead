@@ -957,6 +957,19 @@ void QCameraStream_Snapshot::deInitBuffer(void)
           }
         }
       }
+     if (isZSLMode()) {
+         /*register main and thumbnail buffers at back-end for frameproc*/
+         for (int i = 0; i < mHalCamCtrl->mSnapshotMemory.buffer_count; i++) {
+             if (NO_ERROR != mHalCamCtrl->sendUnMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_MAIN, i, mCameraId,
+                 CAM_SOCK_MSG_TYPE_FD_UNMAPPING)) {
+             ALOGE("%s: sending unmapping data Msg Failed", __func__);
+             }
+             if (NO_ERROR != mHalCamCtrl->sendUnMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_THUMBNAIL, i, mCameraId,
+                 CAM_SOCK_MSG_TYPE_FD_UNMAPPING)) {
+                 ALOGE("%s: sending unmapping data Msg Failed", __func__);
+             }
+         }
+    }
 
       deinitSnapshotBuffers();
     }
@@ -1067,7 +1080,7 @@ status_t QCameraStream_Snapshot::initJPEGSnapshot(int num_of_snapshots)
     }
 
     {
-      /*register main and thumbnail buffers at back-end for frameproc*/
+        /*register main and thumbnail buffers at back-end for frameproc*/
         for (int i = 0; i < num_of_snapshots; i++) {
           if (NO_ERROR != mHalCamCtrl->sendMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_MAIN, i,
           mSnapshotStreamBuf.frame[i].fd, mHalCamCtrl->mSnapshotMemory.size, mCameraId,
@@ -1251,6 +1264,19 @@ status_t QCameraStream_Snapshot::initZSLSnapshot(void)
     if ( NO_ERROR != ret ){
         ALOGE("%s: Failure allocating memory for Snapshot buffers", __func__);
         goto end;
+    }
+    /*register main and thumbnail buffers at back-end for frameproc*/
+    for (int i = 0; i <  mHalCamCtrl->getZSLQueueDepth() + 3; i++) {
+        if (NO_ERROR != mHalCamCtrl->sendMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_MAIN, i,
+             mSnapshotStreamBuf.frame[i].fd, mHalCamCtrl->mSnapshotMemory.size, mCameraId,
+             CAM_SOCK_MSG_TYPE_FD_MAPPING)) {
+             ALOGE("%s: sending mapping data Msg Failed", __func__);
+        }
+        if (NO_ERROR != mHalCamCtrl->sendMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_THUMBNAIL, i,
+            mPostviewStreamBuf.frame[i].fd, mHalCamCtrl->mThumbnailMemory.size, mCameraId,
+            CAM_SOCK_MSG_TYPE_FD_MAPPING)) {
+            ALOGE("%s: sending mapping data Msg Failed", __func__);
+        }
     }
 
 end:
