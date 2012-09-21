@@ -1176,8 +1176,9 @@ void QCameraHardwareInterface::initDefaultParameters()
                     QCameraParameters::TOUCH_AF_AEC_OFF);
     mParameters.set(QCameraParameters::KEY_SUPPORTED_TOUCH_AF_AEC,
                     mTouchAfAecValues);
-    mParameters.set("touchAfAec-dx","100");
-    mParameters.set("touchAfAec-dy","100");
+    /* touch-AF ROI for reducing af fail case */
+    mParameters.set("touchAfAec-dx","200");
+    mParameters.set("touchAfAec-dy","200");
 
     //Set Scene Detection
     mParameters.set(QCameraParameters::KEY_SCENE_DETECT,
