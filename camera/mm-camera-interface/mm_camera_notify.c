@@ -643,7 +643,7 @@ static void mm_camera_read_video_frame(mm_camera_obj_t * my_obj)
     if (idx < 0)
         return;
 
-    ALOGE("Video thread locked");
+    ALOGV("Video thread locked");
     pthread_mutex_lock(&my_obj->ch[MM_CAMERA_CH_VIDEO].mutex);
     for( i=0;i<MM_CAMERA_BUF_CB_MAX;i++) {
         if((my_obj->ch[MM_CAMERA_CH_VIDEO].buf_cb[i].cb) &&
@@ -655,14 +655,14 @@ static void mm_camera_read_video_frame(mm_camera_obj_t * my_obj)
             data[cnt].video.video.frame = &my_obj->ch[MM_CAMERA_CH_VIDEO].video.video.
                 frame.frame[idx].frame;
             my_obj->ch[MM_CAMERA_CH_VIDEO].video.video.frame.ref_count[idx]++;
-            ALOGE("Video thread callback issued");
+            ALOGV("Video thread callback issued");
             //my_obj->ch[MM_CAMERA_CH_VIDEO].buf_cb[i].cb(&data,
             //                        my_obj->ch[MM_CAMERA_CH_VIDEO].buf_cb[i].user_data);
             memcpy(&buf_cb[cnt], &my_obj->ch[MM_CAMERA_CH_VIDEO].buf_cb[i],
                    sizeof(mm_camera_buf_cb_t));
             cnt++;
 
-            ALOGE("Video thread callback returned");
+            ALOGV("Video thread callback returned");
             if( my_obj->ch[MM_CAMERA_CH_VIDEO].buf_cb[i].cb_type==MM_CAMERA_BUF_CB_COUNT ) {
                 ALOGE("<DEBUG>:%s: Additional cb called for buffer %p:%d",__func__,stream,idx);
                 if(--(my_obj->ch[MM_CAMERA_CH_VIDEO].buf_cb[i].cb_count) == 0 )
@@ -683,7 +683,7 @@ static void mm_camera_read_video_frame(mm_camera_obj_t * my_obj)
         }*/
     }
 
-    ALOGE("Video thread unlocked");
+    ALOGV("Video thread unlocked");
 }
 
 static void mm_camera_read_video_main_frame(mm_camera_obj_t * my_obj)
