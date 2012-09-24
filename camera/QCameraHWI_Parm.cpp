@@ -1028,7 +1028,7 @@ void QCameraHardwareInterface::initDefaultParameters()
 
     //Set Antibanding
     mParameters.set(QCameraParameters::KEY_ANTIBANDING,
-                    QCameraParameters::ANTIBANDING_OFF);
+                    QCameraParameters::ANTIBANDING_AUTO);
     mParameters.set(QCameraParameters::KEY_SUPPORTED_ANTIBANDING,
                     mAntibandingValues);
 
