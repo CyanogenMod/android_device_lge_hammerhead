@@ -2675,6 +2675,17 @@ void QCameraHardwareInterface::pausePreviewForVideo()
         restart |= TRUE;
     }
 
+    //VFE output1 shouldn't be greater than VFE output2.
+    if( (mPreviewWidth > mVideoWidth) || (mPreviewHeight > mVideoHeight)) {
+        //Set preview sizes as record sizes.
+        ALOGE("Preview size %dx%d is greater than record size %dx%d,\
+                resetting preview size to record size",mPreviewWidth,
+                        mPreviewHeight, mVideoWidth, mVideoHeight);
+        mPreviewWidth = mVideoWidth;
+        mPreviewHeight = mVideoHeight;
+        mParameters.setPreviewSize(mPreviewWidth, mPreviewHeight);
+        restart |= TRUE;
+    }
     if (restart) {
         stopPreviewInternal();
         mPreviewState = QCAMERA_HAL_PREVIEW_STOPPED;

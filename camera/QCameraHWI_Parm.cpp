@@ -2500,29 +2500,6 @@ status_t QCameraHardwareInterface::setVideoSize(const QCameraParameters& params)
                 ALOGE("%s: Video sizes changes, Restart preview...", __func__, str);
             }
             mParameters.set(QCameraParameters::KEY_VIDEO_SIZE, str);
-            //VFE output1 shouldn't be greater than VFE output2.
-            if( (mPreviewWidth > mVideoWidth) || (mPreviewHeight > mVideoHeight)) {
-                //Set preview sizes as record sizes.
-                ALOGE("Preview size %dx%d is greater than record size %dx%d,\
-                        resetting preview size to record size",mPreviewWidth,
-                        mPreviewHeight, mVideoWidth, mVideoHeight);
-                mPreviewWidth = mVideoWidth;
-                mPreviewHeight = mVideoHeight;
-                mParameters.setPreviewSize(mPreviewWidth, mPreviewHeight);
-            }
-
-            if(mIs3DModeOn == true) {
-                /* As preview and video frames are same in 3D mode,
-                 * preview size should be same as video size. This
-                 * cahnge is needed to take of video resolutions
-                 * like 720P and 1080p where the application can
-                 * request different preview sizes like 768x432
-                 */
-                ALOGE("3D mod is on");
-                mPreviewWidth = mVideoWidth;
-                mPreviewHeight = mVideoHeight;
-                mParameters.setPreviewSize(mPreviewWidth, mPreviewHeight);
-            }
         } else {
             mParameters.set(QCameraParameters::KEY_VIDEO_SIZE, "");
             ALOGE("%s: error :failed to parse parameter record-size (%s)", __func__, str);
