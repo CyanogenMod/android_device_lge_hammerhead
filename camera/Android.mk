@@ -75,6 +75,10 @@ ifneq ($(USE_CAMERA_STUB),true)
         LOCAL_HAL_FILES := QualcommCamera.cpp QualcommCameraHardware.cpp
       endif
 
+      ifeq ($(BOARD_USES_CAMERA_FAST_AUTOFOCUS),true)
+        LOCAL_CFLAGS += -DFAST_AF
+      endif
+
       LOCAL_CFLAGS+= -DHW_ENCODE
 
       # if debug service layer and up , use stub camera!
