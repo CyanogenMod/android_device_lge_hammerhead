@@ -30,6 +30,9 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __MM_CAMERA_H__
 #define __MM_CAMERA_H__
 
+#define TRUE 1
+#define FALSE 0
+
 typedef enum {
     MM_CAMERA_STREAM_STATE_NOTUSED,     /* not used */
     MM_CAMERA_STREAM_STATE_ACQUIRED,    /* acquired, fd opened  */

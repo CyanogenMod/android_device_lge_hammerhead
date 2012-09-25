@@ -8,7 +8,6 @@ LOCAL_CFLAGS:= \
         $(mmcamera_debug_defines) \
         $(mmcamera_debug_cflags) \
         $(USE_SERVER_TREE) \
-        -include camera_defs_i.h
 
 ifneq ($(strip $(USE_BIONIC_HEADER)),true)
 LOCAL_CFLAGS += -include $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/linux/ion.h
@@ -34,11 +33,10 @@ LOCAL_SRC_FILES:= \
 LOCAL_C_INCLUDES:=$(LOCAL_PATH)/inc
 LOCAL_C_INCLUDES+= \
         $(TARGET_OUT_INTERMEDIATES)/include/mm-camera-interface_badger \
-	      $(TARGET_OUT_INTERMEDIATES)/include/mm-still/jpeg \
-        $(TARGET_OUT_INTERMEDIATES)/include/mm-camera \
         $(LOCAL_PATH)/../mm-camera-interface/inc \
         $(LOCAL_PATH)/../common \
         $(LOCAL_PATH)/../../../ \
+        $(LOCAL_PATH)/../../../inc
 
 ifneq ($(strip $(USE_BIONIC_HEADER)),true)
 LOCAL_C_INCLUDES+= $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/media

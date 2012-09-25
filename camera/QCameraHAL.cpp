@@ -24,7 +24,6 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 
-
 /* include QCamera Hardware Interface Header*/
 #include "QCameraHAL.h"
 

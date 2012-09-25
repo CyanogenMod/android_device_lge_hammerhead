@@ -30,6 +30,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pthread.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
 #include <termios.h>
@@ -47,11 +48,9 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 #include <dlfcn.h>
 
-#include "camera.h"
 #include "mm_camera_dbg.h"
 #include "mm_qcamera_main_menu.h"
 #include "mm_qcamera_display_dimensions.h"
-#include "camera_defs_i.h"
 #include "mm_qcamera_app.h"
 
 #define CAMERA_OPENED 0
@@ -218,7 +217,7 @@ int contrast = CAMERA_DEF_CONTRAST;
 int saturation = CAMERA_DEF_SATURATION;
 int sharpness = CAMERA_DEF_SHARPNESS;
 int32_t ev_num = 0;
-uint8_t ezTune = FALSE;
+uint8_t ezTune = false;
 int pmemThumbnailfd = 0;
 int pmemSnapshotfd = 0;
 int pmemRawSnapshotfd = 0;
@@ -1673,12 +1672,12 @@ int set_whitebalance (int wb_action_param) {
 
   if (wb_action_param == MM_CAMERA_WHITE_BALANCE_AUTO) {
 		ctrl.id = V4L2_CID_AUTO_WHITE_BALANCE;
-		ctrl.value = TRUE;
+		ctrl.value = true;
 	//	rc = ioctl(camfd, VIDIOC_S_CTRL, &ctrl);
 
 	} else if ( wb_action_param == MM_CAMERA_WHITE_BALANCE_OFF) {
 		ctrl.id = V4L2_CID_AUTO_WHITE_BALANCE;
-		ctrl.value = FALSE;
+		ctrl.value = false;
 	//	rc = ioctl(camfd, VIDIOC_S_CTRL, &ctrl);
 
   } else {

@@ -4,15 +4,7 @@ ifneq ($(USE_CAMERA_STUB),true)
     # When zero we link against libmmcamera; when 1, we dlopen libmmcamera.
     DLOPEN_LIBMMCAMERA:=1
     ifneq ($(BUILD_TINY_ANDROID),true)
-      V4L2_BASED_LIBCAM := false
-      MM_STILL_V4L2_DRIVER_LIST := msm7627a
-      #MM_STILL_V4L2_DRIVER_LIST += msm7630_surf
-      #MM_STILL_V4L2_DRIVER_LIST += msm7630_fusion
-      MM_STILL_V4L2_DRIVER_LIST += msm8660
-      MM_STILL_V4L2_DRIVER_LIST += msm8960
-      ifeq ($(call is-board-platform-in-list,$(MM_STILL_V4L2_DRIVER_LIST)),true)
-        V4L2_BASED_LIBCAM := true
-      endif
+      V4L2_BASED_LIBCAM := true
 
       LOCAL_PATH:= $(call my-dir)
       LOCAL_PATH1:= $(call my-dir)
@@ -22,13 +14,13 @@ ifneq ($(USE_CAMERA_STUB),true)
       LOCAL_CFLAGS:= -DDLOPEN_LIBMMCAMERA=$(DLOPEN_LIBMMCAMERA)
 
       #define BUILD_UNIFIED_CODE
-      ifeq ($(call is-board-platform,msm7627a),true)
+      ifeq ($(TARGET_BOARD_PLATFORM),msm7627a)
         BUILD_UNIFIED_CODE := true
       else
         BUILD_UNIFIED_CODE := false
       endif
 
-      ifeq ($(call is-board-platform,msm7627a),true)
+      ifeq ($(TARGET_BOARD_PLATFORM),msm7627a)
         LOCAL_CFLAGS+= -DVFE_7X27A
       endif
 
@@ -38,13 +30,13 @@ ifneq ($(USE_CAMERA_STUB),true)
 
       LOCAL_CFLAGS += -DCAMERA_ION_HEAP_ID=ION_CP_MM_HEAP_ID # 8660=SMI, Rest=EBI
       LOCAL_CFLAGS += -DCAMERA_ZSL_ION_HEAP_ID=ION_CP_MM_HEAP_ID
-      ifeq ($(call is-board-platform,msm8960),true)
+      ifeq ($(TARGET_BOARD_PLATFORM),msm8960)
         LOCAL_CFLAGS += -DCAMERA_GRALLOC_HEAP_ID=GRALLOC_USAGE_PRIVATE_MM_HEAP
         LOCAL_CFLAGS += -DCAMERA_GRALLOC_FALLBACK_HEAP_ID=GRALLOC_USAGE_PRIVATE_IOMMU_HEAP
         LOCAL_CFLAGS += -DCAMERA_ION_FALLBACK_HEAP_ID=ION_IOMMU_HEAP_ID
         LOCAL_CFLAGS += -DCAMERA_ZSL_ION_FALLBACK_HEAP_ID=ION_IOMMU_HEAP_ID
         LOCAL_CFLAGS += -DCAMERA_GRALLOC_CACHING_ID=0
-      else ifeq ($(call is-chipset-prefix-in-board-platform,msm8660),true)
+      else ifeq ($(TARGET_BOARD_PLATFORM),msm8660)
         LOCAL_CFLAGS += -DCAMERA_GRALLOC_HEAP_ID=GRALLOC_USAGE_PRIVATE_CAMERA_HEAP
         LOCAL_CFLAGS += -DCAMERA_GRALLOC_FALLBACK_HEAP_ID=GRALLOC_USAGE_PRIVATE_CAMERA_HEAP # Don't Care
         LOCAL_CFLAGS += -DCAMERA_ION_FALLBACK_HEAP_ID=ION_CAMERA_HEAP_ID # EBI
@@ -57,7 +49,7 @@ ifneq ($(USE_CAMERA_STUB),true)
       endif
 
       ifeq ($(V4L2_BASED_LIBCAM),true)
-        ifeq ($(call is-board-platform,msm7627a),true)
+        ifeq ($(TARGET_BOARD_PLATFORM),msm7627a)
           LOCAL_HAL_FILES := QCameraHAL.cpp QCameraHWI_Parm.cpp\
             QCameraHWI.cpp QCameraHWI_Preview.cpp \
             QCameraHWI_Record_7x27A.cpp QCameraHWI_Still.cpp \
@@ -87,7 +79,7 @@ ifneq ($(USE_CAMERA_STUB),true)
 
       LOCAL_SRC_FILES := $(MM_CAM_FILES) $(LOCAL_HAL_FILES)
 
-      ifeq ($(call is-chipset-prefix-in-board-platform,msm7627),true)
+      ifeq ($(TARGET_BOARD_PLATFORM),msm7627a)
         LOCAL_CFLAGS+= -DNUM_PREVIEW_BUFFERS=6 -D_ANDROID_
       else
         LOCAL_CFLAGS+= -DNUM_PREVIEW_BUFFERS=4 -D_ANDROID_
@@ -98,15 +90,8 @@ ifneq ($(USE_CAMERA_STUB),true)
       # Uncomment below line to enable smooth zoom
       #LOCAL_CFLAGS+= -DCAMERA_SMOOTH_ZOOM
 
-       LOCAL_C_INCLUDES+= \
-        $(TARGET_OUT_HEADERS)/mm-camera \
-        $(TARGET_OUT_HEADERS)/mm-camera/common \
-        $(TARGET_OUT_HEADERS)/mm-still \
-        $(TARGET_OUT_HEADERS)/mm-still/jpeg \
-
       ifeq ($(V4L2_BASED_LIBCAM),true)
         LOCAL_C_INCLUDES+= hardware/qcom/media/mm-core/inc
-        LOCAL_C_INCLUDES+= $(TARGET_OUT_HEADERS)/mm-still/mm-omx
         LOCAL_C_INCLUDES+= $(LOCAL_PATH)/mm-camera-interface
       endif
 

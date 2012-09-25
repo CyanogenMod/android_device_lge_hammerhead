@@ -22,12 +22,7 @@ LOCAL_COPY_HEADERS += mm_camera_interface2.h
 LOCAL_COPY_HEADERS += mm_omx_jpeg_encoder.h
 
 LOCAL_C_INCLUDES+= $(LOCAL_PATH)/..
-LOCAL_C_INCLUDES+= \
-    $(TARGET_OUT_HEADERS)/mm-camera \
-    $(TARGET_OUT_HEADERS)/mm-camera/common \
-    $(TARGET_OUT_HEADERS)/mm-still \
-    $(TARGET_OUT_HEADERS)/mm-still/jpeg \
-    $(TARGET_OUT_HEADERS)/mm-still/mm-omx
+LOCAL_C_INCLUDES+= $(LOCAL_PATH)/../inc
 
 LOCAL_C_INCLUDES+= hardware/qcom/media/mm-core/inc
 LOCAL_CFLAGS += -include bionic/libc/include/sys/socket.h

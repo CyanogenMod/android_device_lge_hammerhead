@@ -33,14 +33,13 @@
 
 extern "C" {
 #include <linux/android_pmem.h>
-#include <linux/ion.h>
-#include <camera.h>
-#include <camera_defs_i.h>
+#include <linux/msm_ion.h>
 #include <mm_camera_interface.h>
 #include "mm_jpeg_interface.h"
 } //extern C
 
 #include "QCameraStream.h"
+#include "QCamera_Intf.h"
 
 //Error codes
 #define  NOT_FOUND -1

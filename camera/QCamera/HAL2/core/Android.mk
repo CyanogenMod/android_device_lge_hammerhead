@@ -19,13 +19,13 @@ LOCAL_CFLAGS += -DCAMERA_ZSL_ION_HEAP_ID=ION_CP_MM_HEAP_ID
 LOCAL_CFLAGS+= -DHW_ENCODE
 LOCAL_CFLAGS+= -DUSE_NEON_CONVERSION
 
-ifeq ($(call is-board-platform,msm8960),true)
+ifeq ($(TARGET_BOARD_PLATFORM),msm8960)
         LOCAL_CFLAGS += -DCAMERA_GRALLOC_HEAP_ID=GRALLOC_USAGE_PRIVATE_MM_HEAP
         LOCAL_CFLAGS += -DCAMERA_GRALLOC_FALLBACK_HEAP_ID=GRALLOC_USAGE_PRIVATE_IOMMU_HEAP
         LOCAL_CFLAGS += -DCAMERA_ION_FALLBACK_HEAP_ID=ION_IOMMU_HEAP_ID
         LOCAL_CFLAGS += -DCAMERA_ZSL_ION_FALLBACK_HEAP_ID=ION_IOMMU_HEAP_ID
         LOCAL_CFLAGS += -DCAMERA_GRALLOC_CACHING_ID=0
-else ifeq ($(call is-chipset-prefix-in-board-platform,msm8660),true)
+else ifeq ($(TARGET_BOARD_PLATFORM),msm8660)
         LOCAL_CFLAGS += -DCAMERA_GRALLOC_HEAP_ID=GRALLOC_USAGE_PRIVATE_CAMERA_HEAP
         LOCAL_CFLAGS += -DCAMERA_GRALLOC_FALLBACK_HEAP_ID=GRALLOC_USAGE_PRIVATE_CAMERA_HEAP # Don't Care
         LOCAL_CFLAGS += -DCAMERA_ION_FALLBACK_HEAP_ID=ION_CAMERA_HEAP_ID # EBI
@@ -52,12 +52,6 @@ LOCAL_C_INCLUDES := \
         $(LOCAL_PATH)/../../stack/mm-camera-interface/inc\
         $(LOCAL_PATH)/../../stack/mm-jpeg-interface/inc\
         $(TARGET_OUT_INTERMEDIATES)/include/mm-camera-interface_badger \
-
-# may need remove this includes
-LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/mm-camera
-LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/mm-still \
-                    $(TARGET_OUT_HEADERS)/mm-still/jpeg
-#end
 
 LOCAL_C_INCLUDES += hardware/qcom/display/libgralloc \
         hardware/qcom/display/libgenlock \
