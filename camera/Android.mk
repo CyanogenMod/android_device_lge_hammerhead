@@ -101,7 +101,7 @@ ifneq ($(USE_CAMERA_STUB),true)
 
 
       ifeq ($(V4L2_BASED_LIBCAM),true)
-        LOCAL_SHARED_LIBRARIES:= libutils libui libcamera_client liblog libcutils libmmjpeg libmmstillomx libimage-jpeg-enc-omx-comp
+        LOCAL_SHARED_LIBRARIES:= libutils libui libcamera_client liblog libcutils
         LOCAL_SHARED_LIBRARIES += libmmcamera_interface2
       else
          LOCAL_SHARED_LIBRARIES:= libutils libui libcamera_client liblog libcutils libmmjpeg

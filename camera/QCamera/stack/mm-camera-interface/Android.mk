@@ -41,10 +41,6 @@ LOCAL_PRELINK_MODULE   := false
 LOCAL_SHARED_LIBRARIES := libdl libcutils liblog
 LOCAL_MODULE_TAGS := optional
 
-# (BEGIN) Need to remove later once dependency on jpeg removed
-# LOCAL_SHARED_LIBRARIES += libmmjpeg_interface
-# (END) Need to remove later once dependency on jpeg removed
-
 include $(BUILD_SHARED_LIBRARY)
 
 LOCAL_PATH := $(OLD_LOCAL_PATH)

@@ -29,6 +29,7 @@
 #include <sys/types.h>
 #include <stdbool.h>
 #include <fcntl.h>
+#include <dlfcn.h>
 #include "OMX_Types.h"
 #include "OMX_Index.h"
 #include "OMX_Core.h"
@@ -90,6 +91,14 @@ omx_jpeg_user_preferences userpreferences;
 OMX_INDEXTYPE exif;
 static omx_jpeg_exif_info_tag tag;
 
+static void *libmmstillomx;
+OMX_ERRORTYPE OMX_APIENTRY (*pOMX_GetHandle)(
+    OMX_OUT OMX_HANDLETYPE* pHandle,
+    OMX_IN  OMX_STRING cComponentName,
+    OMX_IN  OMX_PTR pAppData,
+    OMX_IN  OMX_CALLBACKTYPE* pCallBacks);
+OMX_ERRORTYPE OMX_APIENTRY (*pOMX_Init)(void);
+OMX_ERRORTYPE OMX_APIENTRY (*pOMX_Deinit)(void);
 
 static pthread_mutex_t lock;
 static pthread_cond_t cond;
@@ -260,7 +269,22 @@ int8_t omxJpegOpen()
 {
     ALOGI("%s", __func__);
     pthread_mutex_lock(&jpege_mutex);
-    OMX_ERRORTYPE ret = OMX_GetHandle(&pHandle, "OMX.qcom.image.jpeg.encoder",
+    libmmstillomx = dlopen("libmmstillomx.so", RTLD_NOW);
+    if (!libmmstillomx) {
+        ALOGE("%s: dlopen failed", __func__);
+        pthread_mutex_unlock(&jpege_mutex);
+        return false;
+    }
+    *(void **)(&pOMX_GetHandle) = dlsym(libmmstillomx, "OMX_GetHandle");
+    *(void **)(&pOMX_Init) = dlsym(libmmstillomx, "OMX_Init");
+    *(void **)(&pOMX_Deinit) = dlsym(libmmstillomx, "OMX_Deinit");
+    if (!pOMX_GetHandle || !pOMX_Init || !pOMX_Deinit) {
+        ALOGE("%s: dlsym failed", __func__);
+        dlclose(libmmstillomx);
+        pthread_mutex_unlock(&jpege_mutex);
+        return false;
+    }
+    OMX_ERRORTYPE ret = (*pOMX_GetHandle)(&pHandle, "OMX.qcom.image.jpeg.encoder",
       NULL, &callbacks);
     pthread_mutex_unlock(&jpege_mutex);
     return true;
@@ -277,7 +301,7 @@ int8_t omxJpegStart(uint8_t hw_encode_enable)
     callbacks.EventHandler = eventHandler;
     pthread_mutex_init(&lock, NULL);
     pthread_cond_init(&cond, NULL);
-    rc = OMX_Init();
+    rc = (*pOMX_Init)();
     pthread_mutex_unlock(&jpege_mutex);
     return rc;
 }
@@ -687,7 +711,7 @@ void omxJpegFinish()
         OMX_FreeBuffer(pHandle, 0, pInBuffers);
         OMX_FreeBuffer(pHandle, 2, pInBuffers1);
         OMX_FreeBuffer(pHandle, 1, pOutBuffers);
-        OMX_Deinit();
+        (*pOMX_Deinit)();
     }
     pthread_mutex_unlock(&jpege_mutex);
 }
@@ -695,6 +719,7 @@ void omxJpegFinish()
 void omxJpegClose()
 {
     ALOGI("%s:", __func__);
+    dlclose(libmmstillomx);
 }
 
 void omxJpegAbort()
@@ -717,7 +742,7 @@ void omxJpegAbort()
       OMX_FreeBuffer(pHandle, 0, pInBuffers);
       OMX_FreeBuffer(pHandle, 2, pInBuffers1);
       OMX_FreeBuffer(pHandle, 1, pOutBuffers);
-      OMX_Deinit();
+      (*pOMX_Deinit)();
     }
     pthread_mutex_unlock(&jpege_mutex);
 }
