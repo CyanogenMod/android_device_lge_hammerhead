@@ -221,6 +221,7 @@ typedef struct{
     rat_t       focalLength;
     uint16_t    flashMode;
     uint16_t    isoSpeed;
+    rat_t       exposure_time;
 
     bool        mAltitude;
     bool        mLongitude;

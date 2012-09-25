@@ -3987,17 +3987,30 @@ void QCameraHardwareInterface::setExifTags()
     rc = cam_config_get_parm(mCameraId, MM_CAMERA_PARM_FOCAL_LENGTH,(void *)&focusDistances);
     if (rc == MM_CAMERA_OK){
         uint16_t temp1;
+        rat_t temp;
         if(mIsoValue == 0) // ISO is auto
         {
             temp1 = (uint16_t)(focusDistances.real_gain + 0.5)*100;
             mExifValues.isoSpeed = temp1;
-            ALOGE("zc: The new ISO value is %d", temp1);
+            ALOGV("zc: The new ISO value is %d", temp1);
         }
         else{
             temp1 = iso_speed_values[mIsoValue];
             mExifValues.isoSpeed = temp1;
-            ALOGE("zc: else The new ISO value is %d", temp1);
+            ALOGV("zc: else The new ISO value is %d", temp1);
         }
+
+        if(focusDistances.exp_time <= 0) // avoid zero-divide problem
+            focusDistances.exp_time = 0.01668; // expoure time will be 1/60 s
+
+        uint16_t temp2 = (uint16_t)(focusDistances.exp_time * 100000);
+        temp2 = (uint16_t)(100000 / temp2);
+        temp.num = 1;
+        temp.denom = temp2;
+        memcpy(&mExifValues.exposure_time, &temp, sizeof(mExifValues.exposure_time));
+        addExifTag(EXIFTAGID_EXPOSURE_TIME, EXIF_RATIONAL, 1, 1, (void *)&mExifValues.exposure_time);
+
+        ALOGV(" The exposure value is %f", temp2);
     }
     //get time and date from system
     time_t rawtime;
