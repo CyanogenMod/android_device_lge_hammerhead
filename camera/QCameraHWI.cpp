@@ -691,7 +691,7 @@ void QCameraHardwareInterface::debugShowPreviewFPS() const
 
 void QCameraHardwareInterface::
 processPreviewChannelEvent(mm_camera_ch_event_type_t channelEvent, app_notify_cb_t *app_cb) {
-    ALOGI("processPreviewChannelEvent: E");
+    ALOGV("processPreviewChannelEvent: E");
     switch(channelEvent) {
         case MM_CAMERA_CH_EVT_STREAMING_ON:
             mCameraState =
@@ -705,7 +705,7 @@ processPreviewChannelEvent(mm_camera_ch_event_type_t channelEvent, app_notify_cb
         default:
             break;
     }
-    ALOGI("processPreviewChannelEvent: X");
+    ALOGV("processPreviewChannelEvent: X");
     return;
 }
 
@@ -730,7 +730,7 @@ void QCameraHardwareInterface::processRecordChannelEvent(
 
 void QCameraHardwareInterface::
 processSnapshotChannelEvent(mm_camera_ch_event_type_t channelEvent, app_notify_cb_t *app_cb) {
-    ALOGI("processSnapshotChannelEvent: E evt=%d state=%d", channelEvent,
+    ALOGV("processSnapshotChannelEvent: E evt=%d state=%d", channelEvent,
       mCameraState);
     switch(channelEvent) {
         case MM_CAMERA_CH_EVT_STREAMING_ON:
@@ -759,14 +759,14 @@ processSnapshotChannelEvent(mm_camera_ch_event_type_t channelEvent, app_notify_c
         default:
             break;
     }
-    ALOGI("processSnapshotChannelEvent: X");
+    ALOGV("processSnapshotChannelEvent: X");
     return;
 }
 
 void QCameraHardwareInterface::processChannelEvent(
   mm_camera_ch_event_t *event, app_notify_cb_t *app_cb)
 {
-    ALOGI("processChannelEvent: E");
+    ALOGV("processChannelEvent: E");
     Mutex::Autolock lock(mLock);
     switch(event->ch) {
         case MM_CAMERA_CH_PREVIEW:
@@ -781,13 +781,13 @@ void QCameraHardwareInterface::processChannelEvent(
         default:
             break;
     }
-    ALOGI("processChannelEvent: X");
+    ALOGV("processChannelEvent: X");
     return;
 }
 
 void QCameraHardwareInterface::processCtrlEvent(mm_camera_ctrl_event_t *event, app_notify_cb_t *app_cb)
 {
-    ALOGI("processCtrlEvent: %d, E",event->evt);
+    ALOGV("processCtrlEvent: %d, E",event->evt);
     Mutex::Autolock lock(mLock);
     switch(event->evt)
     {
@@ -825,14 +825,14 @@ void QCameraHardwareInterface::processCtrlEvent(mm_camera_ctrl_event_t *event, a
        default:
             break;
     }
-    ALOGI("processCtrlEvent: X");
+    ALOGV("processCtrlEvent: X");
     return;
 }
 
 void  QCameraHardwareInterface::processStatsEvent(
   mm_camera_stats_event_t *event, app_notify_cb_t *app_cb)
 {
-    ALOGI("processStatsEvent: E");
+    ALOGV("processStatsEvent: E");
     if (!isPreviewRunning( )) {
         ALOGE("preview is not running");
         return;
@@ -879,7 +879,7 @@ void  QCameraHardwareInterface::processStatsEvent(
 
 void  QCameraHardwareInterface::processInfoEvent(
   mm_camera_info_event_t *event, app_notify_cb_t *app_cb) {
-    ALOGI("processInfoEvent: %d, E",event->event_id);
+    ALOGV("processInfoEvent: %d, E",event->event_id);
     //Mutex::Autolock lock(eventLock);
     switch(event->event_id)
     {
@@ -893,13 +893,13 @@ void  QCameraHardwareInterface::processInfoEvent(
         default:
             break;
     }
-    ALOGI("processInfoEvent: X");
+    ALOGV("processInfoEvent: X");
     return;
 }
 
 void QCameraHardwareInterface::zslFlashEvent(struct zsl_flash_t evt, app_notify_cb_t *) {
-    ALOGE("%s: E", __func__);
-    ALOGE("flashEvent: numFrames = %d, frameId[0] = %d", evt.valid_entires, evt.frame_idx[0]);
+    ALOGV("%s: E", __func__);
+    ALOGV("flashEvent: numFrames = %d, frameId[0] = %d", evt.valid_entires, evt.frame_idx[0]);
 
     int32_t value = 0;
     if (native_set_parms(MM_CAMERA_PARM_AEC_LOCK,
@@ -911,16 +911,16 @@ void QCameraHardwareInterface::zslFlashEvent(struct zsl_flash_t evt, app_notify_
     if (ret != MM_CAMERA_OK) {
         ALOGE("%s: Error taking ZSL snapshot!", __func__);
     }
-    ALOGE("%s: X", __func__);
+    ALOGV("%s: X", __func__);
 }
 
 
 void  QCameraHardwareInterface::processEvent(mm_camera_event_t *event)
 {
     app_notify_cb_t app_cb;
-    ALOGE("processEvent: type :%d E",event->event_type);
+    ALOGV("processEvent: type :%d E",event->event_type);
     if(mPreviewState == QCAMERA_HAL_PREVIEW_STOPPED){
-	ALOGE("Stop recording issued. Return from process Event");
+	ALOGD("Stop recording issued. Return from process Event");
         return;
     }
     memset(&app_cb, 0, sizeof(app_notify_cb_t));
@@ -941,7 +941,7 @@ void  QCameraHardwareInterface::processEvent(mm_camera_event_t *event)
         default:
             break;
     }
-    ALOGE(" App_cb Notify %p, datacb=%p", app_cb.notifyCb, app_cb.dataCb);
+    ALOGV(" App_cb Notify %p, datacb=%p", app_cb.notifyCb, app_cb.dataCb);
     if (app_cb.notifyCb) {
       app_cb.notifyCb(app_cb.argm_notify.msg_type,
         app_cb.argm_notify.ext1, app_cb.argm_notify.ext2,
@@ -952,7 +952,7 @@ void  QCameraHardwareInterface::processEvent(mm_camera_event_t *event)
         app_cb.argm_data_cb.data, app_cb.argm_data_cb.index,
         app_cb.argm_data_cb.metadata, app_cb.argm_data_cb.cookie);
     }
-    ALOGI("processEvent: X");
+    ALOGV("processEvent: X");
     return;
 }
 
@@ -1026,7 +1026,7 @@ status_t QCameraHardwareInterface::startPreview()
 
         if(QCAMERA_HAL_PREVIEW_START == mPreviewState &&
            (mPreviewWindow || isNoDisplayMode())) {
-            ALOGE("%s:  start preview now", __func__);
+            ALOGD("%s:  start preview now", __func__);
             retVal = startPreview2();
             if(retVal == NO_ERROR)
                 mPreviewState = QCAMERA_HAL_PREVIEW_STARTED;
@@ -1423,15 +1423,15 @@ status_t QCameraHardwareInterface::autoFocusMoveEvent(cam_ctrl_status_t *status,
 
 status_t QCameraHardwareInterface::autoFocusEvent(cam_ctrl_status_t *status, app_notify_cb_t *app_cb)
 {
-    ALOGE("autoFocusEvent: E");
+    ALOGD("autoFocusEvent: E");
     int ret = NO_ERROR;
 /************************************************************
   BEGIN MUTEX CODE
 *************************************************************/
 
-    ALOGE("%s:%d: Trying to acquire AF bit lock",__func__,__LINE__);
+    ALOGD("%s:%d: Trying to acquire AF bit lock",__func__,__LINE__);
     mAutofocusLock.lock();
-    ALOGE("%s:%d: Acquired AF bit lock",__func__,__LINE__);
+    ALOGD("%s:%d: Acquired AF bit lock",__func__,__LINE__);
 
     if(mAutoFocusRunning==false) {
       ALOGE("%s:AF not running, discarding stale event",__func__);
@@ -1465,7 +1465,7 @@ status_t QCameraHardwareInterface::autoFocusEvent(cam_ctrl_status_t *status, app
       variables' validity will be under question*/
 
     if (mNotifyCb && ( mMsgEnabled & CAMERA_MSG_FOCUS)){
-      ALOGE("%s:Issuing callback to service",__func__);
+      ALOGD("%s:Issuing callback to service",__func__);
 
       /* "Accepted" status is not appropriate it should be used for
         initial cmd, event reporting should only give use SUCCESS/FAIL
@@ -1476,7 +1476,7 @@ status_t QCameraHardwareInterface::autoFocusEvent(cam_ctrl_status_t *status, app
       app_cb->argm_notify.ext2 = 0;
       app_cb->argm_notify.cookie =  mCallbackCookie;
 
-      ALOGE("Auto foucs state =%d", *status);
+      ALOGD("Auto foucs state =%d", *status);
       if(*status==CAM_CTRL_SUCCESS) {
         app_cb->argm_notify.ext1 = true;
       }
@@ -1493,7 +1493,7 @@ status_t QCameraHardwareInterface::autoFocusEvent(cam_ctrl_status_t *status, app
       ALOGE("%s:Call back not enabled",__func__);
     }
 
-    ALOGE("autoFocusEvent: X");
+    ALOGD("autoFocusEvent: X");
     return ret;
 
 }
