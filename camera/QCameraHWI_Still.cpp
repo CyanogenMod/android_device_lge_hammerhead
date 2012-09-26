@@ -2697,7 +2697,7 @@ void QCameraStream_Snapshot::notifyHdrEvent(cam_ctrl_status_t status, void * coo
 {
     camera_notify_callback         notifyCb;
     camera_data_callback           dataCb, jpgDataCb;
-    int rc[2];
+    int rc[3];
     mm_camera_ch_data_buf_t *frame;
     int i;
 
