@@ -396,14 +396,9 @@ configSnapshotDimension(cam_ctrl_dimension_t* dim)
     mHalCamCtrl->getPictureSize(&mPictureWidth, &mPictureHeight);
     ALOGD("%s: Picture size received: %d x %d", __func__,
          mPictureWidth, mPictureHeight);
-    /*Current VFE software design requires picture size >= display size for ZSL*/
-    if (isZSLMode()){
-      mPostviewWidth = dim->display_width;
-      mPostviewHeight = dim->display_height;
-    } else {
-      mPostviewWidth = mHalCamCtrl->mParameters.getInt(QCameraParameters::KEY_JPEG_THUMBNAIL_WIDTH);
-      mPostviewHeight =  mHalCamCtrl->mParameters.getInt(QCameraParameters::KEY_JPEG_THUMBNAIL_HEIGHT);
-    }
+
+    mPostviewWidth = mHalCamCtrl->mParameters.getInt(QCameraParameters::KEY_JPEG_THUMBNAIL_WIDTH);
+    mPostviewHeight =  mHalCamCtrl->mParameters.getInt(QCameraParameters::KEY_JPEG_THUMBNAIL_HEIGHT);
     /*If application requested thumbnail size to be (0,0)
        then configure second outout to a default size.
        Jpeg encoder will drop thumbnail as reflected in encodeParams.
@@ -426,7 +421,7 @@ configSnapshotDimension(cam_ctrl_dimension_t* dim)
     /* picture size currently set do not match with the one wanted
        by user.*/
     if (!matching) {
-        if (mPictureWidth < mPostviewWidth || mPictureHeight < mPostviewHeight) {
+        if (!isZSLMode() && (mPictureWidth < mPostviewWidth || mPictureHeight < mPostviewHeight)) {
             //Changes to Handle VFE limitation.
             mActualPictureWidth = mPictureWidth;
             mActualPictureHeight = mPictureHeight;
@@ -964,10 +959,6 @@ void QCameraStream_Snapshot::deInitBuffer(void)
                  CAM_SOCK_MSG_TYPE_FD_UNMAPPING)) {
              ALOGE("%s: sending unmapping data Msg Failed", __func__);
              }
-             if (NO_ERROR != mHalCamCtrl->sendUnMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_THUMBNAIL, i, mCameraId,
-                 CAM_SOCK_MSG_TYPE_FD_UNMAPPING)) {
-                 ALOGE("%s: sending unmapping data Msg Failed", __func__);
-             }
          }
     }
 
@@ -1271,11 +1262,6 @@ status_t QCameraStream_Snapshot::initZSLSnapshot(void)
              mSnapshotStreamBuf.frame[i].fd, mHalCamCtrl->mSnapshotMemory.size, mCameraId,
              CAM_SOCK_MSG_TYPE_FD_MAPPING)) {
              ALOGE("%s: sending mapping data Msg Failed", __func__);
-        }
-        if (NO_ERROR != mHalCamCtrl->sendMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_THUMBNAIL, i,
-            mPostviewStreamBuf.frame[i].fd, mHalCamCtrl->mThumbnailMemory.size, mCameraId,
-            CAM_SOCK_MSG_TYPE_FD_MAPPING)) {
-            ALOGE("%s: sending mapping data Msg Failed", __func__);
         }
     }
 
@@ -1693,7 +1679,7 @@ encodeData(mm_camera_ch_data_buf_t* recvd_frame,
         /*Thumbnail image*/
         crop.in1_w=mCrop.snapshot.thumbnail_crop.width; //dimension.thumbnail_width;
         crop.in1_h=mCrop.snapshot.thumbnail_crop.height; // dimension.thumbnail_height;
-        if(isLiveSnapshot() || isFullSizeLiveshot()) {
+        if(isLiveSnapshot() || isFullSizeLiveshot() || isZSLMode()) {
             crop.out1_w= mHalCamCtrl->thumbnailWidth;
             crop.out1_h=  mHalCamCtrl->thumbnailHeight;
             ALOGD("Thumbnail width= %d  height= %d for livesnapshot", crop.out1_w, crop.out1_h);

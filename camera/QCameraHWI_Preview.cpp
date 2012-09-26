@@ -250,11 +250,17 @@ status_t QCameraStream_preview::putBufferToSurface() {
     ALOGI(" %s : E ", __FUNCTION__);
 
     mHalCamCtrl->mPreviewMemoryLock.lock();
-	for (int cnt = 0; cnt < mHalCamCtrl->mPreviewMemory.buffer_count; cnt++) {
+    for (int cnt = 0; cnt < mHalCamCtrl->mPreviewMemory.buffer_count; cnt++) {
         if (cnt < mHalCamCtrl->mPreviewMemory.buffer_count) {
             if (NO_ERROR != mHalCamCtrl->sendUnMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_PREVIEW, cnt, mCameraId,
                                                           CAM_SOCK_MSG_TYPE_FD_UNMAPPING)) {
                 ALOGE("%s: sending data Msg Failed", __func__);
+            }
+            if(mHalCamCtrl->isZSLMode()) {
+                if (NO_ERROR != mHalCamCtrl->sendUnMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_THUMBNAIL, cnt, mCameraId,
+                                                          CAM_SOCK_MSG_TYPE_FD_UNMAPPING)) {
+                    ALOGE("%s: Send socket msg to Unmap Failed", __func__);
+                }
             }
         }
 
@@ -370,6 +376,12 @@ status_t   QCameraStream_preview::freeBufferNoDisplay()
           if (NO_ERROR != mHalCamCtrl->sendUnMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_PREVIEW,
                        cnt, mCameraId, CAM_SOCK_MSG_TYPE_FD_UNMAPPING)) {
               ALOGE("%s: sending data Msg Failed", __func__);
+          }
+          if(mHalCamCtrl->isZSLMode()) {
+              if (NO_ERROR != mHalCamCtrl->sendUnMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_THUMBNAIL, cnt, mCameraId,
+                                                            CAM_SOCK_MSG_TYPE_FD_UNMAPPING)) {
+                  ALOGE("%s: Send socket msg to Unmap Failed", __func__);
+              }
           }
       }
   }
@@ -603,6 +615,18 @@ status_t QCameraStream_preview::initDisplayBuffers()
       goto error;
     }
 
+    if(mHalCamCtrl->isZSLMode()) {
+         ret = mHalCamCtrl->sendMappingBuf(
+                        MSM_V4L2_EXT_CAPTURE_MODE_THUMBNAIL,
+                        i,
+                        mDisplayStreamBuf.frame[i].fd,
+                        mHalCamCtrl->mPreviewMemory.private_buffer_handle[i]->size,
+                        mCameraId, CAM_SOCK_MSG_TYPE_FD_MAPPING);
+        if (NO_ERROR != ret) {
+          ALOGE("%s: Send socket msg to map Failed", __func__);
+          goto error;
+        }
+    }
     mDisplayBuf.preview.buf.mp[i].frame = mDisplayStreamBuf.frame[i];
     mDisplayBuf.preview.buf.mp[i].frame_offset = mHalCamCtrl->mPreviewMemory.addr_offset[i];
     mDisplayBuf.preview.buf.mp[i].num_planes = num_planes;
@@ -732,6 +756,16 @@ status_t QCameraStream_preview::initPreviewOnlyBuffers()
       ALOGE("%s: sending mapping data Msg Failed", __func__);
     }
 
+    if(mHalCamCtrl->isZSLMode()) {
+        if (NO_ERROR != mHalCamCtrl->sendMappingBuf(
+                    MSM_V4L2_EXT_CAPTURE_MODE_THUMBNAIL,
+                    i,
+                    mDisplayStreamBuf.frame[i].fd,
+                    mHalCamCtrl->mNoDispPreviewMemory.size,
+                    mCameraId, CAM_SOCK_MSG_TYPE_FD_MAPPING)) {
+            ALOGE("%s: sending mapping data Msg Failed", __func__);
+        }
+    }
     mDisplayBuf.preview.buf.mp[i].frame = mDisplayStreamBuf.frame[i];
     mDisplayBuf.preview.buf.mp[i].frame_offset = mDisplayStreamBuf.frame[i].y_off;
     mDisplayBuf.preview.buf.mp[i].num_planes = num_planes;

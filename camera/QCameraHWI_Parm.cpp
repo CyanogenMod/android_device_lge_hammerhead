@@ -2564,6 +2564,11 @@ status_t QCameraHardwareInterface::setPreviewSize(const QCameraParameters& param
     for (size_t i = 0; i <  mPreviewSizeCount; ++i) {
         if (width ==  mPreviewSizes[i].width
            && height ==  mPreviewSizes[i].height) {
+            int old_width, old_height;
+            mParameters.getPreviewSize(&old_width,&old_height);
+            if(width != old_width || height != old_height) {
+                mRestartPreview = true;
+            }
             mParameters.setPreviewSize(width, height);
             ALOGE("setPreviewSize:  width: %d   heigh: %d", width, height);
             mPreviewWidth = width;
