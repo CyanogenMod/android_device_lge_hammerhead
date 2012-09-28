@@ -349,6 +349,11 @@ end:
          */
         jpg_data_cb  = mHalCamCtrl->mDataCb;
     }
+   if(mHalCamCtrl->mHdrMode == HDR_MODE && (hdrJpegCount%2) != 0){
+     mStopCallbackLock.unlock( );
+     mJpegOffset = 0;
+     return;
+   }
     if(!fail_cb_flag) {
         camera_memory_t *encodedMem = mHalCamCtrl->mGetMemory(
             mHalCamCtrl->mJpegMemory.fd[0], mJpegOffset, 1, mHalCamCtrl);
@@ -357,8 +362,6 @@ end:
         }
         memcpy(encodedMem->data, mHalCamCtrl->mJpegMemory.camera_memory[0]->data, mJpegOffset );
         mStopCallbackLock.unlock( );
-        if(mHalCamCtrl->mHdrMode == HDR_MODE && (hdrJpegCount%2) != 0)
-          return;
 
         if ((mActive || isLiveSnapshot()) && jpg_data_cb != NULL) {
             ALOGV("%s: Calling upperlayer callback to store JPEG image", __func__);
