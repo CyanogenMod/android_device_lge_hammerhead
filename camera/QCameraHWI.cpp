@@ -1060,10 +1060,14 @@ status_t QCameraHardwareInterface::startPreview2()
         ALOGE("%s:Setting non-ZSL mode",__func__);
         mParameters.set(QCameraParameters::KEY_CAMERA_MODE, 0);
         myMode = (camera_mode_t)(myMode & ~CAMERA_ZSL_MODE);
+        mParameters.setPreviewFrameRateMode("frame-rate-fixed");
+        setPreviewFrameRateMode(mParameters);
      } else {
         ALOGE("%s:Setting ZSL mode",__func__);
         mParameters.set(QCameraParameters::KEY_CAMERA_MODE, 1);
         myMode = (camera_mode_t)(myMode | CAMERA_ZSL_MODE);
+        mParameters.setPreviewFrameRateMode("frame-rate-auto");
+        setPreviewFrameRateMode(mParameters);
     }
 
     /*  get existing preview information, by qury mm_camera*/
