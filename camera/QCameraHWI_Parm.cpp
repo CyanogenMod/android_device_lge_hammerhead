@@ -2389,10 +2389,6 @@ status_t QCameraHardwareInterface::setPreviewFrameRateMode(const QCameraParamete
         ALOGE("Preview Frame Rate Mode is NULL\n");
         return NO_ERROR;
     }
-    if( mInitialized && !strcmp(previousMode, str)) {
-        ALOGE("frame rate mode same as previous mode %s", previousMode);
-        return NO_ERROR;
-    }
     int32_t frameRateMode = attr_lookup(frame_rate_modes, sizeof(frame_rate_modes) / sizeof(str_map),str);
     if(frameRateMode != NOT_FOUND) {
         ALOGV("setPreviewFrameRateMode: %s ", str);
