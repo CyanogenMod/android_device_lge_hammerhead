@@ -30,12 +30,13 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pthread.h>
 #include "mm_camera_dbg.h"
 #include <errno.h>
+#include <sys/mman.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <poll.h>
-#include <linux/ion.h>
+#include <linux/msm_ion.h>
 #include "mm_qcamera_app.h"
 
 

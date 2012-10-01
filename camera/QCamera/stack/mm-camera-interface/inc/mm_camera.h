@@ -30,7 +30,9 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __MM_CAMERA_H__
 #define __MM_CAMERA_H__
 
+#include <sys/poll.h>
 #include "mm_camera_interface.h"
+#include "cam_list.h"
 
 /**********************************************************************************
 * Data structure declare

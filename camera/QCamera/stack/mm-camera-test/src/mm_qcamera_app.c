@@ -30,6 +30,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pthread.h>
 #include "mm_camera_dbg.h"
 #include <errno.h>
+#include <stdbool.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -52,7 +53,7 @@ int mm_camera_app_timedwait()
 {
     int rc = 0;
     pthread_mutex_lock(&app_mutex);
-    if(FALSE == thread_status) {
+    if(false == thread_status) {
         struct timespec tw;
         memset(&tw, 0, sizeof tw);
         tw.tv_sec = 0;
@@ -60,7 +61,7 @@ int mm_camera_app_timedwait()
 
         //pthread_cond_wait(&app_cond_v, &app_mutex);
         rc = pthread_cond_timedwait(&app_cond_v, &app_mutex,&tw);
-        thread_status = FALSE;
+        thread_status = false;
     }
     pthread_mutex_unlock(&app_mutex);
     return rc;
@@ -70,9 +71,9 @@ int mm_camera_app_wait()
 {
     int rc = 0;
     pthread_mutex_lock(&app_mutex);
-    if(FALSE == thread_status){
+    if(false == thread_status){
         pthread_cond_wait(&app_cond_v, &app_mutex);
-        thread_status = FALSE;
+        thread_status = false;
     }
     pthread_mutex_unlock(&app_mutex);
     return rc;
@@ -81,7 +82,7 @@ int mm_camera_app_wait()
 void mm_camera_app_done()
 {
   pthread_mutex_lock(&app_mutex);
-  thread_status = TRUE;
+  thread_status = true;
   pthread_cond_signal(&app_cond_v);
   pthread_mutex_unlock(&app_mutex);
 }
@@ -237,7 +238,7 @@ int mm_app_open(uint8_t cam_id)
     CDBG("Open Camera id = %d handle = %d",cam_id,pme->cam->camera_handle);
 
     pme->ch_id = cam_id;
-    pme->open_flag = TRUE;
+    pme->open_flag = true;
     mm_app_set_dim_def(&pme->dim);
 
     for (i = 0; i < MM_CAMERA_EVT_TYPE_MAX; i++) {
@@ -268,7 +269,7 @@ int mm_app_close(int8_t cam_id)
 
     pme->cam->ops->ch_release(pme->cam->camera_handle,pme->ch_id);
     pme->cam->ops->camera_close(pme->cam->camera_handle);
-    pme->open_flag = FALSE;
+    pme->open_flag = false;
     pme->cam = NULL;
     pme->my_id = 0;
     free(pme->mem_cam);
@@ -359,7 +360,7 @@ int mm_app_get_dim(int8_t cam_id, cam_ctrl_dimension_t *dim)
 #if 0
     mm_camera_app_obj_t *pme = mm_app_get_cam_obj(cam_id);
     CDBG("%s:BEGIN\n", __func__);
-    if(pme->open_flag != TRUE) {
+    if(pme->open_flag != true) {
         CDBG("%s: dev not open yet\n", __func__);
         rc = -MM_CAMERA_E_INVALID_OPERATION;
         goto end;

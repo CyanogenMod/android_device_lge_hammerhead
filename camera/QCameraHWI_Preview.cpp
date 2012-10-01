@@ -1355,7 +1355,7 @@ status_t QCameraStream_preview::start()
     /* call mm_camera action start(...)  */
     ALOGE("Starting Preview/Video Stream. ");
     mFirstFrameRcvd = false;
-    ret = cam_ops_action(mCameraId, TRUE, MM_CAMERA_OPS_PREVIEW, 0);
+    ret = cam_ops_action(mCameraId, true, MM_CAMERA_OPS_PREVIEW, 0);
 
     if (MM_CAMERA_OK != ret) {
       ALOGE ("%s: preview streaming start err=%d\n", __func__, ret);
@@ -1393,7 +1393,7 @@ end:
 
     ALOGI("%s: Stop the thread \n", __func__);
     /* call stop() in parent class to stop the monitor thread*/
-    ret = cam_ops_action(mCameraId, FALSE, MM_CAMERA_OPS_PREVIEW, 0);
+    ret = cam_ops_action(mCameraId, false, MM_CAMERA_OPS_PREVIEW, 0);
     if(MM_CAMERA_OK != ret) {
       ALOGE ("%s: camera preview stop err=%d\n", __func__, ret);
     }

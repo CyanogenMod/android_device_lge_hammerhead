@@ -28,6 +28,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <pthread.h>
+#include <stdbool.h>
 #include "mm_camera_dbg.h"
 #include <errno.h>
 #include <sys/ioctl.h>
@@ -51,7 +52,7 @@ static pthread_cond_t g_s_cond_v;
 static void mm_app_snapshot_done()
 {
     pthread_mutex_lock(&g_s_mutex);
-    g_status = TRUE;
+    g_status = true;
     pthread_cond_signal(&g_s_cond_v);
     pthread_mutex_unlock(&g_s_mutex);
 }
@@ -851,9 +852,9 @@ int mm_app_stop_raw_snapshot(int cam_id)
 static void mm_app_snapshot_wait(int cam_id)
 {
     pthread_mutex_lock(&g_s_mutex);
-    if (FALSE == g_status) {
+    if (false == g_status) {
         pthread_cond_wait(&g_s_cond_v, &g_s_mutex);
-        g_status = FALSE;
+        g_status = false;
     }
     pthread_mutex_unlock(&g_s_mutex);
 }

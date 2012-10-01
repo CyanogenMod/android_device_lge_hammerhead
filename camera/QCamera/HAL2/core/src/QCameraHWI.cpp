@@ -303,7 +303,7 @@ void QCameraHardwareInterface::release()
 
 bool QCameraHardwareInterface::isCameraReady()
 {
-    return TRUE;
+    return true;
 }
 
 int QCameraHardwareInterface::set_request_queue_src_ops(

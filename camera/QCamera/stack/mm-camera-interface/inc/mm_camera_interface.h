@@ -30,9 +30,8 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __MM_CAMERA_INTERFACE_H__
 #define __MM_CAMERA_INTERFACE_H__
 #include <linux/ion.h>
-#include <camera.h>
+#include <linux/videodev2.h>
 #include <QCamera_Intf.h>
-#include "cam_list.h"
 
 #define MM_CAMERA_MAX_NUM_FRAMES 16
 #define MM_CAMEAR_MAX_STRAEM_BUNDLE 4

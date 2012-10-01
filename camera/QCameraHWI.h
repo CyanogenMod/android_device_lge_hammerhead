@@ -36,7 +36,7 @@
 
 extern "C" {
 #include <linux/android_pmem.h>
-#include <linux/ion.h>
+#include <linux/msm_ion.h>
 #include <mm_camera_interface2.h>
 #include "mm_omx_jpeg_encoder.h"
 } //extern C

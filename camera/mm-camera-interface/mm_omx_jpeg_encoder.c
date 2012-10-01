@@ -27,6 +27,7 @@
  */
 
 #include <sys/types.h>
+#include <stdbool.h>
 #include <fcntl.h>
 #include "OMX_Types.h"
 #include "OMX_Index.h"
@@ -228,7 +229,7 @@ int8_t mm_jpeg_encoder_get_buffer_offset(uint32_t width, uint32_t height,
 {
     ALOGI("%s:", __func__);
     if ((NULL == p_y_offset) || (NULL == p_cbcr_offset)) {
-        return FALSE;
+        return false;
     }
     *num_planes = 2;
     if (hw_encode ) {
@@ -252,7 +253,7 @@ int8_t mm_jpeg_encoder_get_buffer_offset(uint32_t width, uint32_t height,
         planes[0] = PAD_TO_WORD(width*CEILING16(height));
         planes[1] = PAD_TO_WORD(width*CEILING16(height)/2);
     }
-    return TRUE;
+    return true;
 }
 
 int8_t omxJpegOpen()
@@ -262,7 +263,7 @@ int8_t omxJpegOpen()
     OMX_ERRORTYPE ret = OMX_GetHandle(&pHandle, "OMX.qcom.image.jpeg.encoder",
       NULL, &callbacks);
     pthread_mutex_unlock(&jpege_mutex);
-    return TRUE;
+    return true;
 }
 
 int8_t omxJpegStart(uint8_t hw_encode_enable)
@@ -403,7 +404,7 @@ int8_t omxJpegEncodeNext(omx_jpeg_encode_params *encode_params)
     OMX_FillThisBuffer(pHandle, pOutBuffers);
     pthread_mutex_unlock(&jpege_mutex);
     ALOGI("%s:X", __func__);
-    return TRUE;
+    return true;
 }
 
 int8_t omxJpegEncode(omx_jpeg_encode_params *encode_params)
@@ -672,7 +673,7 @@ int8_t omxJpegEncode(omx_jpeg_encode_params *encode_params)
     OMX_FillThisBuffer(pHandle, pOutBuffers);
     pthread_mutex_unlock(&jpege_mutex);
     ALOGI("%s:X", __func__);
-    return TRUE;
+    return true;
 }
 
 void omxJpegFinish()
@@ -730,7 +731,7 @@ int8_t mm_jpeg_encoder_setMainImageQuality(uint32_t quality)
     if (quality <= 100)
         jpegMainimageQuality = quality;
     pthread_mutex_unlock(&jpege_mutex);
-    return TRUE;
+    return true;
 }
 
 int8_t mm_jpeg_encoder_setThumbnailQuality(uint32_t quality)
@@ -741,7 +742,7 @@ int8_t mm_jpeg_encoder_setThumbnailQuality(uint32_t quality)
     if (quality <= 100)
         jpegThumbnailQuality = quality;
     pthread_mutex_unlock(&jpege_mutex);
-    return TRUE;
+    return true;
 }
 
 int8_t mm_jpeg_encoder_setRotation(int rotation, int isZSL)
@@ -766,7 +767,7 @@ int8_t mm_jpeg_encoder_setRotation(int rotation, int isZSL)
         break;
     }
     pthread_mutex_unlock(&jpege_mutex);
-    return TRUE;
+    return true;
 }
 
 /*===========================================================================

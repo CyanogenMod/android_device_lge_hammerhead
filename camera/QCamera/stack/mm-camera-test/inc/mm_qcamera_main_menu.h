@@ -30,7 +30,6 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __MM_QCAMERA_MAIN_MENU_H__
 #define __MM_QCAMERA_MAIN_MENU_H__
 
-#include "camera.h"
 #include "mm_camera_interface.h"
 
 
