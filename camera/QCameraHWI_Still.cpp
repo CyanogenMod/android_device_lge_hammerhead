@@ -1832,6 +1832,7 @@ status_t QCameraStream_Snapshot::receiveRawPicture(mm_camera_ch_data_buf_t* recv
     int buf_index = 0;
     common_crop_t crop;
     int rc = NO_ERROR;
+    int cur_lux_idx = 0;
 
     camera_notify_callback         notifyCb;
     camera_data_callback           dataCb, jpgDataCb;
@@ -1910,7 +1911,34 @@ status_t QCameraStream_Snapshot::receiveRawPicture(mm_camera_ch_data_buf_t* recv
             return BAD_VALUE;
         }
         memcpy(frame, recvd_frame, sizeof(mm_camera_ch_data_buf_t));
+        rc = cam_config_get_parm(mCameraId, MM_CAMERA_PARM_LUX_IDX, &cur_lux_idx);
 
+        if (cur_lux_idx > 370) {
+            static int input_width = 0, input_height = 0;
+            static int ret = 0;
+            unsigned char *dnr_buffer;
+            input_width = mPictureWidth;
+            input_height = mPictureHeight;
+
+            ALOGV("%s: received frame %d * %d", __func__, input_width, input_height);
+            {
+                dnr_buffer = (uint8_t *)malloc(input_width*input_height*3/2);
+                if (dnr_buffer == NULL)
+                    ALOGV("dnr_buffer alloc fail");
+                ALOGV("dnr_buffer allocated size : %d", input_width*input_height*3/2);
+                memcpy(dnr_buffer, (uint8_t *)frame->snapshot.main.frame->buffer, input_width*input_height*3/2);
+                ALOGV("dnr_buffer memcpy completed.");
+            }
+            ALOGV("[DNR] DNR Processing Start.... %d * %d\n", mPictureWidth, mPictureHeight);
+            ret = NO_ERROR;
+            if (mHalCamCtrl->LINK_morpho_DNR_ProcessFrame)
+                ret = (int)mHalCamCtrl->LINK_morpho_DNR_ProcessFrame(dnr_buffer, mPictureWidth, mPictureHeight, 1, 1); //bright->normal->dark
+            ALOGV("[DNR] DNR Processing result.... ret = %d\n", ret);
+            memcpy((uint8_t *)recvd_frame->snapshot.main.frame->buffer, (uint8_t *)dnr_buffer, mPictureWidth*mPictureHeight*3/2);
+            ALOGV("[DNR] DNR Processing END....\n");
+            if(dnr_buffer)
+                free(dnr_buffer);
+        }
         //mStopCallbackLock.lock();
 
         // only in ZSL mode and Wavelet Denoise is enabled, we will send frame to deamon to do WDN
