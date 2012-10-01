@@ -110,7 +110,7 @@ extern "C" status_t getStaticInfo(camera_metadata_t **info,
     if(!camera_vtbl) return BAD_VALUE;
 
     bool mFacingBack = (camera_vtbl->camera_info->camera_info.position==BACK_CAMERA)?
-                       TRUE:FALSE;
+                       true:false;
 
 #define ADD_OR_SIZE( tag, data, count ) \
     if ( ( ret = addOrSize(*info, sizeRequest, &entryCount, &dataCount, \

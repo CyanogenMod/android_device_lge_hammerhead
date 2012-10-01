@@ -22,23 +22,13 @@ LOCAL_COPY_HEADERS := inc/mm_camera_interface.h
 LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/inc \
     $(LOCAL_PATH)/../common \
-    $(LOCAL_PATH)/../../../ \
-    $(TARGET_OUT_HEADERS)/mm-camera \
-    $(TARGET_OUT_HEADERS)/mm-camera/common
+    $(LOCAL_PATH)/../../../
 
 ifneq ($(strip $(USE_BIONIC_HEADER)),true)
 LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
 LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include/media
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 endif
-
-# (BEGIN) Need to remove later once dependency on jpeg removed
-LOCAL_C_INCLUDES += \
-    $(TARGET_OUT_HEADERS)/mm-still \
-    $(TARGET_OUT_HEADERS)/mm-still/jpeg \
-    $(TARGET_OUT_HEADERS)/mm-core/omxcore \
-    $(TARGET_OUT_HEADERS)/mm-still/mm-omx
-# (END) Need to remove later once dependency on jpeg removed
 
 LOCAL_C_INCLUDES+= hardware/qcom/media/mm-core/inc
 LOCAL_CFLAGS += -include bionic/libc/include/sys/socket.h

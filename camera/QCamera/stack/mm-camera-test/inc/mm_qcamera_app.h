@@ -32,7 +32,6 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DISABLE_JPEG_ENCODING
 
-#include "camera.h"
 #include "mm_qcamera_main_menu.h"
 #include "mm_camera_interface.h"
 #ifndef DISABLE_JPEG_ENCODING

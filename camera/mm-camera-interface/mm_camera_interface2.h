@@ -30,6 +30,9 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __MM_CAMERA_INTERFACE2_H__
 #define __MM_CAMERA_INTERFACE2_H__
 #include <linux/ion.h>
+#include <linux/videodev2.h>
+#include <media/msm_camera.h>
+#include "QCamera_Intf.h"
 #include "mm_omx_jpeg_encoder.h"
 
 #define MM_CAMERA_MAX_NUM_FRAMES        16
@@ -335,7 +338,6 @@ typedef enum {
     MM_CAMERA_REG_BUF_CB_COUNT,
     MM_CAMERA_REG_BUF_CB_INFINITE
 } mm_camera_register_buf_cb_type_t;
-
 
 typedef void (*mm_camera_event_notify_t)(mm_camera_event_t *evt,
     void *user_data);

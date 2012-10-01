@@ -73,7 +73,7 @@ static pthread_cond_t g_s_cond_v;
 static void mm_app_snapshot_done()
 {
   pthread_mutex_lock(&g_s_mutex);
-  g_status = TRUE;
+  g_status = true;
   pthread_cond_signal(&g_s_cond_v);
   pthread_mutex_unlock(&g_s_mutex);
 }
@@ -81,9 +81,9 @@ static void mm_app_snapshot_done()
 static void mm_app_snapshot_wait()
 {
         pthread_mutex_lock(&g_s_mutex);
-        if(FALSE == g_status) pthread_cond_wait(&g_s_cond_v, &g_s_mutex);
+        if(false == g_status) pthread_cond_wait(&g_s_cond_v, &g_s_mutex);
         pthread_mutex_unlock(&g_s_mutex);
-    g_status = FALSE;
+    g_status = false;
 }
 
 static int mm_app_dump_snapshot_frame(char *filename,
@@ -430,9 +430,9 @@ configSnapshotDimension(cam_ctrl_dimension_t* dim)
             mActualPictureHeight = mPictureHeight;
             mPictureWidth = mPostviewWidth;
             mPictureHeight = mPostviewHeight;
-            mJpegDownscaling = TRUE;
+            mJpegDownscaling = true;
         }else{
-            mJpegDownscaling = FALSE;
+            mJpegDownscaling = false;
         }
         dim->picture_width  = mPictureWidth;
         dim->picture_height = mPictureHeight;
@@ -1293,7 +1293,7 @@ takePictureJPEG(void)
     /* Take snapshot */
     ALOGD("%s: Call MM_CAMERA_OPS_SNAPSHOT", __func__);
     if (NO_ERROR != cam_ops_action(mCameraId,
-                                              TRUE,
+                                              true,
                                               MM_CAMERA_OPS_SNAPSHOT,
                                               this)) {
            ALOGE("%s: Failure taking snapshot", __func__);
@@ -1329,7 +1329,7 @@ takePictureRaw(void)
     /* Take snapshot */
     ALOGD("%s: Call MM_CAMERA_OPS_SNAPSHOT", __func__);
     if (NO_ERROR != cam_ops_action(mCameraId,
-                                  TRUE,
+                                  true,
                                   MM_CAMERA_OPS_RAW,
                                   this)) {
            ALOGE("%s: Failure taking snapshot", __func__);
@@ -1375,10 +1375,10 @@ takePictureLiveshot(mm_camera_ch_data_buf_t* recvd_frame,
     setModeLiveSnapshot(true);
 
     if(!mHalCamCtrl->mShutterSoundPlayed) {
-        notifyShutter(&crop_info, TRUE);
+        notifyShutter(&crop_info, true);
     }
-    notifyShutter(&crop_info, FALSE);
-    mHalCamCtrl->mShutterSoundPlayed = FALSE;
+    notifyShutter(&crop_info, false);
+    mHalCamCtrl->mShutterSoundPlayed = false;
 
     // send upperlayer callback for raw image (data or notify, not both)
     if((mHalCamCtrl->mDataCb) && (mHalCamCtrl->mMsgEnabled & CAMERA_MSG_RAW_IMAGE)){
@@ -1465,7 +1465,7 @@ takePictureZSL(void)
 
     mNumOfSnapshot = mHalCamCtrl->getNumOfSnapshots();
     if (NO_ERROR != cam_ops_action(mCameraId,
-                                          TRUE,
+                                          true,
                                           MM_CAMERA_OPS_GET_BUFFERED_FRAME,
                                           &param)) {
            ALOGE("%s: Failure getting zsl frame(s)", __func__);
@@ -1496,7 +1496,7 @@ startStreamZSL(void)
     /* Start ZSL - it'll start queuing the frames */
     ALOGD("%s: Call MM_CAMERA_OPS_ZSL", __func__);
     if (NO_ERROR != cam_ops_action(mCameraId,
-                                          TRUE,
+                                          true,
                                           MM_CAMERA_OPS_ZSL,
                                           this)) {
            ALOGE("%s: Failure starting ZSL stream", __func__);
@@ -1858,10 +1858,10 @@ status_t QCameraStream_Snapshot::receiveRawPicture(mm_camera_ch_data_buf_t* recv
         ALOGD("%s: Call notifyShutter 2nd time in case of RAW", __func__);
         mStopCallbackLock.unlock();
         if(!mHalCamCtrl->mShutterSoundPlayed) {
-            notifyShutter(&crop, TRUE);
+            notifyShutter(&crop, true);
         }
-        notifyShutter(&crop, FALSE);
-        mHalCamCtrl->mShutterSoundPlayed = FALSE;
+        notifyShutter(&crop, false);
+        mHalCamCtrl->mShutterSoundPlayed = false;
 
         mStopCallbackLock.lock( );
         ALOGD("%s: Sending Raw Snapshot Callback to Upperlayer", __func__);
@@ -1921,13 +1921,13 @@ status_t QCameraStream_Snapshot::receiveRawPicture(mm_camera_ch_data_buf_t* recv
                 rc = NO_ERROR;
             } else {
                 ALOGD("%s: Start Wavelet denoise", __func__);
-                mIsDoingWDN = TRUE; // set the falg to TRUE because we are going to do WDN
+                mIsDoingWDN = true; // set the falg to true because we are going to do WDN
 
                 // No WDN is going on so far, we will start it here
                 rc = doWaveletDenoise(frame);
                 if ( NO_ERROR != rc ) {
                     ALOGE("%s: Error while doing wavelet denoise", __func__);
-                    mIsDoingWDN = FALSE;
+                    mIsDoingWDN = false;
                 }
             }
         } else if (mHdrInfo.hdr_on) {
@@ -1960,10 +1960,10 @@ status_t QCameraStream_Snapshot::receiveRawPicture(mm_camera_ch_data_buf_t* recv
 
         mStopCallbackLock.unlock();
         if(!mHalCamCtrl->mShutterSoundPlayed) {
-            notifyShutter(&crop, TRUE);
+            notifyShutter(&crop, true);
         }
-        notifyShutter(&crop, FALSE);
-        mHalCamCtrl->mShutterSoundPlayed = FALSE;
+        notifyShutter(&crop, false);
+        mHalCamCtrl->mShutterSoundPlayed = false;
 
         if(mHalCamCtrl->mHdrMode == HDR_MODE) {
             if ((hdrRawCount % 3) != 2)
@@ -2146,7 +2146,7 @@ QCameraStream_Snapshot(int cameraId, camera_mode_t mode)
 
     /*initialize WDN queue*/
     mWDNQueue.init();
-    mIsDoingWDN = FALSE;
+    mIsDoingWDN = false;
 
     memset(&mSnapshotStreamBuf, 0, sizeof(mSnapshotStreamBuf));
     memset(&mPostviewStreamBuf, 0, sizeof(mPostviewStreamBuf));
@@ -2339,7 +2339,7 @@ void QCameraStream_Snapshot::stopPolling(void)
     }else
         ops_type = MM_CAMERA_OPS_RAW;
 
-    if( NO_ERROR != cam_ops_action(mCameraId, FALSE,
+    if( NO_ERROR != cam_ops_action(mCameraId, false,
                                           ops_type, this)) {
         ALOGE("%s: Failure stopping snapshot", __func__);
     }
@@ -2423,7 +2423,7 @@ void QCameraStream_Snapshot::release()
 
     if(mActive) {
       this->stop();
-      mActive = FALSE;
+      mActive = false;
     }
 
     /* release is generally called in case of explicit call from
@@ -2442,7 +2442,7 @@ void QCameraStream_Snapshot::prepareHardware()
 
     /* Prepare snapshot*/
     cam_ops_action(mCameraId,
-                          TRUE,
+                          true,
                           MM_CAMERA_OPS_PREPARE_SNAPSHOT,
                           this);
     ALOGV("%s: X", __func__);
@@ -2554,8 +2554,8 @@ void QCameraStream_Snapshot::lauchNextWDenoiseFromQueue()
         mm_camera_ch_data_buf_t *frame = NULL;
         if ( mWDNQueue.isEmpty() ||
              (NULL == (frame = (mm_camera_ch_data_buf_t *)mWDNQueue.dequeue())) ) {
-            // set the flag back to FALSE when no WDN going on
-            mIsDoingWDN = FALSE;
+            // set the flag back to false when no WDN going on
+            mIsDoingWDN = false;
             break;
         }
 
@@ -2569,7 +2569,7 @@ void QCameraStream_Snapshot::lauchNextWDenoiseFromQueue()
             ALOGD("%s: Send out req for doing wavelet denoise, return here", __func__);
             break;
         }
-    } while (TRUE);
+    } while (true);
 }
 
 status_t QCameraStream_Snapshot::doWaveletDenoise(mm_camera_ch_data_buf_t* frame)

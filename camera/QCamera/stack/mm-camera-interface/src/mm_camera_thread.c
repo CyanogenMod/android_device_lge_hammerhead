@@ -29,6 +29,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <pthread.h>
 #include <errno.h>
+#include <stdbool.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -73,7 +74,7 @@ static int32_t mm_camera_poll_sig(mm_camera_poll_thread_t *poll_cb,
     cmd_evt.cmd = cmd;
     pthread_mutex_lock(&poll_cb->mutex);
     /* reset the statue to false */
-    poll_cb->status = FALSE;
+    poll_cb->status = false;
     /* send cmd to worker */
 
     len = write(poll_cb->pfds[1], &cmd_evt, sizeof(cmd_evt));
@@ -82,7 +83,7 @@ static int32_t mm_camera_poll_sig(mm_camera_poll_thread_t *poll_cb,
     }
     CDBG("%s: begin IN mutex write done, len = %d", __func__, len);
     /* wait till worker task gives positive signal */
-    if (FALSE == poll_cb->status) {
+    if (false == poll_cb->status) {
         CDBG("%s: wait", __func__);
         pthread_cond_wait(&poll_cb->cond_v, &poll_cb->mutex);
     }
@@ -95,7 +96,7 @@ static int32_t mm_camera_poll_sig(mm_camera_poll_thread_t *poll_cb,
 static void mm_camera_poll_sig_done(mm_camera_poll_thread_t *poll_cb)
 {
     pthread_mutex_lock(&poll_cb->mutex);
-    poll_cb->status = TRUE;
+    poll_cb->status = true;
     pthread_cond_signal(&poll_cb->cond_v);
     CDBG("%s: done, in mutex", __func__);
     pthread_mutex_unlock(&poll_cb->mutex);

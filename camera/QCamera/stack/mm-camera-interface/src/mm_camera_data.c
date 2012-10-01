@@ -33,7 +33,6 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <camera.h>
 #include <semaphore.h>
 
 #include "mm_camera_dbg.h"

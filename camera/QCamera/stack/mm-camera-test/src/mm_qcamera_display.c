@@ -29,6 +29,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -44,8 +45,9 @@ struct inode;
 #include <inttypes.h>
 #include <linux/msm_mdp.h>
 #include <linux/fb.h>
-#include "camera.h"
+#include <linux/videodev2.h>
 #include "mm_camera_dbg.h"
+#include "QCamera_Intf.h"
 
 #ifdef DRAW_RECTANGLES
 extern roi_info_t camframe_roi;
@@ -504,7 +506,7 @@ int v4l2_render(int frame_fd, struct v4l2_buffer *vb, struct v4l2_crop *crop)
   ov_front.data.memory_id = frame_fd;
   notify_camframe_fb_thread();
 
-  return TRUE;
+  return true;
 }
 
 int mm_app_dl_render(int frame_fd, struct crop_info * cropinfo)
@@ -566,7 +568,7 @@ int mm_app_dl_render(int frame_fd, struct crop_info * cropinfo)
   ov_front.data.memory_id = frame_fd;
   notify_camframe_fb_thread();
 
-  return TRUE;
+  return true;
 }
 
 

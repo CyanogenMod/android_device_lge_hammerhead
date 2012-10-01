@@ -60,7 +60,6 @@ extern "C" {
 #include <sys/time.h>
 #include <stdlib.h>
 #include <linux/msm_ion.h>
-#include <camera.h>
 #include <cam_fifo.h>
 #include <jpege.h>
 
@@ -245,7 +244,6 @@ static const str_map selectable_zone_af[] = {
     { CameraParameters::SELECTABLE_ZONE_AF_FRAME_AVERAGE, AVERAGE }
 };
 
-// from qcamera/common/camera.h
 static const str_map autoexposure[] = {
     { CameraParameters::AUTO_EXPOSURE_FRAME_AVG,  CAMERA_AEC_FRAME_AVERAGE },
     { CameraParameters::AUTO_EXPOSURE_CENTER_WEIGHTED, CAMERA_AEC_CENTER_WEIGHTED },
