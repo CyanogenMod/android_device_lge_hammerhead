@@ -45,6 +45,7 @@ extern "C" {
 #include "QCameraStream.h"
 #include "QCamera_Intf.h"
 
+#include "hdr/include/morpho_noise_reduction_ext.h"
 //Error codes
 #define  NOT_FOUND -1
 #define MAX_ZOOM_RATIOS 62
@@ -800,6 +801,8 @@ private:
     camera_size_type* mVideoSizes;
     const camera_size_type * mPictureSizesPtr;
     HAL_camera_state_type_t mCameraState;
+    void *libdnr;
+    int (*LINK_morpho_DNR_ProcessFrame)(unsigned char* yuvImage, int width, int height, int y_level, int c_level);
 
      /* Temporary - can be removed after Honeycomb*/
 #ifdef USE_ION
