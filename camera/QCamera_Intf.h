@@ -470,6 +470,7 @@ typedef enum {
 #ifdef FAST_AF
     MM_CAMERA_PARM_CAF_TYPE,
 #endif
+    MM_CAMERA_PARM_LUX_IDX,
     MM_CAMERA_PARM_MAX
 } mm_camera_parm_type_t;
 
@@ -619,6 +620,7 @@ typedef enum {
 #ifdef FAST_AF
   CAMERA_SET_PARM_CAF_TYPE,
 #endif
+  CAMERA_GET_PARM_LUX_IDX,
   CAMERA_CTRL_PARM_MAX
 } cam_ctrl_type;
 

@@ -24,6 +24,8 @@
 #include <cutils/properties.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <string.h>
+#include <dlfcn.h>
 
 #include "QCameraHAL.h"
 #include "QCameraHWI.h"
@@ -282,6 +284,13 @@ QCameraHardwareInterface(int cameraId, int mode)
         return;
     }
     mCameraState = CAMERA_STATE_READY;
+    libdnr = dlopen("libmorpho_noise_reduction.so", RTLD_NOW);
+    if (libdnr) {
+        ALOGD("Open MM camera DL libmorpho_noise_reduction loaded at %p & %p ", libdnr);
+        *(void **)&LINK_morpho_DNR_ProcessFrame = dlsym(libdnr, "LINK_mm_camera_morpho_noise_reduction");
+    }
+    else
+        ALOGE("failed to open libmorpho_noise_reduction");
 
     ALOGI("QCameraHardwareInterface: X");
 }
@@ -331,6 +340,11 @@ QCameraHardwareInterface::~QCameraHardwareInterface()
     if(mStreamSnap) {
         QCameraStream_Snapshot::deleteInstance (mStreamSnap);
         mStreamSnap = NULL;
+    }
+    if (libdnr != NULL) {
+         dlclose(libdnr);
+         libdnr = NULL;
+         ALOGD("closed libmorpho_noise_reduction.so");
     }
 
     if (mStreamLiveSnap){
@@ -1389,7 +1403,7 @@ void QCameraHardwareInterface::releaseRecordingFrame(const void *opaque)
 
 status_t QCameraHardwareInterface::autoFocusMoveEvent(cam_ctrl_status_t *status, app_notify_cb_t *app_cb)
 {
-    ALOGI("autoFocusMoveEvent: E");
+    ALOGV("autoFocusMoveEvent: E");
     int ret = NO_ERROR;
 
     isp3a_af_mode_t afMode = getAutoFocusMode(mParameters);
@@ -1412,7 +1426,7 @@ status_t QCameraHardwareInterface::autoFocusMoveEvent(cam_ctrl_status_t *status,
             ALOGE("%s:Unknown AF Move Status received (%d) received",__func__,*status);
         }
     }
-    ALOGI("autoFocusMoveEvent: X");
+    ALOGV("autoFocusMoveEvent: X");
     return ret;
 }
 
@@ -1473,7 +1487,7 @@ status_t QCameraHardwareInterface::autoFocusEvent(cam_ctrl_status_t *status, app
       app_cb->argm_notify.ext2 = 0;
       app_cb->argm_notify.cookie =  mCallbackCookie;
 
-      ALOGD("Auto foucs state =%d", *status);
+      ALOGV("Auto focus state =%d", *status);
       if(*status==CAM_CTRL_SUCCESS) {
         app_cb->argm_notify.ext1 = true;
       }
