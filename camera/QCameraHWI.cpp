@@ -1417,7 +1417,7 @@ status_t QCameraHardwareInterface::autoFocusMoveEvent(cam_ctrl_status_t *status,
         app_cb->argm_notify.ext2 = 0;
         app_cb->argm_notify.cookie =  mCallbackCookie;
 
-        ALOGE("Auto foucs state =%d", *status);
+        ALOGV("Auto focus state =%d", *status);
         if(*status == 1) {
             app_cb->argm_notify.ext1 = true;
         }else if(*status == 0){
