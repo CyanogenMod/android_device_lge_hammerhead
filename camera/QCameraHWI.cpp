@@ -477,20 +477,6 @@ status_t QCameraHardwareInterface::sendCommand(int32_t command, int32_t arg1,
     Mutex::Autolock l(&mLock);
 
     switch (command) {
-    #if 0
-        case CAMERA_CMD_HISTOGRAM_ON:
-            ALOGE("histogram set to on");
-            rc = setHistogram(1);
-            break;
-        case CAMERA_CMD_HISTOGRAM_OFF:
-            ALOGE("histogram set to off");
-            rc = setHistogram(0);
-            break;
-        case CAMERA_CMD_HISTOGRAM_SEND_DATA:
-            ALOGE("histogram send data");
-            mSendData = true;
-            rc = NO_ERROR;
-            break;
         case CAMERA_CMD_START_FACE_DETECTION:
            if(supportsFaceDetection() == false){
                 ALOGE("Face detection support is not available");
@@ -505,7 +491,22 @@ status_t QCameraHardwareInterface::sendCommand(int32_t command, int32_t arg1,
            }
            setFaceDetection("off");
            return runFaceDetection();
-        case CAMERA_CMD_SEND_META_DATA:
+
+    #if 0
+        case CAMERA_CMD_HISTOGRAM_ON:
+            ALOGE("histogram set to on");
+            rc = setHistogram(1);
+            break;
+        case CAMERA_CMD_HISTOGRAM_OFF:
+            ALOGE("histogram set to off");
+            rc = setHistogram(0);
+            break;
+        case CAMERA_CMD_HISTOGRAM_SEND_DATA:
+            ALOGE("histogram send data");
+            mSendData = true;
+            rc = NO_ERROR;
+            break;
+       case CAMERA_CMD_SEND_META_DATA:
            mMetaDataWaitLock.lock();
            if(mFaceDetectOn == true) {
                mSendMetaData = true;
