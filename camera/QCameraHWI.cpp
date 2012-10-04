@@ -1085,6 +1085,13 @@ status_t QCameraHardwareInterface::startPreview2()
         setPreviewFrameRateMode(mParameters);
     }
 
+     if (mRecordingHint && !mFullLiveshotEnabled) {
+         //Camcorder Preview
+         prepareVideoPicture(true);
+     }else{
+         //Camera Preview
+         prepareVideoPicture(false);
+     }
     /*  get existing preview information, by qury mm_camera*/
     memset(&dim, 0, sizeof(cam_ctrl_dimension_t));
     ret = cam_config_get_parm(mCameraId, MM_CAMERA_PARM_DIMENSION,&dim);
