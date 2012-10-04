@@ -553,6 +553,7 @@ private:
     void pausePreviewForSnapshot();
     void pausePreviewForZSL();
     void pausePreviewForVideo();
+    void prepareVideoPicture(bool disable);
     status_t resumePreviewAfterSnapshot();
 
     status_t runFaceDetection();
