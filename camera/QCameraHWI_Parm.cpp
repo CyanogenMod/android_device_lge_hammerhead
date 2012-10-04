@@ -4174,4 +4174,25 @@ status_t QCameraHardwareInterface::setCAFLockCancel(void)
     return rc;
 }
 
+void QCameraHardwareInterface::prepareVideoPicture(bool disable){
+    String8 str;
+    char buffer[32];
+
+    if(disable) {
+        sprintf(buffer, "%dx%d", mDimension.video_width, mDimension.video_height);
+        str.append(buffer);
+
+        mParameters.setPictureSize(mDimension.video_width, mDimension.video_height);
+        mParameters.set(QCameraParameters::KEY_SUPPORTED_PICTURE_SIZES,
+                        str.string());
+        ALOGE("%s: Video Picture size supported = %d X %d",
+              __func__,mDimension.video_width,mDimension.video_height);
+    }else{
+        //Set Picture Size
+        mParameters.setPictureSize(mDimension.picture_width, mDimension.picture_height);
+        mParameters.set(QCameraParameters::KEY_SUPPORTED_PICTURE_SIZES,
+                        mPictureSizeValues.string());
+    }
+}
+
 }; /*namespace android */
