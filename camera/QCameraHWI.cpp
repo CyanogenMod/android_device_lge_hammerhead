@@ -1049,7 +1049,7 @@ status_t QCameraHardwareInterface::startPreview2()
 
     const char *str = mParameters.get(QCameraParameters::KEY_SCENE_MODE);
 
-    if (mRecordingHint || !strcmp(str, "hdr")) {
+    if (mRecordingHint || !strcmp(str, "hdr") || mFlashCond) {
         ALOGE("%s:Setting non-ZSL mode",__func__);
         mParameters.set(QCameraParameters::KEY_CAMERA_MODE, 0);
         myMode = (camera_mode_t)(myMode & ~CAMERA_ZSL_MODE);
@@ -1650,6 +1650,16 @@ status_t  QCameraHardwareInterface::takePicture()
     bool hdr;
     int  frm_num = 1;
     int  exp[MAX_HDR_EXP_FRAME_NUM];
+
+    if(QCAMERA_HAL_RECORDING_STARTED != mPreviewState){
+        mFlashCond = getFlashCondition();
+        ALOGV("%s: Flash Contidion %d", __func__, mFlashCond);
+        if(mFlashCond) {
+            mRestartPreview = true;
+            pausePreviewForZSL();
+        }
+        mFlashCond = false;
+    }
 
     hdr = getHdrInfoAndSetExp(MAX_HDR_EXP_FRAME_NUM, &frm_num, exp);
     mStreamSnap->resetSnapshotCounters();
