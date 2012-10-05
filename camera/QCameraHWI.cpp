@@ -1995,7 +1995,7 @@ void QCameraHardwareInterface::processprepareSnapshotEvent(cam_ctrl_status_t *st
 
 void QCameraHardwareInterface::roiEvent(fd_roi_t roi,app_notify_cb_t *app_cb)
 {
-    ALOGE("roiEvent: E");
+    ALOGV("roiEvent: E");
 
     if(mStreamDisplay) mStreamDisplay->notifyROIEvent(roi);
 #if 0 //TODO: move to preview obj
@@ -2042,7 +2042,7 @@ void QCameraHardwareInterface::roiEvent(fd_roi_t roi,app_notify_cb_t *app_cb)
         mMetaDataWaitLock.unlock();
     }
 #endif // mzhu
-    ALOGE("roiEvent: X");
+    ALOGV("roiEvent: X");
 }
 
 
@@ -2781,4 +2781,3 @@ void QCameraHardwareInterface::hdrEvent(cam_ctrl_status_t status, void *cookie)
 }
 
 }; // namespace android
-
