@@ -2828,17 +2828,6 @@ status_t QCameraHardwareInterface::setStrTextures(const QCameraParameters& param
     return NO_ERROR;
 }
 
-int QCameraHardwareInterface::getFlashMode() {
-    const char *str = mParameters.get(CameraParameters::KEY_FLASH_MODE);
-    if (str != NULL) {
-        int32_t value = attr_lookup(flash, sizeof(flash) / sizeof(str_map), str);
-        return value;
-    } else {
-        ALOGE("%s: Error: Flash parameter not-set (unexpected)", __func__);
-        return -1;
-    }
-}
-
 status_t QCameraHardwareInterface::setFlash(const QCameraParameters& params)
 {
     ALOGV("%s: E",__func__);

@@ -649,7 +649,7 @@ int32_t mm_camera_get_parm(mm_camera_obj_t *my_obj,
                                             sizeof(focus_distances_info_t),
                                             p_value);
         break;
-    case MM_CAMERA_PARM_QUERY_FLASH4SNAP:
+    case MM_CAMERA_PARM_QUERY_FALSH4SNAP:
         rc = mm_camera_send_native_ctrl_cmd(my_obj,
                                             CAMERA_QUERY_FLASH_FOR_SNAPSHOT,
                                             sizeof(int),
