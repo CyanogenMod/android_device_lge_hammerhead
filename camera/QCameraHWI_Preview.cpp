@@ -254,12 +254,12 @@ status_t QCameraStream_preview::putBufferToSurface() {
         if (cnt < mHalCamCtrl->mPreviewMemory.buffer_count) {
             if (NO_ERROR != mHalCamCtrl->sendUnMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_PREVIEW, cnt, mCameraId,
                                                           CAM_SOCK_MSG_TYPE_FD_UNMAPPING)) {
-                ALOGE("%s: sending data Msg Failed", __func__);
+                ALOGE("%s: unmapping Preview Buffer", __func__);
             }
             if(mHalCamCtrl->isZSLMode()) {
                 if (NO_ERROR != mHalCamCtrl->sendUnMappingBuf(MSM_V4L2_EXT_CAPTURE_MODE_THUMBNAIL, cnt, mCameraId,
                                                           CAM_SOCK_MSG_TYPE_FD_UNMAPPING)) {
-                    ALOGE("%s: Send socket msg to Unmap Failed", __func__);
+                    ALOGE("%s: unmapping Thumbnail Buffer for ZSL", __func__);
                 }
             }
         }

@@ -741,6 +741,7 @@ private:
     bool mAppRecordingHint;
     bool mStartRecording;
     bool mReleasedRecordingFrame;
+    bool mStateLiveshot;
     int mHdrMode;
     int mSnapshotFormat;
     int mZslInterval;

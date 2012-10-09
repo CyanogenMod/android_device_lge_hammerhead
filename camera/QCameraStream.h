@@ -120,9 +120,7 @@ public:
     virtual void *getLastQueuedFrame(void){return NULL;}
     virtual status_t takePictureZSL(void){return NO_ERROR;}
     virtual status_t takeLiveSnapshot(){return NO_ERROR;}
-    virtual status_t takePictureLiveshot(mm_camera_ch_data_buf_t* recvd_frame,
-                                 cam_ctrl_dimension_t *dim,
-                                 int frame_len){return NO_ERROR;}
+    virtual status_t takePictureLiveshot(mm_camera_ch_data_buf_t* recvd_frame){return NO_ERROR;}
 	virtual void setModeLiveSnapshot(bool){;}
     virtual status_t initSnapshotBuffers(cam_ctrl_dimension_t *dim,
                                  int num_of_buf){return NO_ERROR;}
@@ -272,9 +270,7 @@ public:
     static void deleteInstance(QCameraStream *p);
 
     status_t takePictureZSL(void);
-    status_t takePictureLiveshot(mm_camera_ch_data_buf_t* recvd_frame,
-                                 cam_ctrl_dimension_t *dim,
-                                 int frame_len);
+    status_t takePictureLiveshot(mm_camera_ch_data_buf_t* recvd_frame);
     status_t receiveRawPicture(mm_camera_ch_data_buf_t* recvd_frame);
     void receiveCompleteJpegPicture(jpeg_event_t event);
 	void jpegErrorHandler(jpeg_event_t event);
