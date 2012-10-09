@@ -362,10 +362,6 @@ int32_t mm_camera_set_general_parm(mm_camera_obj_t * my_obj, mm_camera_parm_t *p
         mm_jpeg_encoder_setRotation(*((int *)parm->p_value),isZSL);
         return MM_CAMERA_OK;
 
-    case MM_CAMERA_PARM_ZSL_FLASH:
-      return mm_camera_send_native_ctrl_cmd(my_obj,
-                  CAMERA_SET_ZSL_FLASH, sizeof(uint32_t), (void *)parm->p_value);
-
     case MM_CAMERA_PARM_ASD_ENABLE:
       return mm_camera_send_native_ctrl_cmd(my_obj,
                   CAMERA_SET_ASD_ENABLE, sizeof(uint32_t), (void *)parm->p_value);
@@ -600,7 +596,7 @@ int32_t mm_camera_get_parm(mm_camera_obj_t * my_obj,
     case MM_CAMERA_PARM_FOCUS_DISTANCES:
         return mm_camera_send_native_ctrl_cmd(my_obj,   CAMERA_GET_PARM_FOCUS_DISTANCES,
                      sizeof(focus_distances_info_t), (void *)parm->p_value);
-  case MM_CAMERA_PARM_QUERY_FLASH4SNAP:
+  case MM_CAMERA_PARM_QUERY_FALSH4SNAP:
         return mm_camera_send_native_ctrl_cmd(my_obj,   CAMERA_QUERY_FLASH_FOR_SNAPSHOT,
                      sizeof(int), (void *)parm->p_value);
   case MM_CAMERA_PARM_3D_FRAME_FORMAT:
@@ -847,11 +843,6 @@ int32_t mm_camera_action_start(mm_camera_obj_t *my_obj,
             rc = mm_camera_ch_fn(my_obj, ch_type,
                     MM_CAMERA_STATE_EVT_STREAM_ON, NULL);
             break;
-        case MM_CAMERA_OPS_PREPARE_SNAPSHOT:
-            rc = mm_camera_send_native_ctrl_timeout_cmd(my_obj,CAMERA_PREPARE_SNAPSHOT, 0, NULL, 2000);
-            CDBG("%s: prepare snapshot done opcode = %d, rc= %d\n", __func__, opcode, rc);
-            break;
-
         default:
             break;
         }
