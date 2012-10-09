@@ -188,7 +188,8 @@ QCameraHardwareInterface(int cameraId, int mode)
                     mFocusMode(AF_MODE_MAX),
                     mPreviewFormat(CAMERA_YUV_420_NV21),
                     mRestartPreview(false),
-                    mReleasedRecordingFrame(false)
+                    mReleasedRecordingFrame(false),
+                    mStateLiveshot(false)
 {
     ALOGV("QCameraHardwareInterface: E");
     int32_t result = MM_CAMERA_E_GENERAL;
@@ -740,13 +741,13 @@ processSnapshotChannelEvent(mm_camera_ch_event_type_t channelEvent, app_notify_c
       mCameraState);
     switch(channelEvent) {
         case MM_CAMERA_CH_EVT_STREAMING_ON:
-          if (!mFullLiveshotEnabled) {
+          if (!mStateLiveshot) {
             mCameraState =
               isZSLMode() ? CAMERA_STATE_ZSL : CAMERA_STATE_SNAP_CMD_ACKED;
           }
           break;
         case MM_CAMERA_CH_EVT_STREAMING_OFF:
-          if (!mFullLiveshotEnabled) {
+          if (!mStateLiveshot) {
             mCameraState = CAMERA_STATE_READY;
           }
           break;
@@ -1340,6 +1341,10 @@ void QCameraHardwareInterface::stopRecordingInternal()
         return;
     }
 
+    if(mStateLiveshot && mStreamLiveSnap != NULL) {
+        mStreamLiveSnap->stop();
+        mStateLiveshot = false;
+    }
     /*
     * call QCameraStream_record::stop()
     * Unregister Callback, action stop
@@ -1505,11 +1510,17 @@ status_t QCameraHardwareInterface::cancelPicture()
         case QCAMERA_HAL_PREVIEW_STOPPED:
         case QCAMERA_HAL_PREVIEW_START:
         case QCAMERA_HAL_PREVIEW_STARTED:
+            break;
         case QCAMERA_HAL_RECORDING_STARTED:
-        default:
+            if(mStateLiveshot && (mStreamLiveSnap != NULL)) {
+                mStreamLiveSnap->stop();
+                mStateLiveshot = false;
+            }
             break;
         case QCAMERA_HAL_TAKE_PICTURE:
             ret = cancelPictureInternal();
+            break;
+        default:
             break;
     }
     ALOGI("cancelPicture: X");
@@ -1551,67 +1562,15 @@ void liveshot_callback(mm_camera_ch_data_buf_t *recvd_frame,
     int mJpegMaxSize;
     int mNuberOfVFEOutputs = 0;
     status_t ret;
-    ALOGE("%s: E", __func__);
+    ALOGI("%s: E", __func__);
 
-    ret = cam_config_get_parm(pme->mCameraId,MM_CAMERA_PARM_VFE_OUTPUT_ENABLE,
-                       &mNuberOfVFEOutputs);
-    if (ret != MM_CAMERA_OK) {
-       ALOGE("get parm MM_CAMERA_PARM_VFE_OUTPUT_ENABLE  failed");
-       cam_evt_buf_done(pme->mCameraId, recvd_frame);
-       return ;
+    if (!pme->mStateLiveshot) {
+        ALOGE("%s: Returning Buffer. Picture Cancelled", __func__);
+		return;
     }
 
-    mm_camera_ch_data_buf_t* frame =
-         (mm_camera_ch_data_buf_t *)malloc(sizeof(mm_camera_ch_data_buf_t));
-    if (frame == NULL) {
-        ALOGE("%s: Error allocating memory to save received_frame structure.", __func__);
-        cam_evt_buf_done(pme->mCameraId, recvd_frame);
-		return ;
-    }
-    memcpy(frame, recvd_frame, sizeof(mm_camera_ch_data_buf_t));
-
-    if (mNuberOfVFEOutputs == 1)
-        ALOGE("<DEBUG> Liveshot buffer idx:%d",frame->def.idx);
-    else
-        ALOGE("<DEBUG> Liveshot buffer idx:%d",frame->video.video.idx);
-    memset(&dim, 0, sizeof(cam_ctrl_dimension_t));
-    ret = cam_config_get_parm(pme->mCameraId, MM_CAMERA_PARM_DIMENSION, &dim);
-    if (MM_CAMERA_OK != ret) {
-        ALOGE("%s: error - can't get dimension!", __func__);
-        ALOGE("%s: X", __func__);
-    }
-
-#if 1
     ALOGE("Live Snapshot Enabled");
-    if (mNuberOfVFEOutputs == 1){
-       frame->snapshot.main.frame = frame->def.frame;
-       frame->snapshot.main.idx = frame->def.idx;
-       frame->snapshot.thumbnail.frame = frame->def.frame;
-       frame->snapshot.thumbnail.idx = frame->def.idx;
-    } else {
-       frame->snapshot.main.frame = frame->video.video.frame;
-       frame->snapshot.main.idx = frame->video.video.idx;
-       frame->snapshot.thumbnail.frame = frame->video.video.frame;
-       frame->snapshot.thumbnail.idx = frame->video.video.idx;
-    }
-
-    dim.picture_width = pme->mVideoWidth;
-    dim.picture_height = pme->mVideoHeight;
-    dim.ui_thumbnail_width = pme->mVideoWidth;
-    dim.ui_thumbnail_height = pme->mVideoHeight;
-
-    if (mNuberOfVFEOutputs == 1){
-       dim.main_img_format = pme->mDimension.prev_format;
-       dim.thumb_format = pme->mDimension.prev_format;
-    } else {
-       dim.main_img_format = pme->mDimension.enc_format;
-       dim.thumb_format = pme->mDimension.enc_format;
-    }
-
-    mJpegMaxSize = dim.picture_width * dim.picture_height * 1.5;
-
-    ALOGE("Picture w = %d , h = %d, size = %d",dim.picture_width,dim.picture_height,mJpegMaxSize);
-     if (pme->mStreamLiveSnap){
+    if (pme->mStreamLiveSnap){
         ALOGE("%s:Deleting old Snapshot stream instance",__func__);
         QCameraStream_Snapshot::deleteInstance (pme->mStreamLiveSnap);
         pme->mStreamLiveSnap = NULL;
@@ -1622,22 +1581,18 @@ void liveshot_callback(mm_camera_ch_data_buf_t *recvd_frame,
 
     if (!pme->mStreamLiveSnap) {
         ALOGE("%s: error - can't creat snapshot stream!", __func__);
+        cam_evt_buf_done(pme->mCameraId, recvd_frame);
         return ;
     }
     pme->mStreamLiveSnap->setModeLiveSnapshot(true);
     pme->mStreamLiveSnap->setHALCameraControl(pme);
-    pme->mStreamLiveSnap->initSnapshotBuffers(&dim,1);
-    ALOGE("Calling live shot");
 
-
-    ((QCameraStream_Snapshot*)(pme->mStreamLiveSnap))->takePictureLiveshot(frame,&dim,mJpegMaxSize);
-
-#else
-  if(MM_CAMERA_OK != cam_evt_buf_done(pme->mCameraId,frame )) {
-    ALOGE(" BUF DONE FAILED");
-  }
-#endif
-  ALOGE("%s: X", __func__);
+    ret = ((QCameraStream_Snapshot*)(pme->mStreamLiveSnap))->takePictureLiveshot(recvd_frame);
+    if (MM_CAMERA_OK != ret) {
+        ALOGE("%s: Error : returned from takePictureLiveshot",__func__);
+        return;
+    }
+    ALOGE("%s: X", __func__);
 
 }
 
@@ -1719,6 +1674,10 @@ status_t  QCameraHardwareInterface::takePicture()
       ret = UNKNOWN_ERROR;
       break;
     case QCAMERA_HAL_RECORDING_STARTED:
+      if(mStateLiveshot) {
+          ALOGE("takePicture : Duplicate TakePicture Call");
+          return ret;
+      }
       if (canTakeFullSizeLiveshot()) {
         ALOGD(" Calling takeFullSizeLiveshot");
         takeFullSizeLiveshot();
@@ -1743,7 +1702,7 @@ status_t  QCameraHardwareInterface::takePicture()
                                                     this);
         }
       }
-
+      mStateLiveshot = true;
       break;
     default:
         ret = UNKNOWN_ERROR;
