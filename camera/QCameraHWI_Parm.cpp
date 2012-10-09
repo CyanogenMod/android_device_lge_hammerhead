@@ -1293,7 +1293,11 @@ void QCameraHardwareInterface::initDefaultParameters()
 
     if (setParameters(mParameters) != NO_ERROR) {
         ALOGE("Failed to set default parameters?!");
-    }  
+    }
+
+    mNoDisplayMode = 0;
+    mLedStatusForZsl = LED_MODE_OFF;
+
     mInitialized = true;
     strTexturesOn = false;
 
@@ -2844,6 +2848,7 @@ status_t QCameraHardwareInterface::setFlash(const QCameraParameters& params)
             mParameters.set(QCameraParameters::KEY_FLASH_MODE, str);
             bool ret = native_set_parms(MM_CAMERA_PARM_LED_MODE,
                                        sizeof(value), (void *)&value);
+            mLedStatusForZsl = (led_mode_t)value;
             return ret ? NO_ERROR : UNKNOWN_ERROR;
         }
     }
@@ -3836,6 +3841,42 @@ int QCameraHardwareInterface::getZSLBackLookCount(void) const
       ALOGE("%s: look_back = %d", __func__, look_back);
     }
     return look_back;
+}
+
+bool QCameraHardwareInterface::getFlashCondition(void)
+{
+    int32_t rc = 0;
+    bool flash_cond = false;
+    aec_info_for_flash_t lowLightForZSL;
+
+    lowLightForZSL.aec_index_for_zsl = 0;
+    lowLightForZSL.zsl_flash_enable = 0;
+
+    if(myMode & CAMERA_ZSL_MODE){
+        switch(mLedStatusForZsl) {
+            case LED_MODE_ON:
+                flash_cond = true;
+                break;
+            case LED_MODE_AUTO:
+                rc = cam_config_get_parm(mCameraId,
+                        MM_CAMERA_GET_PARM_LOW_LIGHT_FOR_ZSL, &lowLightForZSL);
+                if(MM_CAMERA_OK == rc) {
+                    if(lowLightForZSL.zsl_flash_enable != 0)
+                        flash_cond = true;
+                    else
+                        flash_cond = false;
+                }
+                else
+                    ALOGE("%s: Failed to get lowLightForZSL, rc %d", __func__, rc);
+                break;
+             default:
+                break;
+        }
+    }
+
+    ALOGV("%s: myMode %d, flash mode %d, flash condition %d",
+        __func__, myMode, mLedStatusForZsl, flash_cond);
+    return flash_cond;
 }
 
 //EXIF functions
