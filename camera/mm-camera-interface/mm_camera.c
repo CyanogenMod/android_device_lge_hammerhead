@@ -654,6 +654,9 @@ int32_t mm_camera_get_parm(mm_camera_obj_t * my_obj,
                   CAMERA_GET_PARM_HDR, sizeof(exp_bracketing_t), (void *)parm->p_value);
         //my_obj->channel_interface_mask = *((exp_bracketing_t *)(parm->p_value));
         break;
+    case MM_CAMERA_GET_PARM_LOW_LIGHT_FOR_ZSL:
+        return mm_camera_send_native_ctrl_cmd(my_obj,   CAMERA_GET_PARM_LOW_LIGHT_FOR_ZSL,
+                     sizeof(aec_info_for_flash_t), (void *)parm->p_value);
     default:
         /* needs to add more implementation */
         rc = -1;

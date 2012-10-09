@@ -439,6 +439,7 @@ typedef enum {
     MM_CAMERA_PARM_AWB_LOCK,
     MM_CAMERA_PARM_AF_MTR_AREA,
     MM_CAMERA_PARM_AEC_MTR_AREA,
+    MM_CAMERA_GET_PARM_LOW_LIGHT_FOR_ZSL,
     MM_CAMERA_PARM_LOW_POWER_MODE,
     MM_CAMERA_PARM_MAX_HFR_MODE, /* 80 */
     MM_CAMERA_PARM_MAX_VIDEO_SIZE,
@@ -619,6 +620,7 @@ typedef enum {
   CAMERA_SET_PARM_CAF_TYPE,
 #endif
   CAMERA_GET_PARM_LUX_IDX,
+  CAMERA_GET_PARM_LOW_LIGHT_FOR_ZSL,
   CAMERA_CTRL_PARM_MAX
 } cam_ctrl_type;
 
@@ -1063,6 +1065,11 @@ typedef enum {
   /*new mode above should be added above this line*/
   LED_MODE_MAX
 } led_mode_t;
+
+typedef struct{
+  int aec_index_for_zsl;
+  int zsl_flash_enable;
+} aec_info_for_flash_t;
 
 typedef struct video_dis_param_ctrl_t {
   uint32_t dis_enable;       /* DIS feature: 1 = enable, 0 = disable.

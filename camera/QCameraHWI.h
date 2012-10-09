@@ -560,6 +560,8 @@ private:
     status_t           setParameters(const QCameraParameters& params);
     QCameraParameters&  getParameters() ;
 
+    bool getFlashCondition(void);
+
     status_t setCameraMode(const QCameraParameters& params);
     status_t setPictureSizeTable(void);
     status_t setPreviewSizeTable(void);
@@ -743,6 +745,9 @@ private:
     int mSnapshotFormat;
     int mZslInterval;
     bool mRestartPreview;
+
+    led_mode_t mLedStatusForZsl;
+    bool mFlashCond;
 
 /*for histogram*/
     int            mStatsOn;
