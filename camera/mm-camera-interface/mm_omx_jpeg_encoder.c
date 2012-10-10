@@ -165,7 +165,7 @@ OMX_ERRORTYPE ftbdone(OMX_OUT OMX_HANDLETYPE hComponent,
                       OMX_OUT OMX_PTR pAppData,
                       OMX_OUT OMX_BUFFERHEADERTYPE* pBuffer)
 {
-    ALOGE("%s", __func__);
+    ALOGV("%s", __func__);
     *out_buffer_size = pBuffer->nFilledLen;
     pthread_mutex_lock(&lock);
     expectedEvent = OMX_EVENT_FTB_DONE;
@@ -181,7 +181,7 @@ OMX_ERRORTYPE ftbdone(OMX_OUT OMX_HANDLETYPE hComponent,
 
 OMX_ERRORTYPE handleError(OMX_IN OMX_EVENTTYPE eEvent, OMX_IN OMX_U32 error)
 {
-    ALOGE("%s", __func__);
+    ALOGV("%s", __func__);
     if (error == OMX_EVENT_JPEG_ERROR) {
         if (mmcamera_jpeg_callback && encoding) {
             ALOGI("%s:OMX_EVENT_JPEG_ERROR\n", __func__);
@@ -293,7 +293,7 @@ int8_t omxJpegOpen()
 int8_t omxJpegStart(uint8_t hw_encode_enable)
 {
     int rc = 0;
-    ALOGE("%s", __func__);
+    ALOGV("%s", __func__);
     pthread_mutex_lock(&jpege_mutex);
     hw_encode = hw_encode_enable;
     callbacks.EmptyBufferDone = etbdone;
@@ -402,7 +402,7 @@ int8_t omxJpegEncodeNext(omx_jpeg_encode_params *encode_params)
       tag.tag_entry.count = 1;
       tag.tag_entry.copy = 1;
       tag.tag_entry.data._short = orientation;
-      ALOGE("%s jpegRotation = %d , orientation value =%d\n", __func__,
+      ALOGV("%s jpegRotation = %d , orientation value =%d\n", __func__,
            jpegRotation, orientation);
       OMX_SetParameter(pHandle, exif, &tag);
     }
@@ -751,7 +751,7 @@ void omxJpegAbort()
 int8_t mm_jpeg_encoder_setMainImageQuality(uint32_t quality)
 {
     pthread_mutex_lock(&jpege_mutex);
-    ALOGE("%s: current main inage quality %d ," \
+    ALOGI("%s: current main inage quality %d ," \
     " new quality : %d\n", __func__, jpegMainimageQuality, quality);
     if (quality <= 100)
         jpegMainimageQuality = quality;
@@ -762,7 +762,7 @@ int8_t mm_jpeg_encoder_setMainImageQuality(uint32_t quality)
 int8_t mm_jpeg_encoder_setThumbnailQuality(uint32_t quality)
 {
     pthread_mutex_lock(&jpege_mutex);
-    ALOGE("%s: current thumbnail quality %d ," \
+    ALOGI("%s: current thumbnail quality %d ," \
     " new quality : %d\n", __func__, jpegThumbnailQuality, quality);
     if (quality <= 100)
         jpegThumbnailQuality = quality;
@@ -776,7 +776,7 @@ int8_t mm_jpeg_encoder_setRotation(int rotation, int isZSL)
 
     /*Set ZSL Mode*/
     isZSLMode = isZSL;
-    ALOGE("%s: Setting ZSL Mode to %d Rotation = %d\n",__func__,isZSLMode,rotation);
+    ALOGI("%s: Setting ZSL Mode to %d Rotation = %d\n",__func__,isZSLMode,rotation);
     /* Set rotation configuration */
     switch (rotation) {
     case 0:

@@ -28,6 +28,7 @@
 #include <math.h>
 #include "QCameraHAL.h"
 #include "QCameraHWI.h"
+#include "QCamera_dbg.h"
 
 #define THUMBNAIL_DEFAULT_WIDTH 512
 #define THUMBNAIL_DEFAULT_HEIGHT 384
@@ -113,7 +114,7 @@ static void snapshot_notify_cb(mm_camera_ch_data_buf_t *recvd_frame,
 {
     QCameraStream_Snapshot *pme = (QCameraStream_Snapshot *)user_data;
 
-    ALOGD("%s: E", __func__);
+    ALOGV("%s: E", __func__);
 
     if (pme != NULL) {
         pme->receiveRawPicture(recvd_frame);
@@ -122,7 +123,7 @@ static void snapshot_notify_cb(mm_camera_ch_data_buf_t *recvd_frame,
         ALOGW("%s: Snapshot obj NULL in callback", __func__);
     }
 
-    ALOGD("%s: X", __func__);
+    ALOGV("%s: X", __func__);
 
 }
 
@@ -135,21 +136,21 @@ static void snapshot_jpeg_fragment_cb(uint8_t *ptr,
 {
     QCameraStream_Snapshot *pme = (QCameraStream_Snapshot *)user_data;
 
-    ALOGE("%s: E",__func__);
+    ALOGV("%s: E",__func__);
     if (pme != NULL) {
         pme->receiveJpegFragment(ptr,size);
     }
     else
         ALOGW("%s: Receive jpeg fragment cb obj Null", __func__);
 
-    ALOGD("%s: X",__func__);
+    ALOGV("%s: X",__func__);
 }
 
 /* This callback is received once the complete JPEG encoding is done */
 static void snapshot_jpeg_cb(jpeg_event_t event, void *user_data)
 {
     QCameraStream_Snapshot *pme = (QCameraStream_Snapshot *)user_data;
-    ALOGE("%s: E ",__func__);
+    ALOGV("%s: E ",__func__);
 
     switch(event) {
     case JPEG_EVENT_DONE:
@@ -177,7 +178,7 @@ static void snapshot_jpeg_cb(jpeg_event_t event, void *user_data)
         if (event == JPEG_EVENT_THUMBNAIL_DROPPED) {
             ALOGE("%s: Error in thumbnail encoding (event: %d)!!!",
                  __func__, event);
-            ALOGD("%s: X",__func__);
+            ALOGV("%s: X",__func__);
             return;
         }
         else {
@@ -188,10 +189,10 @@ static void snapshot_jpeg_cb(jpeg_event_t event, void *user_data)
 
     if (pme != NULL) {
        pme->receiveCompleteJpegPicture(event);
-       ALOGE(" Completed issuing JPEG callback");
+       ALOGI(" Completed issuing JPEG callback");
        /* deinit only if we are done taking requested number of snapshots */
        if (pme->getSnapshotState() == SNAPSHOT_STATE_JPEG_COMPLETE_ENCODE_DONE) {
-           ALOGE(" About to issue deinit callback");
+           ALOGI(" About to issue deinit callback");
        /* If it's ZSL Mode, we don't deinit now. We'll stop the polling thread and
           deinit the channel/buffers only when we change the mode from zsl to
           non-zsl. */
@@ -204,8 +205,7 @@ static void snapshot_jpeg_cb(jpeg_event_t event, void *user_data)
         ALOGW("%s: Receive jpeg cb Obj Null", __func__);
 
 
-    ALOGD("%s: X",__func__);
-
+    ALOGV("%s: X",__func__);
 }
 
 // ---------------------------------------------------------------------------
@@ -215,7 +215,7 @@ static void snapshot_jpeg_cb(jpeg_event_t event, void *user_data)
 void QCameraStream_Snapshot::
 receiveJpegFragment(uint8_t *ptr, uint32_t size)
 {
-    ALOGE("%s: E", __func__);
+    ALOGV("%s: E", __func__);
 #if 0
     if (mJpegHeap != NULL) {
         ALOGE("%s: Copy jpeg...", __func__);
@@ -242,7 +242,7 @@ receiveJpegFragment(uint8_t *ptr, uint32_t size)
 
     #endif
 
-    ALOGD("%s: X", __func__);
+    ALOGV("%s: X", __func__);
 }
 
 void QCameraStream_Snapshot::jpegErrorHandler(jpeg_event_t event)
@@ -270,7 +270,7 @@ void QCameraStream_Snapshot::
 receiveCompleteJpegPicture(jpeg_event_t event)
 {
     int msg_type = CAMERA_MSG_COMPRESSED_IMAGE;
-    ALOGE("%s: E", __func__);
+    ALOGV("%s: E", __func__);
     camera_memory_t *encodedMem = NULL;
     camera_data_callback jpg_data_cb = NULL;
     bool fail_cb_flag = false;
@@ -286,7 +286,7 @@ receiveCompleteJpegPicture(jpeg_event_t event)
     }
 
     if(mCurrentFrameEncoded!=NULL /*&& !isLiveSnapshot()*/){
-        ALOGV("<DEBUG>: Calling buf done for snapshot buffer");
+        ALOGI("<DEBUG>: Calling buf done for snapshot buffer");
         cam_evt_buf_done(mCameraId, mCurrentFrameEncoded);
     }
     mHalCamCtrl->dumpFrameToFile(mHalCamCtrl->mJpegMemory.camera_memory[0]->data, mJpegOffset, (char *)"debug", (char *)"jpg", 0);
@@ -386,7 +386,7 @@ end:
     }
     mHalCamCtrl->mStateLiveshot = false;
 
-    ALOGD("%s: X", __func__);
+    ALOGV("%s: X", __func__);
 }
 
 status_t QCameraStream_Snapshot::
@@ -395,7 +395,7 @@ configSnapshotDimension(cam_ctrl_dimension_t* dim)
     bool matching = true;
     cam_format_t img_format;
     status_t ret = NO_ERROR;
-    ALOGD("%s: E", __func__);
+    ALOGV("%s: E", __func__);
 
     ALOGI("%s:Passed picture size: %d X %d", __func__,
          dim->picture_width, dim->picture_height);
@@ -483,7 +483,7 @@ configSnapshotDimension(cam_ctrl_dimension_t* dim)
          dim->picture_width, dim->picture_height,
          dim->ui_thumbnail_width, dim->ui_thumbnail_height);
 end:
-    ALOGD("%s: X", __func__);
+    ALOGV("%s: X", __func__);
     return ret;
 }
 
@@ -499,11 +499,11 @@ initRawSnapshotChannel(cam_ctrl_dimension_t *dim,
     mm_camera_raw_streaming_type_t raw_stream_type =
         MM_CAMERA_RAW_STREAMING_CAPTURE_SINGLE;
 
-    ALOGD("%s: E", __func__);
+    ALOGV("%s: E", __func__);
 
     /* Initialize stream - set format, acquire channel */
     /*TBD: Currently we only support single raw capture*/
-    ALOGE("num_of_snapshots = %d",num_of_snapshots);
+    ALOGI("num_of_snapshots = %d",num_of_snapshots);
     if (num_of_snapshots == 1) {
         raw_stream_type = MM_CAMERA_RAW_STREAMING_CAPTURE_SINGLE;
     }
@@ -536,9 +536,9 @@ initRawSnapshotChannel(cam_ctrl_dimension_t *dim,
     fmt.def.dim.height = dim->raw_picture_height;
 
 
-    ALOGV("%s: Raw snapshot channel fmt: %d", __func__,
+    ALOGI("%s: Raw snapshot channel fmt: %d", __func__,
          fmt.def.fmt);
-    ALOGV("%s: Raw snapshot resolution: %dX%d", __func__,
+    ALOGI("%s: Raw snapshot resolution: %dX%d", __func__,
          dim->raw_picture_width, dim->raw_picture_height);
 
     ALOGD("%s: Set Raw Snapshot channel image format", __func__);
@@ -553,7 +553,7 @@ end:
     if (ret != NO_ERROR) {
         handleError();
     }
-    ALOGE("%s: X", __func__);
+    ALOGV("%s: X", __func__);
     return ret;
 
 }
@@ -563,14 +563,14 @@ setZSLChannelAttribute(void)
 {
     status_t ret = NO_ERROR;
     mm_camera_channel_attr_t ch_attr;
-    ALOGD("%s: E", __func__);
+    ALOGV("%s: E", __func__);
 
     memset(&ch_attr, 0, sizeof(mm_camera_channel_attr_t));
     ch_attr.type = MM_CAMERA_CH_ATTR_BUFFERING_FRAME;
     ch_attr.buffering_frame.look_back = mHalCamCtrl->getZSLBackLookCount();
     ch_attr.buffering_frame.water_mark = mHalCamCtrl->getZSLQueueDepth();
     ch_attr.buffering_frame.interval = mHalCamCtrl->getZSLBurstInterval( );
-    ALOGE("%s: ZSL queue_depth = %d, back_look_count = %d", __func__,
+    ALOGI("%s: ZSL queue_depth = %d, back_look_count = %d", __func__,
          ch_attr.buffering_frame.water_mark,
          ch_attr.buffering_frame.look_back);
     if( NO_ERROR !=
@@ -580,7 +580,7 @@ setZSLChannelAttribute(void)
         goto end;
     }
 end:
-    ALOGD("%s: X", __func__);
+    ALOGV("%s: X", __func__);
     return ret;
 }
 
@@ -590,7 +590,7 @@ initSnapshotFormat(cam_ctrl_dimension_t *dim)
     status_t ret = NO_ERROR;
     mm_camera_ch_image_fmt_parm_t fmt;
 
-    ALOGD("%s: E", __func__);
+    ALOGV("%s: E", __func__);
 
     /* For ZSL mode we'll need to set channel attribute */
     if (isZSLMode()) {
@@ -610,9 +610,9 @@ initSnapshotFormat(cam_ctrl_dimension_t *dim)
     fmt.snapshot.thumbnail.dim.width = dim->ui_thumbnail_width;
     fmt.snapshot.thumbnail.dim.height = dim->ui_thumbnail_height;
 
-    ALOGV("%s: Snapshot channel fmt = main: %d thumbnail: %d", __func__,
+    ALOGI("%s: Snapshot channel fmt = main: %d thumbnail: %d", __func__,
          dim->main_img_format, dim->thumb_format);
-    ALOGV("%s: Snapshot channel resolution = main: %dX%d  thumbnail: %dX%d",
+    ALOGI("%s: Snapshot channel resolution = main: %dX%d  thumbnail: %dX%d",
          __func__, dim->picture_width, dim->picture_height,
          dim->ui_thumbnail_width, dim->ui_thumbnail_height);
 
@@ -628,7 +628,7 @@ end:
     if (ret != NO_ERROR) {
         handleError();
     }
-    ALOGE("%s: X", __func__);
+    ALOGV("%s: X", __func__);
     return ret;
 
 }
@@ -636,7 +636,7 @@ end:
 void QCameraStream_Snapshot::
 deinitSnapshotChannel(mm_camera_channel_type_t ch_type)
 {
-    ALOGD("%s: E", __func__);
+    ALOGV("%s: E", __func__);
 
     /* unreg buf notify*/
     if (getSnapshotState() >= SNAPSHOT_STATE_BUF_NOTIF_REGD){
@@ -651,7 +651,7 @@ deinitSnapshotChannel(mm_camera_channel_type_t ch_type)
         cam_ops_ch_release(mCameraId, ch_type);
     }
 
-    ALOGD("%s: X",__func__);
+    ALOGV("%s: X",__func__);
 }
 
 status_t QCameraStream_Snapshot::
@@ -665,7 +665,7 @@ initRawSnapshotBuffers(cam_ctrl_dimension_t *dim, int num_of_buf)
     mm_camera_reg_buf_t reg_buf;
     cam_format_t raw_fmt;
 
-    ALOGD("%s: E", __func__);
+    ALOGV("%s: E", __func__);
     memset(&reg_buf,  0,  sizeof(mm_camera_reg_buf_t));
     memset(&mSnapshotStreamBuf, 0, sizeof(mSnapshotStreamBuf));
 
@@ -713,7 +713,7 @@ initRawSnapshotBuffers(cam_ctrl_dimension_t *dim, int num_of_buf)
 
     ret = cam_config_prepare_buf(mCameraId, &reg_buf);
     if(ret != NO_ERROR) {
-        ALOGV("%s:reg snapshot buf err=%d\n", __func__, ret);
+        ALOGI("%s:reg snapshot buf err=%d\n", __func__, ret);
         ret = FAILED_TRANSACTION;
         mHalCamCtrl->releaseHeapMem(&mHalCamCtrl->mRawMemory);
         goto end;
@@ -730,20 +730,20 @@ end:
     }
     if (reg_buf.def.buf.mp)
       delete []reg_buf.def.buf.mp;
-    ALOGD("%s: X", __func__);
+    ALOGV("%s: X", __func__);
     return ret;
 }
 
 status_t QCameraStream_Snapshot::deinitRawSnapshotBuffers(void)
 {
     int ret = NO_ERROR;
-    ALOGD("%s: E", __func__);
+    ALOGV("%s: E", __func__);
 
     int err = getSnapshotState();
 
     /* deinit buffers only if we have already allocated */
     if (err >= SNAPSHOT_STATE_BUF_INITIALIZED || err == SNAPSHOT_STATE_ERROR){
-        ALOGD("%s: Unpreparing Snapshot Buffer", __func__);
+        ALOGI("%s: Unpreparing Snapshot Buffer", __func__);
         ret = cam_config_unprepare_buf(mCameraId, MM_CAMERA_CH_RAW);
         if(ret != NO_ERROR) {
             ALOGE("%s:Unreg Raw snapshot buf err=%d\n", __func__, ret);
@@ -754,7 +754,7 @@ status_t QCameraStream_Snapshot::deinitRawSnapshotBuffers(void)
     }
 
 end:
-    ALOGD("%s: X", __func__);
+    ALOGV("%s: X", __func__);
     return ret;
 }
 
@@ -769,7 +769,7 @@ initSnapshotBuffers(cam_ctrl_dimension_t *dim, int num_of_buf)
     mm_camera_reg_buf_t reg_buf;
     int rotation = 0;
 
-    ALOGD("%s: E", __func__);
+    ALOGV("%s: E", __func__);
     memset(&reg_buf,  0,  sizeof(mm_camera_reg_buf_t));
     memset(&mSnapshotStreamBuf, 0, sizeof(mSnapshotStreamBuf));
 
@@ -780,7 +780,7 @@ initSnapshotBuffers(cam_ctrl_dimension_t *dim, int num_of_buf)
         goto end;
     }
 
-    ALOGD("%s: Mode: %d Num_of_buf: %d ImageSizes: main: %dx%d thumb: %dx%d",
+    ALOGI("%s: Mode: %d Num_of_buf: %d ImageSizes: main: %dx%d thumb: %dx%d",
          __func__, myMode, num_of_buf,
          dim->picture_width, dim->picture_height,
          dim->ui_thumbnail_width, dim->ui_thumbnail_height);
@@ -825,7 +825,7 @@ initSnapshotBuffers(cam_ctrl_dimension_t *dim, int num_of_buf)
     frame_len = dim->picture_frame_offset.frame_len;
     y_off = dim->picture_frame_offset.mp[0].offset;
     cbcr_off = dim->picture_frame_offset.mp[1].offset;
-    ALOGE("%s: main image: rotation = %d, yoff = %d, cbcroff = %d, size = %d, width = %d, height = %d",
+    ALOGI("%s: main image: rotation = %d, yoff = %d, cbcroff = %d, size = %d, width = %d, height = %d",
          __func__, dim->rotation, y_off, cbcr_off, frame_len, dim->picture_width, dim->picture_height);
     if (mHalCamCtrl->initHeapMem (&mHalCamCtrl->mJpegMemory, 1, frame_len, 0, cbcr_off,
                                   MSM_PMEM_MAX, NULL, NULL, num_planes, planes) < 0) {
@@ -848,7 +848,7 @@ initSnapshotBuffers(cam_ctrl_dimension_t *dim, int num_of_buf)
         if (!isFullSizeLiveshot()) {
     	    y_off = dim->thumb_frame_offset.mp[0].offset;
                 cbcr_off = dim->thumb_frame_offset.mp[1].offset;
-    	    ALOGE("%s: thumbnail: rotation = %d, yoff = %d, cbcroff = %d, size = %d, width = %d, height = %d",
+    	    ALOGI("%s: thumbnail: rotation = %d, yoff = %d, cbcroff = %d, size = %d, width = %d, height = %d",
     		__func__, dim->rotation, y_off, cbcr_off, frame_len,
     		dim->thumbnail_width, dim->thumbnail_height);
 
@@ -872,7 +872,7 @@ initSnapshotBuffers(cam_ctrl_dimension_t *dim, int num_of_buf)
 
         ret = cam_config_prepare_buf(mCameraId, &reg_buf);
         if(ret != NO_ERROR) {
-            ALOGV("%s:reg snapshot buf err=%d\n", __func__, ret);
+            ALOGE("%s:reg snapshot buf err=%d\n", __func__, ret);
             ret = FAILED_TRANSACTION;
             if (!isFullSizeLiveshot()){
                 mHalCamCtrl->releaseHeapMem(&mHalCamCtrl->mThumbnailMemory);
@@ -894,7 +894,7 @@ end:
       delete []reg_buf.snapshot.main.buf.mp;
     if (reg_buf.snapshot.thumbnail.buf.mp)
       delete []reg_buf.snapshot.thumbnail.buf.mp;
-    ALOGD("%s: X", __func__);
+    ALOGV("%s: X", __func__);
     return ret;
 }
 
@@ -902,14 +902,14 @@ status_t QCameraStream_Snapshot::
 deinitSnapshotBuffers(void)
 {
     int ret = NO_ERROR;
-    ALOGD("%s: E", __func__);
+    ALOGV("%s: E", __func__);
 
     int err = getSnapshotState();
     /* Deinit only if we have already initialized*/
     if (err >= SNAPSHOT_STATE_BUF_INITIALIZED || err == SNAPSHOT_STATE_ERROR){
 
         if(!isLiveSnapshot()) {
-            ALOGD("%s: Unpreparing Snapshot Buffer", __func__);
+            ALOGI("%s: Unpreparing Snapshot Buffer", __func__);
             ret = cam_config_unprepare_buf(mCameraId, MM_CAMERA_CH_SNAPSHOT);
             if(ret != NO_ERROR) {
                 ALOGE("%s:unreg snapshot buf err=%d\n", __func__, ret);
@@ -927,7 +927,7 @@ deinitSnapshotBuffers(void)
         mHalCamCtrl->releaseHeapMem(&mHalCamCtrl->mJpegMemory);
     }
 end:
-    ALOGD("%s: X", __func__);
+    ALOGV("%s: X", __func__);
     return ret;
 }
 
@@ -935,7 +935,7 @@ void QCameraStream_Snapshot::deInitBuffer(void)
 {
     mm_camera_channel_type_t ch_type;
 
-    ALOGI("%s: E", __func__);
+    ALOGV("%s: E", __func__);
 
     if( getSnapshotState() == SNAPSHOT_STATE_UNINIT) {
         ALOGD("%s: Already deinit'd!", __func__);
@@ -988,7 +988,7 @@ void QCameraStream_Snapshot::deInitBuffer(void)
 
     setSnapshotState(SNAPSHOT_STATE_UNINIT);
 
-    ALOGD("%s: X", __func__);
+    ALOGV("%s: X", __func__);
 }
 
 /*Temp: to be removed once event handling is enabled in mm-camera.
@@ -996,7 +996,7 @@ void QCameraStream_Snapshot::deInitBuffer(void)
   stream-off to disable OPS_SNAPSHOT*/
 void QCameraStream_Snapshot::runSnapshotThread(void *data)
 {
-    ALOGD("%s: E", __func__);
+    ALOGV("%s: E", __func__);
 
     if (mSnapshotFormat == PICTURE_FORMAT_RAW) {
        /* TBD: Temp: Needs to be removed once event handling is enabled.
@@ -1008,19 +1008,19 @@ void QCameraStream_Snapshot::runSnapshotThread(void *data)
         /* Send command to stop snapshot polling thread*/
         stop();
     }
-    ALOGD("%s: X", __func__);
+    ALOGV("%s: X", __func__);
 }
 
 /*Temp: to be removed once event handling is enabled in mm-camera*/
 static void *snapshot_thread(void *obj)
 {
     QCameraStream_Snapshot *pme = (QCameraStream_Snapshot *)obj;
-    ALOGD("%s: E", __func__);
+    ALOGV("%s: E", __func__);
     if (pme != 0) {
         pme->runSnapshotThread(obj);
     }
     else ALOGW("not starting snapshot thread: the object went away!");
-    ALOGD("%s: X", __func__);
+    ALOGV("%s: X", __func__);
     return NULL;
 }
 
@@ -1050,7 +1050,7 @@ status_t QCameraStream_Snapshot::initJPEGSnapshot(int num_of_snapshots)
     }
 
     /* Set camera op mode to MM_CAMERA_OP_MODE_CAPTURE */
-    ALOGD("Setting OP_MODE_CAPTURE");
+    ALOGI("Setting OP_MODE_CAPTURE");
     op_mode = MM_CAMERA_OP_MODE_CAPTURE;
     if( NO_ERROR != cam_config_set_parm(mCameraId,
             MM_CAMERA_PARM_OP_MODE, &op_mode)) {
@@ -1117,7 +1117,7 @@ status_t QCameraStream_Snapshot::initRawSnapshot(int num_of_snapshots)
     ALOGV("%s: E", __func__);
 
     /* Set camera op mode to MM_CAMERA_OP_MODE_CAPTURE */
-    ALOGD("%s: Setting OP_MODE_CAPTURE", __func__);
+    ALOGI("%s: Setting OP_MODE_CAPTURE", __func__);
     op_mode = MM_CAMERA_OP_MODE_CAPTURE;
     if( NO_ERROR != cam_config_set_parm(mCameraId,
             MM_CAMERA_PARM_OP_MODE, &op_mode)) {
@@ -1133,10 +1133,10 @@ status_t QCameraStream_Snapshot::initRawSnapshot(int num_of_snapshots)
     ret = cam_config_get_parm(mCameraId, MM_CAMERA_PARM_DIMENSION, &dim);
     if (MM_CAMERA_OK != ret) {
       ALOGE("%s: error - can't get dimension!", __func__);
-      ALOGE("%s: X", __func__);
+      ALOGV("%s: X", __func__);
       goto end;
     }
-    ALOGD("%s: Raw Snapshot dimension: %dx%d", __func__,
+    ALOGI("%s: Raw Snapshot dimension: %dx%d", __func__,
          dim.raw_picture_width,
          dim.raw_picture_height);
 
@@ -1178,7 +1178,7 @@ status_t QCameraStream_Snapshot::initFullLiveshot(void)
 #if 1
     /* First check if the picture resolution is the same, if not, change it*/
     mHalCamCtrl->getPictureSize(&mPictureWidth, &mPictureHeight);
-    ALOGD("%s: Picture size received: %d x %d", __func__,
+    ALOGI("%s: Picture size received: %d x %d", __func__,
          mPictureWidth, mPictureHeight);
 
     //Use main image as input to encoder to generate thumbnail
@@ -1204,7 +1204,7 @@ status_t QCameraStream_Snapshot::initFullLiveshot(void)
         dim.ui_thumbnail_height = mThumbnailHeight;
         dim.ui_thumbnail_width = mThumbnailWidth;
     }
-    ALOGD("%s: Picture size to set: %d x %d", __func__,
+    ALOGI("%s: Picture size to set: %d x %d", __func__,
          dim.picture_width, dim.picture_height);
     ret = cam_config_set_parm(mCameraId, MM_CAMERA_PARM_DIMENSION,&dim);
 #endif
@@ -1231,7 +1231,7 @@ status_t QCameraStream_Snapshot::initZSLSnapshot(void)
 
     ALOGV("%s: E", __func__);
 
-    ALOGD("%s: Get current dimension", __func__);
+    ALOGI("%s: Get current dimension", __func__);
     /* Query mm_camera to get current dimension */
     memset(&dim, 0, sizeof(cam_ctrl_dimension_t));
     ret = cam_config_get_parm(mCameraId,
@@ -1243,7 +1243,7 @@ status_t QCameraStream_Snapshot::initZSLSnapshot(void)
     }
 
     /* config the parmeters and see if we need to re-init the stream*/
-    ALOGD("%s: Configure Snapshot Dimension", __func__);
+    ALOGI("%s: Configure Snapshot Dimension", __func__);
     ret = configSnapshotDimension(&dim);
     if (ret != NO_ERROR) {
         ALOGE("%s: Setting snapshot dimension failed", __func__);
@@ -1291,14 +1291,14 @@ takePictureJPEG(void)
 {
     status_t ret = NO_ERROR;
 
-    ALOGD("%s: E", __func__);
+    ALOGV("%s: E", __func__);
 
     if (mHalCamCtrl->mHdrMode == HDR_MODE) {
         hdrRawCount = 0;
         hdrJpegCount = 0;
     }
     /* Take snapshot */
-    ALOGD("%s: Call MM_CAMERA_OPS_SNAPSHOT", __func__);
+    ALOGI("%s: Call MM_CAMERA_OPS_SNAPSHOT", __func__);
     if (NO_ERROR != cam_ops_action(mCameraId,
                                               true,
                                               MM_CAMERA_OPS_SNAPSHOT,
@@ -1321,7 +1321,7 @@ end:
         handleError();
     }
 
-    ALOGD("%s: X", __func__);
+    ALOGV("%s: X", __func__);
     return ret;
 
 }
@@ -1331,10 +1331,10 @@ takePictureRaw(void)
 {
     status_t ret = NO_ERROR;
 
-    ALOGD("%s: E", __func__);
+    ALOGV("%s: E", __func__);
 
     /* Take snapshot */
-    ALOGD("%s: Call MM_CAMERA_OPS_SNAPSHOT", __func__);
+    ALOGI("%s: Call MM_CAMERA_OPS_SNAPSHOT", __func__);
     if (NO_ERROR != cam_ops_action(mCameraId,
                                   true,
                                   MM_CAMERA_OPS_RAW,
@@ -1357,7 +1357,7 @@ end:
     if (ret != NO_ERROR) {
         handleError();
     }
-    ALOGD("%s: X", __func__);
+    ALOGV("%s: X", __func__);
     return ret;
 
 }
@@ -1400,13 +1400,13 @@ takePictureLiveshot(mm_camera_ch_data_buf_t* recvd_frame)
     memcpy(frame, recvd_frame, sizeof(mm_camera_ch_data_buf_t));
 
     if (mNuberOfVFEOutputs == 1){
-        ALOGE("<DEBUG> Liveshot buffer idx:%d",frame->def.idx);
+        ALOGI("<DEBUG> Liveshot buffer idx:%d",frame->def.idx);
        frame->snapshot.main.frame = frame->def.frame;
        frame->snapshot.main.idx = frame->def.idx;
        frame->snapshot.thumbnail.frame = frame->def.frame;
        frame->snapshot.thumbnail.idx = frame->def.idx;
     } else {
-       ALOGE("<DEBUG> Liveshot buffer idx:%d",frame->video.video.idx);
+       ALOGI("<DEBUG> Liveshot buffer idx:%d",frame->video.video.idx);
        frame->snapshot.main.frame = frame->video.video.frame;
        frame->snapshot.main.idx = frame->video.video.idx;
        frame->snapshot.thumbnail.frame = frame->video.video.frame;
@@ -1471,7 +1471,7 @@ takePictureLiveshot(mm_camera_ch_data_buf_t* recvd_frame)
 
     mJpegMaxSize = mPictureWidth * mPictureHeight * 1.5;
 
-    ALOGE("Liveshot res = %d X %d, Thumabnail = %d % %d",
+    ALOGI("Liveshot res = %d X %d, Thumabnail = %d % %d",
           mPictureWidth,mPictureHeight,mThumbnailWidth,mThumbnailHeight);
 
     memset(&crop_info, 0, sizeof(common_crop_t));
@@ -1505,7 +1505,7 @@ takePictureLiveshot(mm_camera_ch_data_buf_t* recvd_frame)
       notifyCb(CAMERA_MSG_RAW_IMAGE_NOTIFY, 0, 0, mHalCamCtrl->mCallbackCookie);
     }
 end:
-    ALOGI("%s: X", __func__);
+    ALOGV("%s: X", __func__);
     return ret;
 }
 
@@ -1515,13 +1515,13 @@ takePictureZSL(void)
     status_t ret = NO_ERROR;
     mm_camera_ops_parm_get_buffered_frame_t param;
 
-    ALOGE("%s: E", __func__);
+    ALOGV("%s: E", __func__);
 
     memset(&param, 0, sizeof(param));
     param.ch_type = MM_CAMERA_CH_SNAPSHOT;
 
     /* Take snapshot */
-    ALOGE("%s: Call MM_CAMERA_OPS_GET_BUFFERED_FRAME", __func__);
+    ALOGI("%s: Call MM_CAMERA_OPS_GET_BUFFERED_FRAME", __func__);
 
     mNumOfSnapshot = mHalCamCtrl->getNumOfSnapshots();
     if (NO_ERROR != cam_ops_action(mCameraId,
@@ -1542,7 +1542,7 @@ takePictureZSL(void)
                    snapshot_thread, (void *)this);
 */
 end:
-    ALOGD("%s: X", __func__);
+    ALOGV("%s: X", __func__);
     return ret;
 }
 
@@ -1551,10 +1551,10 @@ startStreamZSL(void)
 {
     status_t ret = NO_ERROR;
 
-    ALOGD("%s: E", __func__);
+    ALOGV("%s: E", __func__);
 
     /* Start ZSL - it'll start queuing the frames */
-    ALOGD("%s: Call MM_CAMERA_OPS_ZSL", __func__);
+    ALOGI("%s: Call MM_CAMERA_OPS_ZSL", __func__);
     if (NO_ERROR != cam_ops_action(mCameraId,
                                           true,
                                           MM_CAMERA_OPS_ZSL,
@@ -1565,7 +1565,7 @@ startStreamZSL(void)
     }
 
 end:
-    ALOGD("%s: X", __func__);
+    ALOGV("%s: X", __func__);
     return ret;
 
 }
@@ -1596,8 +1596,8 @@ encodeData(mm_camera_ch_data_buf_t* recvd_frame,
        Also, if the queue isn't empty then we need to queue this
        one too till its turn comes (only if it's not already
        queued up there)*/
-    ALOGD("%s: getSnapshotState()=%d, enqueued =%d, Q empty=%d", __func__, getSnapshotState(), enqueued, mSnapshotQueue.isEmpty());
-    ALOGD("%s: mNumOfRecievedJPEG=%d, mNumOfSnapshot =%d", __func__, mNumOfRecievedJPEG, mNumOfSnapshot);
+    ALOGI("%s: getSnapshotState()=%d, enqueued =%d, Q empty=%d", __func__, getSnapshotState(), enqueued, mSnapshotQueue.isEmpty());
+    ALOGI("%s: mNumOfRecievedJPEG=%d, mNumOfSnapshot =%d", __func__, mNumOfRecievedJPEG, mNumOfSnapshot);
     if(mHalCamCtrl->thumbnailWidth == 0 ||  mHalCamCtrl->thumbnailHeight == 0) {
       ALOGI("Snapshot thumbnail will be dropped as indicated by application");
       mDropThumbnail = true;
@@ -1605,13 +1605,13 @@ encodeData(mm_camera_ch_data_buf_t* recvd_frame,
     if((getSnapshotState() == SNAPSHOT_STATE_JPEG_ENCODING) ||
        (!mSnapshotQueue.isEmpty() && !enqueued)){ /*busy and new buffer*/
         /* encoding is going on. Just queue the frame for now.*/
-        ALOGD("%s: JPEG encoding in progress."
+        ALOGI("%s: JPEG encoding in progress."
              "Enqueuing frame id(%d) for later processing.", __func__,
              recvd_frame->snapshot.main.idx);
         mSnapshotQueue.enqueue((void *)recvd_frame);
     } else if (enqueued ||
        (mNumOfRecievedJPEG != mNumOfSnapshot  && mNumOfRecievedJPEG != 0)) { /*not busy, not first*/
-      ALOGD("%s: JPG not busy, not first frame.", __func__);
+      ALOGI("%s: JPG not busy, not first frame.", __func__);
 
       // For full-size live shot, use mainimage to generate thumbnail
       if (isFullSizeLiveshot()) {
@@ -1621,7 +1621,7 @@ encodeData(mm_camera_ch_data_buf_t* recvd_frame,
       }
       mainframe = recvd_frame->snapshot.main.frame;
       cam_config_get_parm(mHalCamCtrl->mCameraId, MM_CAMERA_PARM_DIMENSION, &dimension);
-      ALOGD("%s: main_fmt =%d, tb_fmt =%d", __func__, dimension.main_img_format, dimension.thumb_format);
+      ALOGI("%s: main_fmt =%d, tb_fmt =%d", __func__, dimension.main_img_format, dimension.thumb_format);
       /*since this is the continue job, we only care about the input buffer*/
       encode_params.thumbnail_buf = (uint8_t *)postviewframe->buffer;
       encode_params.thumbnail_fd = postviewframe->fd;
@@ -1644,7 +1644,7 @@ encodeData(mm_camera_ch_data_buf_t* recvd_frame,
       setSnapshotState(SNAPSHOT_STATE_JPEG_ENCODING);
     } else {  /*not busy and new buffer (first job)*/
 
-      ALOGD("%s: JPG Idle and  first frame.", __func__);
+      ALOGI("%s: JPG Idle and  first frame.", __func__);
 
         // For full-size live shot, use mainimage to generate thumbnail
         if (isFullSizeLiveshot()){
@@ -1654,7 +1654,7 @@ encodeData(mm_camera_ch_data_buf_t* recvd_frame,
         }
         mainframe = recvd_frame->snapshot.main.frame;
         cam_config_get_parm(mHalCamCtrl->mCameraId, MM_CAMERA_PARM_DIMENSION, &dimension);
-        ALOGD("%s: main_fmt =%d, tb_fmt =%d", __func__, dimension.main_img_format, dimension.thumb_format);
+        ALOGI("%s: main_fmt =%d, tb_fmt =%d", __func__, dimension.main_img_format, dimension.thumb_format);
 
         dimension.orig_picture_dx = mPictureWidth;
         dimension.orig_picture_dy = mPictureHeight;
@@ -1677,8 +1677,8 @@ encodeData(mm_camera_ch_data_buf_t* recvd_frame,
         dimension.thumb_format = mThumbnailFormat;
 
         /*TBD: Move JPEG handling to the mm-camera library */
-        ALOGD("Setting callbacks, initializing encoder and start encoding.");
-        ALOGD(" Passing my obj: %x", (unsigned int) this);
+        ALOGI("Setting callbacks, initializing encoder and start encoding.");
+        ALOGI(" Passing my obj: %x", (unsigned int) this);
         set_callbacks(snapshot_jpeg_fragment_cb, snapshot_jpeg_cb, this,
              mHalCamCtrl->mJpegMemory.camera_memory[0]->data, &mJpegOffset);
 
@@ -1698,7 +1698,7 @@ encodeData(mm_camera_ch_data_buf_t* recvd_frame,
             if (mNuberOfVFEOutputs == 1)
                 hw_encode = false;
         }
-        ALOGD("%s: hw_encode: %d\n",__func__, hw_encode);
+        ALOGI("%s: hw_encode: %d\n",__func__, hw_encode);
 
         if(omxJpegStart(hw_encode) != NO_ERROR){
             ALOGE("Error In omxJpegStart!!! Return");
@@ -1711,7 +1711,7 @@ encodeData(mm_camera_ch_data_buf_t* recvd_frame,
         else
             mm_jpeg_encoder_setMainImageQuality(85);
 
-        ALOGE("%s: Dimension to encode: main: %dx%d thumbnail: %dx%d", __func__,
+        ALOGI("%s: Dimension to encode: main: %dx%d thumbnail: %dx%d", __func__,
              dimension.orig_picture_dx, dimension.orig_picture_dy,
              dimension.thumbnail_width, dimension.thumbnail_height);
 
@@ -1745,7 +1745,7 @@ encodeData(mm_camera_ch_data_buf_t* recvd_frame,
         if(isLiveSnapshot() || isFullSizeLiveshot() || isZSLMode()) {
             crop.out1_w= mHalCamCtrl->thumbnailWidth;
             crop.out1_h=  mHalCamCtrl->thumbnailHeight;
-            ALOGD("Thumbnail width= %d  height= %d for livesnapshot", crop.out1_w, crop.out1_h);
+            ALOGI("Thumbnail width= %d  height= %d for livesnapshot", crop.out1_w, crop.out1_h);
         } else {
             crop.out1_w = width;
             crop.out1_h = height;
@@ -1798,7 +1798,7 @@ encodeData(mm_camera_ch_data_buf_t* recvd_frame,
     }
 
 end:
-    ALOGD("%s: X", __func__);
+    ALOGV("%s: X", __func__);
     return ret;
 }
 
@@ -1807,7 +1807,7 @@ end:
 void QCameraStream_Snapshot::notifyShutter(common_crop_t *crop,
                                            bool mPlayShutterSoundOnly)
 {
-    ALOGD("%s: E", __func__);
+    ALOGV("%s: E", __func__);
     if(!mActive && !isLiveSnapshot()) {
       ALOGE("__debbug: Snapshot thread stopped \n");
       return;
@@ -1815,7 +1815,7 @@ void QCameraStream_Snapshot::notifyShutter(common_crop_t *crop,
     if(mHalCamCtrl->mNotifyCb)
       mHalCamCtrl->mNotifyCb(CAMERA_MSG_SHUTTER, 0, mPlayShutterSoundOnly,
                                  mHalCamCtrl->mCallbackCookie);
-    ALOGD("%s: X", __func__);
+    ALOGV("%s: X", __func__);
 }
 
 status_t  QCameraStream_Snapshot::
@@ -1830,7 +1830,7 @@ encodeDisplayAndSave(mm_camera_ch_data_buf_t* recvd_frame,
     ssize_t offset_addr = 0;
     common_crop_t dummy_crop;
     /* send frame for encoding */
-    ALOGE("%s: Send frame for encoding", __func__);
+    ALOGI("%s: Send frame for encoding", __func__);
     /*TBD: Pass 0 as cropinfo for now as v4l2 doesn't provide
       cropinfo. It'll be changed later.*/
     if(!mActive) {
@@ -1838,7 +1838,7 @@ encodeDisplayAndSave(mm_camera_ch_data_buf_t* recvd_frame,
         return NO_ERROR;
     }
     if(isZSLMode()){
-      ALOGE("%s: set JPEG rotation in ZSL mode", __func__);
+      ALOGI("%s: set JPEG rotation in ZSL mode", __func__);
       mHalCamCtrl->setJpegRotation(isZSLMode());
     }
 #ifdef USE_ION
@@ -1853,7 +1853,7 @@ encodeDisplayAndSave(mm_camera_ch_data_buf_t* recvd_frame,
       if(ioctl(ion_fd, ION_IOC_CLEAN_INV_CACHES, &cache_inv_data) < 0)
           ALOGE("%s: Cache Invalidate failed\n", __func__);
       else {
-          ALOGD("%s: Successful cache invalidate\n", __func__);
+          ALOGI("%s: Successful cache invalidate\n", __func__);
 	  if(!isFullSizeLiveshot()) {
             ion_fd = recvd_frame->snapshot.thumbnail.frame->ion_dev_fd;
             cache_inv_data.vaddr = (void*)recvd_frame->snapshot.thumbnail.frame->buffer;
@@ -1863,7 +1863,7 @@ encodeDisplayAndSave(mm_camera_ch_data_buf_t* recvd_frame,
             if(ioctl(ion_fd, ION_IOC_CLEAN_INV_CACHES, &cache_inv_data) < 0)
               ALOGE("%s: Cache Invalidate failed\n", __func__);
             else
-              ALOGD("%s: Successful cache invalidate\n", __func__);
+              ALOGI("%s: Successful cache invalidate\n", __func__);
           }
       }
     }
@@ -1880,10 +1880,10 @@ encodeDisplayAndSave(mm_camera_ch_data_buf_t* recvd_frame,
     /* Display postview image*/
     /* If it's burst mode, we won't be displaying postview of all the captured
        images - only the first one */
-    ALOGD("%s: Burst mode flag  %d", __func__, mBurstModeFlag);
+    ALOGI("%s: Burst mode flag  %d", __func__, mBurstModeFlag);
 
 end:
-    ALOGD("%s: X", __func__);
+    ALOGV("%s: X", __func__);
     return ret;
 }
 
@@ -1897,11 +1897,11 @@ status_t QCameraStream_Snapshot::receiveRawPicture(mm_camera_ch_data_buf_t* recv
     camera_notify_callback         notifyCb;
     camera_data_callback           dataCb, jpgDataCb;
 
-    ALOGD("%s: E ", __func__);
+    ALOGV("%s: E ", __func__);
     mStopCallbackLock.lock( );
     if(!mActive) {
         mStopCallbackLock.unlock();
-        ALOGD("%s: Stop receiving raw pic ", __func__);
+        ALOGV("%s: Stop receiving raw pic ", __func__);
         return NO_ERROR;
     }
 
@@ -1916,7 +1916,7 @@ status_t QCameraStream_Snapshot::receiveRawPicture(mm_camera_ch_data_buf_t* recv
 
     /* If it's raw snapshot, we just want to tell upperlayer to save the image*/
     if(mSnapshotFormat == PICTURE_FORMAT_RAW) {
-        ALOGD("%s: Call notifyShutter 2nd time in case of RAW", __func__);
+        ALOGI("%s: Call notifyShutter 2nd time in case of RAW", __func__);
         mStopCallbackLock.unlock();
         if(!mHalCamCtrl->mShutterSoundPlayed) {
             notifyShutter(&crop, true);
@@ -1925,7 +1925,7 @@ status_t QCameraStream_Snapshot::receiveRawPicture(mm_camera_ch_data_buf_t* recv
         mHalCamCtrl->mShutterSoundPlayed = false;
 
         mStopCallbackLock.lock( );
-        ALOGD("%s: Sending Raw Snapshot Callback to Upperlayer", __func__);
+        ALOGI("%s: Sending Raw Snapshot Callback to Upperlayer", __func__);
         buf_index = recvd_frame->def.idx;
 
         if (mHalCamCtrl->mDataCb && mActive &&
@@ -1957,7 +1957,7 @@ status_t QCameraStream_Snapshot::receiveRawPicture(mm_camera_ch_data_buf_t* recv
         crop.out1_h=mThumbnailHeight;
         #endif
 
-        ALOGD("%s: Call notifyShutter 2nd time", __func__);
+        ALOGI("%s: Call notifyShutter 2nd time", __func__);
         /* The recvd_frame structre we receive from lower library is a local
            variable. So we'll need to save this structure so that we won't
            be later pointing to garbage data when that variable goes out of
@@ -1980,22 +1980,22 @@ status_t QCameraStream_Snapshot::receiveRawPicture(mm_camera_ch_data_buf_t* recv
             input_width = mPictureWidth;
             input_height = mPictureHeight;
 
-            ALOGV("%s: received frame %d * %d", __func__, input_width, input_height);
+            ALOGI("%s: received frame %d * %d", __func__, input_width, input_height);
             {
                 dnr_buffer = (uint8_t *)malloc(input_width*input_height*3/2);
                 if (dnr_buffer == NULL)
-                    ALOGV("dnr_buffer alloc fail");
-                ALOGV("dnr_buffer allocated size : %d", input_width*input_height*3/2);
+                    ALOGE("dnr_buffer alloc fail");
+                ALOGI("dnr_buffer allocated size : %d", input_width*input_height*3/2);
                 memcpy(dnr_buffer, (uint8_t *)frame->snapshot.main.frame->buffer, input_width*input_height*3/2);
-                ALOGV("dnr_buffer memcpy completed.");
+                ALOGI("dnr_buffer memcpy completed.");
             }
-            ALOGV("[DNR] DNR Processing Start.... %d * %d\n", mPictureWidth, mPictureHeight);
+            ALOGI("[DNR] DNR Processing Start.... %d * %d\n", mPictureWidth, mPictureHeight);
             ret = NO_ERROR;
             if (mHalCamCtrl->LINK_morpho_DNR_ProcessFrame)
                 ret = (int)mHalCamCtrl->LINK_morpho_DNR_ProcessFrame(dnr_buffer, mPictureWidth, mPictureHeight, 1, 1); //bright->normal->dark
-            ALOGV("[DNR] DNR Processing result.... ret = %d\n", ret);
+            ALOGI("[DNR] DNR Processing result.... ret = %d\n", ret);
             memcpy((uint8_t *)recvd_frame->snapshot.main.frame->buffer, (uint8_t *)dnr_buffer, mPictureWidth*mPictureHeight*3/2);
-            ALOGV("[DNR] DNR Processing END....\n");
+            ALOGI("[DNR] DNR Processing END....\n");
             if(dnr_buffer)
                 free(dnr_buffer);
         }
@@ -2005,10 +2005,10 @@ status_t QCameraStream_Snapshot::receiveRawPicture(mm_camera_ch_data_buf_t* recv
         if (isZSLMode() && mHalCamCtrl->isWDenoiseEnabled()) {
             if(mIsDoingWDN){
                 mWDNQueue.enqueue((void *)frame);
-                ALOGD("%s: Wavelet denoise is going on, queue frame", __func__);
+                ALOGI("%s: Wavelet denoise is going on, queue frame", __func__);
                 rc = NO_ERROR;
             } else {
-                ALOGD("%s: Start Wavelet denoise", __func__);
+                ALOGI("%s: Start Wavelet denoise", __func__);
                 mIsDoingWDN = true; // set the falg to true because we are going to do WDN
 
                 // No WDN is going on so far, we will start it here
@@ -2029,7 +2029,7 @@ status_t QCameraStream_Snapshot::receiveRawPicture(mm_camera_ch_data_buf_t* recv
             }
         }
         else {
-          ALOGD("%s: encodeDisplayAndSave ", __func__);
+          ALOGI("%s: encodeDisplayAndSave ", __func__);
             rc = encodeDisplayAndSave(frame, 0);
         }
 
@@ -2105,7 +2105,7 @@ status_t QCameraStream_Snapshot::receiveRawPicture(mm_camera_ch_data_buf_t* recv
         }
     }
 
-    ALOGD("%s: X", __func__);
+    ALOGV("%s: X", __func__);
     return NO_ERROR;
 }
 
@@ -2115,7 +2115,7 @@ status_t QCameraStream_Snapshot::receiveRawPicture(mm_camera_ch_data_buf_t* recv
 void QCameraStream_Snapshot::handleError()
 {
     mm_camera_channel_type_t ch_type;
-    ALOGD("%s: E", __func__);
+    ALOGV("%s: E", __func__);
 
     /* Depending upon the state we'll have to
        handle error */
@@ -2149,12 +2149,12 @@ void QCameraStream_Snapshot::handleError()
         break;
     }
 
-    ALOGD("%s: X", __func__);
+    ALOGV("%s: X", __func__);
 }
 
 void QCameraStream_Snapshot::setSnapshotState(int state)
 {
-    ALOGD("%s: Setting snapshot state to: %d",
+    ALOGI("%s: Setting snapshot state to: %d",
          __func__, state);
     mSnapshotState = state;
 }
@@ -2195,7 +2195,7 @@ void QCameraStream_Snapshot::resetSnapshotCounters(void )
       mNumOfSnapshot = 1;
   }
   mNumOfRecievedJPEG = 0;
-  ALOGD("%s: Number of images to be captured: %d", __func__, mNumOfSnapshot);
+  ALOGI("%s: Number of images to be captured: %d", __func__, mNumOfSnapshot);
 }
 
 //------------------------------------------------------------------
@@ -2329,7 +2329,7 @@ status_t QCameraStream_Snapshot::start(void) {
         }
         /* Snapshot channel is acquired */
         setSnapshotState(SNAPSHOT_STATE_CH_ACQUIRED);
-        ALOGD("%s: Register buffer notification. My object: %x",
+        ALOGI("%s: Register buffer notification. My object: %x",
              __func__, (unsigned int) this);
         (void) cam_evt_register_buf_notify(mCameraId, MM_CAMERA_CH_RAW,
                                         snapshot_notify_cb,
@@ -2339,7 +2339,7 @@ status_t QCameraStream_Snapshot::start(void) {
         /* Set the state to buffer notification completed */
         setSnapshotState(SNAPSHOT_STATE_BUF_NOTIF_REGD);
     }else{
-        ALOGD("%s: Acquire Snapshot Channel", __func__);
+        ALOGI("%s: Acquire Snapshot Channel", __func__);
         ret = cam_ops_ch_acquire(mCameraId, MM_CAMERA_CH_SNAPSHOT);
         if (NO_ERROR != ret) {
             ALOGE("%s: Failure Acquiring Snapshot Channel error =%d\n", __func__, ret);
@@ -2348,7 +2348,7 @@ status_t QCameraStream_Snapshot::start(void) {
         }
         /* Snapshot channel is acquired */
         setSnapshotState(SNAPSHOT_STATE_CH_ACQUIRED);
-        ALOGD("%s: Register buffer notification. My object: %x",
+        ALOGI("%s: Register buffer notification. My object: %x",
              __func__, (unsigned int) this);
         (void) cam_evt_register_buf_notify(mCameraId, MM_CAMERA_CH_SNAPSHOT,
                                         snapshot_notify_cb,
@@ -2443,7 +2443,7 @@ void QCameraStream_Snapshot::stop(void)
 
     if(isLiveSnapshot() && mHalCamCtrl->mStateLiveshot) {
         if(getSnapshotState() == SNAPSHOT_STATE_JPEG_ENCODING) {
-            ALOGV("Destroy Liveshot Jpeg Instance");
+            ALOGI("Destroy Liveshot Jpeg Instance");
             omxJpegAbort();
         }
         mStopCallbackLock.lock();
@@ -2665,7 +2665,7 @@ void QCameraStream_Snapshot::lauchNextWDenoiseFromQueue()
             }
         } else {
             // we sent out req for WDN, so we can break here
-            ALOGD("%s: Send out req for doing wavelet denoise, return here", __func__);
+            ALOGI("%s: Send out req for doing wavelet denoise, return here", __func__);
             break;
         }
     } while (true);
@@ -2719,7 +2719,7 @@ status_t QCameraStream_Snapshot::doWaveletDenoise(mm_camera_ch_data_buf_t* frame
     }
 
 end:
-    ALOGD("%s: X", __func__);
+    ALOGV("%s: X", __func__);
     return ret;
 }
 
