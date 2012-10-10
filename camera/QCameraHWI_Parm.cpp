@@ -131,7 +131,7 @@ static thumbnail_size_type thumbnail_sizes[] = {
 };
 
 static struct camera_size_type zsl_picture_sizes[] = {
-  { 1024, 768}, // 1MP XGA
+  { 1280, 960}, // 1.3MP
   { 800, 600}, //SVGA
   { 800, 480}, // WVGA
   { 640, 480}, // VGA
@@ -145,15 +145,13 @@ static camera_size_type default_picture_sizes[] = {
   { 3264, 2448}, // 8MP
   { 2592, 1944}, // 5MP
   { 2048, 1536}, // 3MP QXGA
-  { 1920, 1088}, //HD1080
+  { 1920, 1088}, // HD1080
   { 1600, 1200}, // 2MP UXGA
-  { 1280, 768}, //WXGA
-  { 1280, 720}, //HD720
-  { 1024, 768}, // 1MP XGA
-  { 800, 600}, //SVGA
+  { 1280, 960}, // 1.3MP
+  { 800, 600}, // SVGA
   { 800, 480}, // WVGA
   { 640, 480}, // VGA
-  { 352, 288}, //CIF
+  { 352, 288}, // CIF
   { 320, 240}, // QVGA
   { 176, 144} // QCIF
 };
