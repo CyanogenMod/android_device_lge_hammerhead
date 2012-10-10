@@ -26,7 +26,7 @@
 #include <sys/mman.h>
 
 #include "QCameraStream.h"
-
+#include "QCamera_dbg.h"
 
 #define LIKELY(exp)   __builtin_expect(!!(exp), 1)
 #define UNLIKELY(exp) __builtin_expect(!!(exp), 0)
@@ -174,7 +174,7 @@ status_t QCameraStream_record::start()
 
   ret = cam_config_prepare_buf(mCameraId, &mRecordBuf);
   if(ret != MM_CAMERA_OK) {
-    ALOGV("%s ERROR: Reg Record buf err=%d\n", __func__, ret);
+    ALOGE("%s ERROR: Reg Record buf err=%d\n", __func__, ret);
     ret = BAD_VALUE;
     goto error;
   }else{
@@ -190,7 +190,7 @@ status_t QCameraStream_record::start()
     ret = BAD_VALUE;
     goto error;
   }else{
-    ALOGE("%s : Video streaming Started",__func__);
+    ALOGI("%s : Video streaming Started",__func__);
     ret = NO_ERROR;
   }
   mActive = true;
@@ -340,7 +340,7 @@ status_t QCameraStream_record::processRecordFrame(void *data)
 	nsecs_t timeStamp = nsecs_t(frame->video.video.frame->ts.tv_sec)*1000000000LL + \
                       frame->video.video.frame->ts.tv_nsec;
 
-  ALOGV("Send Video frame to services/encoder TimeStamp : %lld",timeStamp);
+  ALOGI("Send Video frame to services/encoder TimeStamp : %lld",timeStamp);
   mRecordedFrames[frame->video.video.idx] = *frame;
 
 #ifdef USE_ION
@@ -380,7 +380,7 @@ status_t QCameraStream_record::processRecordFrame(void *data)
 //Record Related Functions
 status_t QCameraStream_record::initEncodeBuffers()
 {
-  ALOGE("%s : BEGIN",__func__);
+  ALOGV("%s : BEGIN",__func__);
   status_t ret = NO_ERROR;
   const char *pmem_region;
   uint32_t frame_len;
@@ -411,7 +411,7 @@ status_t QCameraStream_record::initEncodeBuffers()
 
   buf_cnt = VIDEO_BUFFER_COUNT;
   if(mHalCamCtrl->isLowPowerCamcorder()) {
-    ALOGE("%s: lower power camcorder selected", __func__);
+    ALOGI("%s: lower power camcorder selected", __func__);
     buf_cnt = VIDEO_BUFFER_COUNT_LOW_POWER_CAMCORDER;
   }
     recordframes = new msm_frame[buf_cnt];
@@ -484,7 +484,7 @@ status_t QCameraStream_record::initEncodeBuffers()
         CAM_SOCK_MSG_TYPE_FD_MAPPING))
         ALOGE("%s: sending mapping data Msg Failed", __func__);
 
-      ALOGE ("initRecord :  record heap , video buffers  buffer=%lu fd=%d y_off=%d cbcr_off=%d\n",
+      ALOGI("initRecord :  record heap , video buffers  buffer=%lu fd=%d y_off=%d cbcr_off=%d\n",
 		    (unsigned long)recordframes[cnt].buffer, recordframes[cnt].fd, recordframes[cnt].y_off,
 		    recordframes[cnt].cbcr_off);
 	    //mNumRecordFrames++;
@@ -514,7 +514,7 @@ status_t QCameraStream_record::initEncodeBuffers()
     mRecordBuf.video.video.num = mHalCamCtrl->mRecordingMemory.buffer_count;//kRecordBufferCount;
     //mRecordBuf.video.video.frame_offset = &record_offset[0];
     //mRecordBuf.video.video.frame = &recordframes[0];
-    ALOGE("%s : END",__func__);
+    ALOGV("%s : END",__func__);
     return NO_ERROR;
 }
 
