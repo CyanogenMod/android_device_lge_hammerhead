@@ -659,6 +659,7 @@ private:
 
     int           mCameraId;
     camera_mode_t myMode;
+    bool mPauseFramedispatch;
 
     QCameraParameters    mParameters;
     //sp<Overlay>         mOverlay;

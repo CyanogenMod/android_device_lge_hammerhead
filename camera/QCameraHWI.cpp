@@ -190,7 +190,8 @@ QCameraHardwareInterface(int cameraId, int mode)
                     mPreviewFormat(CAMERA_YUV_420_NV21),
                     mRestartPreview(false),
                     mReleasedRecordingFrame(false),
-                    mStateLiveshot(false)
+                    mStateLiveshot(false),
+                    mPauseFramedispatch(false)
 {
     ALOGV("QCameraHardwareInterface: E");
     int32_t result = MM_CAMERA_E_GENERAL;
@@ -1042,6 +1043,7 @@ status_t QCameraHardwareInterface::startPreview2()
     cam_ctrl_dimension_t dim;
     mm_camera_dimension_t maxDim;
     bool initPreview = false;
+    mPauseFramedispatch = false;
 
     if (mPreviewState == QCAMERA_HAL_PREVIEW_STARTED) { //isPreviewRunning()){
         ALOGE("%s:Preview already started  mCameraState = %d!", __func__, mCameraState);
@@ -1628,6 +1630,7 @@ status_t  QCameraHardwareInterface::takePicture()
         mStreamSnap->setFullSizeLiveshot(false);
         if (isZSLMode()) {
             if (mStreamSnap != NULL) {
+                mPauseFramedispatch = true;
                 pausePreviewForZSL();
                 ret = mStreamSnap->takePictureZSL();
                 if (ret != MM_CAMERA_OK) {
