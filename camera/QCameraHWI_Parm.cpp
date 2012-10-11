@@ -1058,8 +1058,8 @@ void QCameraHardwareInterface::initDefaultParameters()
     //Set Focus Mode
     if(mHasAutoFocusSupport){
        mParameters.set(QCameraParameters::KEY_FOCUS_MODE,
-                          QCameraParameters::FOCUS_MODE_AUTO);
-       mFocusMode = AF_MODE_AUTO;
+                          QCameraParameters::FOCUS_MODE_CONTINUOUS_PICTURE);
+       mFocusMode = AF_MODE_CAF;
        mParameters.set(QCameraParameters::KEY_SUPPORTED_FOCUS_MODES,
                           mFocusModeValues);
        mParameters.set(QCameraParameters::KEY_MAX_NUM_FOCUS_AREAS, "1");
@@ -1378,7 +1378,7 @@ status_t QCameraHardwareInterface::setParameters(const QCameraParameters& params
     if((rc = setRecordingHint(params)))                 final_rc = rc;
     if ((rc = setNumOfSnapshot(params)))                final_rc = rc;
     if ((rc = setAecAwbLock(params)))                   final_rc = rc;
-
+    if ((rc = setWhiteBalance(params)))             final_rc = rc;
     const char *str = params.get(QCameraParameters::KEY_SCENE_MODE);
     int32_t value = attr_lookup(scenemode, sizeof(scenemode) / sizeof(str_map), str);
 
@@ -1388,13 +1388,13 @@ status_t QCameraHardwareInterface::setParameters(const QCameraParameters& params
         if ((rc = setAutoExposure(params)))             final_rc = rc;
         if ((rc = setExposureCompensation(params)))     final_rc = rc;
         if ((rc = setWhiteBalance(params)))             final_rc = rc;
-        if ((rc = setFlash(params)))                    final_rc = rc;
-        if ((rc = setFocusMode(params)))                final_rc = rc;
         if ((rc = setBrightness(params)))               final_rc = rc;
         if ((rc = setISOValue(params)))                 final_rc = rc;
         if ((rc = setFocusAreas(params)))               final_rc = rc;
         if ((rc = setMeteringAreas(params)))            final_rc = rc;
     }
+    if ((rc = setFlash(params)))                    final_rc = rc;
+    if ((rc = setFocusMode(params)))                final_rc = rc;
     //selectableZoneAF needs to be invoked after continuous AF
     if ((rc = setSelectableZoneAf(params)))             final_rc = rc;
     // setHighFrameRate needs to be done at end, as there can
