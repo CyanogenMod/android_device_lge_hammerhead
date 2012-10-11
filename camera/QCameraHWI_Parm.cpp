@@ -84,7 +84,7 @@ extern "C" {
 #define MINIMUM_FPS 5
 #define MAXIMUM_FPS 120
 #define DEFAULT_FIXED_FPS 30
-#define DEFAULT_FPS MAXIMUM_FPS
+#define DEFAULT_FPS 31
 
 //Default Picture Width
 #define DEFAULT_PICTURE_WIDTH  640
