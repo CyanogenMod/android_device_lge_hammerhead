@@ -83,7 +83,7 @@ extern "C" {
 #define MINIMUM_FPS 5
 #define MAXIMUM_FPS 120
 #define DEFAULT_FIXED_FPS 30
-#define DEFAULT_FPS 31
+#define DEFAULT_FPS 30
 
 //Default Picture Width
 #define DEFAULT_PICTURE_WIDTH  640
@@ -144,7 +144,7 @@ static camera_size_type default_picture_sizes[] = {
   { 3264, 2448}, // 8MP
   { 2592, 1944}, // 5MP
   { 2048, 1536}, // 3MP QXGA
-  { 1920, 1088}, // HD1080
+  { 1920, 1080}, // HD1080
   { 1600, 1200}, // 2MP UXGA
   { 1280, 960}, // 1.3MP
   { 800, 600}, // SVGA
