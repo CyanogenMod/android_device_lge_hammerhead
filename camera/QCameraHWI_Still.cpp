@@ -1524,6 +1524,9 @@ takePictureZSL(void)
     ALOGI("%s: Call MM_CAMERA_OPS_GET_BUFFERED_FRAME", __func__);
 
     mNumOfSnapshot = mHalCamCtrl->getNumOfSnapshots();
+    // it's just for stabilization for dequeuing zsl buffer frame
+    // 13.2 ~ 22.4fps
+    usleep(80000);
     if (NO_ERROR != cam_ops_action(mCameraId,
                                           true,
                                           MM_CAMERA_OPS_GET_BUFFERED_FRAME,
