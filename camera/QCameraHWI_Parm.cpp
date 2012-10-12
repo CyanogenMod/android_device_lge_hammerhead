@@ -1030,7 +1030,7 @@ void QCameraHardwareInterface::initDefaultParameters()
     }
 
     //Set default power mode
-    mParameters.set(QCameraParameters::KEY_POWER_MODE,"Low_Power");
+    mParameters.set(QCameraParameters::KEY_POWER_MODE,"Normal_Power");
     //Set Wnr on
     mParameters.set(QCameraParameters::KEY_DENOISE,true);
     //Set Camera Mode
@@ -3392,8 +3392,8 @@ status_t QCameraHardwareInterface::setFullLiveshot()
   uint32_t value = mRecordingHint && mFullLiveshotEnabled
                    && !isLowPowerCamcorder();
 
-  if (((mDimension.picture_width == mDimension.video_width) &&
-      (mDimension.picture_height == mDimension.video_height))) {
+  if (((mDimension.picture_width == mVideoWidth) &&
+      (mDimension.picture_height == mVideoHeight))) {
     /* If video size matches the live snapshot size
      * turn off full size liveshot to get higher fps. */
     value = 0;
