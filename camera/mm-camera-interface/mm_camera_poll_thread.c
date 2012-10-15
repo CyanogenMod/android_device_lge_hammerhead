@@ -75,6 +75,7 @@ static int32_t mm_camera_poll_sig(mm_camera_poll_thread_t *poll_cb,
     cmd_evt.cmd = cmd;
     int len;
     CDBG("%s: begin", __func__);
+
     pthread_mutex_lock(&poll_cb->mutex);
     /* reset the statue to false */
     poll_cb->status = FALSE;
@@ -87,9 +88,17 @@ static int32_t mm_camera_poll_sig(mm_camera_poll_thread_t *poll_cb,
     }
     CDBG("%s: begin IN mutex write done, len = %d", __func__, len);
     /* wait till worker task gives positive signal */
-    if(FALSE == poll_cb->status) {
-      CDBG("%s: wait", __func__);
-        pthread_cond_wait(&poll_cb->cond_v, &poll_cb->mutex);
+    while (!poll_cb->status) {
+        int rc;
+        struct timespec ts;
+        clock_gettime(CLOCK_REALTIME, &ts);
+        ts.tv_sec += 2;
+        CDBG("%s: wait", __func__);
+        rc = pthread_cond_timedwait(&poll_cb->cond_v, &poll_cb->mutex, &ts);
+        if (rc) {
+            ALOGE("%s: error on pthread_cond_timedwait: %s", __func__, strerror(rc));
+            break;
+        }
     }
     /* done */
     pthread_mutex_unlock(&poll_cb->mutex);
@@ -298,8 +307,17 @@ int mm_camera_poll_start(mm_camera_obj_t * my_obj,  mm_camera_poll_thread_t *pol
     pthread_mutex_lock(&poll_cb->mutex);
     poll_cb->status = 0;
     pthread_create(&poll_cb->data.pid, NULL, mm_camera_poll_thread, (void *)poll_cb);
-    if(!poll_cb->status) {
-        pthread_cond_wait(&poll_cb->cond_v, &poll_cb->mutex);
+    while (!poll_cb->status) {
+        int rc;
+        struct timespec ts;
+
+        clock_gettime(CLOCK_REALTIME, &ts);
+        ts.tv_sec += 2;
+        rc = pthread_cond_timedwait(&poll_cb->cond_v, &poll_cb->mutex, &ts);
+        if (rc) {
+            ALOGE("%s: error on pthread_cond_timedwait: %s", __func__, strerror(rc));
+            break;
+        }
     }
     pthread_mutex_unlock(&poll_cb->mutex);
     return MM_CAMERA_OK;
