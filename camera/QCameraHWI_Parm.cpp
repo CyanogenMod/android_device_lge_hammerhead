@@ -567,8 +567,26 @@ bool QCameraHardwareInterface::supportsSceneDetection() {
 }
 
 bool QCameraHardwareInterface::supportsFaceDetection() {
-    bool rc = cam_config_is_parm_supported(mCameraId,MM_CAMERA_PARM_FD);
-    return rc;
+    bool rc;
+    status_t ret = NO_ERROR;
+    mm_camera_op_mode_type_t op_mode;
+
+    ret = cam_config_get_parm(mCameraId, MM_CAMERA_PARM_OP_MODE, &op_mode);
+    if(ret != NO_ERROR){
+        ALOGE("%s: Failed to get Op Mode", __func__);
+    }
+
+    ALOGV("%s: OP_Mode is %d, ret=%d",__func__,op_mode,ret);
+    if ((ret == NO_ERROR) && (op_mode == MM_CAMERA_OP_MODE_VIDEO))
+    {
+        ALOGV("%s: Video mode : FD not supported",__func__);
+        return false;
+    }
+    else{
+        ALOGV("%s: Still mode : FD supported",__func__);
+        rc = cam_config_is_parm_supported(mCameraId,MM_CAMERA_PARM_FD);
+        return rc;
+    }
 }
 
 bool QCameraHardwareInterface::supportsSelectableZoneAf() {
@@ -1187,10 +1205,12 @@ void QCameraHardwareInterface::initDefaultParameters()
                     mSelectableZoneAfValues);
 
     //Set Face Detection
-    mParameters.set(QCameraParameters::KEY_FACE_DETECTION,
-                    QCameraParameters::FACE_DETECTION_ON);
-    mParameters.set(QCameraParameters::KEY_SUPPORTED_FACE_DETECTION,
-                    mFaceDetectionValues);
+    if(supportsFaceDetection()){
+        mParameters.set(QCameraParameters::KEY_FACE_DETECTION,
+                        QCameraParameters::FACE_DETECTION_ON);
+        mParameters.set(QCameraParameters::KEY_SUPPORTED_FACE_DETECTION,
+                        mFaceDetectionValues);
+    }
 
     //Set Red Eye Reduction
     mParameters.set(QCameraParameters::KEY_REDEYE_REDUCTION,
@@ -2990,6 +3010,11 @@ status_t QCameraHardwareInterface::setLensshadeValue(const QCameraParameters& pa
 
 status_t QCameraHardwareInterface::setFaceDetect(const QCameraParameters& params)
 {
+    if(supportsFaceDetection() == false){
+        ALOGI("setFaceDetect support is not available");
+        return NO_ERROR;
+    }
+
     int requested_faces = params.getInt(QCameraParameters::KEY_MAX_NUM_REQUESTED_FACES);
     int hardware_supported_faces = mParameters.getInt(CameraParameters::KEY_MAX_NUM_DETECTED_FACES_HW);
     if (requested_faces > hardware_supported_faces) {
