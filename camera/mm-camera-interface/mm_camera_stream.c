@@ -432,7 +432,7 @@ static int mm_camera_stream_util_request_buf(mm_camera_obj_t * my_obj,
         __func__, stream->fd, rc);
       goto end;
     }
-    ALOGI("%s: stream fd=%d, ioctl VIDIOC_REQBUFS: memtype = %d, num_frames = %d, rc=%d\n",
+    ALOGV("%s: stream fd=%d, ioctl VIDIOC_REQBUFS: memtype = %d, num_frames = %d, rc=%d\n",
         __func__, stream->fd, bufreq.memory, bufreq.count, rc);
 
 end:
@@ -455,9 +455,9 @@ static int mm_camera_stream_util_enqueue_buf(mm_camera_obj_t * my_obj,
 
     for(i = 0; i < vbuf->num; i++){
         int idx = vbuf->buf.mp[i].idx;
-        ALOGI("%s: enqueue buf index = %d\n",__func__, idx);
+        ALOGV("%s: enqueue buf index = %d\n",__func__, idx);
         if(idx < MM_CAMERA_MAX_NUM_FRAMES) {
-            ALOGI("%s: stream_fd = %d, frame_fd = %d, frame ID = %d, offset = %d\n",
+            ALOGV("%s: stream_fd = %d, frame_fd = %d, frame ID = %d, offset = %d\n",
                      __func__, stream->fd, stream->frame.frame[i].frame.fd,
                      idx, stream->frame.frame_offset[idx]);
             rc = mm_camera_stream_qbuf(my_obj, stream, stream->frame.frame[idx].idx);

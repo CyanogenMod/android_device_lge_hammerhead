@@ -25,7 +25,6 @@
 
 
 #include "QCameraStream.h"
-#include "QCamera_dbg.h"
 
 /* QCameraStream class implementation goes here*/
 /* following code implement the control logic of this class*/
@@ -194,7 +193,7 @@ status_t QCameraStream::initChannel(int cameraId,
     ALOGV("QCameraStream::initChannel : E");
     if(MM_CAMERA_CH_PREVIEW_MASK & ch_type_mask){
         rc = cam_ops_ch_acquire(cameraId, MM_CAMERA_CH_PREVIEW);
-        ALOGI("%s:ch_acquire MM_CAMERA_CH_PREVIEW, rc=%d\n",__func__, rc);
+        ALOGV("%s:ch_acquire MM_CAMERA_CH_PREVIEW, rc=%d\n",__func__, rc);
         if(MM_CAMERA_OK != rc) {
                 ALOGE("%s: preview channel acquir error =%d\n", __func__, rc);
                 ALOGV("%s: X", __func__);
@@ -208,7 +207,7 @@ status_t QCameraStream::initChannel(int cameraId,
         ALOGV("Buf notify MM_CAMERA_CH_PREVIEW, rc=%d\n",rc);*/
     }else if(MM_CAMERA_CH_VIDEO_MASK & ch_type_mask){
         rc = cam_ops_ch_acquire(cameraId, MM_CAMERA_CH_VIDEO);
-        ALOGI("%s:ch_acquire MM_CAMERA_CH_VIDEO, rc=%d\n",__func__, rc);
+        ALOGV("%s:ch_acquire MM_CAMERA_CH_VIDEO, rc=%d\n",__func__, rc);
         if(MM_CAMERA_OK != rc) {
                 ALOGE("%s: preview channel acquir error =%d\n", __func__, rc);
                 ALOGV("%s: X", __func__);
@@ -247,7 +246,7 @@ status_t QCameraStream::deinitChannel(int cameraId,
 }
 
 status_t QCameraStream::setMode(int enable) {
-  ALOGI("%s :myMode %x ", __func__, myMode);
+  ALOGV("%s :myMode %x ", __func__, myMode);
   if (enable) {
       myMode = (camera_mode_t)(myMode | CAMERA_ZSL_MODE);
   } else {
@@ -306,7 +305,7 @@ status_t QCameraStream::setFormat(uint8_t ch_type_mask, cam_format_t previewFmt)
     }*/
 
     rc = cam_config_set_parm(mCameraId, MM_CAMERA_PARM_CH_IMAGE_FMT, &fmt);
-    ALOGI("%s: Stream MM_CAMERA_PARM_CH_IMAGE_FMT rc = %d\n", __func__, rc);
+    ALOGV("%s: Stream MM_CAMERA_PARM_CH_IMAGE_FMT rc = %d\n", __func__, rc);
     if(MM_CAMERA_OK != rc) {
         ALOGE("%s:set stream channel format err=%d\n", __func__, ret);
         ALOGV("%s: X", __func__);

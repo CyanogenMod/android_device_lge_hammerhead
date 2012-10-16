@@ -173,7 +173,7 @@ OMX_ERRORTYPE ftbdone(OMX_OUT OMX_HANDLETYPE hComponent,
     expectedValue2 = 0;
     pthread_cond_signal(&cond);
     pthread_mutex_unlock(&lock);
-    ALOGI("%s:filled len = %u", __func__, (uint32_t)pBuffer->nFilledLen);
+    ALOGV("%s:filled len = %u", __func__, (uint32_t)pBuffer->nFilledLen);
     if (mmcamera_jpeg_callback && encoding)
         mmcamera_jpeg_callback(0, user_data);
     return 0;
@@ -184,12 +184,12 @@ OMX_ERRORTYPE handleError(OMX_IN OMX_EVENTTYPE eEvent, OMX_IN OMX_U32 error)
     ALOGV("%s", __func__);
     if (error == OMX_EVENT_JPEG_ERROR) {
         if (mmcamera_jpeg_callback && encoding) {
-            ALOGI("%s:OMX_EVENT_JPEG_ERROR\n", __func__);
+            ALOGV("%s:OMX_EVENT_JPEG_ERROR\n", __func__);
             mmcamera_jpeg_callback(JPEG_EVENT_ERROR, user_data);
         }
     } else if (error == OMX_EVENT_THUMBNAIL_DROPPED) {
         if (mmcamera_jpeg_callback && encoding) {
-            ALOGI("%s:(OMX_EVENT_THUMBNAIL_DROPPED\n", __func__);
+            ALOGV("%s:(OMX_EVENT_THUMBNAIL_DROPPED\n", __func__);
             mmcamera_jpeg_callback(JPEG_EVENT_THUMBNAIL_DROPPED, user_data);
         }
     }
@@ -201,8 +201,8 @@ OMX_ERRORTYPE eventHandler( OMX_IN OMX_HANDLETYPE hComponent,
                             OMX_IN OMX_U32 nData1, OMX_IN OMX_U32 nData2,
                             OMX_IN OMX_PTR pEventData)
 {
-    ALOGI("%s", __func__);
-    ALOGI("%s:got event %d ndata1 %u ndata2 %u", __func__,
+    ALOGV("%s", __func__);
+    ALOGV("%s:got event %d ndata1 %u ndata2 %u", __func__,
       eEvent, nData1, nData2);
     pthread_mutex_lock(&lock);
     expectedEvent = eEvent;
@@ -217,17 +217,17 @@ OMX_ERRORTYPE eventHandler( OMX_IN OMX_HANDLETYPE hComponent,
 
 void waitForEvent(int event, int value1, int value2 ){
     pthread_mutex_lock(&lock);
-    ALOGI("%s:Waiting for:event=%d, value1=%d, value2=%d",
+    ALOGV("%s:Waiting for:event=%d, value1=%d, value2=%d",
       __func__, event, value1, value2);
     while (! (expectedEvent == event &&
     expectedValue1 == value1 && expectedValue2 == value2)) {
         pthread_cond_wait(&cond, &lock);
-        ALOGI("%s:After cond_wait:expectedEvent=%d, expectedValue1=%d, expectedValue2=%d",
+        ALOGV("%s:After cond_wait:expectedEvent=%d, expectedValue1=%d, expectedValue2=%d",
           __func__, expectedEvent, expectedValue1, expectedValue2);
-        ALOGI("%s:After cond_wait:event=%d, value1=%d, value2=%d",
+        ALOGV("%s:After cond_wait:event=%d, value1=%d, value2=%d",
           __func__, event, value1, value2);
     }
-    ALOGI("%s:done:expectedEvent=%d, expectedValue1=%d, expectedValue2=%d",
+    ALOGV("%s:done:expectedEvent=%d, expectedValue1=%d, expectedValue2=%d",
       __func__, expectedEvent, expectedValue1, expectedValue2);
     pthread_mutex_unlock(&lock);
 }
@@ -236,7 +236,7 @@ int8_t mm_jpeg_encoder_get_buffer_offset(uint32_t width, uint32_t height,
     uint32_t* p_y_offset, uint32_t* p_cbcr_offset, uint32_t* p_buf_size,
     uint8_t *num_planes, uint32_t planes[])
 {
-    ALOGI("%s:", __func__);
+    ALOGV("%s:", __func__);
     if ((NULL == p_y_offset) || (NULL == p_cbcr_offset)) {
         return false;
     }
@@ -267,7 +267,7 @@ int8_t mm_jpeg_encoder_get_buffer_offset(uint32_t width, uint32_t height,
 
 int8_t omxJpegOpen()
 {
-    ALOGI("%s", __func__);
+    ALOGV("%s", __func__);
     pthread_mutex_lock(&jpege_mutex);
     libmmstillomx = dlopen("libmmstillomx.so", RTLD_NOW);
     if (!libmmstillomx) {
@@ -318,7 +318,7 @@ static omx_jpeg_color_format format_cam2jpeg(cam_format_t fmt)
         jpeg_fmt = OMX_YCRCBLP_H2V2;
         break;
     default:
-        ALOGI("Camera format %d not supported", fmt);
+        ALOGV("Camera format %d not supported", fmt);
         break;
     }
     return jpeg_fmt;
@@ -326,12 +326,12 @@ static omx_jpeg_color_format format_cam2jpeg(cam_format_t fmt)
 
 int8_t omxJpegEncodeNext(omx_jpeg_encode_params *encode_params)
 {
-    ALOGI("%s:E", __func__);
+    ALOGV("%s:E", __func__);
     pthread_mutex_lock(&jpege_mutex);
     encoding = 1;
     int orientation;
     if(inputPort == NULL || inputPort1 == NULL || outputPort == NULL) {
-      ALOGI("%s:pointer is null: X", __func__);
+      ALOGV("%s:pointer is null: X", __func__);
       pthread_mutex_unlock(&jpege_mutex);
       return -1;
     }
@@ -341,19 +341,19 @@ int8_t omxJpegEncodeNext(omx_jpeg_encode_params *encode_params)
     OMX_GetParameter(pHandle, OMX_IndexParamPortDefinition, inputPort);
     OMX_GetParameter(pHandle, OMX_IndexParamPortDefinition, outputPort);
 
-    ALOGI("%s:nFrameWidth=%d nFrameHeight=%d nBufferSize=%d w=%d h=%d",
+    ALOGV("%s:nFrameWidth=%d nFrameHeight=%d nBufferSize=%d w=%d h=%d",
       __func__, inputPort->format.image.nFrameWidth,
       inputPort->format.image.nFrameHeight, inputPort->nBufferSize,
       bufferoffset.width, bufferoffset.height);
     OMX_GetExtensionIndex(pHandle,"omx.qcom.jpeg.exttype.buffer_offset",
       &buffer_offset);
-    ALOGI("%s:Buffer w %d h %d yOffset %d cbcrOffset %d totalSize %d\n",
+    ALOGV("%s:Buffer w %d h %d yOffset %d cbcrOffset %d totalSize %d\n",
       __func__, bufferoffset.width, bufferoffset.height, bufferoffset.yOffset,
       bufferoffset.cbcrOffset,bufferoffset.totalSize);
     OMX_SetParameter(pHandle, buffer_offset, &bufferoffset);
     OMX_SetParameter(pHandle, OMX_IndexParamPortDefinition, inputPort1);
     OMX_GetParameter(pHandle, OMX_IndexParamPortDefinition, inputPort1);
-    ALOGI("%s: thumbnail widht %d height %d", __func__,
+    ALOGV("%s: thumbnail widht %d height %d", __func__,
       thumbnail.width, thumbnail.height);
 
     userpreferences.color_format =
@@ -418,7 +418,7 @@ int8_t omxJpegEncodeNext(omx_jpeg_encode_params *encode_params)
     pmem_info1.fd = encode_params->thumbnail_fd;
     pmem_info1.offset = 0;
 
-    ALOGI("%s: input1 buff size %d", __func__, inputPort1->nBufferSize);
+    ALOGV("%s: input1 buff size %d", __func__, inputPort1->nBufferSize);
     OMX_UseBuffer(pHandle, &pInBuffers1, 2, &pmem_info1,
       inputPort1->nBufferSize, (void *) encode_params->thumbnail_buf);
     OMX_UseBuffer(pHandle, &pOutBuffers, 1, NULL, inputPort->nBufferSize,
@@ -427,7 +427,7 @@ int8_t omxJpegEncodeNext(omx_jpeg_encode_params *encode_params)
     OMX_EmptyThisBuffer(pHandle, pInBuffers1);
     OMX_FillThisBuffer(pHandle, pOutBuffers);
     pthread_mutex_unlock(&jpege_mutex);
-    ALOGI("%s:X", __func__);
+    ALOGV("%s:X", __func__);
     return true;
 }
 
@@ -437,7 +437,7 @@ int8_t omxJpegEncode(omx_jpeg_encode_params *encode_params)
     uint8_t num_planes;
     uint32_t planes[10];
     int orientation;
-    ALOGI("%s:E", __func__);
+    ALOGV("%s:E", __func__);
 
     inputPort = malloc(sizeof(OMX_PARAM_PORTDEFINITIONTYPE));
     outputPort = malloc(sizeof(OMX_PARAM_PORTDEFINITIONTYPE));
@@ -466,7 +466,7 @@ int8_t omxJpegEncode(omx_jpeg_encode_params *encode_params)
         encode_params->scaling_params->in2_h) {
         if (jpegRotation) {
             userpreferences.preference = OMX_JPEG_PREF_SOFTWARE_ONLY;
-            ALOGI("%s:Scaling and roation true: setting pref to sw\n",
+            ALOGV("%s:Scaling and roation true: setting pref to sw\n",
                 __func__);
             hw_encode = 0;
         }
@@ -479,14 +479,14 @@ int8_t omxJpegEncode(omx_jpeg_encode_params *encode_params)
         bufferoffset.totalSize = encode_params->a_cbcroffset * 1.5;
     }
     OMX_GetExtensionIndex(pHandle,"omx.qcom.jpeg.exttype.buffer_offset",&buffer_offset);
-    ALOGI(" Buffer width = %d, Buffer  height = %d, yOffset =%d, cbcrOffset =%d, totalSize = %d\n",
+    ALOGV(" Buffer width = %d, Buffer  height = %d, yOffset =%d, cbcrOffset =%d, totalSize = %d\n",
                  bufferoffset.width, bufferoffset.height, bufferoffset.yOffset,
                  bufferoffset.cbcrOffset,bufferoffset.totalSize);
     OMX_SetParameter(pHandle, buffer_offset, &bufferoffset);
 
 
     if (encode_params->a_cbcroffset > 0) {
-        ALOGI("Using acbcroffset\n");
+        ALOGV("Using acbcroffset\n");
         bufferoffset1.cbcrOffset = encode_params->a_cbcroffset;
         OMX_GetExtensionIndex(pHandle,"omx.qcom.jpeg.exttype.acbcr_offset",&buffer_offset);
         OMX_SetParameter(pHandle, buffer_offset, &bufferoffset1);
@@ -515,7 +515,7 @@ int8_t omxJpegEncode(omx_jpeg_encode_params *encode_params)
 
     OMX_SetParameter(pHandle, OMX_IndexParamPortDefinition, inputPort1);
     OMX_GetParameter(pHandle, OMX_IndexParamPortDefinition, inputPort1);
-    ALOGI("%s: thumbnail width %d height %d", __func__,
+    ALOGV("%s: thumbnail width %d height %d", __func__,
       encode_params->dimension->thumbnail_width,
       encode_params->dimension->thumbnail_height);
 
@@ -530,7 +530,7 @@ int8_t omxJpegEncode(omx_jpeg_encode_params *encode_params)
 
 
 
-      ALOGI("%s:Scaling params in1_w %d in1_h %d out1_w %d out1_h %d"
+      ALOGV("%s:Scaling params in1_w %d in1_h %d out1_w %d out1_h %d"
                   "main_img in2_w %d in2_h %d out2_w %d out2_h %d\n", __func__,
       encode_params->scaling_params->in1_w,
       encode_params->scaling_params->in1_h,
@@ -541,7 +541,7 @@ int8_t omxJpegEncode(omx_jpeg_encode_params *encode_params)
       encode_params->scaling_params->out2_w,
       encode_params->scaling_params->out2_h);
    /*Main image scaling*/
-    ALOGI("%s:%d/n",__func__,__LINE__);
+    ALOGV("%s:%d/n",__func__,__LINE__);
 
 
     if (encode_params->scaling_params->in2_w &&
@@ -550,40 +550,40 @@ int8_t omxJpegEncode(omx_jpeg_encode_params *encode_params)
       /* Scaler information  for main image */
         recttype.nWidth = CEILING2(encode_params->scaling_params->in2_w);
         recttype.nHeight = CEILING2(encode_params->scaling_params->in2_h);
-        ALOGI("%s:%d/n",__func__,__LINE__);
+        ALOGV("%s:%d/n",__func__,__LINE__);
 
         if (encode_params->main_crop_offset) {
             recttype.nLeft = encode_params->main_crop_offset->x;
             recttype.nTop = encode_params->main_crop_offset->y;
-            ALOGI("%s:%d/n",__func__,__LINE__);
+            ALOGV("%s:%d/n",__func__,__LINE__);
 
         } else {
             recttype.nLeft = 0;
             recttype.nTop = 0;
-            ALOGI("%s:%d/n",__func__,__LINE__);
+            ALOGV("%s:%d/n",__func__,__LINE__);
 
         }
-        ALOGI("%s:%d/n",__func__,__LINE__);
+        ALOGV("%s:%d/n",__func__,__LINE__);
 
         recttype.nPortIndex = 1;
         OMX_SetConfig(pHandle, OMX_IndexConfigCommonInputCrop, &recttype);
-        ALOGI("%s:%d/n",__func__,__LINE__);
+        ALOGV("%s:%d/n",__func__,__LINE__);
 
         if (encode_params->scaling_params->out2_w &&
             encode_params->scaling_params->out2_h) {
             recttype.nWidth = (encode_params->scaling_params->out2_w);
             recttype.nHeight = (encode_params->scaling_params->out2_h);
-            ALOGI("%s:%d/n",__func__,__LINE__);
+            ALOGV("%s:%d/n",__func__,__LINE__);
 
 
             recttype.nPortIndex = 1;
             OMX_SetConfig(pHandle, OMX_IndexConfigCommonOutputCrop, &recttype);
-            ALOGI("%s:%d/n",__func__,__LINE__);
+            ALOGV("%s:%d/n",__func__,__LINE__);
 
         }
 
     } else {
-        ALOGI("%s: There is no main image scaling information",
+        ALOGV("%s: There is no main image scaling information",
           __func__);
     }
   /*case of thumbnail*/
@@ -602,13 +602,13 @@ int8_t omxJpegEncode(omx_jpeg_encode_params *encode_params)
             (encode_params->scaling_params->out1_h !=
             encode_params->dimension->thumbnail_height)) {
 
-            ALOGI("%s:%d/n",__func__,__LINE__);
+            ALOGV("%s:%d/n",__func__,__LINE__);
             thumbnail.cropWidth = CEILING2(encode_params->dimension->thumbnail_width);
             thumbnail.cropHeight = CEILING2(encode_params->dimension->thumbnail_height);
         }
         if (encode_params->scaling_params->in1_w &&
             encode_params->scaling_params->in1_h) {
-            ALOGI("%s:%d/n",__func__,__LINE__);
+            ALOGV("%s:%d/n",__func__,__LINE__);
             thumbnail.cropWidth = CEILING2(encode_params->scaling_params->in1_w);
             thumbnail.cropHeight = CEILING2(encode_params->scaling_params->in1_h);
         }
@@ -616,7 +616,7 @@ int8_t omxJpegEncode(omx_jpeg_encode_params *encode_params)
         thumbnail.height = encode_params->scaling_params->out1_h;
 
         if (encode_params->thumb_crop_offset) {
-            ALOGI("%s:%d/n",__func__,__LINE__);
+            ALOGV("%s:%d/n",__func__,__LINE__);
 
             thumbnail.left = encode_params->thumb_crop_offset->x;
             thumbnail.top = encode_params->thumb_crop_offset->y;
@@ -627,18 +627,18 @@ int8_t omxJpegEncode(omx_jpeg_encode_params *encode_params)
         }
     } else {
         thumbnail.scaling = 0;
-        ALOGI("%s: There is no thumbnail scaling information",
+        ALOGV("%s: There is no thumbnail scaling information",
           __func__);
     }
     OMX_GetExtensionIndex(pHandle,"omx.qcom.jpeg.exttype.user_preferences",
       &user_preferences);
-    ALOGI("%s:User Preferences: color_format %d"
+    ALOGV("%s:User Preferences: color_format %d"
       "thumbnail_color_format = %d encoder preference =%d\n", __func__,
       userpreferences.color_format,userpreferences.thumbnail_color_format,
       userpreferences.preference);
     OMX_SetParameter(pHandle,user_preferences,&userpreferences);
 
-    ALOGI("%s Thumbnail present? : %d ", __func__,
+    ALOGV("%s Thumbnail present? : %d ", __func__,
                  encode_params->hasThumbnail);
     if (encode_params->hasThumbnail) {
     OMX_GetExtensionIndex(pHandle, "omx.qcom.jpeg.exttype.thumbnail", &type);
@@ -652,7 +652,7 @@ int8_t omxJpegEncode(omx_jpeg_encode_params *encode_params)
     OMX_GetExtensionIndex(pHandle, "omx.qcom.jpeg.exttype.thumbnail_quality",
     &thumbnailQualityType);
 
-    ALOGI("%s: thumbnail quality %u %d",
+    ALOGV("%s: thumbnail quality %u %d",
       __func__, thumbnailQualityType, jpegThumbnailQuality);
     OMX_GetParameter(pHandle, thumbnailQualityType, &thumbnailQuality);
     thumbnailQuality.nQFactor = jpegThumbnailQuality;
@@ -660,7 +660,7 @@ int8_t omxJpegEncode(omx_jpeg_encode_params *encode_params)
     rotType.nPortIndex = OUTPUT_PORT;
     rotType.nRotation = jpegRotation;
     OMX_SetConfig(pHandle, OMX_IndexConfigCommonRotate, &rotType);
-    ALOGI("Set rotation to %d\n",jpegRotation);
+    ALOGV("Set rotation to %d\n",jpegRotation);
     OMX_GetExtensionIndex(pHandle, "omx.qcom.jpeg.exttype.exif", &exif);
 
     //Set omx parameter for all exif tags
@@ -673,14 +673,14 @@ int8_t omxJpegEncode(omx_jpeg_encode_params *encode_params)
     pmem_info.fd = encode_params->snapshot_fd;
     pmem_info.offset = 0;
 
-    ALOGI("input buffer size is %d",size);
+    ALOGV("input buffer size is %d",size);
     OMX_UseBuffer(pHandle, &pInBuffers, 0, &pmem_info, size,
     (void *) encode_params->snapshot_buf);
 
     pmem_info1.fd = encode_params->thumbnail_fd;
     pmem_info1.offset = 0;
 
-    ALOGI("%s: input1 buff size %d", __func__, inputPort1->nBufferSize);
+    ALOGV("%s: input1 buff size %d", __func__, inputPort1->nBufferSize);
     OMX_UseBuffer(pHandle, &pInBuffers1, 2, &pmem_info1,
       inputPort1->nBufferSize, (void *) encode_params->thumbnail_buf);
 
@@ -688,7 +688,7 @@ int8_t omxJpegEncode(omx_jpeg_encode_params *encode_params)
     OMX_UseBuffer(pHandle, &pOutBuffers, 1, NULL, size, (void *) out_buffer);
 
     waitForEvent(OMX_EventCmdComplete, OMX_CommandStateSet, OMX_StateIdle);
-    ALOGI("%s:State changed to OMX_StateIdle\n", __func__);
+    ALOGV("%s:State changed to OMX_StateIdle\n", __func__);
     OMX_SendCommand(pHandle, OMX_CommandStateSet, OMX_StateExecuting, NULL);
     waitForEvent(OMX_EventCmdComplete, OMX_CommandStateSet, OMX_StateExecuting);
 
@@ -696,14 +696,14 @@ int8_t omxJpegEncode(omx_jpeg_encode_params *encode_params)
     OMX_EmptyThisBuffer(pHandle, pInBuffers1);
     OMX_FillThisBuffer(pHandle, pOutBuffers);
     pthread_mutex_unlock(&jpege_mutex);
-    ALOGI("%s:X", __func__);
+    ALOGV("%s:X", __func__);
     return true;
 }
 
 void omxJpegFinish()
 {
     pthread_mutex_lock(&jpege_mutex);
-    ALOGI("%s:encoding=%d", __func__, encoding);
+    ALOGV("%s:encoding=%d", __func__, encoding);
     if (encoding) {
         encoding = 0;
         OMX_SendCommand(pHandle, OMX_CommandStateSet, OMX_StateIdle, NULL);
@@ -718,7 +718,7 @@ void omxJpegFinish()
 
 void omxJpegClose()
 {
-    ALOGI("%s:", __func__);
+    ALOGV("%s:", __func__);
     dlclose(libmmstillomx);
 }
 
@@ -730,13 +730,13 @@ void omxJpegAbort()
     user_data = NULL;
     pthread_mutex_unlock(&jpegcb_mutex);
     pthread_mutex_lock(&jpege_mutex);
-    ALOGI("%s: encoding=%d", __func__, encoding);
+    ALOGV("%s: encoding=%d", __func__, encoding);
     if (encoding) {
       encoding = 0;
       OMX_SendCommand(pHandle, OMX_CommandFlush, NULL, NULL);
-      ALOGI("%s:waitForEvent: OMX_CommandFlush", __func__);
+      ALOGV("%s:waitForEvent: OMX_CommandFlush", __func__);
       waitForEvent(OMX_EVENT_JPEG_ABORT, 0, 0);
-      ALOGI("%s:waitForEvent: OMX_CommandFlush: DONE", __func__);
+      ALOGV("%s:waitForEvent: OMX_CommandFlush: DONE", __func__);
       OMX_SendCommand(pHandle, OMX_CommandStateSet, OMX_StateIdle, NULL);
       OMX_SendCommand(pHandle, OMX_CommandStateSet, OMX_StateLoaded, NULL);
       OMX_FreeBuffer(pHandle, 0, pInBuffers);
@@ -751,7 +751,7 @@ void omxJpegAbort()
 int8_t mm_jpeg_encoder_setMainImageQuality(uint32_t quality)
 {
     pthread_mutex_lock(&jpege_mutex);
-    ALOGI("%s: current main inage quality %d ," \
+    ALOGV("%s: current main inage quality %d ," \
     " new quality : %d\n", __func__, jpegMainimageQuality, quality);
     if (quality <= 100)
         jpegMainimageQuality = quality;
@@ -762,7 +762,7 @@ int8_t mm_jpeg_encoder_setMainImageQuality(uint32_t quality)
 int8_t mm_jpeg_encoder_setThumbnailQuality(uint32_t quality)
 {
     pthread_mutex_lock(&jpege_mutex);
-    ALOGI("%s: current thumbnail quality %d ," \
+    ALOGV("%s: current thumbnail quality %d ," \
     " new quality : %d\n", __func__, jpegThumbnailQuality, quality);
     if (quality <= 100)
         jpegThumbnailQuality = quality;
@@ -776,7 +776,7 @@ int8_t mm_jpeg_encoder_setRotation(int rotation, int isZSL)
 
     /*Set ZSL Mode*/
     isZSLMode = isZSL;
-    ALOGI("%s: Setting ZSL Mode to %d Rotation = %d\n",__func__,isZSLMode,rotation);
+    ALOGV("%s: Setting ZSL Mode to %d Rotation = %d\n",__func__,isZSLMode,rotation);
     /* Set rotation configuration */
     switch (rotation) {
     case 0:
@@ -787,7 +787,7 @@ int8_t mm_jpeg_encoder_setRotation(int rotation, int isZSL)
         break;
     default:
         /* Invalid rotation mode, set to default */
-        ALOGI("%s:Setting Default rotation mode", __func__);
+        ALOGV("%s:Setting Default rotation mode", __func__);
         jpegRotation = 0;
         break;
     }

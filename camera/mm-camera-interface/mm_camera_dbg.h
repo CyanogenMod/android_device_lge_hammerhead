@@ -41,7 +41,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     #include <utils/Log.h>
   #else
     #include <stdio.h>
-    #define ALOGE CDBG
+    #define ALOGV CDBG
   #endif
   #undef CDBG
   #define CDBG(fmt, args...) do{}while(0)
@@ -52,7 +52,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     #define LOG_NIDEBUG 0
     #define LOG_TAG "mm-libcamera2"
     #include <utils/Log.h>
-    #define CDBG(fmt, args...) ALOGE(fmt, ##args)
+    #define CDBG(fmt, args...) ALOGV(fmt, ##args)
   #else
     #include <stdio.h>
     #define CDBG(fmt, args...) fprintf(stderr, fmt, ##args)

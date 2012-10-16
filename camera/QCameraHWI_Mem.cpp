@@ -40,7 +40,6 @@
 #include <gralloc_priv.h>
 
 #include "QCameraHWI_Mem.h"
-#include "QCamera_dbg.h"
 
 #define CAMERA_HAL_UNUSED(expr) do { (void)(expr); } while (0)
 
