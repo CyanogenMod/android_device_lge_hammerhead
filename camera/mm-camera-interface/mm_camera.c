@@ -494,6 +494,9 @@ int32_t mm_camera_set_parm(mm_camera_obj_t * my_obj,
                             MM_CAMERA_STATE_EVT_SET_FMT, fmt);
         }
         break;
+    case MM_CAMERA_PARM_CHECK_AF_RETRY:
+        return mm_camera_send_native_ctrl_cmd(my_obj,   CAMERA_CHECK_AF_RETRY,
+                 0, (void *)NULL);
     default:
         rc = mm_camera_set_general_parm(my_obj, parm);
         break;
@@ -657,6 +660,10 @@ int32_t mm_camera_get_parm(mm_camera_obj_t * my_obj,
     case MM_CAMERA_GET_PARM_LOW_LIGHT_FOR_ZSL:
         return mm_camera_send_native_ctrl_cmd(my_obj,   CAMERA_GET_PARM_LOW_LIGHT_FOR_ZSL,
                      sizeof(aec_info_for_flash_t), (void *)parm->p_value);
+
+    case MM_CAMERA_PARM_GET_AF_STATUS:
+        return mm_camera_send_native_ctrl_cmd(my_obj,   CAMERA_GET_PARM_AF_STATUS,
+                     sizeof(af_actuator_status_t), (void *)parm->p_value);
     default:
         /* needs to add more implementation */
         rc = -1;
