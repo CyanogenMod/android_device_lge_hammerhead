@@ -1952,13 +1952,11 @@ status_t QCameraStream_Snapshot::receiveRawPicture(mm_camera_ch_data_buf_t* recv
           frame. We'll need to query.*/
         memset(&crop, 0, sizeof(common_crop_t));
 
-        /*maftab*/
-        #if 0
-        crop.in1_w=mCrop.snapshot.thumbnail_crop.width;
-        crop.in1_h=mCrop.snapshot.thumbnail_crop.height;
-        crop.out1_w=mThumbnailWidth;
-        crop.out1_h=mThumbnailHeight;
-        #endif
+        if(isZSLMode()){
+            //Changes to stop sending Preview Frames when Snapshot issued
+            //in ZSL case.
+            mHalCamCtrl->mPauseFramedispatch = true;
+        }
 
         ALOGI("%s: Call notifyShutter 2nd time", __func__);
         /* The recvd_frame structre we receive from lower library is a local

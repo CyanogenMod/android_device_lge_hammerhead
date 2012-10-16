@@ -874,6 +874,13 @@ status_t QCameraStream_preview::processPreviewFrameWithDisplay(
     /*Call buf done*/
     return BAD_VALUE;
   }
+
+  if(mHalCamCtrl->mPauseFramedispatch) {
+      if(MM_CAMERA_OK != cam_evt_buf_done(mCameraId, frame)) {
+            ALOGE("BUF DONE FAILED for the recylce buffer");
+      }
+      return NO_ERROR;
+  }
   mHalCamCtrl->mCallbackLock.lock();
   camera_data_timestamp_callback rcb = mHalCamCtrl->mDataCbTimestamp;
   void *rdata = mHalCamCtrl->mCallbackCookie;
@@ -898,13 +905,13 @@ status_t QCameraStream_preview::processPreviewFrameWithDisplay(
   ALOGI("Enqueue buf handle %p\n",
   mHalCamCtrl->mPreviewMemory.buffer_handle[frame->def.idx]);
   ALOGV("%s: camera call genlock_unlock", __FUNCTION__);
-  if(!mHalCamCtrl->mPauseFramedispatch) {
+
     if (BUFFER_LOCKED == mHalCamCtrl->mPreviewMemory.local_flag[frame->def.idx]) {
       ALOGI("%s: genlock_unlock_buffer hdl =%p", __FUNCTION__, (*mHalCamCtrl->mPreviewMemory.buffer_handle[frame->def.idx]));
         if (GENLOCK_FAILURE == genlock_unlock_buffer((native_handle_t*)
-	            (*mHalCamCtrl->mPreviewMemory.buffer_handle[frame->def.idx]))) {
+                (*mHalCamCtrl->mPreviewMemory.buffer_handle[frame->def.idx]))) {
             ALOGE("%s: genlock_unlock_buffer failed", __FUNCTION__);
-	        //mHalCamCtrl->mPreviewMemoryLock.unlock();
+            //mHalCamCtrl->mPreviewMemoryLock.unlock();
             //return -EINVAL;
         } else {
             mHalCamCtrl->mPreviewMemory.local_flag[frame->def.idx] = BUFFER_UNLOCKED;
@@ -998,11 +1005,7 @@ status_t QCameraStream_preview::processPreviewFrameWithDisplay(
      }
   } else
       ALOGV("%s: error in dequeue_buffer, enqueue_buffer idx = %d, no free buffer now", __func__, frame->def.idx);
-  } else {
-      if(MM_CAMERA_OK != cam_evt_buf_done(mCameraId, frame)) {
-            ALOGE("BUF DONE FAILED for the recylce buffer");
-      }
-  }
+
   /* Save the last displayed frame. We'll be using it to fill the gap between
      when preview stops and postview start during snapshot.*/
   mLastQueuedFrame = &(mDisplayStreamBuf.frame[frame->def.idx]);
