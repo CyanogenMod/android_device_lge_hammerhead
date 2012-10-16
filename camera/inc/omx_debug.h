@@ -40,9 +40,9 @@
   #define LOG_TAG "mm-still-omx"
   #include <utils/Log.h>
   #ifdef NEW_LOG_API
-    #define OMXDBG(fmt, args...) ALOGI(fmt, ##args)
+    #define OMXDBG(fmt, args...) ALOGV(fmt, ##args)
   #else
-    #define OMXDBG(fmt, args...) LOGI(fmt, ##args)
+    #define OMXDBG(fmt, args...) LOGV(fmt, ##args)
   #endif
 #endif
 
