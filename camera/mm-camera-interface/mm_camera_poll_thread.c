@@ -96,7 +96,7 @@ static int32_t mm_camera_poll_sig(mm_camera_poll_thread_t *poll_cb,
         CDBG("%s: wait", __func__);
         rc = pthread_cond_timedwait(&poll_cb->cond_v, &poll_cb->mutex, &ts);
         if (rc) {
-            ALOGE("%s: error on pthread_cond_timedwait: %s", __func__, strerror(rc));
+            ALOGV("%s: error on pthread_cond_timedwait: %s", __func__, strerror(rc));
             break;
         }
     }
@@ -315,7 +315,7 @@ int mm_camera_poll_start(mm_camera_obj_t * my_obj,  mm_camera_poll_thread_t *pol
         ts.tv_sec += 2;
         rc = pthread_cond_timedwait(&poll_cb->cond_v, &poll_cb->mutex, &ts);
         if (rc) {
-            ALOGE("%s: error on pthread_cond_timedwait: %s", __func__, strerror(rc));
+            ALOGV("%s: error on pthread_cond_timedwait: %s", __func__, strerror(rc));
             break;
         }
     }
@@ -409,7 +409,7 @@ int mm_camera_poll_thread_launch(mm_camera_obj_t * my_obj, int ch_type)
         poll_cb->data.poll_type = MM_CAMERA_POLL_TYPE_EVT;
     }
 
-    ALOGI("%s: ch_type = %d, poll_type = %d, read fd = %d, write fd = %d",
+    ALOGV("%s: ch_type = %d, poll_type = %d, read fd = %d, write fd = %d",
          __func__, ch_type, poll_cb->data.poll_type,
          poll_cb->data.pfds[0], poll_cb->data.pfds[1]);
     /* launch the thread */

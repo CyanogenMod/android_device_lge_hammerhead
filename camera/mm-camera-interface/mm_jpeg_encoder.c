@@ -44,7 +44,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     #define LOG_NIDEBUG 0
     #define LOG_TAG "mm-camera jpeg"
     #include <utils/Log.h>
-    #define CDBG(fmt, args...) ALOGE(fmt, ##args)
+    #define CDBG(fmt, args...) ALOGV(fmt, ##args)
     #endif
 #endif
 
