@@ -153,14 +153,14 @@ extern "C" int get_number_of_cameras()
 {
     /* try to query every time we get the call!*/
 
-    ALOGE("Q%s: E", __func__);
+    ALOGV("Q%s: E", __func__);
     return android::HAL_getNumberOfCameras( );
 }
 
 extern "C" int get_camera_info(int camera_id, struct camera_info *info)
 {
     int rc = -1;
-    ALOGE("Q%s: E", __func__);
+    ALOGV("Q%s: E", __func__);
     if(info) {
         struct CameraInfo camInfo;
         memset(&camInfo, -1, sizeof (struct CameraInfo));
@@ -223,7 +223,7 @@ extern "C" int  camera_device_open(
 
 extern "C"  int close_camera_device( hw_device_t *hw_dev)
 {
-    ALOGE("Q%s: device =%p E", __func__, hw_dev);
+    ALOGV("Q%s: device =%p E", __func__, hw_dev);
     int rc =  -1;
     camera_device_t *device = (camera_device_t *)hw_dev;
 
@@ -308,7 +308,7 @@ int start_preview(struct camera_device * device)
     if(hardware != NULL){
         rc = hardware->startPreview( );
     }
-    ALOGE("Q%s: X", __func__);
+    ALOGV("Q%s: X", __func__);
     return rc;
 }
 
