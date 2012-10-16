@@ -471,6 +471,8 @@ typedef enum {
     MM_CAMERA_PARM_CAF_TYPE,
 #endif
     MM_CAMERA_PARM_LUX_IDX,
+    MM_CAMERA_PARM_GET_AF_STATUS,
+    MM_CAMERA_PARM_CHECK_AF_RETRY,
     MM_CAMERA_PARM_MAX
 } mm_camera_parm_type_t;
 
@@ -621,6 +623,8 @@ typedef enum {
 #endif
   CAMERA_GET_PARM_LUX_IDX,
   CAMERA_GET_PARM_LOW_LIGHT_FOR_ZSL,
+  CAMERA_GET_PARM_AF_STATUS,
+  CAMERA_CHECK_AF_RETRY,
   CAMERA_CTRL_PARM_MAX
 } cam_ctrl_type;
 
@@ -1065,6 +1069,11 @@ typedef enum {
   /*new mode above should be added above this line*/
   LED_MODE_MAX
 } led_mode_t;
+
+typedef struct {
+  int is_checking_af_retry;
+  int is_moving;
+} af_actuator_status_t;
 
 typedef struct{
   int aec_index_for_zsl;
