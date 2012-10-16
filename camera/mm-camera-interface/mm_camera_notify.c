@@ -430,12 +430,6 @@ static void mm_camera_read_preview_frame(mm_camera_obj_t * my_obj)
     }
     pthread_mutex_unlock(&my_obj->ch[MM_CAMERA_CH_PREVIEW].mutex);
 
-    for( i=0;i<cnt;i++) {
-        if(buf_cb[i].cb != NULL && my_obj->poll_threads[MM_CAMERA_CH_PREVIEW].data.used == 1) {
-            buf_cb[i].cb(&data[i],buf_cb[i].user_data);
-        }
-    }
-
     if(my_obj->op_mode == MM_CAMERA_OP_MODE_ZSL) {
         /* Reset match to 0. */
         stream->frame.frame[idx].match = 0;
@@ -443,6 +437,12 @@ static void mm_camera_read_preview_frame(mm_camera_obj_t * my_obj)
         mm_camera_zsl_frame_cmp_and_enq(my_obj,
           &my_obj->ch[MM_CAMERA_CH_PREVIEW].preview.stream.frame.frame[idx],
           stream);
+    }
+
+    for( i=0;i<cnt;i++) {
+        if(buf_cb[i].cb != NULL && my_obj->poll_threads[MM_CAMERA_CH_PREVIEW].data.used == 1) {
+            buf_cb[i].cb(&data[i],buf_cb[i].user_data);
+        }
     }
 }
 

@@ -1005,6 +1005,15 @@ status_t QCameraHardwareInterface::startPreview()
 
     ALOGV("%s: mPreviewState =%d", __func__, mPreviewState);
     Mutex::Autolock lock(mLock);
+
+    if(mPauseFramedispatch){
+        //In ZSL case after snapshot we need to restart
+        //if stop preview not issued.
+        stopPreviewInternal();
+        mPreviewState = QCAMERA_HAL_PREVIEW_STOPPED;
+        mPauseFramedispatch = false;
+    }
+
     switch(mPreviewState) {
     case QCAMERA_HAL_PREVIEW_STOPPED:
     case QCAMERA_HAL_TAKE_PICTURE:
@@ -1043,8 +1052,8 @@ status_t QCameraHardwareInterface::startPreview2()
     cam_ctrl_dimension_t dim;
     mm_camera_dimension_t maxDim;
     bool initPreview = false;
-    mPauseFramedispatch = false;
 
+    mPauseFramedispatch = false;
     if (mPreviewState == QCAMERA_HAL_PREVIEW_STARTED) { //isPreviewRunning()){
         ALOGE("%s:Preview already started  mCameraState = %d!", __func__, mCameraState);
         ALOGV("%s: X", __func__);
@@ -1246,6 +1255,7 @@ void QCameraHardwareInterface::stopPreviewInternal()
     }
     mStreamDisplay->stop();
 
+    mPauseFramedispatch = false;
     mCameraState = CAMERA_STATE_PREVIEW_STOP_CMD_SENT;
     ALOGV("stopPreviewInternal: X");
 }
@@ -1255,6 +1265,9 @@ int QCameraHardwareInterface::previewEnabled()
     ALOGV("previewEnabled: E");
     Mutex::Autolock lock(mLock);
     ALOGI("%s: mCameraState = %d", __func__, mCameraState);
+    if (mPauseFramedispatch) {
+        return false;
+    }
     switch(mPreviewState) {
     case QCAMERA_HAL_PREVIEW_STOPPED:
     case QCAMERA_HAL_TAKE_PICTURE:
@@ -1630,7 +1643,6 @@ status_t  QCameraHardwareInterface::takePicture()
         mStreamSnap->setFullSizeLiveshot(false);
         if (isZSLMode()) {
             if (mStreamSnap != NULL) {
-                mPauseFramedispatch = true;
                 pausePreviewForZSL();
                 ret = mStreamSnap->takePictureZSL();
                 if (ret != MM_CAMERA_OK) {
