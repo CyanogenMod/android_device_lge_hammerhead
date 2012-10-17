@@ -1075,8 +1075,8 @@ void QCameraHardwareInterface::initDefaultParameters()
     //Set Focus Mode
     if(mHasAutoFocusSupport){
        mParameters.set(QCameraParameters::KEY_FOCUS_MODE,
-                          QCameraParameters::FOCUS_MODE_CONTINUOUS_PICTURE);
-       mFocusMode = AF_MODE_CAF;
+                          QCameraParameters::FOCUS_MODE_AUTO);
+       mFocusMode = AF_MODE_AUTO;
        mParameters.set(QCameraParameters::KEY_SUPPORTED_FOCUS_MODES,
                           mFocusModeValues);
        mParameters.set(QCameraParameters::KEY_MAX_NUM_FOCUS_AREAS, "1");
@@ -1423,7 +1423,7 @@ status_t QCameraHardwareInterface::setParameters(const QCameraParameters& params
     if ((rc = setZSLBurstInterval(params))) final_rc = rc;
     if ((rc = setNoDisplayMode(params))) final_rc = rc;
     if ((rc = setCAFLockCancel())) final_rc = rc;
-    
+
     //Update Exiftag values.
     setExifTags();
 
@@ -2061,11 +2061,11 @@ status_t QCameraHardwareInterface::setFocusMode(const QCameraParameters& params)
                                       (void *)&value);
 
                 int cafSupport = false;
+                int caf_type=0;
                 if(!strcmp(str, QCameraParameters::FOCUS_MODE_CONTINUOUS_VIDEO) ||
                    !strcmp(str, QCameraParameters::FOCUS_MODE_CONTINUOUS_PICTURE)){
                     cafSupport = true;
 #ifdef FAST_AF
-                    int caf_type=0;
                     bool rc = false;
                     if(!strcmp(str, QCameraParameters::FOCUS_MODE_CONTINUOUS_VIDEO))
                     {
@@ -2079,6 +2079,10 @@ status_t QCameraHardwareInterface::setFocusMode(const QCameraParameters& params)
                     }
                     ALOGV("caf_type %d rc %d", caf_type, rc);
 #endif
+                } else if(myMode & CAMERA_ZSL_MODE){
+                    cafSupport = true;
+                    caf_type = 2;
+                    native_set_parms(MM_CAMERA_PARM_CAF_TYPE, sizeof(caf_type), (void *)&caf_type);
                 }
                 ALOGV("Continuous Auto Focus %d", cafSupport);
                 ret = native_set_parms(MM_CAMERA_PARM_CONTINUOUS_AF, sizeof(cafSupport),
@@ -2536,6 +2540,7 @@ status_t QCameraHardwareInterface::setCameraMode(const QCameraParameters& params
     } else {
         myMode = (camera_mode_t)(myMode & ~CAMERA_ZSL_MODE);
     }
+
     return NO_ERROR;
 }
 
