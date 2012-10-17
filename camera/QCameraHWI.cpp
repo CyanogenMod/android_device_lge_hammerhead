@@ -198,6 +198,7 @@ QCameraHardwareInterface(int cameraId, int mode)
 
     pthread_mutex_init(&mAsyncCmdMutex, NULL);
     pthread_cond_init(&mAsyncCmdWait, NULL);
+    mFlashCond = false;
 
     property_get("persist.debug.sf.showfps", value, "0");
     mDebugFps = atoi(value);
@@ -1073,6 +1074,12 @@ status_t QCameraHardwareInterface::startPreview2()
         myMode = (camera_mode_t)(myMode | CAMERA_ZSL_MODE);
         mParameters.setPreviewFrameRateMode("frame-rate-auto");
         setPreviewFrameRateMode(mParameters);
+
+        int cafSupport = true;
+        int caf_type = 2;
+        native_set_parms(MM_CAMERA_PARM_CAF_TYPE, sizeof(caf_type), (void *)&caf_type);
+        native_set_parms(MM_CAMERA_PARM_CONTINUOUS_AF, sizeof(cafSupport),
+                               (void *)&cafSupport);
     }
 
      if (mRecordingHint && !mFullLiveshotEnabled) {
