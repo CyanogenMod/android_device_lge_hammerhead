@@ -15,7 +15,6 @@
 */
 
 /*#error uncomment this for compiler test!*/
-
 #define ALOG_NIDEBUG 0
 
 #define LOG_TAG "QCameraHWI"
@@ -1082,13 +1081,6 @@ status_t QCameraHardwareInterface::startPreview2()
                                (void *)&cafSupport);
     }
 
-     if (mRecordingHint && !mFullLiveshotEnabled) {
-         //Camcorder Preview
-         prepareVideoPicture(true);
-     }else{
-         //Camera Preview
-         prepareVideoPicture(false);
-     }
     /*  get existing preview information, by qury mm_camera*/
     memset(&dim, 0, sizeof(cam_ctrl_dimension_t));
     ret = cam_config_get_parm(mCameraId, MM_CAMERA_PARM_DIMENSION,&dim);
@@ -1700,6 +1692,9 @@ status_t  QCameraHardwareInterface::takePicture()
           ALOGE("takePicture : Duplicate TakePicture Call");
           return ret;
       }
+      mFullLiveshotEnabled = true;
+      setFullLiveshot();
+      mStreamSnap->setFullSizeLiveshot(mFullLiveshotEnabled);
       if (canTakeFullSizeLiveshot()) {
         ALOGV(" Calling takeFullSizeLiveshot");
         takeFullSizeLiveshot();
@@ -1741,8 +1736,8 @@ bool QCameraHardwareInterface::canTakeFullSizeLiveshot() {
 
       /* If Picture size is same as video size, switch to Video size
        * live snapshot */
-      if ((mDimension.picture_width == mDimension.video_width) &&
-          (mDimension.picture_height == mDimension.video_height)) {
+      if ((mDimension.picture_width == mVideoWidth) &&
+          (mDimension.picture_height == mVideoHeight)) {
         return false;
       }
 
@@ -1751,9 +1746,9 @@ bool QCameraHardwareInterface::canTakeFullSizeLiveshot() {
         * less than (video size + 10% DIS Margin)
         * then fall back to Video size liveshot. */
         if ((mDimension.picture_width <
-               (int)(mDimension.video_width * 1.1)) ||
+               (int)(mVideoWidth * 1.1)) ||
              (mDimension.picture_height <
-               (int)(mDimension.video_height * 1.1))) {
+               (int)(mVideoHeight * 1.1))) {
           ret = false;
         } else {
           /* Go with Full size live snapshot. */
@@ -2133,8 +2128,8 @@ void QCameraHardwareInterface::dumpFrameToFile(struct msm_frame* newFrame,
             file_fd = open(buf, O_RDWR | O_CREAT, 0777);
             break;
           case HAL_DUMP_FRM_VIDEO:
-            w = mDimension.video_width;
-            h = mDimension.video_height;
+            w = mVideoWidth;
+            h = mVideoHeight;
             snprintf(buf, sizeof(buf),"/data/%dv_%dx%d.yuv", mDumpFrmCnt, w, h);
             file_fd = open(buf, O_RDWR | O_CREAT, 0777);
             break;
