@@ -63,6 +63,7 @@ extern "C" {
 } // extern "C"
 
 #include "QCameraHWI.h"
+#include "QCameraStream.h"
 
 /* QCameraHardwareInterface class implementation goes here*/
 /* following code implements the parameter logic of this class*/
@@ -567,6 +568,7 @@ bool QCameraHardwareInterface::supportsSceneDetection() {
 
 bool QCameraHardwareInterface::supportsFaceDetection() {
     bool rc;
+
     status_t ret = NO_ERROR;
     mm_camera_op_mode_type_t op_mode;
 
@@ -575,8 +577,8 @@ bool QCameraHardwareInterface::supportsFaceDetection() {
         ALOGE("%s: Failed to get Op Mode", __func__);
     }
 
-    ALOGV("%s: OP_Mode is %d, ret=%d",__func__,op_mode,ret);
-    if ((ret == NO_ERROR) && (op_mode == MM_CAMERA_OP_MODE_VIDEO))
+    ALOGV("%s: OP_Mode is %d, ret=%d, mHdrMode=%d",__func__,op_mode,ret,mHdrMode);
+    if ((ret == NO_ERROR) && (op_mode == MM_CAMERA_OP_MODE_VIDEO) && (mHdrMode != HDR_MODE))
     {
         ALOGV("%s: Video mode : FD not supported",__func__);
         return false;
