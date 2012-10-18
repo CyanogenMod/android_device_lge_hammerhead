@@ -247,6 +247,7 @@ receiveJpegFragment(uint8_t *ptr, uint32_t size)
 void QCameraStream_Snapshot::jpegErrorHandler(jpeg_event_t event)
 {
     ALOGV("%s: E", __func__);
+    camera_memory_t *data = mHalCamCtrl->mGetMemory(-1, 1, 1, NULL);
     mStopCallbackLock.lock( );
     if(mCurrentFrameEncoded) {
         free(mCurrentFrameEncoded);
@@ -261,7 +262,8 @@ void QCameraStream_Snapshot::jpegErrorHandler(jpeg_event_t event)
     mStopCallbackLock.unlock( );
     if (NULL != mHalCamCtrl->mDataCb)
         mHalCamCtrl->mDataCb (CAMERA_MSG_COMPRESSED_IMAGE,
-                              NULL, 0, NULL,mHalCamCtrl->mCallbackCookie);
+                              data, 0, NULL,mHalCamCtrl->mCallbackCookie);
+    if(NULL != data) data->release(data);
     ALOGV("%s: X", __func__);
 }
 
