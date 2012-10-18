@@ -2618,9 +2618,6 @@ void QCameraHardwareInterface::pausePreviewForVideo()
         restart |= false;
     }
     if (mRecordingHint == false) {
-        // Set recording hint to true
-        mRecordingHint = true;
-        setRecordingHintValue(mRecordingHint);
         ALOGV("%s: Restarting Preview. Hint not set",__func__);
         restart |= true;
     }
@@ -2644,6 +2641,10 @@ void QCameraHardwareInterface::pausePreviewForVideo()
     if (restart) {
         stopPreviewInternal();
         mPreviewState = QCAMERA_HAL_PREVIEW_STOPPED;
+
+        // Set recording hint to true
+        mRecordingHint = true;
+        setRecordingHintValue(mRecordingHint);
 
         mDimension.display_width = mPreviewWidth;
         mDimension.display_height= mPreviewHeight;
