@@ -1160,6 +1160,11 @@ status_t QCameraHardwareInterface::startPreview2()
 
     ALOGV("%s: setPreviewWindow", __func__);
     mStreamDisplay->setPreviewWindow(mPreviewWindow);
+    ret = cam_config_set_parm(mCameraId, MM_CAMERA_PARM_INFORM_STARTPRVIEW, NULL);
+    if(ret<0)
+    {
+      ALOGE("%s: Failed to Check MM_CAMERA_PARM_INFORM_STARTPRVIEW, rc %d", __func__, ret);
+    }
 
     if(isZSLMode()) {
         /* Start preview streaming */
@@ -1630,7 +1635,7 @@ status_t  QCameraHardwareInterface::takePicture()
     int mNuberOfVFEOutputs = 0;
     Mutex::Autolock lock(mLock);
     bool hdr;
-    int  frm_num = 1;
+    int  frm_num = 1, rc = 0;
     int  exp[MAX_HDR_EXP_FRAME_NUM];
 
     if(QCAMERA_HAL_RECORDING_STARTED != mPreviewState){
@@ -1643,6 +1648,11 @@ status_t  QCameraHardwareInterface::takePicture()
         mFlashCond = false;
     }
 
+    rc = cam_config_set_parm(mCameraId, MM_CAMERA_PARM_LG_CAF_LOCK, NULL);
+    if(rc<0)
+    {
+      ALOGE("%s: Failed to Check MM_CAMERA_PARM_LG_CAF_LOCK, rc %d", __func__, rc);
+    }
     hdr = getHdrInfoAndSetExp(MAX_HDR_EXP_FRAME_NUM, &frm_num, exp);
     mStreamSnap->resetSnapshotCounters();
     mStreamSnap->InitHdrInfoForSnapshot(hdr, frm_num, exp);

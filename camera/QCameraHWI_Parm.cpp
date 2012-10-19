@@ -1429,7 +1429,6 @@ status_t QCameraHardwareInterface::setParameters(const QCameraParameters& params
     if ((rc = setZSLBurstLookBack(params))) final_rc = rc;
     if ((rc = setZSLBurstInterval(params))) final_rc = rc;
     if ((rc = setNoDisplayMode(params))) final_rc = rc;
-    if ((rc = setCAFLockCancel())) final_rc = rc;
 
     //Update Exiftag values.
     setExifTags();

@@ -497,6 +497,12 @@ int32_t mm_camera_set_parm(mm_camera_obj_t * my_obj,
     case MM_CAMERA_PARM_CHECK_AF_RETRY:
         return mm_camera_send_native_ctrl_cmd(my_obj,   CAMERA_CHECK_AF_RETRY,
                  0, (void *)NULL);
+    case MM_CAMERA_PARM_LG_CAF_LOCK:
+        return mm_camera_send_native_ctrl_cmd(my_obj,   CAMERA_SET_LG_CAF_LOCK,
+                 0, (void *)NULL);
+    case MM_CAMERA_PARM_INFORM_STARTPRVIEW:
+        return mm_camera_send_native_ctrl_cmd(my_obj,   CAMERA_SET_INFORM_STARTPREVIEW,
+                 0, (void *)NULL);
     default:
         rc = mm_camera_set_general_parm(my_obj, parm);
         break;
