@@ -1081,6 +1081,18 @@ status_t QCameraHardwareInterface::startPreview2()
                                (void *)&cafSupport);
     }
 
+     if (mRecordingHint) {
+         //set the fullsize liveshot to True in Camcorder Mode
+        mFullLiveshotEnabled = true;
+        setFullLiveshot();
+        mStreamSnap->setFullSizeLiveshot(mFullLiveshotEnabled);
+     }else{
+         //set the fullsize liveshot to False in Camera Mode
+        mFullLiveshotEnabled = false;
+        setFullLiveshot();
+        mStreamSnap->setFullSizeLiveshot(mFullLiveshotEnabled);
+     }
+
     /*  get existing preview information, by qury mm_camera*/
     memset(&dim, 0, sizeof(cam_ctrl_dimension_t));
     ret = cam_config_get_parm(mCameraId, MM_CAMERA_PARM_DIMENSION,&dim);
@@ -1126,8 +1138,9 @@ status_t QCameraHardwareInterface::startPreview2()
         if (!matching) {
             dim.picture_width  = mPictureWidth;
             dim.picture_height = mPictureHeight;
-            dim.ui_thumbnail_height = dim.display_height;
-            dim.ui_thumbnail_width = dim.display_width;
+            //For FullSize snapshot Main image Buffer is used as Thumanail.
+            dim.ui_thumbnail_height = mPictureWidth;
+            dim.ui_thumbnail_width = mPictureHeight;
         }
         ALOGI("%s: Fullsize Liveshaot Picture size to set: %d x %d", __func__,
              dim.picture_width, dim.picture_height);
@@ -1635,7 +1648,7 @@ status_t  QCameraHardwareInterface::takePicture()
     mStreamSnap->InitHdrInfoForSnapshot(hdr, frm_num, exp);
     switch(mPreviewState) {
     case QCAMERA_HAL_PREVIEW_STARTED:
-          //set the fullsize liveshot to false
+        //set the fullsize liveshot to false
         mFullLiveshotEnabled = false;
         setFullLiveshot();
         mStreamSnap->setFullSizeLiveshot(false);

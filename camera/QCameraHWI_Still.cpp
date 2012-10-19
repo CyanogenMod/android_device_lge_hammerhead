@@ -1757,6 +1757,10 @@ encodeData(mm_camera_ch_data_buf_t* recvd_frame,
         thumb_crop_offset.x=mCrop.snapshot.thumbnail_crop.left;
         thumb_crop_offset.y=mCrop.snapshot.thumbnail_crop.top;
 
+        if (crop.out1_w > crop.out2_w || crop.out1_h > crop.out2_h) {
+            crop.out1_w = crop.out2_w;
+            crop.out1_h = crop.out2_h;
+        }
         //update exif parameters in HAL
         mHalCamCtrl->initExifData();
 
