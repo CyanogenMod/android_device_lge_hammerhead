@@ -2104,10 +2104,14 @@ void QCameraHardwareInterface::zoomEvent(cam_ctrl_status_t *status, app_notify_c
 
 void QCameraHardwareInterface::dumpFrameToFile(const void * data, uint32_t size, char* name, char* ext, int index)
 {
-    char buf[32];
-    int file_fd;
+#if 0
+    char buf[32], value[PROPERTY_VALUE_MAX];
+    int file_fd, enabled = 0;
     static int i = 0 ;
-    if ( data != NULL) {
+    property_get("persist.camera.dumpimage", value, "0");
+    enabled = atoi(value);
+
+    if ( data != NULL && enabled) {
         char * str;
         snprintf(buf, sizeof(buf), "/data/%s_%d.%s", name, index, ext);
         ALOGE("%s size =%d", buf, size);
@@ -2116,11 +2120,13 @@ void QCameraHardwareInterface::dumpFrameToFile(const void * data, uint32_t size,
         close(file_fd);
         i++;
     }
+#endif
 }
 
 void QCameraHardwareInterface::dumpFrameToFile(struct msm_frame* newFrame,
   HAL_cam_dump_frm_type_t frm_type)
 {
+#if 0
   int32_t enabled = 0;
   int frm_num;
   uint32_t  skip_mode;
@@ -2197,6 +2203,7 @@ void QCameraHardwareInterface::dumpFrameToFile(struct msm_frame* newFrame,
   }  else {
     mDumpFrmCnt = 0;
   }
+#endif
 }
 
 status_t QCameraHardwareInterface::setPreviewWindow(preview_stream_ops_t* window)
