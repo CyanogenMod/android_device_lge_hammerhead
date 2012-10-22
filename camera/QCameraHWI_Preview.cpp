@@ -820,6 +820,7 @@ end:
 
 void QCameraStream_preview::dumpFrameToFile(struct msm_frame* newFrame)
 {
+#if 0
   int32_t enabled = 0;
   int frm_num;
   uint32_t  skip_mode;
@@ -851,6 +852,7 @@ void QCameraStream_preview::dumpFrameToFile(struct msm_frame* newFrame)
     close(file_fd);
     ALOGV("%s: dump %s, rc = %d, len = %d", __func__, buf, rc, len);
   }
+#endif
 }
 
 status_t QCameraStream_preview::processPreviewFrameWithDisplay(
