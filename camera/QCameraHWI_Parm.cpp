@@ -1213,7 +1213,7 @@ void QCameraHardwareInterface::initDefaultParameters()
     //Set Face Detection
     if(supportsFaceDetection()){
         mParameters.set(QCameraParameters::KEY_FACE_DETECTION,
-                        QCameraParameters::FACE_DETECTION_ON);
+                        QCameraParameters::FACE_DETECTION_OFF);
         mParameters.set(QCameraParameters::KEY_SUPPORTED_FACE_DETECTION,
                         mFaceDetectionValues);
     }
