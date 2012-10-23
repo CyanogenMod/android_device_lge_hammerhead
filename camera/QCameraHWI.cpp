@@ -1061,7 +1061,7 @@ status_t QCameraHardwareInterface::startPreview2()
 
     const char *str = mParameters.get(QCameraParameters::KEY_SCENE_MODE);
 
-    if (mRecordingHint || !strcmp(str, "hdr") || mFlashCond) {
+    if (mRecordingHint || mFlashCond) {
         ALOGI("%s:Setting non-ZSL mode",__func__);
         mParameters.set(QCameraParameters::KEY_CAMERA_MODE, 0);
         myMode = (camera_mode_t)(myMode & ~CAMERA_ZSL_MODE);
