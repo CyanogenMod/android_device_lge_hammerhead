@@ -143,6 +143,8 @@ static struct camera_size_type zsl_picture_sizes[] = {
 static camera_size_type default_picture_sizes[] = {
   { 4000, 3000}, // 12MP
   { 3264, 2448}, // 8MP
+  { 3264, 1836}, // Picture Size to match 1080p,720p AR
+  { 3264, 2176}, // Picture Size to match 480p AR
   { 2592, 1944}, // 5MP
   { 2048, 1536}, // 3MP QXGA
   { 1920, 1080}, // HD1080
