@@ -1051,13 +1051,8 @@ void QCameraHardwareInterface::initDefaultParameters()
     mParameters.set(QCameraParameters::KEY_SUPPORTED_EFFECTS, mEffectValues);
 
     //Set Auto Exposure
-    if (mCameraId)
-      mParameters.set(QCameraParameters::KEY_AUTO_EXPOSURE,
-                      QCameraParameters::AUTO_EXPOSURE_SPOT_METERING);
-    else
-      mParameters.set(QCameraParameters::KEY_AUTO_EXPOSURE,
-                     QCameraParameters::AUTO_EXPOSURE_CENTER_WEIGHTED);
-
+    mParameters.set(QCameraParameters::KEY_AUTO_EXPOSURE,
+                    QCameraParameters::AUTO_EXPOSURE_CENTER_WEIGHTED);
     mParameters.set(QCameraParameters::KEY_SUPPORTED_AUTO_EXPOSURE, mAutoExposureValues);
 
     //Set WhiteBalance
