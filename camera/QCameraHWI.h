@@ -747,6 +747,7 @@ private:
     int mSnapshotFormat;
     int mZslInterval;
     bool mRestartPreview;
+    bool isCameraOpen;
 
     led_mode_t mLedStatusForZsl;
     bool mFlashCond;
@@ -845,6 +846,7 @@ private:
      int                    mExifTableNumEntries;            //NUmber of entries in mExifData
      int                 mNoDisplayMode;
      int                 mIsoValue;
+
 };
 
 }; // namespace android
