@@ -1061,7 +1061,7 @@ status_t QCameraHardwareInterface::startPreview2()
 
     const char *str = mParameters.get(QCameraParameters::KEY_SCENE_MODE);
 
-    if (mRecordingHint || mFlashCond) {
+    if (mRecordingHint || mFlashCond || !strcmp(str, "hdr")) {
         ALOGI("%s:Setting non-ZSL mode",__func__);
         mParameters.set(QCameraParameters::KEY_CAMERA_MODE, 0);
         myMode = (camera_mode_t)(myMode & ~CAMERA_ZSL_MODE);
@@ -1093,6 +1093,13 @@ status_t QCameraHardwareInterface::startPreview2()
         mStreamSnap->setFullSizeLiveshot(mFullLiveshotEnabled);
      }
 
+     if (!strcmp(str, "hdr")) {
+         int cafSupport = true;
+         int caf_type = 2;
+         native_set_parms(MM_CAMERA_PARM_CAF_TYPE, sizeof(caf_type), (void *)&caf_type);
+         native_set_parms(MM_CAMERA_PARM_CONTINUOUS_AF, sizeof(cafSupport),
+                               (void *)&cafSupport);
+     }
     /*  get existing preview information, by qury mm_camera*/
     memset(&dim, 0, sizeof(cam_ctrl_dimension_t));
     ret = cam_config_get_parm(mCameraId, MM_CAMERA_PARM_DIMENSION,&dim);
@@ -1499,7 +1506,7 @@ status_t QCameraHardwareInterface::autoFocusEvent(cam_ctrl_status_t *status, app
       variables' validity will be under question*/
 
     if (mNotifyCb && ( mMsgEnabled & CAMERA_MSG_FOCUS)){
-      ALOGV("%s:Issuing callback to service",__func__);
+      ALOGV("%s:Issuing AF callback to service",__func__);
 
       /* "Accepted" status is not appropriate it should be used for
         initial cmd, event reporting should only give use SUCCESS/FAIL
