@@ -1639,13 +1639,17 @@ status_t  QCameraHardwareInterface::takePicture()
     int  exp[MAX_HDR_EXP_FRAME_NUM];
 
     if(QCAMERA_HAL_RECORDING_STARTED != mPreviewState){
+      isp3a_af_mode_t afMode = getAutoFocusMode(mParameters);
+      if (afMode != AF_MODE_CAF)
+      {
         mFlashCond = getFlashCondition();
-        ALOGV("%s: Flash Contidion %d", __func__, mFlashCond);
-        if(mFlashCond) {
-            mRestartPreview = true;
-            pausePreviewForZSL();
-        }
-        mFlashCond = false;
+      }
+      ALOGV("%s: Flash Contidion %d", __func__, mFlashCond);
+      if(mFlashCond) {
+        mRestartPreview = true;
+        pausePreviewForZSL();
+      }
+      mFlashCond = false;
     }
 
     rc = cam_config_set_parm(mCameraId, MM_CAMERA_PARM_LG_CAF_LOCK, NULL);
@@ -1841,6 +1845,8 @@ status_t QCameraHardwareInterface::autoFocus()
 {
     ALOGV("autoFocus: E");
     status_t ret = NO_ERROR;
+    mFlashCond = getFlashCondition();
+    ALOGV("autoFocus: mFlashCond = %d", mFlashCond);
     Mutex::Autolock lock(mLock);
     ALOGV("autoFocus: Got lock");
     bool status = true;
