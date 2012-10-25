@@ -2065,6 +2065,7 @@ status_t QCameraHardwareInterface::setFocusMode(const QCameraParameters& params)
 
                 int cafSupport = false;
                 int caf_type=0;
+                const char *str_hdr = mParameters.get(QCameraParameters::KEY_SCENE_MODE);
                 if(!strcmp(str, QCameraParameters::FOCUS_MODE_CONTINUOUS_VIDEO) ||
                    !strcmp(str, QCameraParameters::FOCUS_MODE_CONTINUOUS_PICTURE)){
                     cafSupport = true;
@@ -2082,7 +2083,7 @@ status_t QCameraHardwareInterface::setFocusMode(const QCameraParameters& params)
                     }
                     ALOGV("caf_type %d rc %d", caf_type, rc);
 #endif
-                } else if(myMode & CAMERA_ZSL_MODE){
+                } else if((myMode & CAMERA_ZSL_MODE) || !strcmp(str_hdr, "hdr")){
                     cafSupport = true;
                     caf_type = 2;
                     native_set_parms(MM_CAMERA_PARM_CAF_TYPE, sizeof(caf_type), (void *)&caf_type);
@@ -2114,7 +2115,6 @@ status_t QCameraHardwareInterface::setSceneMode(const QCameraParameters& params)
     const char *oldstr = mParameters.get(QCameraParameters::KEY_SCENE_MODE);
 
     ALOGV("Scene Mode string : %s",str);
-
     if (str != NULL && oldstr != NULL) {
         int32_t value = attr_lookup(scenemode, sizeof(scenemode) / sizeof(str_map), str);
         if (value != NOT_FOUND) {
@@ -2859,6 +2859,8 @@ status_t QCameraHardwareInterface::setStrTextures(const QCameraParameters& param
 
 status_t QCameraHardwareInterface::setFlash(const QCameraParameters& params)
 {
+    const char *str = NULL;
+
     ALOGV("%s: E",__func__);
     int rc = cam_config_is_parm_supported(mCameraId, MM_CAMERA_PARM_LED_MODE);
     if(!rc) {
@@ -2866,7 +2868,18 @@ status_t QCameraHardwareInterface::setFlash(const QCameraParameters& params)
         return NO_ERROR;
     }
 
-    const char *str = params.get(QCameraParameters::KEY_FLASH_MODE);
+    const char *sce_str = params.get(QCameraParameters::KEY_SCENE_MODE);
+    if (sce_str != NULL) {
+        if (!strcmp(sce_str, "hdr")) {
+            str = QCameraParameters::FLASH_MODE_OFF;
+            mParameters.set(QCameraParameters::KEY_FLASH_MODE, str);
+        }else{
+            str = params.get(QCameraParameters::KEY_FLASH_MODE);
+        }
+    }else{
+        str = params.get(QCameraParameters::KEY_FLASH_MODE);
+    }
+
     if (str != NULL) {
         int32_t value = attr_lookup(flash, sizeof(flash) / sizeof(str_map), str);
         if (value != NOT_FOUND) {
