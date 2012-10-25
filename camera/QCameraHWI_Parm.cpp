@@ -1372,7 +1372,7 @@ status_t QCameraHardwareInterface::setParameters(const QCameraParameters& params
     if ((rc = setSaturation(params)))                   final_rc = rc;
     if ((rc = setSceneMode(params)))                    final_rc = rc;
     if ((rc = setContrast(params)))                     final_rc = rc;
-    if ((rc = setFaceDetect(params)))                   final_rc = rc;
+//    if ((rc = setFaceDetect(params)))                   final_rc = rc;
     if ((rc = setStrTextures(params)))                  final_rc = rc;
     if ((rc = setPreviewFormat(params)))                final_rc = rc;
     if ((rc = setSkinToneEnhancement(params)))          final_rc = rc;
