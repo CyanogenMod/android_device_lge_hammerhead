@@ -1247,6 +1247,14 @@ void QCameraHardwareInterface::stopPreview()
       default:
             break;
     }
+     const char * str_fd = mParameters.get(QCameraParameters::KEY_FACE_DETECTION);
+     if((str != NULL) && !strcmp(str_fd, "on")){
+       if(supportsFaceDetection() == false){
+         ALOGE("Face detection support is not available");
+       }
+       setFaceDetection("off");
+       runFaceDetection();
+     }
     ALOGV("stopPreview: X, mPreviewState = %d", mPreviewState);
 }
 
