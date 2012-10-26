@@ -189,6 +189,7 @@ QCameraHardwareInterface(int cameraId, int mode)
                     mRestartPreview(false),
                     mReleasedRecordingFrame(false),
                     mStateLiveshot(false),
+                    isCameraOpen(false),
                     mPauseFramedispatch(false)
 {
     ALOGV("QCameraHardwareInterface: E");
@@ -259,6 +260,7 @@ QCameraHardwareInterface(int cameraId, int mode)
       ALOGV(" %d  %d", mVideoSizes[i].width, mVideoSizes[i].height);
     }
 
+    isCameraOpen = true;
     /* set my mode - update myMode member variable due to difference in
      enum definition between upper and lower layer*/
     setMyMode(mode);
@@ -322,11 +324,13 @@ QCameraHardwareInterface::~QCameraHardwareInterface()
     }
     mPreviewState = QCAMERA_HAL_PREVIEW_STOPPED;
 
-    freePictureTable();
-    freeVideoSizeTable();
-    if(mStatHeap != NULL) {
-      mStatHeap.clear( );
-      mStatHeap = NULL;
+    if (isCameraOpen) {
+        freePictureTable();
+        freeVideoSizeTable();
+        if(mStatHeap != NULL) {
+          mStatHeap.clear( );
+          mStatHeap = NULL;
+        }
     }
     /* Join the threads, complete operations and then delete
        the instances. */
@@ -356,6 +360,7 @@ QCameraHardwareInterface::~QCameraHardwareInterface()
 
     pthread_mutex_destroy(&mAsyncCmdMutex);
     pthread_cond_destroy(&mAsyncCmdWait);
+    isCameraOpen = false;
 
     ALOGV("~QCameraHardwareInterface: X");
 }
