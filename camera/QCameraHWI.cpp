@@ -1079,11 +1079,13 @@ status_t QCameraHardwareInterface::startPreview2()
         mParameters.setPreviewFrameRateMode("frame-rate-auto");
         setPreviewFrameRateMode(mParameters);
 
-        int cafSupport = true;
-        int caf_type = 2;
-        native_set_parms(MM_CAMERA_PARM_CAF_TYPE, sizeof(caf_type), (void *)&caf_type);
-        native_set_parms(MM_CAMERA_PARM_CONTINUOUS_AF, sizeof(cafSupport),
-                               (void *)&cafSupport);
+        if (mHasAutoFocusSupport) {
+            int cafSupport = true;
+            int caf_type = 2;
+            native_set_parms(MM_CAMERA_PARM_CAF_TYPE, sizeof(caf_type), (void *)&caf_type);
+            native_set_parms(MM_CAMERA_PARM_CONTINUOUS_AF, sizeof(cafSupport),
+                                   (void *)&cafSupport);
+        }
     }
 
      if (mRecordingHint) {
@@ -1098,7 +1100,7 @@ status_t QCameraHardwareInterface::startPreview2()
         mStreamSnap->setFullSizeLiveshot(mFullLiveshotEnabled);
      }
 
-     if (!strcmp(str, "hdr")) {
+     if (mHasAutoFocusSupport && strcmp(str, "auto")) {
          int cafSupport = true;
          int caf_type = 2;
          native_set_parms(MM_CAMERA_PARM_CAF_TYPE, sizeof(caf_type), (void *)&caf_type);
