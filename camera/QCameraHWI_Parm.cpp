@@ -2088,12 +2088,14 @@ status_t QCameraHardwareInterface::setFocusMode(const QCameraParameters& params)
                     }
                     ALOGV("caf_type %d rc %d", caf_type, rc);
 #endif
-                } else if((myMode & CAMERA_ZSL_MODE) || !strcmp(str_hdr, "hdr")){
-                    cafSupport = true;
-                    caf_type = 2;
-                    native_set_parms(MM_CAMERA_PARM_CAF_TYPE, sizeof(caf_type), (void *)&caf_type);
                 }
                 ALOGV("Continuous Auto Focus %d", cafSupport);
+                if(mAutoFocusRunning && cafSupport){
+                  mAutoFocusRunning = false;
+                  if(MM_CAMERA_OK!=cam_ops_action(mCameraId,false,MM_CAMERA_OPS_FOCUS,NULL )) {
+                    ALOGE("%s: AF command failed err:%d error %s",__func__, errno,strerror(errno));
+                  }
+                }
                 ret = native_set_parms(MM_CAMERA_PARM_CONTINUOUS_AF, sizeof(cafSupport),
                                        (void *)&cafSupport);
             }
