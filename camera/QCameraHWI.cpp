@@ -158,7 +158,7 @@ QCameraHardwareInterface(int cameraId, int mode)
                     mFaceDetectOn(0),
                     mDisEnabled(0),
                     mZoomSupported(false),
-                    mFullLiveshotEnabled(true),
+                    mFullLiveshotEnabled(false),
                     mRecordingHint(false),
                     mAppRecordingHint(false),
                     mStatsOn(0), mCurrentHisto(-1), mSendData(false), mStatHeap(NULL),
@@ -212,7 +212,7 @@ QCameraHardwareInterface(int cameraId, int mode)
     property_get("persist.camera.hal.multitouchaf", value, "0");
     mMultiTouch = atoi(value);
 
-    property_get("persist.camera.full.liveshot", value, "1");
+    property_get("persist.camera.full.liveshot", value, "0");
     mFullLiveshotEnabled = atoi(value);
 
     property_get("persist.camera.hal.dis", value, "0");
@@ -1088,16 +1088,6 @@ status_t QCameraHardwareInterface::startPreview2()
         }
     }
 
-     if (mRecordingHint) {
-         //set the fullsize liveshot to True in Camcorder Mode
-        mFullLiveshotEnabled = true;
-        mStreamSnap->setFullSizeLiveshot(mFullLiveshotEnabled);
-     }else{
-         //set the fullsize liveshot to False in Camera Mode
-        mFullLiveshotEnabled = false;
-        mStreamSnap->setFullSizeLiveshot(mFullLiveshotEnabled);
-     }
-
      if (mHasAutoFocusSupport && strcmp(str, "auto")) {
          int cafSupport = true;
          int caf_type = 2;
@@ -1233,6 +1223,15 @@ void QCameraHardwareInterface::stopPreview()
         mRecordingHint = false;
     }
 
+    const char * str_fd = mParameters.get(QCameraParameters::KEY_FACE_DETECTION);
+    if((str_fd != NULL) && !strcmp(str_fd, "on")){
+        if(supportsFaceDetection() == false){
+         ALOGE("Face detection support is not available");
+        }
+        setFaceDetection("off");
+        runFaceDetection();
+    }
+
     switch(mPreviewState) {
       case QCAMERA_HAL_PREVIEW_START:
           //mPreviewWindow = NULL;
@@ -1252,14 +1251,6 @@ void QCameraHardwareInterface::stopPreview()
       default:
             break;
     }
-     const char * str_fd = mParameters.get(QCameraParameters::KEY_FACE_DETECTION);
-     if((str != NULL) && !strcmp(str_fd, "on")){
-       if(supportsFaceDetection() == false){
-         ALOGE("Face detection support is not available");
-       }
-       setFaceDetection("off");
-       runFaceDetection();
-     }
     ALOGV("stopPreview: X, mPreviewState = %d", mPreviewState);
 }
 
@@ -1739,9 +1730,6 @@ status_t  QCameraHardwareInterface::takePicture()
           ALOGE("takePicture : Duplicate TakePicture Call");
           return ret;
       }
-      mFullLiveshotEnabled = true;
-      setFullLiveshot();
-      mStreamSnap->setFullSizeLiveshot(mFullLiveshotEnabled);
       if (canTakeFullSizeLiveshot()) {
         ALOGV(" Calling takeFullSizeLiveshot");
         takeFullSizeLiveshot();
@@ -2701,10 +2689,6 @@ void QCameraHardwareInterface::pausePreviewForVideo()
         // Set recording hint to true
         mRecordingHint = true;
         setRecordingHintValue(mRecordingHint);
-
-        mFullLiveshotEnabled = true;
-        setFullLiveshot();
-        mStreamSnap->setFullSizeLiveshot(mFullLiveshotEnabled);
 
         mDimension.display_width = mPreviewWidth;
         mDimension.display_height= mPreviewHeight;
