@@ -1091,12 +1091,10 @@ status_t QCameraHardwareInterface::startPreview2()
      if (mRecordingHint) {
          //set the fullsize liveshot to True in Camcorder Mode
         mFullLiveshotEnabled = true;
-        setFullLiveshot();
         mStreamSnap->setFullSizeLiveshot(mFullLiveshotEnabled);
      }else{
          //set the fullsize liveshot to False in Camera Mode
         mFullLiveshotEnabled = false;
-        setFullLiveshot();
         mStreamSnap->setFullSizeLiveshot(mFullLiveshotEnabled);
      }
 
@@ -2703,6 +2701,10 @@ void QCameraHardwareInterface::pausePreviewForVideo()
         // Set recording hint to true
         mRecordingHint = true;
         setRecordingHintValue(mRecordingHint);
+
+        mFullLiveshotEnabled = true;
+        setFullLiveshot();
+        mStreamSnap->setFullSizeLiveshot(mFullLiveshotEnabled);
 
         mDimension.display_width = mPreviewWidth;
         mDimension.display_height= mPreviewHeight;
