@@ -587,8 +587,8 @@ bool QCameraHardwareInterface::supportsFaceDetection() {
         return false;
     }
     else{
-        ALOGV("%s: Still mode : FD supported",__func__);
         rc = cam_config_is_parm_supported(mCameraId,MM_CAMERA_PARM_FD);
+        ALOGV("%s: Still mode : FD supported : %d",__func__,rc);
         return rc;
     }
 }
@@ -1025,6 +1025,7 @@ void QCameraHardwareInterface::initDefaultParameters()
 
     //8960 supports Power modes : Low power, Normal Power.
     mParameters.set("power-mode-supported", "true");
+
     //Set Live shot support
     rc = cam_config_is_parm_supported(mCameraId, MM_CAMERA_PARM_LIVESHOT_MAIN);
     if(!rc) {
@@ -1034,8 +1035,9 @@ void QCameraHardwareInterface::initDefaultParameters()
         mParameters.set("video-snapshot-supported", "true");
     }
 
+
     //Set default power mode
-    mParameters.set(QCameraParameters::KEY_POWER_MODE,"Normal_Power");
+    mParameters.set(QCameraParameters::KEY_POWER_MODE,"Low_Power");
     //Set Wnr on
     mParameters.set(QCameraParameters::KEY_DENOISE,true);
     //Set Camera Mode
