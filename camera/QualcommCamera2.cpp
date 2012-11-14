@@ -137,7 +137,7 @@ QCameraHardwareInterface *util_get_Hal_obj( struct camera_device * device)
     return hardware;
 }
 
-#if 0 //mzhu
+#if 0
 QCameraParameters* util_get_HAL_parameter( struct camera_device * device)
 {
     QCameraParameters *param = NULL;
@@ -147,8 +147,7 @@ QCameraParameters* util_get_HAL_parameter( struct camera_device * device)
     }
     return param;
 }
-#endif //mzhu
-
+#endif
 extern "C" int get_number_of_cameras()
 {
     /* try to query every time we get the call!*/
@@ -175,6 +174,8 @@ extern "C" int get_camera_info(int camera_id, struct camera_info *info)
     return rc;
 }
 
+static pthread_mutex_t camera_session_lock = PTHREAD_MUTEX_INITIALIZER;
+static unsigned int QCameraSession = 0;
 
 /* HAL should return NULL if it fails to open camera hardware. */
 extern "C" int  camera_device_open(
@@ -182,8 +183,16 @@ extern "C" int  camera_device_open(
           struct hw_device_t** hw_device)
 {
     int rc = -1;
-	int mode = 0; // TODO: need to add 3d/2d mode, etc
+    int mode = 0; // TODO: need to add 3d/2d mode, etc
     camera_device *device = NULL;
+
+    pthread_mutex_lock(&camera_session_lock);
+
+    if(QCameraSession) {
+       ALOGE("%s Mutliple camera open instances are not supported",__func__);
+       pthread_mutex_unlock(&camera_session_lock);
+       return NULL;
+    }
     if(module && id && hw_device) {
         int cameraId = atoi(id);
 
@@ -192,18 +201,20 @@ extern "C" int  camera_device_open(
                 (camera_hardware_t *) malloc(sizeof (camera_hardware_t));
             if(!camHal) {
                 *hw_device = NULL;
-				    ALOGE("%s:  end in no mem", __func__);
-				    return rc;
-		    }
+                ALOGE("%s:  end in no mem", __func__);
+                pthread_mutex_unlock(&camera_session_lock);
+                return rc;
+            }
             /* we have the camera_hardware obj malloced */
             memset(camHal, 0, sizeof (camera_hardware_t));
             camHal->hardware = new QCameraHardwareInterface(cameraId, mode); //HAL_openCameraHardware(cameraId);
             if (camHal->hardware && camHal->hardware->isCameraReady()) {
-				camHal->cameraId = cameraId;
-		        device = &camHal->hw_dev;
+                camHal->cameraId = cameraId;
+                device = &camHal->hw_dev;
                 device->common.close = close_camera_device;
                 device->ops = &camera_ops;
                 device->priv = (void *)camHal;
+                QCameraSession++;
                 rc =  0;
             } else {
                 if (camHal->hardware) {
@@ -215,9 +226,10 @@ extern "C" int  camera_device_open(
             }
         }
     }
-	/* pass actual hw_device ptr to framework. This amkes that we actally be use memberof() macro */
+    /* pass actual hw_device ptr to framework. This amkes that we actally be use memberof() macro */
     *hw_device = (hw_device_t*)&device->common;
     ALOGV("%s:  end rc %d", __func__, rc);
+    pthread_mutex_unlock(&camera_session_lock);
     return rc;
 }
 
@@ -226,6 +238,8 @@ extern "C"  int close_camera_device( hw_device_t *hw_dev)
     ALOGV("Q%s: device =%p E", __func__, hw_dev);
     int rc =  -1;
     camera_device_t *device = (camera_device_t *)hw_dev;
+
+    pthread_mutex_lock(&camera_session_lock);
 
     if(device) {
         camera_hardware_t *camHal = (camera_hardware_t *)device->priv;
@@ -236,12 +250,16 @@ extern "C"  int close_camera_device( hw_device_t *hw_dev)
                     hardware->release( );
                 }
             }
+            if (QCameraSession)
+                QCameraSession--;
             if(hardware != NULL)
                 delete hardware;
             free(camHal);
         }
         rc = 0;
     }
+
+    pthread_mutex_unlock(&camera_session_lock);
     return rc;
 }
 
