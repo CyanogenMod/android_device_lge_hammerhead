@@ -50,7 +50,7 @@ const nsecs_t QCFrameDurationRange[2] =
     {33331760L, 30000000000L}; // ~1/30 s - 30 sec
 const nsecs_t QCMinVerticalBlank = 10000L;
 
-const uint8_t QCColorFilterArrangement = ANDROID_SENSOR_RGGB;
+const uint8_t QCColorFilterArrangement = ANDROID_SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_RGGB;
 
 // Output image data characteristics
 const uint32_t QCMaxRawValue = 4000;
@@ -119,46 +119,46 @@ extern "C" status_t getStaticInfo(camera_metadata_t **info,
     // android.lens
 
     static float minFocusDistance = 0;
-    ADD_OR_SIZE(ANDROID_LENS_MINIMUM_FOCUS_DISTANCE,
+    ADD_OR_SIZE(ANDROID_LENS_INFO_MINIMUM_FOCUS_DISTANCE,
             &minFocusDistance, 1);
-    ADD_OR_SIZE(ANDROID_LENS_HYPERFOCAL_DISTANCE,
+    ADD_OR_SIZE(ANDROID_LENS_INFO_HYPERFOCAL_DISTANCE,
             &minFocusDistance, 1);
 
     static float focalLength = 0.0f;
     camera_vtbl->ops->get_parm(camera_vtbl->camera_handle,
             MM_CAMERA_PARM_FOCAL_LENGTH,
             (void *)&focalLength);
-    ADD_OR_SIZE(ANDROID_LENS_AVAILABLE_FOCAL_LENGTHS,
+    ADD_OR_SIZE(ANDROID_LENS_INFO_AVAILABLE_FOCAL_LENGTHS,
             &focalLength, 1);
 
     static float aperture = 2.8f;
     camera_vtbl->ops->get_parm(camera_vtbl->camera_handle,
             MM_CAMERA_PARM_APERTURE,
             (void *)&aperture);
-    ADD_OR_SIZE(ANDROID_LENS_AVAILABLE_APERTURES,
+    ADD_OR_SIZE(ANDROID_LENS_INFO_AVAILABLE_APERTURES,
             &aperture, 1);
 
     static float filterDensity = 0;
-    ADD_OR_SIZE(ANDROID_LENS_AVAILABLE_FILTER_DENSITY,
+    ADD_OR_SIZE(ANDROID_LENS_INFO_AVAILABLE_FILTER_DENSITIES,
             &filterDensity, 1);
 
     static const uint8_t availableOpticalStabilization =
-            ANDROID_LENS_OPTICAL_STABILIZATION_OFF;
-    ADD_OR_SIZE(ANDROID_LENS_AVAILABLE_OPTICAL_STABILIZATION,
+            ANDROID_LENS_OPTICAL_STABILIZATION_MODE_OFF;
+    ADD_OR_SIZE(ANDROID_LENS_INFO_AVAILABLE_OPTICAL_STABILIZATION,
             &availableOpticalStabilization, 1);
 
     static const int32_t lensShadingMapSize[] = {1, 1};
-    ADD_OR_SIZE(ANDROID_LENS_SHADING_MAP_SIZE, lensShadingMapSize,
+    ADD_OR_SIZE(ANDROID_LENS_INFO_SHADING_MAP_SIZE, lensShadingMapSize,
             sizeof(lensShadingMapSize)/sizeof(int32_t));
 
     static const float lensShadingMap[3 * 1 * 1 ] =
             { 1.f, 1.f, 1.f };
-    ADD_OR_SIZE(ANDROID_LENS_SHADING_MAP, lensShadingMap,
+    ADD_OR_SIZE(ANDROID_LENS_INFO_SHADING_MAP, lensShadingMap,
             sizeof(lensShadingMap)/sizeof(float));
 
     // Identity transform
     static const int32_t geometricCorrectionMapSize[] = {2, 2};
-    ADD_OR_SIZE(ANDROID_LENS_GEOMETRIC_CORRECTION_MAP_SIZE,
+    ADD_OR_SIZE(ANDROID_LENS_INFO_GEOMETRIC_CORRECTION_MAP_SIZE,
             geometricCorrectionMapSize,
             sizeof(geometricCorrectionMapSize)/sizeof(int32_t));
 
@@ -167,7 +167,7 @@ extern "C" status_t getStaticInfo(camera_metadata_t **info,
             1.f, 0.f,  1.f, 0.f,  1.f, 0.f,
             0.f, 1.f,  0.f, 1.f,  0.f, 1.f,
             1.f, 1.f,  1.f, 1.f,  1.f, 1.f};
-    ADD_OR_SIZE(ANDROID_LENS_GEOMETRIC_CORRECTION_MAP,
+    ADD_OR_SIZE(ANDROID_LENS_INFO_GEOMETRIC_CORRECTION_MAP,
             geometricCorrectionMap,
             sizeof(geometricCorrectionMap)/sizeof(float));
 
@@ -193,33 +193,33 @@ extern "C" status_t getStaticInfo(camera_metadata_t **info,
 #if 0
     // android.sensor
 
-    ADD_OR_SIZE(ANDROID_SENSOR_EXPOSURE_TIME_RANGE,
+    ADD_OR_SIZE(ANDROID_SENSOR_INFO_EXPOSURE_TIME_RANGE,
             QCExposureTimeRange, 2);
 
-    ADD_OR_SIZE(ANDROID_SENSOR_MAX_FRAME_DURATION,
+    ADD_OR_SIZE(ANDROID_SENSOR_INFO_MAX_FRAME_DURATION,
             &QCFrameDurationRange[1], 1);
 
-    ADD_OR_SIZE(ANDROID_SENSOR_AVAILABLE_SENSITIVITIES,
+    ADD_OR_SIZE(ANDROID_SENSOR_INFO_AVAILABLE_SENSITIVITIES,
             QCAvailableSensitivities,
             sizeof(QCAvailableSensitivities)
             /sizeof(uint32_t));
 
-    ADD_OR_SIZE(ANDROID_SENSOR_COLOR_FILTER_ARRANGEMENT,
+    ADD_OR_SIZE(ANDROID_SENSOR_INFO_COLOR_FILTER_ARRANGEMENT,
             &QCColorFilterArrangement, 1);
 #endif
     static const float sensorPhysicalSize[2] = {3.20f, 2.40f}; // mm
-    ADD_OR_SIZE(ANDROID_SENSOR_PHYSICAL_SIZE,
+    ADD_OR_SIZE(ANDROID_SENSOR_INFO_PHYSICAL_SIZE,
             sensorPhysicalSize, 2);
 
     const unsigned int kResolution[2]  = {640, 480};
-    ADD_OR_SIZE(ANDROID_SENSOR_PIXEL_ARRAY_SIZE,
+    ADD_OR_SIZE(ANDROID_SENSOR_INFO_PIXEL_ARRAY_SIZE,
             kResolution, 2);
 
-    ADD_OR_SIZE(ANDROID_SENSOR_ACTIVE_ARRAY_SIZE,
+    ADD_OR_SIZE(ANDROID_SENSOR_INFO_ACTIVE_ARRAY_SIZE,
             kResolution, 2);
 
 #if 0
-    ADD_OR_SIZE(ANDROID_SENSOR_WHITE_LEVEL,
+    ADD_OR_SIZE(ANDROID_SENSOR_INFO_WHITE_LEVEL,
             &QCMaxRawValue, 1);
 
     static const int32_t blackLevelPattern[4] = {
@@ -234,10 +234,10 @@ extern "C" status_t getStaticInfo(camera_metadata_t **info,
 
     // android.flash
     static const uint8_t flashAvailable = 0;
-    ADD_OR_SIZE(ANDROID_FLASH_AVAILABLE, &flashAvailable, 1);
+    ADD_OR_SIZE(ANDROID_FLASH_INFO_AVAILABLE, &flashAvailable, 1);
 
     static const int64_t flashChargeDuration = 0;
-    ADD_OR_SIZE(ANDROID_FLASH_CHARGE_DURATION, &flashChargeDuration, 1);
+    ADD_OR_SIZE(ANDROID_FLASH_INFO_CHARGE_DURATION, &flashChargeDuration, 1);
 
     // android.tonemap
 
@@ -275,7 +275,7 @@ extern "C" status_t getStaticInfo(camera_metadata_t **info,
             sizeof(QCAvailableJpegMinDurations)/sizeof(uint64_t));
 
     static const float maxZoom = 10;
-    ADD_OR_SIZE(ANDROID_SCALER_AVAILABLE_MAX_ZOOM,
+    ADD_OR_SIZE(ANDROID_SCALER_AVAILABLE_MAX_DIGITAL_ZOOM,
             &maxZoom, 1);
 
     // android.jpeg
@@ -293,30 +293,30 @@ extern "C" status_t getStaticInfo(camera_metadata_t **info,
     // android.stats
 
     static const uint8_t availableFaceDetectModes[] = {
-            ANDROID_STATS_FACE_DETECTION_OFF
+            ANDROID_STATISTICS_FACE_DETECT_MODE_OFF
     };
-    ADD_OR_SIZE(ANDROID_STATS_AVAILABLE_FACE_DETECT_MODES,
+    ADD_OR_SIZE(ANDROID_STATISTICS_INFO_AVAILABLE_FACE_DETECT_MODES,
             availableFaceDetectModes,
             sizeof(availableFaceDetectModes));
 
     static const int32_t maxFaceCount = 0;
-    ADD_OR_SIZE(ANDROID_STATS_MAX_FACE_COUNT,
+    ADD_OR_SIZE(ANDROID_STATISTICS_INFO_MAX_FACE_COUNT,
             &maxFaceCount, 1);
 
     static const int32_t histogramSize = 64;
-    ADD_OR_SIZE(ANDROID_STATS_HISTOGRAM_BUCKET_COUNT,
+    ADD_OR_SIZE(ANDROID_STATISTICS_INFO_HISTOGRAM_BUCKET_COUNT,
             &histogramSize, 1);
 
     static const int32_t maxHistogramCount = 1000;
-    ADD_OR_SIZE(ANDROID_STATS_MAX_HISTOGRAM_COUNT,
+    ADD_OR_SIZE(ANDROID_STATISTICS_INFO_MAX_HISTOGRAM_COUNT,
             &maxHistogramCount, 1);
 
     static const int32_t sharpnessMapSize[2] = {64, 64};
-    ADD_OR_SIZE(ANDROID_STATS_SHARPNESS_MAP_SIZE,
+    ADD_OR_SIZE(ANDROID_STATISTICS_INFO_SHARPNESS_MAP_SIZE,
             sharpnessMapSize, sizeof(sharpnessMapSize)/sizeof(int32_t));
 
     static const int32_t maxSharpnessMapValue = 1000;
-    ADD_OR_SIZE(ANDROID_STATS_MAX_SHARPNESS_MAP_VALUE,
+    ADD_OR_SIZE(ANDROID_STATISTICS_INFO_MAX_SHARPNESS_MAP_VALUE,
             &maxSharpnessMapValue, 1);
 
     // android.control
@@ -328,7 +328,7 @@ extern "C" status_t getStaticInfo(camera_metadata_t **info,
             availableSceneModes, sizeof(availableSceneModes));
 
     static const uint8_t availableEffects[] = {
-            ANDROID_CONTROL_EFFECT_OFF
+            ANDROID_CONTROL_EFFECT_MODE_OFF
     };
     ADD_OR_SIZE(ANDROID_CONTROL_AVAILABLE_EFFECTS,
             availableEffects, sizeof(availableEffects));
@@ -338,8 +338,8 @@ extern "C" status_t getStaticInfo(camera_metadata_t **info,
             &max3aRegions, 1);
 
     static const uint8_t availableAeModes[] = {
-            ANDROID_CONTROL_AE_OFF,
-            ANDROID_CONTROL_AE_ON
+            ANDROID_CONTROL_AE_MODE_OFF,
+            ANDROID_CONTROL_AE_MODE_ON
     };
     ADD_OR_SIZE(ANDROID_CONTROL_AE_AVAILABLE_MODES,
             availableAeModes, sizeof(availableAeModes));
@@ -347,11 +347,11 @@ extern "C" status_t getStaticInfo(camera_metadata_t **info,
     static const camera_metadata_rational exposureCompensationStep = {
             1, 3
     };
-    ADD_OR_SIZE(ANDROID_CONTROL_AE_EXP_COMPENSATION_STEP,
+    ADD_OR_SIZE(ANDROID_CONTROL_AE_COMPENSATION_STEP,
             &exposureCompensationStep, 1);
 
     int32_t exposureCompensationRange[] = {-9, 9};
-    ADD_OR_SIZE(ANDROID_CONTROL_AE_EXP_COMPENSATION_RANGE,
+    ADD_OR_SIZE(ANDROID_CONTROL_AE_COMPENSATION_RANGE,
             exposureCompensationRange,
             sizeof(exposureCompensationRange)/sizeof(int32_t));
 
@@ -363,31 +363,31 @@ extern "C" status_t getStaticInfo(camera_metadata_t **info,
             sizeof(availableTargetFpsRanges)/sizeof(int32_t));
 
     static const uint8_t availableAntibandingModes[] = {
-            ANDROID_CONTROL_AE_ANTIBANDING_OFF,
-            ANDROID_CONTROL_AE_ANTIBANDING_AUTO
+            ANDROID_CONTROL_AE_ANTIBANDING_MODE_OFF,
+            ANDROID_CONTROL_AE_ANTIBANDING_MODE_AUTO
     };
     ADD_OR_SIZE(ANDROID_CONTROL_AE_AVAILABLE_ANTIBANDING_MODES,
             availableAntibandingModes, sizeof(availableAntibandingModes));
 
     static const uint8_t availableAwbModes[] = {
-            ANDROID_CONTROL_AWB_OFF,
-            ANDROID_CONTROL_AWB_AUTO,
-            ANDROID_CONTROL_AWB_INCANDESCENT,
-            ANDROID_CONTROL_AWB_FLUORESCENT,
-            ANDROID_CONTROL_AWB_DAYLIGHT,
-            ANDROID_CONTROL_AWB_SHADE
+            ANDROID_CONTROL_AWB_MODE_OFF,
+            ANDROID_CONTROL_AWB_MODE_AUTO,
+            ANDROID_CONTROL_AWB_MODE_INCANDESCENT,
+            ANDROID_CONTROL_AWB_MODE_FLUORESCENT,
+            ANDROID_CONTROL_AWB_MODE_DAYLIGHT,
+            ANDROID_CONTROL_AWB_MODE_SHADE
     };
     ADD_OR_SIZE(ANDROID_CONTROL_AWB_AVAILABLE_MODES,
             availableAwbModes, sizeof(availableAwbModes));
 
     static const uint8_t availableAfModes[] = {
-            ANDROID_CONTROL_AF_OFF
+            ANDROID_CONTROL_AF_MODE_OFF
     };
     ADD_OR_SIZE(ANDROID_CONTROL_AF_AVAILABLE_MODES,
             availableAfModes, sizeof(availableAfModes));
 
     static const uint8_t availableVstabModes[] = {
-            ANDROID_CONTROL_VIDEO_STABILIZATION_OFF
+            ANDROID_CONTROL_VIDEO_STABILIZATION_MODE_OFF
     };
     ADD_OR_SIZE(ANDROID_CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES,
             availableVstabModes, sizeof(availableVstabModes));
@@ -426,7 +426,7 @@ extern "C" status_t constructDefaultRequest(int request_template,
 
     /** android.request */
 
-    static const uint8_t metadataMode = ANDROID_REQUEST_METADATA_NONE;
+    static const uint8_t metadataMode = ANDROID_REQUEST_METADATA_MODE_NONE;
     ADD_OR_SIZE(ANDROID_REQUEST_METADATA_MODE, &metadataMode, 1);
 
     static const int32_t id = 0;
@@ -454,7 +454,7 @@ extern "C" status_t constructDefaultRequest(int request_template,
     ADD_OR_SIZE(ANDROID_LENS_FILTER_DENSITY, &filterDensity, 1);
 
     static const uint8_t opticalStabilizationMode =
-            ANDROID_LENS_OPTICAL_STABILIZATION_OFF;
+            ANDROID_LENS_OPTICAL_STABILIZATION_MODE_OFF;
     ADD_OR_SIZE(ANDROID_LENS_OPTICAL_STABILIZATION_MODE,
             &opticalStabilizationMode, 1);
 
@@ -475,7 +475,7 @@ extern "C" status_t constructDefaultRequest(int request_template,
 
     /** android.flash */
 
-    static const uint8_t flashMode = ANDROID_FLASH_OFF;
+    static const uint8_t flashMode = ANDROID_FLASH_MODE_OFF;
     ADD_OR_SIZE(ANDROID_FLASH_MODE, &flashMode, 1);
 
     static const uint8_t flashPower = 10;
@@ -494,79 +494,47 @@ extern "C" status_t constructDefaultRequest(int request_template,
     uint8_t tonemapMode = 0;
     uint8_t edgeMode = 0;
     switch (request_template) {
-      case CAMERA2_TEMPLATE_PREVIEW:
-        hotPixelMode = ANDROID_PROCESSING_FAST;
-        demosaicMode = ANDROID_PROCESSING_FAST;
-        noiseMode = ANDROID_PROCESSING_FAST;
-        shadingMode = ANDROID_PROCESSING_FAST;
-        geometricMode = ANDROID_PROCESSING_FAST;
-        colorMode = ANDROID_PROCESSING_FAST;
-        tonemapMode = ANDROID_PROCESSING_FAST;
-        edgeMode = ANDROID_PROCESSING_FAST;
-        break;
       case CAMERA2_TEMPLATE_STILL_CAPTURE:
-        hotPixelMode = ANDROID_PROCESSING_HIGH_QUALITY;
-        demosaicMode = ANDROID_PROCESSING_HIGH_QUALITY;
-        noiseMode = ANDROID_PROCESSING_HIGH_QUALITY;
-        shadingMode = ANDROID_PROCESSING_HIGH_QUALITY;
-        geometricMode = ANDROID_PROCESSING_HIGH_QUALITY;
-        colorMode = ANDROID_PROCESSING_HIGH_QUALITY;
-        tonemapMode = ANDROID_PROCESSING_HIGH_QUALITY;
-        edgeMode = ANDROID_PROCESSING_HIGH_QUALITY;
-        break;
-      case CAMERA2_TEMPLATE_VIDEO_RECORD:
-        hotPixelMode = ANDROID_PROCESSING_FAST;
-        demosaicMode = ANDROID_PROCESSING_FAST;
-        noiseMode = ANDROID_PROCESSING_FAST;
-        shadingMode = ANDROID_PROCESSING_FAST;
-        geometricMode = ANDROID_PROCESSING_FAST;
-        colorMode = ANDROID_PROCESSING_FAST;
-        tonemapMode = ANDROID_PROCESSING_FAST;
-        edgeMode = ANDROID_PROCESSING_FAST;
-        break;
+        // fall-through
       case CAMERA2_TEMPLATE_VIDEO_SNAPSHOT:
-        hotPixelMode = ANDROID_PROCESSING_HIGH_QUALITY;
-        demosaicMode = ANDROID_PROCESSING_HIGH_QUALITY;
-        noiseMode = ANDROID_PROCESSING_HIGH_QUALITY;
-        shadingMode = ANDROID_PROCESSING_HIGH_QUALITY;
-        geometricMode = ANDROID_PROCESSING_HIGH_QUALITY;
-        colorMode = ANDROID_PROCESSING_HIGH_QUALITY;
-        tonemapMode = ANDROID_PROCESSING_HIGH_QUALITY;
-        edgeMode = ANDROID_PROCESSING_HIGH_QUALITY;
-        break;
+        // fall-through
       case CAMERA2_TEMPLATE_ZERO_SHUTTER_LAG:
-        hotPixelMode = ANDROID_PROCESSING_HIGH_QUALITY;
-        demosaicMode = ANDROID_PROCESSING_HIGH_QUALITY;
-        noiseMode = ANDROID_PROCESSING_HIGH_QUALITY;
-        shadingMode = ANDROID_PROCESSING_HIGH_QUALITY;
-        geometricMode = ANDROID_PROCESSING_HIGH_QUALITY;
-        colorMode = ANDROID_PROCESSING_HIGH_QUALITY;
-        tonemapMode = ANDROID_PROCESSING_HIGH_QUALITY;
-        edgeMode = ANDROID_PROCESSING_HIGH_QUALITY;
+        hotPixelMode = ANDROID_HOT_PIXEL_MODE_HIGH_QUALITY;
+        demosaicMode = ANDROID_DEMOSAIC_MODE_HIGH_QUALITY;
+        noiseMode = ANDROID_NOISE_REDUCTION_MODE_HIGH_QUALITY;
+        shadingMode = ANDROID_SHADING_MODE_HIGH_QUALITY;
+        geometricMode = ANDROID_GEOMETRIC_MODE_HIGH_QUALITY;
+        colorMode = ANDROID_COLOR_CORRECTION_MODE_HIGH_QUALITY;
+        tonemapMode = ANDROID_TONEMAP_MODE_HIGH_QUALITY;
+        edgeMode = ANDROID_EDGE_MODE_HIGH_QUALITY;
         break;
+      case CAMERA2_TEMPLATE_PREVIEW:
+        // fall-through
+      case CAMERA2_TEMPLATE_VIDEO_RECORD:
+        // fall-through
       default:
-        hotPixelMode = ANDROID_PROCESSING_FAST;
-        demosaicMode = ANDROID_PROCESSING_FAST;
-        noiseMode = ANDROID_PROCESSING_FAST;
-        shadingMode = ANDROID_PROCESSING_FAST;
-        geometricMode = ANDROID_PROCESSING_FAST;
-        colorMode = ANDROID_PROCESSING_FAST;
-        tonemapMode = ANDROID_PROCESSING_FAST;
-        edgeMode = ANDROID_PROCESSING_FAST;
+        hotPixelMode = ANDROID_HOT_PIXEL_MODE_FAST;
+        demosaicMode = ANDROID_DEMOSAIC_MODE_FAST;
+        noiseMode = ANDROID_NOISE_REDUCTION_MODE_FAST;
+        shadingMode = ANDROID_SHADING_MODE_FAST;
+        geometricMode = ANDROID_GEOMETRIC_MODE_FAST;
+        colorMode = ANDROID_COLOR_CORRECTION_MODE_FAST;
+        tonemapMode = ANDROID_TONEMAP_MODE_FAST;
+        edgeMode = ANDROID_EDGE_MODE_FAST;
         break;
     }
-    ADD_OR_SIZE(ANDROID_HOT_PIXEL_MODE, &hotPixelMode, 1);
+     ADD_OR_SIZE(ANDROID_HOT_PIXEL_MODE, &hotPixelMode, 1);
     ADD_OR_SIZE(ANDROID_DEMOSAIC_MODE, &demosaicMode, 1);
-    ADD_OR_SIZE(ANDROID_NOISE_MODE, &noiseMode, 1);
+    ADD_OR_SIZE(ANDROID_NOISE_REDUCTION_MODE, &noiseMode, 1);
     ADD_OR_SIZE(ANDROID_SHADING_MODE, &shadingMode, 1);
     ADD_OR_SIZE(ANDROID_GEOMETRIC_MODE, &geometricMode, 1);
-    ADD_OR_SIZE(ANDROID_COLOR_MODE, &colorMode, 1);
+    ADD_OR_SIZE(ANDROID_COLOR_CORRECTION_MODE, &colorMode, 1);
     ADD_OR_SIZE(ANDROID_TONEMAP_MODE, &tonemapMode, 1);
     ADD_OR_SIZE(ANDROID_EDGE_MODE, &edgeMode, 1);
 
     /** android.noise */
     static const uint8_t noiseStrength = 5;
-    ADD_OR_SIZE(ANDROID_NOISE_STRENGTH, &noiseStrength, 1);
+    ADD_OR_SIZE(ANDROID_NOISE_REDUCTION_STRENGTH, &noiseStrength, 1);
 
     /** android.color */
     static const float colorTransform[9] = {
@@ -574,7 +542,7 @@ extern "C" status_t constructDefaultRequest(int request_template,
         0.f, 1.f, 0.f,
         0.f, 0.f, 1.f
     };
-    ADD_OR_SIZE(ANDROID_COLOR_TRANSFORM, colorTransform, 9);
+    ADD_OR_SIZE(ANDROID_COLOR_CORRECTION_TRANSFORM, colorTransform, 9);
 
     /** android.tonemap */
     static const float tonemapCurve[4] = {
@@ -623,14 +591,14 @@ extern "C" status_t constructDefaultRequest(int request_template,
 
     /** android.stats */
 
-    static const uint8_t faceDetectMode = ANDROID_STATS_FACE_DETECTION_OFF;
-    ADD_OR_SIZE(ANDROID_STATS_FACE_DETECT_MODE, &faceDetectMode, 1);
+    static const uint8_t faceDetectMode = ANDROID_STATISTICS_FACE_DETECT_MODE_OFF;
+    ADD_OR_SIZE(ANDROID_STATISTICS_FACE_DETECT_MODE, &faceDetectMode, 1);
 
-    static const uint8_t histogramMode = ANDROID_STATS_OFF;
-    ADD_OR_SIZE(ANDROID_STATS_HISTOGRAM_MODE, &histogramMode, 1);
+    static const uint8_t histogramMode = ANDROID_STATISTICS_HISTOGRAM_MODE_OFF;
+    ADD_OR_SIZE(ANDROID_STATISTICS_HISTOGRAM_MODE, &histogramMode, 1);
 
-    static const uint8_t sharpnessMapMode = ANDROID_STATS_OFF;
-    ADD_OR_SIZE(ANDROID_STATS_SHARPNESS_MAP_MODE, &sharpnessMapMode, 1);
+    static const uint8_t sharpnessMapMode = ANDROID_STATISTICS_SHARPNESS_MAP_MODE_OFF;
+    ADD_OR_SIZE(ANDROID_STATISTICS_SHARPNESS_MAP_MODE, &sharpnessMapMode, 1);
 
     // faceRectangles, faceScores, faceLandmarks, faceIds, histogram,
     // sharpnessMap only in frames
@@ -640,36 +608,36 @@ extern "C" status_t constructDefaultRequest(int request_template,
     uint8_t controlIntent = 0;
     switch (request_template) {
       case CAMERA2_TEMPLATE_PREVIEW:
-        controlIntent = ANDROID_CONTROL_INTENT_PREVIEW;
+        controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW;
         break;
       case CAMERA2_TEMPLATE_STILL_CAPTURE:
-        controlIntent = ANDROID_CONTROL_INTENT_STILL_CAPTURE;
+        controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE;
         break;
       case CAMERA2_TEMPLATE_VIDEO_RECORD:
-        controlIntent = ANDROID_CONTROL_INTENT_VIDEO_RECORD;
+        controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD;
         break;
       case CAMERA2_TEMPLATE_VIDEO_SNAPSHOT:
-        controlIntent = ANDROID_CONTROL_INTENT_VIDEO_SNAPSHOT;
+        controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT;
         break;
       case CAMERA2_TEMPLATE_ZERO_SHUTTER_LAG:
-        controlIntent = ANDROID_CONTROL_INTENT_ZERO_SHUTTER_LAG;
+        controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_ZERO_SHUTTER_LAG;
         break;
       default:
-        controlIntent = ANDROID_CONTROL_INTENT_CUSTOM;
+        controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_CUSTOM;
         break;
     }
     ADD_OR_SIZE(ANDROID_CONTROL_CAPTURE_INTENT, &controlIntent, 1);
 
-    static const uint8_t controlMode = ANDROID_CONTROL_AUTO;
+    static const uint8_t controlMode = ANDROID_CONTROL_MODE_AUTO;
     ADD_OR_SIZE(ANDROID_CONTROL_MODE, &controlMode, 1);
 
-    static const uint8_t effectMode = ANDROID_CONTROL_EFFECT_OFF;
+    static const uint8_t effectMode = ANDROID_CONTROL_EFFECT_MODE_OFF;
     ADD_OR_SIZE(ANDROID_CONTROL_EFFECT_MODE, &effectMode, 1);
 
     static const uint8_t sceneMode = ANDROID_CONTROL_SCENE_MODE_FACE_PRIORITY;
     ADD_OR_SIZE(ANDROID_CONTROL_SCENE_MODE, &sceneMode, 1);
 
-    static const uint8_t aeMode = ANDROID_CONTROL_AE_ON_AUTO_FLASH;
+    static const uint8_t aeMode = ANDROID_CONTROL_AE_MODE_ON_AUTO_FLASH;
     ADD_OR_SIZE(ANDROID_CONTROL_AE_MODE, &aeMode, 1);
 
     const unsigned int kResolution[2]  = {640, 480};
@@ -679,7 +647,7 @@ extern "C" status_t constructDefaultRequest(int request_template,
     ADD_OR_SIZE(ANDROID_CONTROL_AE_REGIONS, controlRegions, 5);
 
     static const int32_t aeExpCompensation = 0;
-    ADD_OR_SIZE(ANDROID_CONTROL_AE_EXP_COMPENSATION, &aeExpCompensation, 1);
+    ADD_OR_SIZE(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION, &aeExpCompensation, 1);
 
     static const int32_t aeTargetFpsRange[2] = {
         10, 30
@@ -687,11 +655,11 @@ extern "C" status_t constructDefaultRequest(int request_template,
     ADD_OR_SIZE(ANDROID_CONTROL_AE_TARGET_FPS_RANGE, aeTargetFpsRange, 2);
 
     static const uint8_t aeAntibandingMode =
-            ANDROID_CONTROL_AE_ANTIBANDING_AUTO;
+            ANDROID_CONTROL_AE_ANTIBANDING_MODE_AUTO;
     ADD_OR_SIZE(ANDROID_CONTROL_AE_ANTIBANDING_MODE, &aeAntibandingMode, 1);
 
     static const uint8_t awbMode =
-            ANDROID_CONTROL_AWB_AUTO;
+            ANDROID_CONTROL_AWB_MODE_AUTO;
     ADD_OR_SIZE(ANDROID_CONTROL_AWB_MODE, &awbMode, 1);
 
     ADD_OR_SIZE(ANDROID_CONTROL_AWB_REGIONS, controlRegions, 5);
@@ -699,29 +667,29 @@ extern "C" status_t constructDefaultRequest(int request_template,
     uint8_t afMode = 0;
     switch (request_template) {
       case CAMERA2_TEMPLATE_PREVIEW:
-        afMode = ANDROID_CONTROL_AF_AUTO;
+        afMode = ANDROID_CONTROL_AF_MODE_AUTO;
         break;
       case CAMERA2_TEMPLATE_STILL_CAPTURE:
-        afMode = ANDROID_CONTROL_AF_AUTO;
+        afMode = ANDROID_CONTROL_AF_MODE_AUTO;
         break;
       case CAMERA2_TEMPLATE_VIDEO_RECORD:
-        afMode = ANDROID_CONTROL_AF_CONTINUOUS_VIDEO;
+        afMode = ANDROID_CONTROL_AF_MODE_CONTINUOUS_VIDEO;
         break;
       case CAMERA2_TEMPLATE_VIDEO_SNAPSHOT:
-        afMode = ANDROID_CONTROL_AF_CONTINUOUS_VIDEO;
+        afMode = ANDROID_CONTROL_AF_MODE_CONTINUOUS_VIDEO;
         break;
       case CAMERA2_TEMPLATE_ZERO_SHUTTER_LAG:
-        afMode = ANDROID_CONTROL_AF_CONTINUOUS_PICTURE;
+        afMode = ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE;
         break;
       default:
-        afMode = ANDROID_CONTROL_AF_AUTO;
+        afMode = ANDROID_CONTROL_AF_MODE_AUTO;
         break;
     }
     ADD_OR_SIZE(ANDROID_CONTROL_AF_MODE, &afMode, 1);
 
     ADD_OR_SIZE(ANDROID_CONTROL_AF_REGIONS, controlRegions, 5);
 
-    static const uint8_t vstabMode = ANDROID_CONTROL_VIDEO_STABILIZATION_OFF;
+    static const uint8_t vstabMode = ANDROID_CONTROL_VIDEO_STABILIZATION_MODE_OFF;
     ADD_OR_SIZE(ANDROID_CONTROL_VIDEO_STABILIZATION_MODE, &vstabMode, 1);
 
     // aeState, awbState, afState only in frame
