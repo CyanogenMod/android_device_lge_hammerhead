@@ -388,12 +388,11 @@ int32_t mm_camera_set_general_parm(mm_camera_obj_t * my_obj, mm_camera_parm_t *p
       return mm_camera_send_native_ctrl_cmd(my_obj,
                   CAMERA_SET_LOW_POWER_MODE, sizeof(uint32_t), (void *)parm->p_value);
 
-#ifdef FAST_AF
     case MM_CAMERA_PARM_CAF_TYPE:
       CDBG("SM : %s : MM_CAMERA_PARM_CAF_TYPE value : %d",__func__,*((int *)(parm->p_value)));
       return mm_camera_send_native_ctrl_cmd(my_obj,
                   CAMERA_SET_PARM_CAF_TYPE, sizeof(int32_t), (void *)parm->p_value);
-#endif
+
     case MM_CAMERA_PARM_HDR:
       return mm_camera_send_native_ctrl_cmd(my_obj,
                         CAMERA_SET_PARM_HDR, sizeof(exp_bracketing_t), (void *)parm->p_value);

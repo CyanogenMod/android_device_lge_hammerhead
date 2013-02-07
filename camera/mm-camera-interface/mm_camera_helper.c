@@ -38,7 +38,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "mm_camera_dbg.h"
 #include <time.h>
 #include "mm_camera_interface2.h"
-#include <linux/ion.h>
+#include <linux/msm_ion.h>
 
 #define MM_CAMERA_PROFILE 1
 
