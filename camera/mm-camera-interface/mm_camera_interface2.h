@@ -427,7 +427,7 @@ struct mm_camera {
     mm_camera_ops_t *ops;                   // operation interface
     mm_camera_notify_t *evt;                // evt callback interface
     mm_camera_jpeg_t *jpeg_ops;         // jpeg config and encoding interface
-    camera_info_t camera_info;      // postion, mount_angle, etc.
+    qcamera_info_t camera_info;      // postion, mount_angle, etc.
     enum sensor_type_t sensor_type; // BAYER, YUV, JPEG_SOC, etc.
     char video_dev_name[32];           // device node name, e.g. /dev/video1
 };

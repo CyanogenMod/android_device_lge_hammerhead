@@ -78,7 +78,7 @@ const char *mm_camera_util_get_dev_name(mm_camera_obj_t * my_obj)
 }
 
 /* used for querying the camera_info of the given camera_id */
-static const camera_info_t * mm_camera_cfg_query_camera_info (int8_t camera_id)
+static const qcamera_info_t * mm_camera_cfg_query_camera_info (int8_t camera_id)
 {
     if(camera_id >= MSM_MAX_CAMERA_SENSORS)
         return NULL;

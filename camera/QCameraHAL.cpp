@@ -28,7 +28,7 @@
 #include "QCameraHAL.h"
 
 int HAL_numOfCameras = 0;
-camera_info_t HAL_cameraInfo[MSM_MAX_CAMERA_SENSORS];
+qcamera_info_t HAL_cameraInfo[MSM_MAX_CAMERA_SENSORS];
 mm_camera_t * HAL_camerahandle[MSM_MAX_CAMERA_SENSORS];
 int HAL_currentCameraMode;
 
@@ -55,7 +55,7 @@ extern "C" int HAL_getNumberOfCameras()
     }
     else
     {
-        camera_info_t* p_camera_info = 0;
+        qcamera_info_t* p_camera_info = 0;
         HAL_numOfCameras=num_camera;
 
         ALOGI("Handle base =0x%p",handle_base);

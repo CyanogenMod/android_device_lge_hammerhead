@@ -150,7 +150,7 @@ mm_camera_status_t (*LINK_mm_camera_init)(mm_camera_config *, mm_camera_notify*,
 mm_camera_status_t (*LINK_mm_camera_deinit)();
 mm_camera_status_t (*LINK_mm_camera_destroy)();
 mm_camera_status_t (*LINK_mm_camera_exec)();
-mm_camera_status_t (*LINK_mm_camera_get_camera_info) (camera_info_t* p_cam_info, int* p_num_cameras);
+mm_camera_status_t (*LINK_mm_camera_get_camera_info) (qcamera_info_t* p_cam_info, int* p_num_cameras);
 
 int8_t (*LINK_zoom_crop_upscale)(uint32_t width, uint32_t height,
     uint32_t cropped_width, uint32_t cropped_height, uint8_t *img_buf);
@@ -375,7 +375,7 @@ static bool mVpeEnabled;
 static cam_frame_start_parms camframeParams;
 
 static int HAL_numOfCameras;
-static camera_info_t HAL_cameraInfo[MSM_MAX_CAMERA_SENSORS];
+static qcamera_info_t HAL_cameraInfo[MSM_MAX_CAMERA_SENSORS];
 static int HAL_currentCameraId;
 static int HAL_currentCameraMode;
 static mm_camera_config mCfgControl;

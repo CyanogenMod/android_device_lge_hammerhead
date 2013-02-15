@@ -54,7 +54,7 @@ extern "C" int HAL_getNumberOfCameras()
     }
     else
     {
-        camera_info_t* p_camera_info = NULL;
+        qcamera_info_t* p_camera_info = NULL;
         HAL_numOfCameras=num_camera;
 
         ALOGI("Handle base =0x%p",handle_base);
