@@ -163,6 +163,7 @@ typedef struct {
   OMX_CONFIG_RECTTYPE crop_info;
   OMX_U32 output_width;
   OMX_U32 output_height;
+  QOMX_YUV_FRAME_INFO tmbOffset;
 } QOMX_THUMBNAIL_INFO;
 
 /**qomx_mobicat

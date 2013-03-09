@@ -279,6 +279,19 @@ OMX_ERRORTYPE mm_jpeg_session_send_buffers(void *data)
     }
   }
 
+  for (i = 0; i < p_params->num_tmb_bufs; i++) {
+    CDBG("%s:%d] Source buffer %d", __func__, __LINE__, i);
+    lbuffer_info.fd = p_params->src_thumb_buf[i].fd;
+    ret = OMX_UseBuffer(p_session->omx_handle,
+        &(p_session->p_in_omx_thumb_buf[i]), 2,
+        &lbuffer_info, p_params->src_thumb_buf[i].buf_size,
+        p_params->src_thumb_buf[i].buf_vaddr);
+    if (ret) {
+      CDBG_ERROR("%s:%d] Error %d", __func__, __LINE__, ret);
+      return ret;
+    }
+  }
+
   for (i = 0; i < p_params->num_dst_bufs; i++) {
     CDBG("%s:%d] Dest buffer %d", __func__, __LINE__, i);
     ret = OMX_UseBuffer(p_session->omx_handle, &(p_session->p_out_omx_buf[i]),
@@ -316,6 +329,15 @@ OMX_ERRORTYPE mm_jpeg_session_free_buffers(void *data)
   for (i = 0; i < p_params->num_src_bufs; i++) {
     CDBG("%s:%d] Source buffer %d", __func__, __LINE__, i);
     ret = OMX_FreeBuffer(p_session->omx_handle, 0, p_session->p_in_omx_buf[i]);
+    if (ret) {
+      CDBG_ERROR("%s:%d] Error %d", __func__, __LINE__, ret);
+      return ret;
+    }
+  }
+
+  for (i = 0; i < p_params->num_tmb_bufs; i++) {
+    CDBG("%s:%d] Source buffer %d", __func__, __LINE__, i);
+    ret = OMX_FreeBuffer(p_session->omx_handle, 2, p_session->p_in_omx_thumb_buf[i]);
     if (ret) {
       CDBG_ERROR("%s:%d] Error %d", __func__, __LINE__, ret);
       return ret;
@@ -612,9 +634,17 @@ OMX_ERRORTYPE mm_jpeg_session_config_ports(mm_jpeg_job_session_t* p_session)
 
   p_session->inputPort.nPortIndex = 0;
   p_session->outputPort.nPortIndex = 1;
+  p_session->inputTmbPort.nPortIndex = 2;
 
   ret = OMX_GetParameter(p_session->omx_handle, OMX_IndexParamPortDefinition,
     &p_session->inputPort);
+  if (ret) {
+    CDBG_ERROR("%s:%d] failed", __func__, __LINE__);
+    return ret;
+  }
+
+  ret = OMX_GetParameter(p_session->omx_handle, OMX_IndexParamPortDefinition,
+    &p_session->inputTmbPort);
   if (ret) {
     CDBG_ERROR("%s:%d] failed", __func__, __LINE__);
     return ret;
@@ -642,6 +672,36 @@ OMX_ERRORTYPE mm_jpeg_session_config_ports(mm_jpeg_job_session_t* p_session)
   p_session->inputPort.nBufferCountActual = p_params->num_src_bufs;
   ret = OMX_SetParameter(p_session->omx_handle, OMX_IndexParamPortDefinition,
     &p_session->inputPort);
+  if (ret) {
+    CDBG_ERROR("%s:%d] failed", __func__, __LINE__);
+    return ret;
+  }
+
+  p_session->inputTmbPort.format.image.nFrameWidth =
+    p_jobparams->thumb_dim.src_dim.width;
+  p_session->inputTmbPort.format.image.nFrameHeight =
+    p_jobparams->thumb_dim.src_dim.height;
+  p_session->inputTmbPort.format.image.nStride =
+    p_session->inputTmbPort.format.image.nFrameWidth;
+  p_session->inputTmbPort.format.image.nSliceHeight =
+    p_session->inputTmbPort.format.image.nFrameHeight;
+  p_session->inputTmbPort.format.image.eColorFormat =
+    map_jpeg_format(p_params->color_format);
+  p_session->inputTmbPort.nBufferSize =
+    p_params->src_thumb_buf[p_jobparams->thumb_index].buf_size;
+  p_session->inputTmbPort.nBufferCountActual = p_params->num_tmb_bufs;
+  ret = OMX_SetParameter(p_session->omx_handle, OMX_IndexParamPortDefinition,
+    &p_session->inputTmbPort);
+
+  if (ret) {
+    CDBG_ERROR("%s:%d] failed", __func__, __LINE__);
+    return ret;
+  }
+
+  // Enable thumbnail port
+  ret = OMX_SendCommand(p_session->omx_handle, OMX_CommandPortEnable,
+      p_session->inputTmbPort.nPortIndex, NULL);
+
   if (ret) {
     CDBG_ERROR("%s:%d] failed", __func__, __LINE__);
     return ret;
@@ -682,6 +742,8 @@ OMX_ERRORTYPE mm_jpeg_session_config_thumbnail(mm_jpeg_job_session_t* p_session)
   mm_jpeg_encode_job_t *p_jobparams = &p_session->encode_job;
   mm_jpeg_dim_t *p_thumb_dim = &p_jobparams->thumb_dim;
   mm_jpeg_dim_t *p_main_dim = &p_jobparams->main_dim;
+  QOMX_YUV_FRAME_INFO *p_frame_info = &thumbnail_info.tmbOffset;
+  mm_jpeg_buf_t *p_tmb_buf = &p_params->src_thumb_buf[p_jobparams->thumb_index];
 
   CDBG_HIGH("%s:%d] encode_thumbnail %d", __func__, __LINE__,
     p_params->encode_thumbnail);
@@ -771,6 +833,14 @@ OMX_ERRORTYPE mm_jpeg_session_config_thumbnail(mm_jpeg_job_session_t* p_session)
     thumbnail_info.output_width = p_thumb_dim->dst_dim.width;
     thumbnail_info.output_height = p_thumb_dim->dst_dim.height;
   }
+
+  memset(p_frame_info, 0x0, sizeof(*p_frame_info));
+
+  p_frame_info->cbcrStartOffset[0] = p_tmb_buf->offset.mp[0].len;
+  p_frame_info->cbcrStartOffset[1] = p_tmb_buf->offset.mp[1].len;
+  p_frame_info->yOffset = p_tmb_buf->offset.mp[0].offset;
+  p_frame_info->cbcrOffset[0] = p_tmb_buf->offset.mp[1].offset;
+  p_frame_info->cbcrOffset[1] = p_tmb_buf->offset.mp[2].offset;
 
   ret = OMX_SetParameter(p_session->omx_handle, thumb_indextype,
     &thumbnail_info);
@@ -1270,6 +1340,13 @@ static OMX_ERRORTYPE mm_jpeg_session_encode(mm_jpeg_job_session_t *p_session)
 
   ret = OMX_EmptyThisBuffer(p_session->omx_handle,
     p_session->p_in_omx_buf[p_jobparams->src_index]);
+  if (ret) {
+    CDBG_ERROR("%s:%d] Error", __func__, __LINE__);
+    goto error;
+  }
+
+  ret = OMX_EmptyThisBuffer(p_session->omx_handle,
+      p_session->p_in_omx_thumb_buf[p_jobparams->thumb_index]);
   if (ret) {
     CDBG_ERROR("%s:%d] Error", __func__, __LINE__);
     goto error;

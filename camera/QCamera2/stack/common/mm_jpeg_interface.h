@@ -98,6 +98,9 @@ typedef struct {
   /* num of buf in src img */
   uint32_t num_src_bufs;
 
+  /* num of src tmb bufs */
+  uint32_t num_tmb_bufs;
+
   /* num of buf in src img */
   uint32_t num_dst_bufs;
 
