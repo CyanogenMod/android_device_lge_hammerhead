@@ -101,6 +101,8 @@ const char QCameraParameters::KEY_QC_PREVIEW_FLIP[] = "preview-flip";
 const char QCameraParameters::KEY_QC_VIDEO_FLIP[] = "video-flip";
 const char QCameraParameters::KEY_QC_SNAPSHOT_PICTURE_FLIP[] = "snapshot-picture-flip";
 const char QCameraParameters::KEY_QC_SUPPORTED_FLIP_MODES[] = "flip-mode-values";
+const char QCameraParameters::KEY_QC_VIDEO_HDR[] = "video-hdr";
+const char QCameraParameters::KEY_QC_SUPPORTED_VIDEO_HDR_MODES[] = "video-hdr-values";
 
 // Values for effect settings.
 const char QCameraParameters::EFFECT_EMBOSS[] = "emboss";
@@ -1731,6 +1733,31 @@ int32_t QCameraParameters::setSceneDetect(const QCameraParameters& params)
 }
 
 /*===========================================================================
+ * FUNCTION   : setVideoHDR
+ *
+ * DESCRIPTION: set video HDR value from user setting
+ *
+ * PARAMETERS :
+ *   @params  : user setting parameters
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraParameters::setVideoHDR(const QCameraParameters& params)
+{
+    const char *str = params.get(KEY_QC_VIDEO_HDR);
+    const char *prev_str = get(KEY_QC_VIDEO_HDR);
+    if (str != NULL) {
+        if (prev_str == NULL ||
+            strcmp(str, prev_str) != 0) {
+            return setVideoHDR(str);
+        }
+    }
+    return NO_ERROR;
+}
+
+/*===========================================================================
  * FUNCTION   : setFaceRecognition
  *
  * DESCRIPTION: set face recognition mode from user setting
@@ -2693,6 +2720,7 @@ int32_t QCameraParameters::updateParameters(QCameraParameters& params,
     if ((rc = setWaveletDenoise(params)))               final_rc = rc;
     if ((rc = setFaceRecognition(params)))              final_rc = rc;
     if ((rc = setFlip(params)))                         final_rc = rc;
+    if ((rc = setVideoHDR(params)))                     final_rc = rc;
 
 UPDATE_PARAM_DONE:
     needRestart = m_bNeedRestart;
@@ -3124,6 +3152,12 @@ int32_t QCameraParameters::initDefaultParameters()
     set(KEY_QC_SUPPORTED_ZSL_MODES, onOffValues);
     set(KEY_QC_ZSL, VALUE_OFF);
     m_bZslMode =true;
+
+    //Set video HDR
+    if ((m_pCapability->qcom_supported_feature_mask & CAM_QCOM_FEATURE_VIDEO_HDR) > 0) {
+        set(KEY_QC_SUPPORTED_VIDEO_HDR_MODES, onOffValues);
+        set(KEY_QC_VIDEO_HDR, VALUE_OFF);
+    }
 
     //Set Touch AF/AEC
     String8 touchValues = createValuesStringFromMap(
@@ -3674,6 +3708,38 @@ int32_t QCameraParameters::setSceneDetect(const char *sceneDetect)
     }
     ALOGE("Invalid Scene Detect value: %s",
           (sceneDetect == NULL) ? "NULL" : sceneDetect);
+    return BAD_VALUE;
+}
+
+/*===========================================================================
+ * FUNCTION   : setVideoHDR
+ *
+ * DESCRIPTION: set video HDR value
+ *
+ * PARAMETERS :
+ *   @videoHDR  : svideo HDR value string
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraParameters::setVideoHDR(const char *videoHDR)
+{
+    if (videoHDR != NULL) {
+        int32_t value = lookupAttr(ON_OFF_MODES_MAP,
+                                   sizeof(ON_OFF_MODES_MAP)/sizeof(QCameraMap),
+                                   videoHDR);
+        if (value != NAME_NOT_FOUND) {
+            ALOGD("%s: Setting Video HDR %s", __func__, videoHDR);
+            updateParamEntry(KEY_QC_VIDEO_HDR, videoHDR);
+            return AddSetParmEntryToBatch(m_pParamBuf,
+                                          CAM_INTF_PARM_VIDEO_HDR,
+                                          sizeof(value),
+                                          &value);
+        }
+    }
+    ALOGE("Invalid Video HDR value: %s",
+          (videoHDR == NULL) ? "NULL" : videoHDR);
     return BAD_VALUE;
 }
 

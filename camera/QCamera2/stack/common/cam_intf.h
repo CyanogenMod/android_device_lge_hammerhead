@@ -283,6 +283,7 @@ typedef union {
     INCLUDE(CAM_INTF_PARM_ZSL_MODE,                 int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_HDR_NEED_1X,              int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_LOCK_CAF,                 int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_VIDEO_HDR,                int32_t,                     1);
 } parm_type_t;
 
 /****************************DO NOT MODIFY BELOW THIS LINE!!!!*********************/

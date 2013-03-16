@@ -693,6 +693,7 @@ typedef enum {
     CAM_INTF_PARM_ZSL_MODE,  /* indicating if it's running in ZSL mode */
     CAM_INTF_PARM_HDR_NEED_1X, /* if HDR needs 1x output */
     CAM_INTF_PARM_LOCK_CAF,
+    CAM_INTF_PARM_VIDEO_HDR,
     CAM_INTF_PARM_MAX
 } cam_intf_parm_type_t;
 
@@ -711,6 +712,7 @@ typedef struct {
 #define CAM_QCOM_FEATURE_HDR            (1<<5)
 #define CAM_QCOM_FEATURE_REGISTER_FACE  (1<<6)
 #define CAM_QCOM_FEATURE_SHARPNESS      (1<<7)
+#define CAM_QCOM_FEATURE_VIDEO_HDR      (1<<8)
 
 // Counter clock wise
 typedef enum {
