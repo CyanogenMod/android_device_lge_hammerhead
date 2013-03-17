@@ -2258,8 +2258,10 @@ int QCameraHardwareInterface::cache_ops(int ion_fd,
   struct ion_flush_data *cache_data, int type)
 {
   int rc = 0;
-
-  rc = ioctl(ion_fd, type, cache_data);
+  struct ion_custom_data data;
+  data.cmd = type;
+  data.arg = (unsigned long)cache_data;
+  rc = ioctl(ion_fd, ION_IOC_CUSTOM, &data);
   if (rc < 0)
     LOGE("%s: Cache Invalidate failed\n", __func__);
   else

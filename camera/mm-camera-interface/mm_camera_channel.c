@@ -397,6 +397,7 @@ static int32_t mm_camera_ch_util_qbuf(mm_camera_obj_t *my_obj,
     int32_t rc = -1;
     mm_camera_stream_t *stream;
     struct ion_flush_data cache_inv_data;
+    struct ion_custom_data custom_data;
     int ion_fd;
     struct msm_frame *cache_frame;
     struct msm_frame *cache_frame1 = NULL;
@@ -465,9 +466,11 @@ static int32_t mm_camera_ch_util_qbuf(mm_camera_obj_t *my_obj,
     cache_inv_data.fd = cache_frame->fd;
     cache_inv_data.handle = cache_frame->fd_data.handle;
     cache_inv_data.length = cache_frame->ion_alloc.len;
+    custom_data.cmd = ION_IOC_INV_CACHES;
+    custom_data.arg = &cache_inv_data;
     ion_fd = cache_frame->ion_dev_fd;
     if(ion_fd > 0) {
-        if(ioctl(ion_fd, ION_IOC_INV_CACHES, &cache_inv_data) < 0)
+        if(ioctl(ion_fd, ION_IOC_CUSTOM, &custom_data) < 0)
             CDBG_ERROR("%s: Cache Invalidate failed\n", __func__);
         else {
             CDBG("%s: Successful cache invalidate\n", __func__);
@@ -477,7 +480,9 @@ static int32_t mm_camera_ch_util_qbuf(mm_camera_obj_t *my_obj,
               cache_inv_data.fd = cache_frame1->fd;
               cache_inv_data.handle = cache_frame1->fd_data.handle;
               cache_inv_data.length = cache_frame1->ion_alloc.len;
-              if(ioctl(ion_fd, ION_IOC_INV_CACHES, &cache_inv_data) < 0)
+              custom_data.cmd = ION_IOC_INV_CACHES;
+              custom_data.arg = &cache_inv_data;
+              if(ioctl(ion_fd, ION_IOC_CUSTOM, &custom_data) < 0)
                 CDBG_ERROR("%s: Cache Invalidate failed\n", __func__);
               else
                 CDBG("%s: Successful cache invalidate\n", __func__);
