@@ -1079,8 +1079,26 @@ status_t QCameraHardwareInterface::startPreview2()
         mParameters.setPreviewFrameRateMode("frame-rate-auto");
         setPreviewFrameRateMode(mParameters);
 
+        if (mHasAutoFocusSupport) {
+            int cafSupport = true;
+            int caf_type = 2;
+#ifdef FAST_AF
+            native_set_parms(MM_CAMERA_PARM_CAF_TYPE, sizeof(caf_type), (void *)&caf_type);
+#endif
+            native_set_parms(MM_CAMERA_PARM_CONTINUOUS_AF, sizeof(cafSupport),
+                                   (void *)&cafSupport);
+        }
     }
 
+     if (mHasAutoFocusSupport && strcmp(str, "auto")) {
+         int cafSupport = true;
+         int caf_type = 2;
+#ifdef FAST_AF
+         native_set_parms(MM_CAMERA_PARM_CAF_TYPE, sizeof(caf_type), (void *)&caf_type);
+#endif
+         native_set_parms(MM_CAMERA_PARM_CONTINUOUS_AF, sizeof(cafSupport),
+                               (void *)&cafSupport);
+     }
     /*  get existing preview information, by qury mm_camera*/
     memset(&dim, 0, sizeof(cam_ctrl_dimension_t));
     ret = cam_config_get_parm(mCameraId, MM_CAMERA_PARM_DIMENSION,&dim);
