@@ -35,7 +35,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <poll.h>
-#include <linux/ion.h>
+#include <linux/msm_ion.h>
 #include "mm_camera_interface2.h"
 #include "mm_camera.h"
 
