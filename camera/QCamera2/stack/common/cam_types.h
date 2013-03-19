@@ -662,6 +662,7 @@ typedef  struct {
 } cam_metadata_info_t;
 
 typedef enum {
+    /* session based parameters */
     CAM_INTF_PARM_QUERY_FLASH4SNAP,
     CAM_INTF_PARM_EXPOSURE,
     CAM_INTF_PARM_SHARPNESS,
@@ -697,12 +698,16 @@ typedef enum {
     CAM_INTF_PARM_RECORDING_HINT,
     CAM_INTF_PARM_DIS_ENABLE,
     CAM_INTF_PARM_HDR,
-    CAM_INTF_PARM_SET_BUNDLE,
     CAM_INTF_PARM_FRAMESKIP,
     CAM_INTF_PARM_ZSL_MODE,  /* indicating if it's running in ZSL mode */
     CAM_INTF_PARM_HDR_NEED_1X, /* if HDR needs 1x output */
     CAM_INTF_PARM_LOCK_CAF,
     CAM_INTF_PARM_VIDEO_HDR,
+
+    /* stream based parameters */
+    CAM_INTF_PARM_DO_REPROCESS,
+    CAM_INTF_PARM_SET_BUNDLE,
+
     CAM_INTF_PARM_MAX
 } cam_intf_parm_type_t;
 

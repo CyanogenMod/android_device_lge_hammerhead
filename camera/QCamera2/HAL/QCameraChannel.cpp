@@ -191,14 +191,13 @@ int32_t QCameraChannel::addStream(QCameraAllocator &allocator,
  *
  * DESCRIPTION: start channel, which will start all streams belong to this channel
  *
- * PARAMETERS :
- *   @param   : parameter obj, needed to pass channel bundle information to backend.
+ * PARAMETERS : None
  *
  * RETURN     : int32_t type of status
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int32_t QCameraChannel::start(QCameraParameters &param)
+int32_t QCameraChannel::start()
 {
     int32_t rc = NO_ERROR;
 
@@ -213,9 +212,25 @@ int32_t QCameraChannel::start(QCameraParameters &param)
             return rc;
         }
         if (bundleInfo.num_of_streams > 1) {
-            rc = param.setBundleInfo(bundleInfo);
-            if (rc != NO_ERROR) {
-                return rc;
+            for (int i = 0; i < bundleInfo.num_of_streams; i++) {
+                QCameraStream *pStream = getStreamByServerID(bundleInfo.stream_ids[i]);
+                if (pStream != NULL) {
+                    if (pStream->isTypeOf(CAM_STREAM_TYPE_METADATA)) {
+                        // Skip metadata for reprocess now because PP module cannot handle meta data
+                        // May need furthur discussion if Imaginglib need meta data
+                        continue;
+                    }
+
+                    cam_stream_parm_buffer_t param;
+                    memset(&param, 0, sizeof(cam_stream_parm_buffer_t));
+                    param.type = CAM_STREAM_PARAM_TYPE_SET_BUNDLE_INFO;
+                    param.bundleInfo = bundleInfo;
+                    rc = pStream->setParameter(param);
+                    if (rc != NO_ERROR) {
+                        ALOGE("%s: stream setParameter for set bundle failed", __func__);
+                        return rc;
+                    }
+                }
             }
         }
     }
@@ -343,12 +358,32 @@ QCameraStream *QCameraChannel::getStreamByHandle(uint32_t streamHandle)
 }
 
 /*===========================================================================
- * FUNCTION   : getStreamByHandle
+ * FUNCTION   : getStreamByServerID
  *
- * DESCRIPTION: return stream object by stream handle
+ * DESCRIPTION: return stream object by stream server ID from daemon
  *
  * PARAMETERS :
- *   @streamHandle : stream handle
+ *   @serverID : stream server ID
+ *
+ * RETURN     : stream object. NULL if not found
+ *==========================================================================*/
+QCameraStream *QCameraChannel::getStreamByServerID(uint32_t serverID)
+{
+    for (int i = 0; i < m_numStreams; i++) {
+        if (mStreams[i] != NULL && mStreams[i]->getMyServerID() == serverID) {
+            return mStreams[i];
+        }
+    }
+    return NULL;
+}
+
+/*===========================================================================
+ * FUNCTION   : getStreamByIndex
+ *
+ * DESCRIPTION: return stream object by index of streams in the channel
+ *
+ * PARAMETERS :
+ *   @index : index of stream in the channel
  *
  * RETURN     : stream object. NULL if not found
  *==========================================================================*/

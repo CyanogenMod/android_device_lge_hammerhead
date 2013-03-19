@@ -179,7 +179,7 @@ int32_t QCameraPostProcessor::start(QCameraChannel *pSrcChannel)
             return UNKNOWN_ERROR;
         }
 
-        rc = m_pReprocChannel->start(m_parent->mParameters);
+        rc = m_pReprocChannel->start();
         if (rc != 0) {
             ALOGE("%s: cannot start reprocess channel", __func__);
             delete m_pReprocChannel;
