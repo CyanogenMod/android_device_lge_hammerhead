@@ -420,6 +420,13 @@ int32_t mm_app_stream_deinitbuf(mm_camera_map_unmap_ops_tbl_t *ops_tbl,
     return 0;
 }
 
+int32_t mm_app_stream_clean_invalidate_buf(int index, void *user_data)
+{
+    mm_camera_stream_t *stream = (mm_camera_stream_t *)user_data;
+    return mm_app_cache_ops(&stream->s_bufs[index].mem_info,
+      ION_IOC_CLEAN_INV_CACHES);
+}
+
 static void notify_evt_cb(uint32_t camera_handle,
                           mm_camera_event_t *evt,
                           void *user_data)

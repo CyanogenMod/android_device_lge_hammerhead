@@ -280,7 +280,6 @@ void QCamera2HardwareInterface::preview_stream_cb_routine(mm_camera_super_buf_t 
     }
 
     int idx = frame->buf_idx;
-    memory->cleanCache(idx);
     pme->dumpFrameToFile(frame->buffer, frame->frame_len,
                          frame->frame_idx, QCAMERA_DUMP_FRM_PREVIEW);
 
@@ -406,8 +405,6 @@ void QCamera2HardwareInterface::nodisplay_preview_stream_cb_routine(
         preview_mem = previewMemObj->getMemory(frame->buf_idx, false);
     }
     if (NULL != previewMemObj && NULL != preview_mem) {
-        previewMemObj->cleanCache(frame->buf_idx);
-
         pme->dumpFrameToFile(frame->buffer, frame->frame_len,
                              frame->frame_idx, QCAMERA_DUMP_FRM_PREVIEW);
 
@@ -476,8 +473,6 @@ void QCamera2HardwareInterface::postview_stream_cb_routine(mm_camera_super_buf_t
 
     QCameraMemory *memObj = (QCameraMemory *)frame->mem_info;
     if (NULL != memObj) {
-        memObj->cleanCache(frame->buf_idx);
-
         pme->dumpFrameToFile(frame->buffer, frame->frame_len,
                              frame->frame_idx, QCAMERA_DUMP_FRM_THUMBNAIL);
     }
@@ -554,7 +549,6 @@ void QCamera2HardwareInterface::video_stream_cb_routine(mm_camera_super_buf_t *s
         video_mem = videoMemObj->getMemory(frame->buf_idx, (pme->mStoreMetaDataInFrame > 0)? true : false);
     }
     if (NULL != videoMemObj && NULL != video_mem) {
-        videoMemObj->cleanCache(frame->buf_idx);
         pme->dumpFrameToFile(frame->buffer, frame->frame_len,
                              frame->frame_idx, QCAMERA_DUMP_FRM_VIDEO);
         if ((pme->mDataCbTimestamp != NULL) &&
