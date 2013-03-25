@@ -1922,7 +1922,8 @@ int QCamera2HardwareInterface::takePicture()
         delChannel(QCAMERA_CH_TYPE_PREVIEW);
 
         // start snapshot
-        if (mParameters.isJpegPictureFormat()) {
+        if (mParameters.isJpegPictureFormat() ||
+            mParameters.isNV16PictureFormat() ) {
             rc = addCaptureChannel();
             if (rc == NO_ERROR) {
                 // start postprocessor
@@ -1991,7 +1992,8 @@ int QCamera2HardwareInterface::cancelPicture()
         }
     } else {
         // normal capture case
-        if (mParameters.isJpegPictureFormat()) {
+        if (mParameters.isJpegPictureFormat() ||
+            mParameters.isNV16PictureFormat() ) {
             stopChannel(QCAMERA_CH_TYPE_CAPTURE);
             delChannel(QCAMERA_CH_TYPE_CAPTURE);
         } else {

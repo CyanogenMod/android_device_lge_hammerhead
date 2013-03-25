@@ -1601,6 +1601,9 @@ uint32_t mm_stream_get_v4l2_fmt(cam_format_t fmt)
     case CAM_FORMAT_YUV_420_YV12:
         val= V4L2_PIX_FMT_NV12;
         break;
+    case CAM_FORMAT_YUV_422_NV16:
+        val= V4L2_PIX_FMT_NV16;
+        break;
     default:
         val = 0;
         CDBG_ERROR("%s: Unknown fmt=%d", __func__, fmt);
