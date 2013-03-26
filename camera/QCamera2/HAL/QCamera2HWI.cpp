@@ -3519,10 +3519,10 @@ int32_t QCamera2HardwareInterface::processFaceDetectionResult(cam_face_detection
         return NO_MEMORY;
     }
 
-    void *faceData = faceResultBuffer->data;
+    unsigned char *faceData = ( unsigned char * ) faceResultBuffer->data;
     memset(faceData, 0, faceResultSize);
     camera_frame_metadata_t *roiData = (camera_frame_metadata_t * ) faceData;
-    camera_face_t *faces = (camera_face_t *) faceData + sizeof(camera_frame_metadata_t);
+    camera_face_t *faces = (camera_face_t *) ( faceData + sizeof(camera_frame_metadata_t) );
 
     roiData->number_of_faces = fd_data->num_faces_detected;
     roiData->faces = faces;
