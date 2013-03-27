@@ -977,8 +977,18 @@ int32_t mm_stream_read_msm_frame(mm_stream_t * my_obj,
         buf_info->buf->ts.tv_nsec = vb.timestamp.tv_usec * 1000;
         CDBG_HIGH("%s: VIDIOC_DQBUF buf_index %d, frame_idx %d, stream type %d\n",
              __func__, vb.index, buf_info->buf->frame_idx, my_obj->stream_info->stream_type);
-        my_obj->mem_vtbl.clean_invalidate_buf(idx,
-                                my_obj->mem_vtbl.user_data);
+        if ( NULL != my_obj->mem_vtbl.clean_invalidate_buf ) {
+            rc = my_obj->mem_vtbl.clean_invalidate_buf(idx,
+                                                       my_obj->mem_vtbl.user_data);
+            if ( 0 > rc ) {
+                CDBG_ERROR("%s: Clean invalidate cache failed on buffer index: %d",
+                           __func__,
+                           idx);
+                return rc;
+            }
+        } else {
+            CDBG_ERROR(" %s : Clean invalidate cache op not supported\n", __func__);
+        }
     }
 
     CDBG("%s :X rc = %d",__func__,rc);
@@ -1118,11 +1128,11 @@ int32_t mm_stream_qbuf(mm_stream_t *my_obj, mm_camera_buf_def_t *buf)
 {
     int32_t rc = 0;
     struct v4l2_buffer buffer;
-	struct v4l2_plane planes[VIDEO_MAX_PLANES];
+    struct v4l2_plane planes[VIDEO_MAX_PLANES];
     CDBG("%s: E, my_handle = 0x%x, fd = %d, state = %d",
          __func__, my_obj->my_hdl, my_obj->fd, my_obj->state);
 
-	memcpy(planes, buf->planes, sizeof(planes));
+    memcpy(planes, buf->planes, sizeof(planes));
     memset(&buffer, 0, sizeof(buffer));
     buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
     buffer.memory = V4L2_MEMORY_USERPTR;
@@ -1132,8 +1142,21 @@ int32_t mm_stream_qbuf(mm_stream_t *my_obj, mm_camera_buf_def_t *buf)
 
     CDBG("%s:plane 0: stream_hdl=%d,fd=%d,frame idx=%d,num_planes = %d, offset = %d, data_offset = %d\n", __func__,
          buf->stream_id, buf->fd, buffer.index, buffer.length, buf->planes[0].reserved[0], buf->planes[0].data_offset);
-	CDBG("%s:plane 1: stream_hdl=%d,fd=%d,frame idx=%d,num_planes = %d, offset = %d, data_offset = %d\n", __func__,
+    CDBG("%s:plane 1: stream_hdl=%d,fd=%d,frame idx=%d,num_planes = %d, offset = %d, data_offset = %d\n", __func__,
          buf->stream_id, buf->fd, buffer.index, buffer.length, buf->planes[1].reserved[0], buf->planes[1].data_offset);
+
+    if ( NULL != my_obj->mem_vtbl.invalidate_buf ) {
+        rc = my_obj->mem_vtbl.invalidate_buf(buffer.index,
+                                             my_obj->mem_vtbl.user_data);
+        if ( 0 > rc ) {
+            CDBG_ERROR("%s: Cache invalidate failed on buffer index: %d",
+                       __func__,
+                       buffer.index);
+            return rc;
+        }
+    } else {
+        CDBG_ERROR("%s: Cache invalidate op not added", __func__);
+    }
 
     rc = ioctl(my_obj->fd, VIDIOC_QBUF, &buffer);
     CDBG("%s: qbuf idx:%d, rc:%d", __func__, buffer.index, rc);
@@ -2490,8 +2513,6 @@ int32_t mm_stream_buf_done(mm_stream_t * my_obj,
         my_obj->buf_status[frame->buf_idx].buf_refcnt--;
         if (0 == my_obj->buf_status[frame->buf_idx].buf_refcnt) {
             CDBG("<DEBUG> : Buf done for buffer:%d", frame->buf_idx);
-            my_obj->mem_vtbl.invalidate_buf(frame->buf_idx,
-                                            my_obj->mem_vtbl.user_data);
             rc = mm_stream_qbuf(my_obj, frame);
             if(rc < 0) {
                 CDBG_ERROR("%s: mm_camera_stream_qbuf(idx=%d) err=%d\n",
