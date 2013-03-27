@@ -1,14 +1,15 @@
-ifeq ($(TARGET_BOARD_PLATFORM),msm8960)
+LOCAL_PATH:= $(call my-dir)
 
+ifeq ($(TARGET_BOARD_PLATFORM),msm8960)
 ifneq ($(USE_CAMERA_STUB),true)
+ifneq ($(USE_DEVICE_SPECIFIC_CAMERA),true)
+
     # When zero we link against libmmcamera; when 1, we dlopen libmmcamera.
     DLOPEN_LIBMMCAMERA:=1
     ifneq ($(BUILD_TINY_ANDROID),true)
       V4L2_BASED_LIBCAM := true
 
-      LOCAL_PATH:= $(call my-dir)
       LOCAL_PATH1:= $(call my-dir)
-
       include $(CLEAR_VARS)
 
       LOCAL_CFLAGS:= -DDLOPEN_LIBMMCAMERA=$(DLOPEN_LIBMMCAMERA)
@@ -120,6 +121,7 @@ ifneq ($(USE_CAMERA_STUB),true)
     endif # BUILD_TINY_ANDROID
 endif # USE_CAMERA_STUB
 
+ifneq ($(USE_DEVICE_SPECIFIC_CAMERA),true)
 ifeq ($(V4L2_BASED_LIBCAM),true)
 include $(LOCAL_PATH)/mm-camera-interface/Android.mk
 endif
@@ -127,5 +129,7 @@ endif
 #Enable only to compile new interafece and HAL files.
 ifeq ($(V4L2_BASED_LIBCAM),true)
 #include $(LOCAL_PATH1)/QCamera/Android.mk
+endif
+endif
 endif
 endif
