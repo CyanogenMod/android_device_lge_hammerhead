@@ -66,8 +66,8 @@ PRODUCT_AAPT_PREF_CONFIG := xhdpi
 
 PRODUCT_CHARACTERISTICS := nosdcard
 
-#DEVICE_PACKAGE_OVERLAYS := \
-#    device/lge/hammerhead/overlay
+DEVICE_PACKAGE_OVERLAYS := \
+    device/lge/hammerhead/overlay
 
 # Live Wallpapers
 PRODUCT_PACKAGES += \
