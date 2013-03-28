@@ -1976,6 +1976,8 @@ int32_t mm_stream_calc_offset_raw(cam_format_t fmt,
     case CAM_FORMAT_YUV_RAW_8BIT_YVYU:
     case CAM_FORMAT_YUV_RAW_8BIT_UYVY:
     case CAM_FORMAT_YUV_RAW_8BIT_VYUY:
+    case CAM_FORMAT_JPEG_RAW_8BIT:
+    case CAM_FORMAT_META_RAW_8BIT:
         /* 1 plane */
         /* Every 16 pixels occupy 16 bytes */
         stride = PAD_TO_SIZE(dim->width, CAM_PAD_TO_16);
