@@ -5171,18 +5171,21 @@ int32_t QCameraParameters::getExifDateTime(char *dateTime, uint32_t &count)
 {
     //get time and date from system
     time_t rawtime;
-    struct tm * timeinfo;
+    struct tm * timeinfo = NULL;
+    memset(&rawtime, 0, sizeof(rawtime));
     time(&rawtime);
     timeinfo = localtime (&rawtime);
-    //Write datetime according to EXIF Spec
-    //"YYYY:MM:DD HH:MM:SS" (20 chars including \0)
-    snprintf(dateTime, 20, "%04d:%02d:%02d %02d:%02d:%02d",
-             timeinfo->tm_year + 1900, timeinfo->tm_mon + 1,
-             timeinfo->tm_mday, timeinfo->tm_hour,
-             timeinfo->tm_min, timeinfo->tm_sec);
-    count = 20;
-
-    return NO_ERROR;
+    if (timeinfo != NULL && count >= 20) {
+        //Write datetime according to EXIF Spec
+        //"YYYY:MM:DD HH:MM:SS" (20 chars including \0)
+        snprintf(dateTime, 20, "%04d:%02d:%02d %02d:%02d:%02d",
+                 timeinfo->tm_year + 1900, timeinfo->tm_mon + 1,
+                 timeinfo->tm_mday, timeinfo->tm_hour,
+                 timeinfo->tm_min, timeinfo->tm_sec);
+        count = 20;
+        return NO_ERROR;
+    }
+    return UNKNOWN_ERROR;
 }
 
 /*===========================================================================
