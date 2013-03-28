@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-#import init.hammerhead.usb.rc
+import init.hammerhead.usb.rc
 
 on early-init
     mount debugfs debugfs /sys/kernel/debug
