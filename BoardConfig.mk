@@ -54,4 +54,6 @@ BOARD_CHARGER_DISABLE_INIT_BLANK := true
 TARGET_RECOVERY_PIXEL_FORMAT := RGBX_8888
 TARGET_RELEASETOOLS_EXTENSIONS := device/lge/hammerhead
 
+BOARD_LIB_DUMPSTATE := libdumpstate.hammerhead
+
 -include vendor/lge/hammerhead/BoardConfigVendor.mk
