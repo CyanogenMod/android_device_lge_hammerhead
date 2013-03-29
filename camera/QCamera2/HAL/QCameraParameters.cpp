@@ -3138,7 +3138,11 @@ int32_t QCameraParameters::initDefaultParameters()
     String8 denoiseValues = createValuesStringFromMap(
        DENOISE_ON_OFF_MODES_MAP, sizeof(DENOISE_ON_OFF_MODES_MAP) / sizeof(QCameraMap));
     set(KEY_QC_SUPPORTED_DENOISE, denoiseValues.string());
+#ifdef DEFAULT_DENOISE_MODE_ON
+    setWaveletDenoise(DENOISE_ON);
+#else
     setWaveletDenoise(DENOISE_OFF);
+#endif
 
     // Set feature enable/disable
     String8 enableDisableValues = createValuesStringFromMap(
