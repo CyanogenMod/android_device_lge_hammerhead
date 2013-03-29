@@ -3185,8 +3185,13 @@ int32_t QCameraParameters::initDefaultParameters()
 
     //Set ZSL
     set(KEY_QC_SUPPORTED_ZSL_MODES, onOffValues);
+#ifdef DEFAULT_ZSL_MODE_ON
+    set(KEY_QC_ZSL, VALUE_ON);
+    m_bZslMode = true;
+#else
     set(KEY_QC_ZSL, VALUE_OFF);
-    m_bZslMode =true;
+    m_bZslMode = false;
+#endif
 
     //Set video HDR
     if ((m_pCapability->qcom_supported_feature_mask & CAM_QCOM_FEATURE_VIDEO_HDR) > 0) {
