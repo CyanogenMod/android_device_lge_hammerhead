@@ -22,4 +22,7 @@
 
     <!-- Default screen brightness, from 0 to 255. 87 is 34%. -->
     <integer name="def_screen_brightness">87</integer>
+
+    <!-- 30 seconds for default screen timeout -->
+    <integer name="def_screen_off_timeout">30000</integer>
 </resources>
