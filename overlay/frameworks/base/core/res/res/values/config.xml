@@ -113,4 +113,7 @@
     <!-- Shutdown if the battery temperature exceeds (this value * 0.1) Celsius. -->
     <integer name="config_shutdownBatteryTemperature">600</integer>
 
+    <!-- Default color for notification LED is white. -->
+    <color name="config_defaultNotificationColor">#ffffffff</color>
+
 </resources>
