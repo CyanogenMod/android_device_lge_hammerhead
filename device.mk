@@ -83,7 +83,10 @@ PRODUCT_PACKAGES += \
     librs_jni
 
 PRODUCT_PACKAGES += \
-    gralloc.msm8x74
+    gralloc.msm8x74 \
+    libgenlock \
+    lights.msm8x74 \
+    hwcomposer.msm8x74
 
 PRODUCT_PACKAGES += \
     libion
