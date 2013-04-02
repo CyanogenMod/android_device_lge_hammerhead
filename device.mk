@@ -42,12 +42,9 @@ PRODUCT_COPY_FILES += \
 PRODUCT_COPY_FILES += \
     device/lge/hammerhead/touch_dev.idc:system/usr/idc/touch_dev.idc
 
-#PRODUCT_COPY_FILES += \
-#    device/lge/hammerhead/mixer_paths.xml:system/etc/mixer_paths.xml
-
-#PRODUCT_COPY_FILES += \
-#    device/lge/hammerhead/audio_policy.conf:system/etc/audio_policy.conf
-
+PRODUCT_COPY_FILES += \
+    device/lge/hammerhead/audio_policy.conf:system/etc/audio_policy.conf \
+    device/lge/hammerhead/mixer_paths.xml:system/etc/mixer_paths.xml
 
 PRODUCT_COPY_FILES += \
     device/lge/hammerhead/media_codecs.xml:system/etc/media_codecs.xml \
@@ -99,6 +96,13 @@ PRODUCT_PACKAGES += \
     libgenlock \
     lights.msm8x74 \
     hwcomposer.msm8x74
+
+PRODUCT_PACKAGES += \
+    audio.primary.msm8x74 \
+    audio.a2dp.default \
+    audio.usb.default \
+    audio.r_submix.default \
+    libaudio-resampler
 
 PRODUCT_PACKAGES += \
     libion
