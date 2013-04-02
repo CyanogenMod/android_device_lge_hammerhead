@@ -32,7 +32,15 @@ PRODUCT_COPY_FILES += \
     device/lge/hammerhead/ueventd.hammerhead.rc:root/ueventd.hammerhead.rc
 
 # Input device files for hammerhead
-#PRODUCT_COPY_FILES += \
+PRODUCT_COPY_FILES += \
+    device/lge/hammerhead/gpio-keys.kl:system/usr/keylayout/gpio-keys.kl \
+    device/lge/hammerhead/gpio-keys.kcm:system/usr/keychars/gpio-keys.kcm \
+    device/lge/hammerhead/qpnp_pon.kl:system/usr/keylayout/qpnp_pon.kl \
+    device/lge/hammerhead/qpnp_pon.kcm:system/usr/keychars/qpnp_pon.kcm
+
+# Prebuilt input device calibration files
+PRODUCT_COPY_FILES += \
+    device/lge/hammerhead/touch_dev.idc:system/usr/idc/touch_dev.idc
 
 #PRODUCT_COPY_FILES += \
 #    device/lge/hammerhead/mixer_paths.xml:system/etc/mixer_paths.xml
