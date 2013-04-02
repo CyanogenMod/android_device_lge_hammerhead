@@ -8,3 +8,5 @@
 /dev/diag                 0666   root       root
 /dev/mdm                  0660   system     radio
 /dev/ttyUSB0              0660   system     system
+/dev/msm_acdb             0660   system     audio
+/dev/msm_rtac             0660   system     audio

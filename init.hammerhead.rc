@@ -45,6 +45,7 @@ on fs
 on early-boot
     # set RLIMIT_MEMLOCK to 64MB
     setrlimit 8 67108864 67108864
+    insmod /system/lib/modules/adsp-loader.ko
 
 on boot
     # Enable DEBUG_SUSPEND, DEBUG_EXIT_SUSPEND, and DEBUG_WAKEUP
@@ -52,6 +53,9 @@ on boot
 
 on post-fs-data
     mkdir /data/media 0770 media_rw media_rw
+
+    # Create directory used by audio subsystem
+    mkdir /data/misc/audio 0770 audio audio
 
     setprop vold.post_fs_data_done 1
 

@@ -43,6 +43,9 @@ PRODUCT_COPY_FILES += \
     device/lge/hammerhead/touch_dev.idc:system/usr/idc/touch_dev.idc
 
 PRODUCT_COPY_FILES += \
+    device/lge/hammerhead-kernel/adsp-loader.ko:system/lib/modules/adsp-loader.ko
+
+PRODUCT_COPY_FILES += \
     device/lge/hammerhead/audio_policy.conf:system/etc/audio_policy.conf \
     device/lge/hammerhead/mixer_paths.xml:system/etc/mixer_paths.xml
 
