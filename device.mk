@@ -49,6 +49,9 @@ PRODUCT_COPY_FILES += \
 #    device/lge/hammerhead/audio_policy.conf:system/etc/audio_policy.conf
 
 
+PRODUCT_COPY_FILES += \
+    device/lge/hammerhead/media_codecs.xml:system/etc/media_codecs.xml
+
 # These are the hardware-specific features
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/handheld_core_hardware.xml:system/etc/permissions/handheld_core_hardware.xml \
