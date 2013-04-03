@@ -135,7 +135,7 @@ int mm_camera_socket_sendmsg(
     msgh.msg_control = NULL;
     msgh.msg_controllen = 0;
 
-    /* if sendfd is vlaid, we need to pass it through control msg */
+    /* if sendfd is valid, we need to pass it through control msg */
     if( sendfd > 0) {
       msgh.msg_control = control;
       msgh.msg_controllen = sizeof(control);

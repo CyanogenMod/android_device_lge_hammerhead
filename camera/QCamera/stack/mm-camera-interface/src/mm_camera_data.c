@@ -33,6 +33,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <camera.h>
 #include <semaphore.h>
 
 #include "mm_camera_dbg.h"
@@ -120,6 +121,7 @@ int32_t mm_camera_queue_flush(mm_camera_queue_t* queue)
 
     while(pos != head) {
         node = member_of(pos, mm_camera_q_node_t, list);
+        pos = pos->next;
         cam_list_del_node(&node->list);
         queue->size--;
 
@@ -130,7 +132,7 @@ int32_t mm_camera_queue_flush(mm_camera_queue_t* queue)
             free(node->data);
         }
         free(node);
-        pos = pos->next;
+
     }
     queue->size = 0;
     pthread_mutex_unlock(&queue->lock);
@@ -158,12 +160,13 @@ static void *mm_camera_cmd_thread(void *data)
 
         /* we got notified about new cmd avail in cmd queue */
         node = (mm_camera_cmdcb_t*)mm_camera_queue_deq(&cmd_thread->cmd_queue);
-        if (node != NULL) {
+        while (node != NULL) {
             switch (node->cmd_type) {
             case MM_CAMERA_CMD_TYPE_EVT_CB:
             case MM_CAMERA_CMD_TYPE_DATA_CB:
             case MM_CAMERA_CMD_TYPE_ASYNC_CB:
             case MM_CAMERA_CMD_TYPE_REQ_DATA_CB:
+            case MM_CAMERA_CMD_TYPE_SUPER_BUF_DATA_CB:
                 if (NULL != cmd_thread->cb) {
                     cmd_thread->cb(node, cmd_thread->user_data);
                 }
@@ -174,7 +177,8 @@ static void *mm_camera_cmd_thread(void *data)
                 break;
             }
             free(node);
-        }
+            node = (mm_camera_cmdcb_t*)mm_camera_queue_deq(&cmd_thread->cmd_queue);
+        } /* (node != NULL) */
     } while (running);
     return NULL;
 }
@@ -198,7 +202,7 @@ int32_t mm_camera_cmd_thread_launch(mm_camera_cmd_thread_t * cmd_thread,
     return rc;
 }
 
-int32_t mm_camera_cmd_thread_release(mm_camera_cmd_thread_t * cmd_thread)
+int32_t mm_camera_cmd_thread_stop(mm_camera_cmd_thread_t * cmd_thread)
 {
     int32_t rc = 0;
     mm_camera_buf_info_t  buf_info;
@@ -218,10 +222,25 @@ int32_t mm_camera_cmd_thread_release(mm_camera_cmd_thread_t * cmd_thread)
     if (pthread_join(cmd_thread->cmd_pid, NULL) != 0) {
         CDBG("%s: pthread dead already\n", __func__);
     }
-    mm_camera_queue_deinit(&cmd_thread->cmd_queue);
+    return rc;
+}
 
+int32_t mm_camera_cmd_thread_destroy(mm_camera_cmd_thread_t * cmd_thread)
+{
+    int32_t rc = 0;
+    mm_camera_queue_deinit(&cmd_thread->cmd_queue);
     sem_destroy(&cmd_thread->cmd_sem);
     memset(cmd_thread, 0, sizeof(mm_camera_cmd_thread_t));
+    return rc;
+}
+
+int32_t mm_camera_cmd_thread_release(mm_camera_cmd_thread_t * cmd_thread)
+{
+    int32_t rc = 0;
+    rc = mm_camera_cmd_thread_stop(cmd_thread);
+    if (0 == rc) {
+        rc = mm_camera_cmd_thread_destroy(cmd_thread);
+    }
     return rc;
 }
 

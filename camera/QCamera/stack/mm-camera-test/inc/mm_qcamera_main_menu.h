@@ -30,6 +30,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __MM_QCAMERA_MAIN_MENU_H__
 #define __MM_QCAMERA_MAIN_MENU_H__
 
+#include "camera.h"
 #include "mm_camera_interface.h"
 
 
@@ -179,14 +180,6 @@ typedef enum {
 } Get_Ctrl_modes;
 
 typedef enum {
-  WHITE_BALANCE_AUTO         = 1,
-  WHITE_BALANCE_OFF          = 2,
-  WHITE_BALANCE_DAYLIGHT     = 3,
-  WHITE_BALANCE_INCANDESCENT = 4,
-  WHITE_BALANCE_FLUORESCENT  = 5,
-} White_Balance_modes;
-
-typedef enum {
 	EXP_METERING_FRAME_AVERAGE   = 1,
 	EXP_METERING_CENTER_WEIGHTED = 2,
   EXP_METERING_SPOT_METERING   = 3,
@@ -290,7 +283,7 @@ typedef struct{
 } PREVIEW_DIMENSION_TBL_T;
 
 typedef struct {
-  White_Balance_modes wb_id;
+  config3a_wb_t wb_id;
   char * wb_name;
 } WHITE_BALANCE_TBL_T;
 

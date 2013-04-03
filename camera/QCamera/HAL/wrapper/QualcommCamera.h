@@ -34,6 +34,8 @@
 #include "QCameraHWI.h"
 
 extern "C" {
+/*#include <hardware/camera.h>*/
+
   int get_number_of_cameras();
   int get_camera_info(int camera_id, struct camera_info *info);
 

@@ -54,10 +54,10 @@ typedef struct  {
 } image_crop_t;
 
 typedef struct {
-    uint8_t sequence;                /*for jpeg bit streams, assembling is based on sequence. sequence starts from 0*/ 
+    uint8_t sequence;                /*for jpeg bit streams, assembling is based on sequence. sequence starts from 0*/
     uint8_t *buf_vaddr;              /*ptr to buf*/
     int fd;                          /*fd of buf*/
-    uint32_t buf_size;               /* total size of buf (header + image) */ 
+    uint32_t buf_size;               /* total size of buf (header + image) */
     uint32_t data_offset;            /*data offset*/
 } src_bitstream_buffer_t;
 
@@ -100,7 +100,7 @@ typedef struct {
     /* src img type: main or thumbnail */
     jpeg_enc_src_img_type_t type;
 
-    /* color format */ 
+    /* color format */
     mm_jpeg_color_format color_format;
 
     /* src img dimension */
@@ -125,13 +125,16 @@ typedef struct {
 typedef struct {
     /* num of src imgs: e.g. main/thumbnail img
      * if main img only: src_img_num = 1;
-     * if main+thumbnail: src_img_num = 2; 
-     * No support for thumbnail only case */ 
+     * if main+thumbnail: src_img_num = 2;
+     * No support for thumbnail only case */
     uint8_t src_img_num;
 
     /* index 0 is always for main image
      * if thumbnail presented, it will be in index 1 */
     src_image_buffer_info src_img[JPEG_SRC_IMAGE_TYPE_MAX];
+
+    /* flag indicating if buffer is from video stream (special case for video-sized live snapshot) */
+    uint8_t is_video_frame;
 } src_image_buffer_config;
 
 typedef struct {
@@ -152,6 +155,11 @@ typedef struct {
     /* buf to exif entries, caller needs to
      * take care of the memory manage with insider ptr */
     exif_tags_info_t *exif_data;
+
+    /*for mobicat support*/
+    const uint8_t * mobicat_data;
+    int32_t mobicat_data_length;
+    int hasmobicat;
 } mm_jpeg_encode_params;
 
 typedef enum {
@@ -188,12 +196,12 @@ typedef struct {
 
 typedef struct {
     /* start a job -- async call
-     * the result of job (DONE/ERROR) will rcvd through CB */ 
+     * the result of job (DONE/ERROR) will rcvd through CB */
     int32_t (* start_job) (uint32_t client_hdl, mm_jpeg_job* job, uint32_t* jobId);
-    
+
     /* abort a job -- sync call */
     int32_t  (* abort_job) (uint32_t client_hdl, uint32_t jobId);
-    
+
     /* close a jpeg client -- sync call */
     int32_t  (* close) (uint32_t clientHdl);
 } mm_jpeg_ops_t;
@@ -201,7 +209,7 @@ typedef struct {
 /* open a jpeg client -- sync call
  * returns client_handle.
  * failed if client_handle=0
- * jpeg ops tbl will be filled in if open succeeds */ 
+ * jpeg ops tbl will be filled in if open succeeds */
 uint32_t jpeg_open(mm_jpeg_ops_t *ops);
 
 #endif /* MM_JPEG_INTERFACE_H_ */

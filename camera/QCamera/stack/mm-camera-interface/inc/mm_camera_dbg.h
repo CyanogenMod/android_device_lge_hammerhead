@@ -30,14 +30,14 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __MM_CAMERA_DBG_H__
 #define __MM_CAMERA_DBG_H__
 
-#define LOG_DEBUG 1
+//#define LOG_DEBUG 1
 
 #ifndef LOG_DEBUG
   #ifdef _ANDROID_
     #undef LOG_NIDEBUG
     #undef LOG_TAG
     #define LOG_NIDEBUG 0
-    #define LOG_TAG "mm-libcamera2"
+    #define LOG_TAG "mm-camera-intf"
     #include <utils/Log.h>
   #else
     #include <stdio.h>
@@ -45,12 +45,13 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   #endif
   #undef CDBG
   #define CDBG(fmt, args...) do{}while(0)
+  #define CDBG_ERROR(fmt, args...) ALOGE(fmt, ##args)
 #else
   #ifdef _ANDROID_
     #undef LOG_NIDEBUG
     #undef LOG_TAG
     #define LOG_NIDEBUG 0
-    #define LOG_TAG "mm-libcamera2"
+    #define LOG_TAG "mm-camera-intf"
     #include <utils/Log.h>
     #define CDBG(fmt, args...) ALOGE(fmt, ##args)
   #else

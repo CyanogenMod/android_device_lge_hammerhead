@@ -41,7 +41,7 @@ int32_t mm_jpeg_queue_init(mm_jpeg_queue_t* queue)
 
 int32_t mm_jpeg_queue_enq(mm_jpeg_queue_t* queue, void* data)
 {
-    mm_jpeg_q_node_t* node = 
+    mm_jpeg_q_node_t* node =
         (mm_jpeg_q_node_t *)malloc(sizeof(mm_jpeg_q_node_t));
     if (NULL == node) {
         CDBG_ERROR("%s: No memory for mm_jpeg_q_node_t", __func__);
@@ -58,6 +58,28 @@ int32_t mm_jpeg_queue_enq(mm_jpeg_queue_t* queue, void* data)
 
     return 0;
 
+}
+
+
+void* mm_jpeg_queue_peek(mm_jpeg_queue_t* queue)
+{
+    mm_jpeg_q_node_t* node = NULL;
+    void* data = NULL;
+    struct cam_list *head = NULL;
+    struct cam_list *pos = NULL;
+
+    pthread_mutex_lock(&queue->lock);
+    head = &queue->head.list;
+    pos = head->next;
+    if (pos != head) {
+        node = member_of(pos, mm_jpeg_q_node_t, list);
+    }
+    pthread_mutex_unlock(&queue->lock);
+
+    if (NULL != node) {
+        data = node->data;
+    }
+    return data;
 }
 
 void* mm_jpeg_queue_deq(mm_jpeg_queue_t* queue)

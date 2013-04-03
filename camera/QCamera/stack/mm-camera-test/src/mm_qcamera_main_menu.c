@@ -30,7 +30,6 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <pthread.h>
 #include <fcntl.h>
 #include <stdio.h>
-#include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
 #include <termios.h>
@@ -48,9 +47,11 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 #include <dlfcn.h>
 
+#include "camera.h"
 #include "mm_camera_dbg.h"
 #include "mm_qcamera_main_menu.h"
 #include "mm_qcamera_display_dimensions.h"
+#include "camera_defs_i.h"
 #include "mm_qcamera_app.h"
 
 #define CAMERA_OPENED 0
@@ -58,6 +59,15 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define VIDEO_BUFFER_SIZE       (PREVIEW_WIDTH * PREVIEW_HEIGHT * 3/2)
 #define THUMBNAIL_BUFFER_SIZE   (THUMBNAIL_WIDTH * THUMBNAIL_HEIGHT * 3/2)
 #define SNAPSHOT_BUFFER_SIZE    (PICTURE_WIDTH * PICTURE_HEIGHT * 3/2)
+
+extern int mm_app_take_zsl(int cam_id);
+extern int mm_app_take_live_snapshot(int cam_id);
+extern int stopPreview(int cam_id);
+extern void switchRes(int cam_id);
+extern void switchCamera(int cam_id);
+extern int startRdi(int cam_id);
+extern int stopRdi(int cam_id);
+
 /*===========================================================================
  * Macro
  *===========================================================================*/
@@ -134,11 +144,11 @@ const CAMERA_SHARPNESS_TBL_T camera_sharpness_tbl[] = {
 };
 
 const WHITE_BALANCE_TBL_T white_balance_tbl[] = {
-  { 	MM_CAMERA_WHITE_BALANCE_AUTO,         "White Balance - Auto"},
-  { 	MM_CAMERA_WHITE_BALANCE_OFF,          "White Balance - Off"},
-  {   MM_CAMERA_WHITE_BALANCE_DAYLIGHT,     "White Balance - Daylight"},
-  {   MM_CAMERA_WHITE_BALANCE_INCANDESCENT, "White Balance - Incandescent"},
-  {   MM_CAMERA_WHITE_BALANCE_FLUORESCENT,  "White Balance - Fluorescent"},
+  { CAMERA_WB_AUTO,         "White Balance - Auto"},
+  { CAMERA_WB_DAYLIGHT,     "White Balance - Daylight"},
+  { CAMERA_WB_INCANDESCENT, "White Balance - Incandescent"},
+  { CAMERA_WB_FLUORESCENT,  "White Balance - Fluorescent"},
+  { CAMERA_WB_CLOUDY_DAYLIGHT,  "White Balance - Cloudy"},
 };
 
 const CAMERA_TBL_T cam_tbl[] = {
@@ -217,7 +227,7 @@ int contrast = CAMERA_DEF_CONTRAST;
 int saturation = CAMERA_DEF_SATURATION;
 int sharpness = CAMERA_DEF_SHARPNESS;
 int32_t ev_num = 0;
-uint8_t ezTune = false;
+uint8_t ezTune = FALSE;
 int pmemThumbnailfd = 0;
 int pmemSnapshotfd = 0;
 int pmemRawSnapshotfd = 0;
@@ -292,7 +302,7 @@ int keypress_to_event(char keypress)
 
 int next_menu(menu_id_change_t current_menu_id, char keypress, camera_action_t * action_id_ptr, int * action_param)
 {
-  char output_to_event;
+  int output_to_event;
   menu_id_change_t next_menu_id = MENU_ID_INVALID;
   * action_id_ptr = ACTION_NO_ACTION;
 
@@ -1273,7 +1283,7 @@ int takePicture_raw(int cam_id)
 {
   int rc = 0;
   CDBG("%s:BEGIN\n", __func__);
-  if(0 != (rc = mm_app_take_raw_picture(cam_id))) {
+  if(0 != (rc = mm_app_take_raw(cam_id))) {
     CDBG("%s: mm_app_take_raw_picture() err=%d\n", __func__, rc);
   }
   return rc;
@@ -1578,8 +1588,7 @@ static int submain()
       case ACTION_SWITCH_CAMERA:
         CDBG("Toggle Camera action\n");
         back_mainflag = 1;
-        if (switchCamera(action_param - 1) < 0)
-          goto ERROR;
+        switchCamera(action_param - 1);
         break;
 
       case ACTION_TAKE_ZSL_SNAPSHOT:
@@ -1667,44 +1676,37 @@ ERROR:
  * ===========================================================================*/
 int set_whitebalance (int wb_action_param) {
 
-	int rc = 0;
-	struct v4l2_control ctrl;
+    int rc = 0;
+    struct v4l2_control ctrl_awb, ctrl_temperature;
 
-  if (wb_action_param == MM_CAMERA_WHITE_BALANCE_AUTO) {
-		ctrl.id = V4L2_CID_AUTO_WHITE_BALANCE;
-		ctrl.value = true;
-	//	rc = ioctl(camfd, VIDIOC_S_CTRL, &ctrl);
+    ctrl_awb.id = V4L2_CID_AUTO_WHITE_BALANCE;
+    ctrl_awb.id = V4L2_CID_WHITE_BALANCE_TEMPERATURE;
 
-	} else if ( wb_action_param == MM_CAMERA_WHITE_BALANCE_OFF) {
-		ctrl.id = V4L2_CID_AUTO_WHITE_BALANCE;
-		ctrl.value = false;
-	//	rc = ioctl(camfd, VIDIOC_S_CTRL, &ctrl);
-
-  } else {
-		int temperature = 6500;
-
-		switch (wb_action_param) {
-			case MM_CAMERA_WHITE_BALANCE_DAYLIGHT:
-				temperature = 6500;
-				break;
-			case MM_CAMERA_WHITE_BALANCE_INCANDESCENT:
-				temperature = 2800;
-				break;
-			case MM_CAMERA_WHITE_BALANCE_FLUORESCENT:
-				temperature = 4200;
-				break;
-			default:
-				temperature = 4200;
-				break;
-		}
-
-		ctrl.id = V4L2_CID_WHITE_BALANCE_TEMPERATURE;
-		ctrl.value = temperature;
-	//	rc = ioctl(camfd, VIDIOC_S_CTRL, &ctrl);
-	}
+    switch (wb_action_param) {
+    case CAMERA_WB_INCANDESCENT:
+        ctrl_awb.value = FALSE;
+        ctrl_temperature.value = 2800;
+        break;
+    case CAMERA_WB_DAYLIGHT:
+        ctrl_awb.value = FALSE;
+        ctrl_temperature.value = 6500;
+	break;
+    case CAMERA_WB_FLUORESCENT:
+        ctrl_awb.value = FALSE;
+	ctrl_temperature.value = 4200;
+	break;
+    case CAMERA_WB_CLOUDY_DAYLIGHT:
+        ctrl_awb.value = FALSE;
+	ctrl_temperature.value = 7500;
+	break;
+    case CAMERA_WB_AUTO:
+    default:
+        ctrl_awb.value = TRUE;
+        break;
+    }
 
 DONE:
-	return rc;
+    return rc;
 }
 
 
