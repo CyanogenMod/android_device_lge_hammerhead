@@ -36,7 +36,7 @@
 #include "OMX_Index.h"
 #include "OMX_Core.h"
 #include "OMX_Component.h"
-//#include "omx_jpeg_ext.h"
+#include "omx_jpeg_ext.h"
 #include <semaphore.h>
 
 typedef struct {
@@ -50,7 +50,7 @@ typedef struct {
     pthread_mutex_t lock;
 } mm_jpeg_queue_t;
 
-typedef enum 
+typedef enum
 {
     MM_JPEG_CMD_TYPE_JOB,          /* job cmd */
     MM_JPEG_CMD_TYPE_EXIT,         /* EXIT cmd for exiting jobMgr thread */
@@ -120,8 +120,8 @@ typedef struct mm_jpeg_obj_t {
     mm_jpeg_client_t clnt_mgr[MAX_JPEG_CLIENT_NUM]; /* client manager */
 
     /* JobMkr */
-    pthread_mutex_t job_lock;                       /* job lock */   
-    mm_jpeg_job_cmd_thread_t job_mgr;               /* job mgr thread including todo_q*/            
+    pthread_mutex_t job_lock;                       /* job lock */
+    mm_jpeg_job_cmd_thread_t job_mgr;               /* job mgr thread including todo_q*/
     mm_jpeg_queue_t ongoing_job_q;                  /* queue for ongoing jobs */
 
     /* Notifier */
@@ -129,6 +129,7 @@ typedef struct mm_jpeg_obj_t {
 
     /* OMX related */
     OMX_HANDLETYPE omx_handle;                      /* handle to omx engine */
+    OMX_CALLBACKTYPE omx_callbacks;                 /* callbacks to omx engine */
 
     pthread_mutex_t omx_evt_lock;
     pthread_cond_t omx_evt_cond;
@@ -156,6 +157,7 @@ uint8_t mm_jpeg_util_get_index_by_handler(uint32_t handler);
 /* basic queue functions */
 extern int32_t mm_jpeg_queue_init(mm_jpeg_queue_t* queue);
 extern int32_t mm_jpeg_queue_enq(mm_jpeg_queue_t* queue, void* node);
+extern void* mm_jpeg_queue_peek(mm_jpeg_queue_t* queue);
 extern void* mm_jpeg_queue_deq(mm_jpeg_queue_t* queue);
 extern int32_t mm_jpeg_queue_deinit(mm_jpeg_queue_t* queue);
 extern int32_t mm_jpeg_queue_flush(mm_jpeg_queue_t* queue);

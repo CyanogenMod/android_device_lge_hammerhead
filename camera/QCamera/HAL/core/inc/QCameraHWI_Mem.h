@@ -1,5 +1,8 @@
 /*
-** Copyright (c) 2011-2012 The Linux Foundation. All rights reserved.
+** Copyright (c) 2012 The Linux Foundation. All rights reserved.
+**
+** Not a Contribution, Apache license notifications and license are retained
+** for attribution purposes only.
 **
 ** Licensed under the Apache License, Version 2.0 (the "License");
 ** you may not use this file except in compliance with the License.
@@ -25,13 +28,10 @@
 
 extern "C" {
 #include <linux/android_pmem.h>
-#include <linux/ion.h>
-#include <camera_defs_i.h>
-
+#include <linux/msm_ion.h>
 }
 
-
-#define VIDEO_BUFFER_COUNT 5
+#define VIDEO_BUFFER_COUNT NUM_RECORDING_BUFFERS
 #define VIDEO_BUFFER_COUNT_LOW_POWER_CAMCORDER 9
 
 #define PREVIEW_BUFFER_COUNT 5

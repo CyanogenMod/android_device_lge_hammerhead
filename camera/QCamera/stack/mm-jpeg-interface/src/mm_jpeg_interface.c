@@ -45,6 +45,35 @@ static mm_jpeg_obj* g_jpeg_obj = NULL;
 static pthread_mutex_t g_handler_lock = PTHREAD_MUTEX_INITIALIZER;
 static uint16_t g_handler_history_count = 0; /* history count for handler */
 
+void static mm_jpeg_dump_job(mm_jpeg_job* job )
+{
+    #if 1
+    int i;
+    jpeg_image_buffer_config * buf_info;
+    buf_info = &job->encode_job.encode_parm.buf_info;
+    CDBG_ERROR("*****Dump job************");
+    CDBG_ERROR("rotation =%d, exif_numEntries=%d, is_video_frame=%d",
+               job->encode_job.encode_parm.rotation, job->encode_job.encode_parm.exif_numEntries,
+               job->encode_job.encode_parm.buf_info.src_imgs.is_video_frame);
+    CDBG_ERROR("Buff_inof: sin_img fd=%d, buf_len=%d, buf_add=%p: src img img num=%d", buf_info->sink_img.fd, buf_info->sink_img.buf_len,
+               buf_info->sink_img.buf_vaddr,  buf_info->src_imgs.src_img_num);
+    for (i=0; i < buf_info->src_imgs.src_img_num; i++) {
+        CDBG_ERROR("src_img[%d] fmt=%d, col_fmt=%d, type=%d, bum_buf=%d, quality=%d, src: %dx%d, out:%dx%d, crop: %dx%d, x=%d, y=%d", i, buf_info->src_imgs.src_img[i].img_fmt,
+                   buf_info->src_imgs.src_img[i].color_format,
+                   buf_info->src_imgs.src_img[i].type,
+                   buf_info->src_imgs.src_img[i].num_bufs,
+                   buf_info->src_imgs.src_img[i].quality,
+                   buf_info->src_imgs.src_img[i].src_dim.width, buf_info->src_imgs.src_img[i].src_dim.height,
+                   buf_info->src_imgs.src_img[i].out_dim.width, buf_info->src_imgs.src_img[i].out_dim.height,
+                   buf_info->src_imgs.src_img[i].crop.width, buf_info->src_imgs.src_img[i].crop.height,
+                   buf_info->src_imgs.src_img[i].crop.offset_x, buf_info->src_imgs.src_img[i].crop.offset_y
+                   );
+    }
+
+    #endif
+
+}
+
 /* utility function to generate handler */
 uint32_t mm_jpeg_util_generate_handler(uint8_t index)
 {
@@ -83,12 +112,12 @@ static int32_t mm_jpeg_intf_start_job(uint32_t client_hdl, mm_jpeg_job* job, uin
         pthread_mutex_unlock(&g_intf_lock);
         return rc;
     }
-
+    mm_jpeg_dump_job(job);
     rc = mm_jpeg_start_job(g_jpeg_obj, client_hdl, job, jobId);
     pthread_mutex_unlock(&g_intf_lock);
     return rc;
 }
-    
+
 static int32_t mm_jpeg_intf_abort_job(uint32_t client_hdl, uint32_t jobId)
 {
     int32_t rc = -1;
@@ -129,7 +158,7 @@ static int32_t mm_jpeg_intf_close(uint32_t client_hdl)
     }
 
     rc = mm_jpeg_close(g_jpeg_obj, client_hdl);
-
+    g_jpeg_obj->num_clients--;
     if(0 == rc) {
         if (0 == g_jpeg_obj->num_clients) {
             /* No client, close jpeg internally */

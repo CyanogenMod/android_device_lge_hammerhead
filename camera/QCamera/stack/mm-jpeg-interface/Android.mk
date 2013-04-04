@@ -14,7 +14,14 @@ LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/inc \
     $(LOCAL_PATH)/../common \
     $(LOCAL_PATH)/../../../ \
-    $(LOCAL_PATH)/../../../inc \
+    $(TARGET_OUT_HEADERS)/mm-still \
+    $(TARGET_OUT_HEADERS)/mm-still/jpeg \
+    $(TARGET_OUT_HEADERS)/mm-core/omxcore \
+    $(TARGET_OUT_HEADERS)/mm-still/mm-omx
+
+ifeq ($(strip $(TARGET_USES_ION)),true)
+    LOCAL_CFLAGS += -DUSE_ION
+endif
 
 LOCAL_SRC_FILES := \
     src/mm_jpeg_queue.c \
@@ -23,9 +30,9 @@ LOCAL_SRC_FILES := \
 
 LOCAL_MODULE           := libmmjpeg_interface
 LOCAL_PRELINK_MODULE   := false
-LOCAL_SHARED_LIBRARIES := libdl libcutils liblog
+LOCAL_SHARED_LIBRARIES := libdl libcutils liblog libmmstillomx libimage-jpeg-enc-omx-comp
 LOCAL_MODULE_TAGS := optional
 
-include $(BUILD_SHARED_LIBRARY)  
+include $(BUILD_SHARED_LIBRARY)
 
 LOCAL_PATH := $(OLD_LOCAL_PATH)

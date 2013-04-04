@@ -30,6 +30,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __MM_QCAMERA_APP_UNIT_TEST_H__
 #define __MM_QCAMERA_APP_UNIT_TEST_H__
 
+#include "camera.h"
 #include "mm_qcamera_main_menu.h"
 #include "mm_camera_interface.h"
 #include "mm_qcamera_app.h"

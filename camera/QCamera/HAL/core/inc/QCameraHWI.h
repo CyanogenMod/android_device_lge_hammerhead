@@ -1,5 +1,8 @@
 /*
-** Copyright (c) 2011-2012 The Linux Foundation. All rights reserved.
+** Copyright (c) 2012 The Linux Foundation. All rights reserved.
+**
+** Not a Contribution, Apache license notifications and license are retained
+** for attribution purposes only.
 **
 ** Licensed under the Apache License, Version 2.0 (the "License");
 ** you may not use this file except in compliance with the License.
@@ -19,28 +22,27 @@
 
 
 #include <utils/threads.h>
-//#include <camera/CameraHardwareInterface.h>
 #include <hardware/camera.h>
 #include <binder/MemoryBase.h>
 #include <binder/MemoryHeapBase.h>
-#include <binder/MemoryHeapPmem.h>
 #include <utils/threads.h>
 #include <cutils/properties.h>
 #include <camera/Camera.h>
-#include <camera/CameraParameters.h>
+#include <camera/QCameraParameters.h>
 #include <system/window.h>
 #include <system/camera.h>
 #include <hardware/camera.h>
 #include <gralloc_priv.h>
 #include <QComOMXMetadata.h>
+#include <hardware/power.h>
 
 extern "C" {
 #include <linux/android_pmem.h>
-#include <linux/ion.h>
-#include <mm_camera_interface2.h>
-
-#include "mm_omx_jpeg_encoder.h"
-
+#include <linux/msm_ion.h>
+#include <camera.h>
+#include <camera_defs_i.h>
+#include <mm_camera_interface.h>
+#include "mm_jpeg_interface.h"
 } //extern C
 
 #include "QCameraHWI_Mem.h"
@@ -62,6 +64,15 @@ extern "C" {
 #define THUMB_TBL_MAX_SIZE    16
 #define HFR_TBL_MAX_SIZE      2
 
+#define DEFAULT_STREAM_WIDTH 320
+#define DEFAULT_STREAM_HEIGHT 240
+#define DEFAULT_LIVESHOT_WIDTH 2592
+#define DEFAULT_LIVESHOT_HEIGHT 1944
+
+//for histogram stats
+#define HISTOGRAM_STATS_SIZE 257
+#define NUM_HISTOGRAM_BUFFERS 3
+
 struct str_map {
     const char *const desc;
     int val;
@@ -74,25 +85,10 @@ struct preview_format_info_t {
    int num_planar;
 };
 
+
 typedef enum {
   CAMERA_STATE_UNINITED,
   CAMERA_STATE_READY,
-  CAMERA_STATE_PREVIEW_START_CMD_SENT,
-  CAMERA_STATE_PREVIEW_STOP_CMD_SENT,
-  CAMERA_STATE_PREVIEW,
-  CAMERA_STATE_RECORD_START_CMD_SENT,  /*5*/
-  CAMERA_STATE_RECORD_STOP_CMD_SENT,
-  CAMERA_STATE_RECORD,
-  CAMERA_STATE_SNAP_START_CMD_SENT,
-  CAMERA_STATE_SNAP_STOP_CMD_SENT,
-  CAMERA_STATE_SNAP_CMD_ACKED,  /*10 - snapshot comd acked, snapshot not done yet*/
-  CAMERA_STATE_ZSL_START_CMD_SENT,
-  CAMERA_STATE_ZSL,
-  CAMERA_STATE_AF_START_CMD_SENT,
-  CAMERA_STATE_AF_STOP_CMD_SENT,
-  CAMERA_STATE_ERROR, /*15*/
-
-  /*Add any new state above*/
   CAMERA_STATE_MAX
 } HAL_camera_state_type_t;
 
@@ -107,6 +103,7 @@ typedef enum {
   HAL_DUMP_FRM_VIDEO = 1<<1,
   HAL_DUMP_FRM_MAIN = 1<<2,
   HAL_DUMP_FRM_THUMBNAIL = 1<<3,
+  HAL_DUMP_FRM_RDI = 1<<4,
 
   /*8 bits mask*/
   HAL_DUMP_FRM_MAX = 1 << 8
@@ -120,6 +117,23 @@ typedef enum {
   HAL_CAM_MODE_MAX = HAL_CAM_MODE_ZSL << 1,
 } qQamera_mode_t;
 
+
+typedef enum {
+    MM_CAMERA_OK,
+    MM_CAMERA_E_GENERAL,
+    MM_CAMERA_E_NO_MEMORY,
+    MM_CAMERA_E_NOT_SUPPORTED,
+    MM_CAMERA_E_INVALID_INPUT,
+    MM_CAMERA_E_INVALID_OPERATION, /* 5 */
+    MM_CAMERA_E_ENCODE,
+    MM_CAMERA_E_BUFFER_REG,
+    MM_CAMERA_E_PMEM_ALLOC,
+    MM_CAMERA_E_CAPTURE_FAILED,
+    MM_CAMERA_E_CAPTURE_TIMEOUT, /* 10 */
+}mm_camera_status_type_t;
+
+
+
 #define HAL_DUMP_FRM_MASK_ALL ( HAL_DUMP_FRM_PREVIEW + HAL_DUMP_FRM_VIDEO + \
     HAL_DUMP_FRM_MAIN + HAL_DUMP_FRM_THUMBNAIL)
 #define QCAMERA_HAL_PREVIEW_STOPPED    0
@@ -128,6 +142,12 @@ typedef enum {
 #define QCAMERA_HAL_RECORDING_STARTED  3
 #define QCAMERA_HAL_TAKE_PICTURE       4
 
+typedef struct {
+    int                     fd;
+    int                     main_ion_fd;
+    struct ion_handle *     handle;
+    uint32_t                size;
+} QCameraHalMemInfo_t;
 
 typedef struct {
      int                     buffer_count;
@@ -136,33 +156,23 @@ typedef struct {
 	 int                     stride[MM_CAMERA_MAX_NUM_FRAMES];
 	 uint32_t                addr_offset[MM_CAMERA_MAX_NUM_FRAMES];
 	 uint8_t                 local_flag[MM_CAMERA_MAX_NUM_FRAMES];
-	 camera_memory_t        *camera_memory[MM_CAMERA_MAX_NUM_FRAMES];
-     int                     main_ion_fd[MM_CAMERA_MAX_NUM_FRAMES];
-     struct ion_fd_data      ion_info_fd[MM_CAMERA_MAX_NUM_FRAMES];
+     camera_memory_t        *camera_memory[MM_CAMERA_MAX_NUM_FRAMES];
+     QCameraHalMemInfo_t     mem_info[MM_CAMERA_MAX_NUM_FRAMES];
 } QCameraHalMemory_t;
 
 
 typedef struct {
      int                     buffer_count;
-     uint32_t                size;
-     uint32_t                y_offset;
-     uint32_t                cbcr_offset;
-	 int                     fd[MM_CAMERA_MAX_NUM_FRAMES];
 	 int                     local_flag[MM_CAMERA_MAX_NUM_FRAMES];
-	 camera_memory_t*        camera_memory[MM_CAMERA_MAX_NUM_FRAMES];
-     camera_memory_t*        metadata_memory[MM_CAMERA_MAX_NUM_FRAMES];
-     int main_ion_fd[MM_CAMERA_MAX_NUM_FRAMES];
-     struct ion_allocation_data alloc[MM_CAMERA_MAX_NUM_FRAMES];
-     struct ion_fd_data ion_info_fd[MM_CAMERA_MAX_NUM_FRAMES];
+     camera_memory_t *       camera_memory[MM_CAMERA_MAX_NUM_FRAMES];
+     camera_memory_t *       metadata_memory[MM_CAMERA_MAX_NUM_FRAMES];
+     QCameraHalMemInfo_t     mem_info[MM_CAMERA_MAX_NUM_FRAMES];
 } QCameraHalHeap_t;
 
 typedef struct {
-     camera_memory_t*  camera_memory[3];
-     int main_ion_fd[3];
-     struct ion_allocation_data alloc[3];
-     struct ion_fd_data ion_info_fd[3];
-     int fd[3];
-     int size;
+     camera_memory_t *       camera_memory[NUM_HISTOGRAM_BUFFERS];
+     QCameraHalMemInfo_t     mem_info[NUM_HISTOGRAM_BUFFERS];
+     int active;
 } QCameraStatHeap_t;
 
 typedef struct {
@@ -178,6 +188,7 @@ typedef struct {
   unsigned int             index;
   camera_frame_metadata_t *metadata;
   void                    *cookie;
+  void                    *user_data;
 } argm_data_cb_t;
 
 typedef struct {
@@ -234,9 +245,88 @@ typedef struct{
 
 } exif_values_t;
 
+typedef struct {
+    jpeg_job_status_t status;
+    uint8_t thumbnailDroppedFlag;
+    uint32_t client_hdl;
+    uint32_t jobId;
+    uint8_t* out_data;
+    uint32_t data_size;
+    mm_camera_super_buf_t* src_frame;
+} camera_jpeg_data_t;
+
+typedef struct {
+    mm_camera_super_buf_t* src_frame;
+    void* userdata;
+} camera_jpeg_encode_cookie_t;
+
 namespace android {
 
 class QCameraStream;
+
+typedef void (*release_data_fn)(void* data, void *user_data);
+
+class QCameraQueue {
+public:
+    QCameraQueue();
+    QCameraQueue(release_data_fn data_rel_fn, void *user_data);
+    virtual ~QCameraQueue();
+    bool enqueue(void *data);
+    bool pri_enqueue(void *data);
+    void flush();
+    void* dequeue();
+    bool is_empty();
+private:
+    typedef struct {
+        struct cam_list list;
+        void* data;
+    } camera_q_node;
+
+    camera_q_node mhead; /* dummy head */
+    uint32_t msize;
+    pthread_mutex_t mlock;
+    release_data_fn mdata_rel_fn;
+    void * muser_data;
+};
+
+typedef enum
+{
+    CAMERA_CMD_TYPE_NONE,
+    CAMERA_CMD_TYPE_START_DATA_PROC,
+    CAMERA_CMD_TYPE_STOP_DATA_PROC,
+    CAMERA_CMD_TYPE_DO_NEXT_JOB,
+    CAMERA_CMD_TYPE_EXIT,
+    CAMERA_CMD_TYPE_MAX
+} camera_cmd_type_t;
+
+typedef struct snap_hdr_record_t_ {
+    bool hdr_on;
+    int num_frame;
+    int num_raw_received;
+    /*in terms of 2^*(n/6), e.g 6 means (1/2)x, whole 12 means 4x*/
+    int exp[MAX_HDR_EXP_FRAME_NUM];
+    mm_camera_super_buf_t *recvd_frame[MAX_HDR_EXP_FRAME_NUM];
+} snap_hdr_record_t;
+
+typedef struct {
+    camera_cmd_type_t cmd;
+} camera_cmd_t;
+
+class QCameraCmdThread {
+public:
+    QCameraCmdThread();
+    ~QCameraCmdThread();
+
+    int32_t launch(void *(*start_routine)(void *), void* user_data);
+    int32_t exit();
+    int32_t sendCmd(camera_cmd_type_t cmd, uint8_t sync_cmd, uint8_t priority);
+    camera_cmd_type_t getCmd();
+
+    QCameraQueue cmd_queue;      /* cmd queue */
+    pthread_t cmd_pid;           /* cmd thread ID */
+    sem_t cmd_sem;               /* semaphore for cmd thread */
+    sem_t sync_sem;              /* semaphore for synchronized call signal */
+};
 
 class QCameraHardwareInterface : public virtual RefBase {
 public:
@@ -396,7 +486,7 @@ public:
      */
     int setParameters(const char *parms);
 
-    //status_t setParameters(const CameraParameters& params);
+    //status_t setParameters(const QCameraParameters& params);
     /** Retrieve the camera parameters.  The buffer returned by the camera HAL
         must be returned back to it with put_parameters, if put_parameters
         is not NULL.
@@ -425,69 +515,65 @@ public:
      * Dump state of the camera hardware
      */
     int dump(int fd);
-
-    //virtual sp<IMemoryHeap> getPreviewHeap() const;
-    //virtual sp<IMemoryHeap> getRawHeap() const;
-
-
-    status_t    takeLiveSnapshot();
-    status_t    takeFullSizeLiveshot();
-    bool        canTakeFullSizeLiveshot();
-
-    //virtual status_t          getBufferInfo( sp<IMemory>& Frame,
-    //size_t *alignedSize);
     void         getPictureSize(int *picture_width, int *picture_height) const;
     void         getPreviewSize(int *preview_width, int *preview_height) const;
+	void         getVideoSize(int *video_width,int *video_height) const;
+	void         getThumbnailSize(int *thumb_width, int *thumb_height) const;
     cam_format_t getPreviewFormat() const;
-
     cam_pad_format_t getPreviewPadding() const;
-
-    //bool     useOverlay(void);
-    //virtual status_t setOverlay(const sp<Overlay> &overlay);
     void processEvent(mm_camera_event_t *);
     int  getJpegQuality() const;
     int  getNumOfSnapshots(void) const;
-    int  getNumOfSnapshots(const CameraParameters& params);
+    int  getNumOfSnapshots(const QCameraParameters& params);
     int  getThumbSizesFromAspectRatio(uint32_t aspect_ratio,
                                      int *picture_width,
                                      int *picture_height);
     bool isRawSnapshot();
     bool mShutterSoundPlayed;
-    void dumpFrameToFile(struct msm_frame*, HAL_cam_dump_frm_type_t);
+    void dumpFrameToFile(mm_camera_buf_def_t*, HAL_cam_dump_frm_type_t);
 
     static QCameraHardwareInterface *createInstance(int, int);
-    status_t setZSLBurstLookBack(const CameraParameters& params);
-    status_t setZSLBurstInterval(const CameraParameters& params);
+    status_t setZSLBurstLookBack(const QCameraParameters& params);
+    status_t setZSLBurstInterval(const QCameraParameters& params);
     int getZSLBurstInterval(void);
     int getZSLQueueDepth(void) const;
     int getZSLBackLookCount(void) const;
 
     ~QCameraHardwareInterface();
-    int initHeapMem(QCameraHalHeap_t *heap, int num_of_buf, int pmem_type,
-      int frame_len, int cbcr_off, int y_off, mm_cameara_stream_buf_t *StreamBuf,
-      mm_camera_buf_def_t *buf_def, uint8_t num_planes, uint32_t *planes);
-
+    int initHeapMem(QCameraHalHeap_t *heap,
+                    int num_of_buf,
+                    uint32_t buf_len,
+                    int pmem_type,
+                    mm_camera_frame_len_offset* offset,
+                    mm_camera_buf_def_t *buf_def);
     int releaseHeapMem( QCameraHalHeap_t *heap);
-    status_t sendMappingBuf(int ext_mode, int idx, int fd, uint32_t size,
-      int cameraid, mm_camera_socket_msg_type msg_type);
-    status_t sendUnMappingBuf(int ext_mode, int idx, int cameraid,
-      mm_camera_socket_msg_type msg_type);
+    int allocate_ion_memory(QCameraHalMemInfo_t * mem_info, int ion_type);
+    int deallocate_ion_memory(QCameraHalMemInfo_t *mem_info);
 
-    int allocate_ion_memory(QCameraHalHeap_t *p_camera_memory, int cnt,
-      int ion_type);
-    int deallocate_ion_memory(QCameraHalHeap_t *p_camera_memory, int cnt);
-
-    int allocate_ion_memory(QCameraStatHeap_t *p_camera_memory, int cnt,
-      int ion_type);
-    int deallocate_ion_memory(QCameraStatHeap_t *p_camera_memory, int cnt);
-
-    int cache_ops(int ion_fd, struct ion_flush_data *cache_inv_data, int type);
+    int cache_ops(QCameraHalMemInfo_t *mem_info,
+                  void *buf_ptr,
+                  unsigned int cmd);
 
     void dumpFrameToFile(const void * data, uint32_t size, char* name,
       char* ext, int index);
     preview_format_info_t getPreviewFormatInfo( );
     bool isCameraReady();
     bool isNoDisplayMode();
+
+    int getBuf(uint32_t camera_handle,
+                        uint32_t ch_id, uint32_t stream_id,
+                        void *user_data,
+                        mm_camera_frame_len_offset *frame_offset_info,
+                        uint8_t num_bufs,
+                        uint8_t *initial_reg_flag,
+                        mm_camera_buf_def_t  *bufs);
+    int putBuf(uint32_t camera_handle,
+                        uint32_t ch_id, uint32_t stream_id,
+                        void *user_data, uint8_t num_bufs,
+                        mm_camera_buf_def_t *bufs);
+
+    mm_camera_vtbl_t *mCameraHandle;
+    uint32_t mChannelId;
 
 private:
     int16_t  zoomRatios[MAX_ZOOM_RATIOS];
@@ -521,6 +607,7 @@ private:
     bool isSnapshotRunning();
 
     void processChannelEvent(mm_camera_ch_event_t *, app_notify_cb_t *);
+    void processRdiChannelEvent(mm_camera_ch_event_type_t channelEvent, app_notify_cb_t *);
     void processPreviewChannelEvent(mm_camera_ch_event_type_t channelEvent, app_notify_cb_t *);
     void processRecordChannelEvent(mm_camera_ch_event_type_t channelEvent, app_notify_cb_t *);
     void processSnapshotChannelEvent(mm_camera_ch_event_type_t channelEvent, app_notify_cb_t *);
@@ -540,86 +627,86 @@ private:
     bool supportsSelectableZoneAf();
     bool supportsFaceDetection();
     bool supportsRedEyeReduction();
-    bool preview_parm_config (cam_ctrl_dimension_t* dim,CameraParameters& parm);
 
     void stopPreviewInternal();
     void stopRecordingInternal();
-    //void stopPreviewZSL();
     status_t cancelPictureInternal();
-    //status_t startPreviewZSL();
     void pausePreviewForSnapshot();
-    void pausePreviewForZSL();
-    status_t resumePreviewAfterSnapshot();
+    void restartPreview();
 
     status_t runFaceDetection();
 
-    status_t           setParameters(const CameraParameters& params);
-    CameraParameters&  getParameters() ;
+    status_t           setParameters(const QCameraParameters& params);
+    QCameraParameters&  getParameters() ;
 
-    status_t setCameraMode(const CameraParameters& params);
+    status_t setCameraMode(const QCameraParameters& params);
     status_t setPictureSizeTable(void);
     status_t setPreviewSizeTable(void);
     status_t setVideoSizeTable(void);
-    status_t setPreviewSize(const CameraParameters& params);
-    status_t setJpegThumbnailSize(const CameraParameters& params);
-    status_t setPreviewFpsRange(const CameraParameters& params);
-    status_t setPreviewFrameRate(const CameraParameters& params);
-    status_t setPreviewFrameRateMode(const CameraParameters& params);
-    status_t setVideoSize(const CameraParameters& params);
-    status_t setPictureSize(const CameraParameters& params);
-    status_t setJpegQuality(const CameraParameters& params);
-    status_t setNumOfSnapshot(const CameraParameters& params);
+    status_t setPreviewSize(const QCameraParameters& params);
+    status_t setJpegThumbnailSize(const QCameraParameters& params);
+    status_t setPreviewFpsRange(const QCameraParameters& params);
+    status_t setPreviewFrameRate(const QCameraParameters& params);
+    status_t setPreviewFrameRateMode(const QCameraParameters& params);
+    status_t setVideoSize(const QCameraParameters& params);
+    status_t setPictureSize(const QCameraParameters& params);
+    status_t setJpegQuality(const QCameraParameters& params);
+    status_t setNumOfSnapshot(const QCameraParameters& params);
     status_t setJpegRotation(int isZSL);
     int getJpegRotation(void);
     int getISOSpeedValue();
-    status_t setAntibanding(const CameraParameters& params);
-    status_t setEffect(const CameraParameters& params);
-    status_t setExposureCompensation(const CameraParameters &params);
-    status_t setAutoExposure(const CameraParameters& params);
-    status_t setWhiteBalance(const CameraParameters& params);
-    status_t setFlash(const CameraParameters& params);
-    status_t setGpsLocation(const CameraParameters& params);
-    status_t setRotation(const CameraParameters& params);
-    status_t setZoom(const CameraParameters& params);
-    status_t setFocusMode(const CameraParameters& params);
-    status_t setBrightness(const CameraParameters& params);
-    status_t setSkinToneEnhancement(const CameraParameters& params);
-    status_t setOrientation(const CameraParameters& params);
-    status_t setLensshadeValue(const CameraParameters& params);
-    status_t setMCEValue(const CameraParameters& params);
-    status_t setISOValue(const CameraParameters& params);
-    status_t setPictureFormat(const CameraParameters& params);
-    status_t setSharpness(const CameraParameters& params);
-    status_t setContrast(const CameraParameters& params);
-    status_t setSaturation(const CameraParameters& params);
-    status_t setWaveletDenoise(const CameraParameters& params);
-    status_t setSceneMode(const CameraParameters& params);
-    status_t setContinuousAf(const CameraParameters& params);
+    int getAutoFlickerMode();
+    status_t setAntibanding(const QCameraParameters& params);
+    status_t setEffect(const QCameraParameters& params);
+    status_t setExposureCompensation(const QCameraParameters &params);
+    status_t setAutoExposure(const QCameraParameters& params);
+    status_t setWhiteBalance(const QCameraParameters& params);
+    status_t setFlash(const QCameraParameters& params);
+    status_t setGpsLocation(const QCameraParameters& params);
+    status_t setRotation(const QCameraParameters& params);
+    status_t setZoom(const QCameraParameters& params);
+    status_t setFocusMode(const QCameraParameters& params);
+    status_t setBrightness(const QCameraParameters& params);
+    status_t setSkinToneEnhancement(const QCameraParameters& params);
+    status_t setOrientation(const QCameraParameters& params);
+    status_t setLensshadeValue(const QCameraParameters& params);
+    status_t setMCEValue(const QCameraParameters& params);
+    status_t setISOValue(const QCameraParameters& params);
+    status_t setPictureFormat(const QCameraParameters& params);
+    status_t setSharpness(const QCameraParameters& params);
+    status_t setContrast(const QCameraParameters& params);
+    status_t setSaturation(const QCameraParameters& params);
+    status_t setWaveletDenoise(const QCameraParameters& params);
+    status_t setSceneMode(const QCameraParameters& params);
+    status_t setContinuousAf(const QCameraParameters& params);
     status_t setFaceDetection(const char *str);
-    status_t setSceneDetect(const CameraParameters& params);
-    status_t setStrTextures(const CameraParameters& params);
-    status_t setPreviewFormat(const CameraParameters& params);
-    status_t setSelectableZoneAf(const CameraParameters& params);
-    status_t setOverlayFormats(const CameraParameters& params);
-    status_t setHighFrameRate(const CameraParameters& params);
-    status_t setRedeyeReduction(const CameraParameters& params);
-    status_t setAEBracket(const CameraParameters& params);
-    status_t setFaceDetect(const CameraParameters& params);
-    status_t setDenoise(const CameraParameters& params);
-    status_t setAecAwbLock(const CameraParameters & params);
+    status_t setSceneDetect(const QCameraParameters& params);
+    status_t setStrTextures(const QCameraParameters& params);
+    status_t setPreviewFormat(const QCameraParameters& params);
+    status_t setSelectableZoneAf(const QCameraParameters& params);
+    status_t setOverlayFormats(const QCameraParameters& params);
+    status_t setHighFrameRate(const QCameraParameters& params);
+    status_t setRedeyeReduction(const QCameraParameters& params);
+    status_t setAEBracket(const QCameraParameters& params);
+    status_t setFaceDetect(const QCameraParameters& params);
+    status_t setDenoise(const QCameraParameters& params);
+    status_t setAecAwbLock(const QCameraParameters & params);
     status_t setHistogram(int histogram_en);
-    status_t setRecordingHint(const CameraParameters& params);
+    status_t setRecordingHint(const QCameraParameters& params);
     status_t setRecordingHintValue(const int32_t value);
-    status_t setFocusAreas(const CameraParameters& params);
-    status_t setMeteringAreas(const CameraParameters& params);
+    status_t setFocusAreas(const QCameraParameters& params);
+    status_t setMeteringAreas(const QCameraParameters& params);
     status_t setFullLiveshot(void);
     status_t setDISMode(void);
     status_t setCaptureBurstExp(void);
-    status_t setPowerMode(const CameraParameters& params);
+    status_t setPowerMode(const QCameraParameters& params);
     void takePicturePrepareHardware( );
-    status_t setNoDisplayMode(const CameraParameters& params);
+    status_t setNoDisplayMode(const QCameraParameters& params);
+    status_t setDimension();
+    status_t setRDIMode(const QCameraParameters& params);
+    status_t setMobiCat(const QCameraParameters& params);
 
-    isp3a_af_mode_t getAutoFocusMode(const CameraParameters& params);
+    isp3a_af_mode_t getAutoFocusMode(const QCameraParameters& params);
     bool isValidDimension(int w, int h);
 
     String8 create_values_str(const str_map *values, int len);
@@ -635,6 +722,7 @@ private:
     int32_t createPreview();
     int32_t createRecord();
     int32_t createSnapshot();
+    int32_t createRdi();
 
     int getHDRMode();
     //EXIF
@@ -647,12 +735,22 @@ private:
     exif_tags_info_t* getExifData(){ return mExifData; }
     int getExifTableNumEntries() { return mExifTableNumEntries; }
     void parseGPSCoordinate(const char *latlonString, rat_t* coord);
+    //added to support hdr
+    bool getHdrInfoAndSetExp(int max_num_frm, int *num_frame, int *exp);
+    status_t initHistogramBuffers();
+    status_t deInitHistogramBuffers();
+    mm_jpeg_color_format getColorfmtFromImgFmt(uint32_t img_fmt);
+
+    void notifyHdrEvent(cam_ctrl_status_t status, void * cookie);
+    void initHdrInfoForSnapshot(bool Hdr_on, int number_frames, int *exp );
+    void doHdrProcessing();
 
     int           mCameraId;
     camera_mode_t myMode;
 
-    CameraParameters    mParameters;
-    //sp<Overlay>         mOverlay;
+    mm_camear_mem_vtbl_t mem_hooks;
+
+    QCameraParameters    mParameters;
     int32_t             mMsgEnabled;
 
     camera_notify_callback         mNotifyCb;
@@ -661,32 +759,22 @@ private:
     camera_request_memory          mGetMemory;
     void                           *mCallbackCookie;
 
-    //sp<MemoryHeapBase>  mPreviewHeap;  //@Guru : Need to remove
-    sp<AshmemPool>      mMetaDataHeap;
-
     mutable Mutex       mLock;
-    //mutable Mutex       eventLock;
-    Mutex         mCallbackLock;
     Mutex         mPreviewMemoryLock;
-    Mutex         mRecordingMemoryLock;
     Mutex         mAutofocusLock;
-    Mutex         mMetaDataWaitLock;
     Mutex         mRecordFrameLock;
-    Mutex         mRecordLock;
     Condition     mRecordWait;
     pthread_mutex_t     mAsyncCmdMutex;
     pthread_cond_t      mAsyncCmdWait;
 
-    QCameraStream       *mStreamDisplay;
-    QCameraStream       *mStreamRecord;
-    QCameraStream       *mStreamSnap;
-    QCameraStream       *mStreamLiveSnap;
-
+    QCameraStream *     mStreams[MM_CAMERA_IMG_MODE_MAX];
     cam_ctrl_dimension_t mDimension;
     int  mPreviewWidth, mPreviewHeight;
+    int  mPictureWidth, mPictureHeight;
     int  videoWidth, videoHeight;
     int  thumbnailWidth, thumbnailHeight;
     int  maxSnapshotWidth, maxSnapshotHeight;
+    int  mRdiWidth,mRdiHeight;
     int  mPreviewFormat;
     int  mFps;
     int  mDebugFps;
@@ -694,6 +782,7 @@ private:
     int  mContrast;
     int  mBestShotMode;
     int  mEffects;
+    int  mColorEffects;
     int  mSkinToneEnhancement;
     int  mDenoiseValue;
     int  mHJR;
@@ -709,6 +798,7 @@ private:
     int  mDumpFrmCnt;
     int  mDumpSkipCnt;
     int  mFocusMode;
+    int  rdiMode;
 
     unsigned int mPictureSizeCount;
     unsigned int mPreviewSizeCount;
@@ -716,6 +806,7 @@ private:
     unsigned int mVideoSizeCount;
 
     bool mAutoFocusRunning;
+    bool mNeedToUnlockCaf;
     bool mMultiTouch;
     bool mHasAutoFocusSupport;
     bool mInitialized;
@@ -735,8 +826,8 @@ private:
     int mSnapshotFormat;
     int mZslInterval;
     bool mRestartPreview;
-
-/*for histogram*/
+    bool mMobiCatEnabled;
+    /*for histogram*/
     int            mStatsOn;
     int            mCurrentHisto;
     bool           mSendData;
@@ -785,7 +876,12 @@ private:
     friend class QCameraStream;
     friend class QCameraStream_record;
     friend class QCameraStream_preview;
-    friend class QCameraStream_Snapshot;
+    friend class QCameraStream_SnapshotMain;
+    friend class QCameraStream_SnapshotThumbnail;
+    friend class QCameraStream_Rdi;
+
+    android :: FPSRange* mSupportedFpsRanges;
+    int mSupportedFpsRangesCount;
 
     camera_size_type* mPictureSizes;
     camera_size_type* mPreviewSizes;
@@ -793,13 +889,6 @@ private:
     const camera_size_type * mPictureSizesPtr;
     HAL_camera_state_type_t mCameraState;
 
-     /* Temporary - can be removed after Honeycomb*/
-#ifdef USE_ION
-    sp<IonPool>  mPostPreviewHeap;
-#else
-    sp<PmemPool> mPostPreviewHeap;
-#endif
-     mm_cameara_stream_buf_t mPrevForPostviewBuf;
      int mStoreMetaDataInFrame;
      preview_stream_ops_t *mPreviewWindow;
      Mutex                mStateLock;
@@ -811,7 +900,7 @@ private:
      /*preview memory without display case: memory is allocated
       directly by camera */
      QCameraHalHeap_t     mNoDispPreviewMemory;
-
+     QCameraHalHeap_t     mRdiMemory;
      QCameraHalHeap_t     mSnapshotMemory;
      QCameraHalHeap_t     mThumbnailMemory;
      QCameraHalHeap_t     mRecordingMemory;
@@ -820,13 +909,56 @@ private:
      camera_frame_metadata_t mMetadata;
      camera_face_t           mFace[MAX_ROI];
      preview_format_info_t  mPreviewFormatInfo;
-     friend void liveshot_callback(mm_camera_ch_data_buf_t *frame,void *user_data);
-
+     friend void stream_cb_routine(mm_camera_super_buf_t *bufs, void *userdata);
      //EXIF
      exif_tags_info_t       mExifData[MAX_EXIF_TABLE_ENTRIES];  //Exif tags for JPEG encoder
      exif_values_t          mExifValues;                        //Exif values in usable format
      int                    mExifTableNumEntries;            //NUmber of entries in mExifData
      int                 mNoDisplayMode;
+     QCameraQueue mSuperBufQueue;     /* queue for raw super buf */
+     QCameraQueue mNotifyDataQueue;   /* queue for data notify */
+     QCameraCmdThread *mNotifyTh;     /* thread for data notify */
+     QCameraCmdThread *mDataProcTh;   /* thread for data process (jpeg encoding) */
+     mm_jpeg_ops_t mJpegHandle;
+     uint32_t mJpegClientHandle;
+     snap_hdr_record_t    mHdrInfo;
+     power_module_t*   mPowerModule;
+     cam_sensor_fps_range_t mSensorFpsRange;
+
+     static void *dataNotifyRoutine(void *data);
+     static void *dataProcessRoutine(void *data);
+     static void snapshot_jpeg_cb(jpeg_job_status_t status,
+                             uint8_t thumbnailDroppedFlag,
+                             uint32_t client_hdl,
+                             uint32_t jobId,
+                             uint8_t* out_data,
+                             uint32_t data_size,
+                             void *userdata);
+     static void receiveCompleteJpegPicture(jpeg_job_status_t status,
+                                            uint8_t thumbnailDroppedFlag,
+                                            uint32_t client_hdl,
+                                            uint32_t jobId,
+                                            uint8_t* out_data,
+                                            uint32_t data_size,
+                                            QCameraHardwareInterface* pme);
+     static void superbuf_cb_routine(mm_camera_super_buf_t *recvd_frame,
+                                     void *userdata);
+     static void receiveRawPicture(mm_camera_super_buf_t* recvd_frame,
+                                   QCameraHardwareInterface *pme);
+     status_t encodeData(mm_camera_super_buf_t* recvd_frame,
+                         uint32_t *jobId);
+     void notifyShutter(bool play_shutter_sound);
+     status_t sendDataNotify(int32_t msg_type,
+                             camera_memory_t *data,
+                             uint8_t index,
+                             camera_frame_metadata_t *metadata,
+                             QCameraHalHeap_t *heap);
+
+     void releaseSuperBuf(mm_camera_super_buf_t *super_buf);
+     void releaseAppCBData(app_notify_cb_t *app_cb);
+     static void releaseNofityData(void *data, void *user_data);
+     static void releaseProcData(void *data, void *user_data);
+     uint8_t canTakeFullSizeLiveshot();
 };
 
 }; // namespace android

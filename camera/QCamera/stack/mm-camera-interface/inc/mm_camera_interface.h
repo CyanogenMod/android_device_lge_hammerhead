@@ -29,23 +29,36 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifndef __MM_CAMERA_INTERFACE_H__
 #define __MM_CAMERA_INTERFACE_H__
-#include <linux/ion.h>
-#include <linux/videodev2.h>
-#include <QCamera_Intf.h>
+#include <linux/msm_ion.h>
+#include <camera.h>
+#include "QCamera_Intf.h"
+#include "cam_list.h"
 
 #define MM_CAMERA_MAX_NUM_FRAMES 16
-#define MM_CAMEAR_MAX_STRAEM_BUNDLE 4
 #define MM_CAMERA_MAX_2ND_SENSORS 4
 
 typedef enum {
-    MM_CAMERA_WHITE_BALANCE_AUTO,
-    MM_CAMERA_WHITE_BALANCE_OFF,
-    MM_CAMERA_WHITE_BALANCE_DAYLIGHT,
-    MM_CAMERA_WHITE_BALANCE_INCANDESCENT,
-    MM_CAMERA_WHITE_BALANCE_FLUORESCENT,
-    MM_CAMERA_WHITE_BALANCE_CLOUDY,
-    MM_CAMERA_WHITE_BALANCE_MAX
-} mm_camera_white_balance_mode_type_t;
+    MM_CAMERA_OPS_LOCAL = -1,  /*no need to query mm-camera*/
+    MM_CAMERA_OPS_STREAMING_PREVIEW = 0,
+    MM_CAMERA_OPS_STREAMING_ZSL,
+    MM_CAMERA_OPS_STREAMING_VIDEO,
+    MM_CAMERA_OPS_CAPTURE, /*not supported*/
+    MM_CAMERA_OPS_FOCUS,
+    MM_CAMERA_OPS_GET_PICTURE, /*5*/
+    MM_CAMERA_OPS_PREPARE_SNAPSHOT,
+    MM_CAMERA_OPS_SNAPSHOT,
+    MM_CAMERA_OPS_LIVESHOT,
+    MM_CAMERA_OPS_RAW_SNAPSHOT,
+    MM_CAMERA_OPS_VIDEO_RECORDING, /*10*/
+    MM_CAMERA_OPS_REGISTER_BUFFER,
+    MM_CAMERA_OPS_UNREGISTER_BUFFER,
+    MM_CAMERA_OPS_CAPTURE_AND_ENCODE,
+    MM_CAMERA_OPS_RAW_CAPTURE,
+    MM_CAMERA_OPS_ENCODE, /*15*/
+    MM_CAMERA_OPS_ZSL_STREAMING_CB,
+    /* add new above*/
+    MM_CAMERA_OPS_MAX
+}mm_camera_ops_type_t;
 
 typedef enum {
     MM_CAMERA_STREAM_OFFSET,
@@ -97,6 +110,11 @@ typedef struct {
 
     /* flag to indicate if this stream need stream on */
     uint8_t need_stream_on;
+
+    /* num of CB needs to be registered on other stream,
+     * this field is valid only when need_stream_on is 0.
+     * When need_stream_on = 1, num_stream_cb_times will be ignored. */
+    uint8_t num_stream_cb_times;
 } mm_camera_stream_config_t;
 
 typedef struct {
@@ -119,7 +137,7 @@ typedef enum {
      * ready dispatch it to HAL */
     MM_CAMERA_SUPER_BUF_NOTIFY_CONTINUOUS,
     MM_CAMERA_SUPER_BUF_NOTIFY_MAX
-}mm_camera_super_buf_notify_mode_t;
+} mm_camera_super_buf_notify_mode_t;
 
 typedef enum {
     /* save the frame. No matter focused or not */
@@ -130,7 +148,7 @@ typedef enum {
     /* after shutter, only queue matched exposure index */
     MM_CAMERA_SUPER_BUF_PRIORITY_EXPOSURE_BRACKETING,
     MM_CAMERA_SUPER_BUF_PRIORITY_MAX
-}mm_camera_super_buf_priority_t;
+} mm_camera_super_buf_priority_t;
 
 typedef struct {
     mm_camera_super_buf_notify_mode_t notify_mode;
@@ -150,7 +168,7 @@ typedef struct {
 
 typedef struct {
     uint8_t camera_id;                   /* camera id */
-    qcamera_info_t camera_info;           /* postion, mount_angle, etc. */
+    camera_info_t camera_info;           /* postion, mount_angle, etc. */
     enum sensor_type_t main_sensor_type; /* BAYER, YUV, JPEG_SOC, etc. */
     char *video_dev_name;                /* device node name, e.g. /dev/video1 */
 } mm_camera_info_t;
@@ -178,8 +196,10 @@ typedef struct {
     int8_t num_planes; /* num of planes, to be filled during mem allocation */
     struct v4l2_plane planes[VIDEO_MAX_PLANES]; /* plane info, to be filled during mem allocation*/
     int fd; /* fd of the frame, to be filled during mem allocation */
-    void* buffer; /* ptr to real frame buffer, to be filled during mem allocation */
+    void *buffer; /* ptr to real frame buffer, to be filled during mem allocation */
     uint32_t frame_len; /* len of the whole frame, to be filled during mem allocation */
+    void *mem_info; /* reserved for pointing to mem info */
+    cam_exif_tags_t *p_mobicat_info; /*for mobicat info*/
 } mm_camera_buf_def_t;
 
 typedef struct {
@@ -217,9 +237,28 @@ typedef struct {
     uint8_t sensor_idxs[MM_CAMERA_MAX_2ND_SENSORS];
 } mm_camera_2nd_sensor_t;
 
+typedef enum {
+    NATIVE_CMD_ID_SOCKET_MAP,
+    NATIVE_CMD_ID_SOCKET_UNMAP,
+    NATIVE_CMD_ID_IOCTL_CTRL,
+    NATIVE_CMD_ID_MAX
+} mm_camera_native_cmd_id_t;
+
+typedef enum {
+    MM_CAMERA_CMD_TYPE_PRIVATE,   /* OEM private ioctl */
+    MM_CAMERA_CMD_TYPE_NATIVE     /* native ctrl cmd through ioctl */
+} mm_camera_cmd_type_t;
+
 typedef struct {
-	int32_t (*sync) (uint32_t camera_handle);
-	uint8_t (*is_event_supported) (uint32_t camera_handle,
+    mm_camera_buf_def_t *src_frame; /* src frame */
+} mm_camera_repro_data_t;
+
+typedef mm_camera_repro_cmd_config_t mm_camera_repro_isp_config_t;
+
+typedef struct {
+    /* to sync the internal camera settings */
+    int32_t (*sync) (uint32_t camera_handle);
+    uint8_t (*is_event_supported) (uint32_t camera_handle,
                                  mm_camera_event_type_t evt_type);
     int32_t (*register_event_notify) (uint32_t camera_handle,
                                  mm_camera_event_notify_t evt_cb,
@@ -231,16 +270,20 @@ typedef struct {
     /* Only fo supporting advanced 2nd sensors. If no secondary sensor needed
      * HAL can ignore this function */
     mm_camera_2nd_sensor_t * (*query_2nd_sensor_info) (uint32_t camera_handle);
+
+    /* if the operation is supported: TRUE - support, FALSE - not support */
+    uint8_t (*is_op_supported)(uint32_t camera_handle, mm_camera_ops_type_t opcode);
+
     /* if the parm is supported: TRUE - support, FALSE - not support */
     int32_t (*is_parm_supported) (uint32_t camera_handle,
                                  mm_camera_parm_type_t parm_type,
                                  uint8_t *support_set_parm,
                                  uint8_t *support_get_parm);
-    /* set a parm’s current value */
+    /* set a parm current value */
     int32_t (*set_parm) (uint32_t camera_handle,
                          mm_camera_parm_type_t parm_type,
                          void* p_value);
-    /* get a parm’s current value */
+    /* get a parm current value */
     int32_t (*get_parm) (uint32_t camera_handle,
                          mm_camera_parm_type_t parm_type,
                          void* p_value);
@@ -263,7 +306,7 @@ typedef struct {
     int32_t (*config_stream) (uint32_t camera_handle, uint32_t ch_id,
                               uint32_t stream_id,
                               mm_camera_stream_config_t *config);
-    /* setup super buf bundle for ZSL */
+    /* setup super buf bundle for ZSL(with burst mode) or other use cases */
     int32_t (*init_stream_bundle) (uint32_t camera_handle, uint32_t ch_id,
                                    mm_camera_buf_notify_t super_frame_notify_cb,
                                    void *user_data,  mm_camera_bundle_attr_t *attr,
@@ -280,7 +323,9 @@ typedef struct {
     int32_t (*async_teardown_streams) (uint32_t camera_handle, uint32_t ch_id,
                                        uint8_t num_streams, uint32_t *stream_ids);
     /* get super bufs. for burst mode only */
-    int32_t (*request_super_buf) (uint32_t camera_handle, uint32_t ch_id);
+    int32_t (*request_super_buf) (uint32_t camera_handle,
+                                  uint32_t ch_id,
+                                  uint32_t num_buf_requested);
     /* abort the super buf dispatching. for burst mode only  */
     int32_t (*cancel_super_buf_request) (uint32_t camera_handle,
                                          uint32_t ch_id);
@@ -298,18 +343,66 @@ typedef struct {
     int32_t (*prepare_snapshot) (uint32_t camera_handle,
                                  uint32_t ch_id,
                                  uint32_t sensor_idx);
-    /* set a parm’s current value */
+    /* set a parm current value of a stream */
     int32_t (*set_stream_parm) (uint32_t camera_handle,
                                 uint32_t ch_id,
                                 uint32_t s_id,
                                 mm_camera_stream_parm_t parm_type,
-                                void* p_value);
-    /* get a parm’s current value */
+                                void *p_value);
+    /* get a parm current value of a stream */
     int32_t (*get_stream_parm) (uint32_t camera_handle,
                                 uint32_t ch_id,
                                 uint32_t s_id,
                                 mm_camera_stream_parm_t parm_type,
-                                void* p_value);
+                                void *p_value);
+    /* private communication tunnel */
+    int32_t (*send_command) (uint32_t camera_handle,
+                             mm_camera_cmd_type_t cmd_type,
+                             uint32_t cmd_id,
+                             uint32_t cmd_length,
+                             void *cmd);
+    /* open a re-process isp, return handler for repro isp (>0).
+     * if failed, reutrn 0 */
+    uint32_t (*open_repro_isp) (uint32_t camera_handle,
+                               uint32_t ch_id,
+                               mm_camera_repro_isp_type_t repro_isp_type);
+    /* config the re-process isp */
+    int32_t (*config_repro_isp) (uint32_t camera_handle,
+                                 uint32_t ch_id,
+                                 uint32_t repro_isp_handle,
+                                 mm_camera_repro_isp_config_t *config);
+    /* attach output stream to the re-process isp */
+    int32_t (*attach_stream_to_repro_isp) (uint32_t camera_handle,
+                                           uint32_t ch_id,
+                                           uint32_t repro_isp_handle,
+                                           uint32_t stream_id);
+    /* start a re-process isp. */
+    int32_t (*start_repro_isp) (uint32_t camera_handle,
+                                uint32_t ch_id,
+                                uint32_t repro_isp_handle,
+                                uint32_t stream_id);
+    /* start a reprocess job for a src frame.
+     * Only after repo_isp is started, reprocess API can be called */
+    int32_t (*reprocess) (uint32_t camera_handle,
+                          uint32_t ch_id,
+                          uint32_t repro_isp_handle,
+                          mm_camera_repro_data_t *repo_data);
+    /* stop a re-process isp */
+    int32_t (*stop_repro_isp) (uint32_t camera_handle,
+                               uint32_t ch_id,
+                               uint32_t repro_isp_handle,
+                               uint32_t stream_id);
+    /* detach an output stream from the re-process isp.
+     * Can only be called after the re-process isp is stopped */
+    int32_t (*detach_stream_from_repro_isp) (uint32_t camera_handle,
+                                             uint32_t ch_id,
+                                             uint32_t repro_isp_handle,
+                                             uint32_t stream_id);
+    /* close a re-process isp.
+     * Can only close after all dest streams are detached from it */
+    int32_t (*close_repro_isp) (uint32_t camera_handle,
+                                uint32_t ch_id,
+                                uint32_t repro_isp_handle);
 } mm_camera_ops_t;
 
 typedef struct {
@@ -322,14 +415,28 @@ mm_camera_info_t * camera_query(uint8_t *num_cameras);
 mm_camera_vtbl_t * camera_open(uint8_t camera_idx,
                                mm_camear_mem_vtbl_t *mem_vtbl);
 
+//extern void mm_camera_util_profile(const char *str);
+
 typedef enum {
     MM_CAMERA_PREVIEW,
     MM_CAMERA_VIDEO,
     MM_CAMERA_SNAPSHOT_MAIN,
     MM_CAMERA_SNAPSHOT_THUMBNAIL,
     MM_CAMERA_SNAPSHOT_RAW,
-    MM_CAMERA_RDI
-}mm_camera_img_mode;
+    MM_CAMERA_RDI,
+    MM_CAMERA_RDI1,
+    MM_CAMERA_RDI2,
+    MM_CAMERA_SAEC,
+    MM_CAMERA_SAWB,
+    MM_CAMERA_SAFC,
+    MM_CAMERA_IHST,
+    MM_CAMERA_CS,
+    MM_CAMERA_RS,
+    MM_CAMERA_CSTA,
+    MM_CAMERA_ISP_PIX_OUTPUT1,
+    MM_CAMERA_ISP_PIX_OUTPUT2,
+    MM_CAMERA_IMG_MODE_MAX
+} mm_camera_img_mode;
 
 /* may remove later */
 typedef enum {
@@ -337,6 +444,8 @@ typedef enum {
     MM_CAMERA_OP_MODE_CAPTURE,
     MM_CAMERA_OP_MODE_VIDEO,
     MM_CAMERA_OP_MODE_ZSL,
+    MM_CAMERA_OP_MODE_RAW,
     MM_CAMERA_OP_MODE_MAX
 } mm_camera_op_mode_type_t;
+
 #endif /*__MM_CAMERA_INTERFACE_H__*/
