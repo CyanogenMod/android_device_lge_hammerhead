@@ -327,7 +327,8 @@ int QCamera3HeapMemory::allocOneBuffer(QCamera3MemInfo &memInfo, int heap_id, in
     /* to make it page size aligned */
     alloc.len = (alloc.len + 4095) & (~4095);
     alloc.align = 4096;
-    alloc.flags = heap_id;
+    alloc.flags = ION_FLAG_CACHED;
+    alloc.heap_mask = heap_id;
     rc = ioctl(main_ion_fd, ION_IOC_ALLOC, &alloc);
     if (rc < 0) {
         ALOGE("ION allocation for len %d failed: %s\n", alloc.len,
@@ -513,29 +514,35 @@ int QCamera3HeapMemory::getRegFlags(uint8_t * regFlags) const
 /*===========================================================================
  * FUNCTION   : getMatchBufIndex
  *
- * DESCRIPTION: query buffer index by opaque ptr
+ * DESCRIPTION: query buffer index by object ptr
  *
  * PARAMETERS :
- *   @opaque  : opaque ptr
- *   @metadata: flag if it's metadata
+ *   @object  : object ptr
  *
  * RETURN     : buffer index if match found,
  *              -1 if failed
  *==========================================================================*/
-int QCamera3HeapMemory::getMatchBufIndex(const void *opaque,
-                                        bool metadata) const
+int QCamera3HeapMemory::getMatchBufIndex(void * /*object*/)
 {
+
+/*
+    TODO for HEAP memory type, would there be an equivalent requirement?
+
     int index = -1;
-    if (metadata) {
-        return -1;
+    buffer_handle_t *key = (buffer_handle_t*) object;
+    if (!key) {
+        return BAD_VALUE;
     }
     for (int i = 0; i < mBufferCount; i++) {
-        if (mPtr[i] == opaque) {
+        if (mBufferHandle[i] == key) {
             index = i;
             break;
         }
     }
     return index;
+*/
+    ALOGE("%s: FATAL: Not supposed to come here", __func__);
+    return -1;
 }
 
 /*===========================================================================
@@ -555,6 +562,7 @@ QCamera3GrallocMemory::QCamera3GrallocMemory()
     for (int i = 0; i < MM_CAMERA_MAX_NUM_FRAMES; i ++) {
         mBufferHandle[i] = NULL;
         mPrivateHandle[i] = NULL;
+        mCurrentFrameNumbers[i] = -1;
     }
 }
 
@@ -706,6 +714,56 @@ void QCamera3GrallocMemory::unregisterBuffers()
 }
 
 /*===========================================================================
+ * FUNCTION   : markFrameNumber
+ *
+ * DESCRIPTION: We use this function from the request call path to mark the
+ *              buffers with the frame number they are intended for this info
+ *              is used later when giving out callback & it is duty of PP to
+ *              ensure that data for that particular frameNumber/Request is
+ *              written to this buffer.
+ * PARAMETERS :
+ *   @index   : index of the buffer
+ *   @frame#  : Frame number from the framework
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCamera3GrallocMemory::markFrameNumber(int index, uint32_t frameNumber)
+{
+    if(index >= mBufferCount || index >= MM_CAMERA_MAX_NUM_FRAMES) {
+        ALOGE("%s: Index out of bounds",__func__);
+        return BAD_INDEX;
+    }
+    mCurrentFrameNumbers[index] = frameNumber;
+    return NO_ERROR;
+}
+
+/*===========================================================================
+ * FUNCTION   : getFrameNumber
+ *
+ * DESCRIPTION: We use this to fetch the frameNumber for the request with which
+ *              this buffer was given to HAL
+ *
+ *
+ * PARAMETERS :
+ *   @index   : index of the buffer
+ *
+ * RETURN     : int32_t frameNumber
+ *              postive/zero  -- success
+ *              negetive failure
+ *==========================================================================*/
+int32_t QCamera3GrallocMemory::getFrameNumber(int index)
+{
+    if(index >= mBufferCount || index >= MM_CAMERA_MAX_NUM_FRAMES) {
+        ALOGE("%s: Index out of bounds",__func__);
+        return -1;
+    }
+
+    return mCurrentFrameNumbers[index];
+}
+
+/*===========================================================================
  * FUNCTION   : cacheOps
  *
  * DESCRIPTION: ion related memory cache operations
@@ -748,24 +806,23 @@ int QCamera3GrallocMemory::getRegFlags(uint8_t *regFlags) const
 /*===========================================================================
  * FUNCTION   : getMatchBufIndex
  *
- * DESCRIPTION: query buffer index by opaque ptr
+ * DESCRIPTION: query buffer index by object ptr
  *
  * PARAMETERS :
  *   @opaque  : opaque ptr
- *   @metadata: flag if it's metadata
  *
  * RETURN     : buffer index if match found,
  *              -1 if failed
  *==========================================================================*/
-int QCamera3GrallocMemory::getMatchBufIndex(const void *opaque,
-                                           bool metadata) const
+int QCamera3GrallocMemory::getMatchBufIndex(void *object)
 {
     int index = -1;
-    if (metadata) {
-        return -1;
+    buffer_handle_t *key = (buffer_handle_t*) object;
+    if (!key) {
+        return BAD_VALUE;
     }
     for (int i = 0; i < mBufferCount; i++) {
-        if (mPtr[i] == opaque) {
+        if (mBufferHandle[i] == key) {
             index = i;
             break;
         }

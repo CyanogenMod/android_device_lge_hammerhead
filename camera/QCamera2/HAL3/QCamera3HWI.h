@@ -72,7 +72,7 @@ public:
     static void get_metadata_vendor_tag_ops(const struct camera3_device *,
                                                vendor_tag_query_ops_t* ops);
     static void dump(const struct camera3_device *, int fd);
-
+    static int close_camera_device(struct hw_device_t* device);
 public:
     QCamera3HardwareInterface(int cameraId);
     virtual ~QCamera3HardwareInterface();
@@ -85,8 +85,9 @@ public:
     static int initCapabilities(int cameraId);
     static int initStaticMetadata(int cameraId);
 
-    static void channelCb(mm_camera_buf_def_t *frame,
-                camera3_stream_buffer_t *buffer, void *userdata);
+    static void captureResultCb(metadata_buffer_t *metadata,
+                camera3_stream_buffer_t *buffer, uint32_t frame_number,
+                void *userdata);
 
     void sendCaptureResult(const struct camera3_callback_ops *,
                         const camera3_capture_result_t *result);
@@ -97,17 +98,21 @@ public:
     int configureStreams(camera3_stream_configuration_t *stream_list);
     int registerStreamBuffers(const camera3_stream_buffer_set_t *buffer_set);
     int processCaptureRequest(camera3_capture_request_t *request);
+    void getMetadataVendorTagOps(vendor_tag_query_ops_t* ops);
+    void dump(int fd);
 
     int setFrameParameters(const camera_metadata_t *settings);
     int translateMetadataToParameters(const camera_metadata_t *settings);
 
-    void channelCb(mm_camera_buf_def_t *frame,
-                camera3_stream_buffer_t *buffer);
+    void captureResultCb(metadata_buffer_t *metadata,
+                camera3_stream_buffer_t *buffer, uint32_t frame_number);
 
 private:
 
     int openCamera();
     int closeCamera();
+
+    int validateCaptureRequest(camera3_capture_request_t *request);
 
 public:
 
@@ -130,6 +135,12 @@ private:
     pthread_mutex_t mRequestLock;
     pthread_cond_t mRequestCond;
     int mPendingRequest;
+
+    //mutex for serialized access to camera3_device_ops_t functions
+    pthread_mutex_t mMutex;
+
+    //mutex to protect the critial section for processCaptureResult
+    pthread_mutex_t mCaptureResultLock;
 };
 
 }; // namespace qcamera

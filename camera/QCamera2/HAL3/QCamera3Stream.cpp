@@ -436,38 +436,11 @@ int32_t QCamera3Stream::bufDone(int index)
 
     rc = mCamOps->qbuf(mCamHandle, mChannelHandle, &mBufDefs[index]);
     if (rc < 0)
-        return rc;
+        return FAILED_TRANSACTION;
 
     if ( !isTypeOf(CAM_STREAM_TYPE_METADATA) ) {
         mStreamBufs->invalidateCache(index);
     }
-    return rc;
-}
-
-/*===========================================================================
- * FUNCTION   : bufDone
- *
- * DESCRIPTION: return stream buffer to kernel
- *
- * PARAMETERS :
- *   @opaque    : stream frame/metadata buf to be returned
- *   @isMetaData: flag if returned opaque is a metadatabuf or the real frame ptr
- *
- * RETURN     : int32_t type of status
- *              NO_ERROR  -- success
- *              none-zero failure code
- *==========================================================================*/
-int32_t QCamera3Stream::bufDone(const void *opaque, bool isMetaData)
-{
-    int32_t rc = NO_ERROR;
-
-    int index = mStreamBufs->getMatchBufIndex(opaque, isMetaData);
-    if (index == -1 || index >= mNumBufs) {
-        ALOGE("%s: Cannot find buf for opaque data = %p", __func__, opaque);
-        return BAD_INDEX;
-    }
-
-    rc = bufDone(index);
     return rc;
 }
 
