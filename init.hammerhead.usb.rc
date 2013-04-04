@@ -102,12 +102,12 @@ on property:sys.usb.config=diag
     stop adbd
     write /sys/class/android_usb/android0/enable 0
     write /sys/class/android_usb/android0/idVendor 1004
-    write /sys/class/android_usb/android0/idProduct 631B
+    write /sys/class/android_usb/android0/idProduct 61F1
     write /sys/class/android_usb/android0/bDeviceClass 239
     write /sys/class/android_usb/android0/bDeviceSubClass 2
     write /sys/class/android_usb/android0/bDeviceProtocol 1
     write /sys/class/android_usb/android0/f_acm/acm_transports smd
-    write /sys/class/android_usb/android0/f_diag/clients diag,diag_mdm
+    write /sys/class/android_usb/android0/f_diag/clients diag
     write /sys/class/android_usb/android0/functions acm,diag,mtp,adb
     write /sys/class/android_usb/android0/enable 1
     start adbd
@@ -117,12 +117,12 @@ on property:sys.usb.config=diag,adb
     stop adbd
     write /sys/class/android_usb/android0/enable 0
     write /sys/class/android_usb/android0/idVendor 1004
-    write /sys/class/android_usb/android0/idProduct 631B
+    write /sys/class/android_usb/android0/idProduct 61F1
     write /sys/class/android_usb/android0/bDeviceClass 239
     write /sys/class/android_usb/android0/bDeviceSubClass 2
     write /sys/class/android_usb/android0/bDeviceProtocol 1
     write /sys/class/android_usb/android0/f_acm/acm_transports smd
-    write /sys/class/android_usb/android0/f_diag/clients diag,diag_mdm
+    write /sys/class/android_usb/android0/f_diag/clients diag
     write /sys/class/android_usb/android0/functions acm,diag,mtp,adb
     write /sys/class/android_usb/android0/enable 1
     start adbd
