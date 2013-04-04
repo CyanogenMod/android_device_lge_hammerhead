@@ -33,6 +33,7 @@
 #include <utils/Errors.h>
 #include "QCamera3HWI.h"
 #include "QCamera3Stream.h"
+#include "QCamera3Channel.h"
 
 using namespace android;
 
@@ -115,7 +116,7 @@ QCamera3Stream::QCamera3Stream(uint32_t camHandle,
                              uint32_t chId,
                              mm_camera_ops_t *camOps,
                              cam_padding_info_t *paddingInfo,
-                             QCamera3Memory *memory) :
+                             QCamera3Channel *channel) :
         mCamHandle(camHandle),
         mChannelHandle(chId),
         mHandle(0),
@@ -124,8 +125,9 @@ QCamera3Stream::QCamera3Stream(uint32_t camHandle,
         mNumBufs(0),
         mDataCB(NULL),
         mStreamInfoBuf(NULL),
-        mStreamBufs(memory),
-        mBufDefs(NULL)
+        mStreamBufs(NULL),
+        mBufDefs(NULL),
+        mChannel(channel)
 {
     mMemVtbl.user_data = this;
     mMemVtbl.get_bufs = get_bufs;
@@ -502,6 +504,7 @@ int32_t QCamera3Stream::getBufs(cam_frame_len_offset_t *offset,
 
     mFrameLenOffset = *offset;
 
+    mStreamBufs = mChannel->getStreamBufs(mFrameLenOffset.frame_len);
     if (!mStreamBufs) {
         ALOGE("%s: Failed to allocate stream buffers", __func__);
         return NO_MEMORY;
@@ -586,6 +589,7 @@ int32_t QCamera3Stream::putBufs(mm_camera_map_unmap_ops_tbl_t *ops_tbl)
     mBufDefs = NULL; // mBufDefs just keep a ptr to the buffer
                      // mm-camera-interface own the buffer, so no need to free
     memset(&mFrameLenOffset, 0, sizeof(mFrameLenOffset));
+    mChannel->putStreamBufs();
 
     return rc;
 }

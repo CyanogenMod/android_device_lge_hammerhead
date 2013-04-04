@@ -41,6 +41,8 @@ extern "C" {
 namespace qcamera {
 
 class QCamera3Stream;
+class QCamera3Channel;
+
 typedef void (*stream_cb_routine)(mm_camera_super_buf_t *frame,
                                   QCamera3Stream *stream,
                                   void *userdata);
@@ -52,7 +54,7 @@ public:
                   uint32_t chId,
                   mm_camera_ops_t *camOps,
                   cam_padding_info_t *paddingInfo,
-                  QCamera3Memory *memory);
+                  QCamera3Channel *channel);
     virtual ~QCamera3Stream();
     virtual int32_t init(cam_stream_type_t streamType,
                          cam_format_t streamFormat,
@@ -100,6 +102,7 @@ private:
     mm_camera_buf_def_t *mBufDefs;
     cam_frame_len_offset_t mFrameLenOffset;
     cam_padding_info_t mPaddingInfo;
+    QCamera3Channel *mChannel;
 
     static int32_t get_bufs(
                      cam_frame_len_offset_t *offset,
