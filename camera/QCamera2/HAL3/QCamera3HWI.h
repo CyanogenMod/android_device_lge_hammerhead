@@ -35,6 +35,7 @@
 #include <hardware/camera3.h>
 #include <camera/CameraMetadata.h>
 #include "QCamera3HALHeader.h"
+#include "QCamera3Channel.h"
 
 extern "C" {
 #include <mm_camera_interface.h>
@@ -54,7 +55,9 @@ namespace qcamera {
 #endif
 
 class QCamera3MetadataChannel;
+class QCamera3PicChannel;
 class QCamera3HeapMemory;
+class QCamera3Exif;
 
 class QCamera3HardwareInterface {
 public:
@@ -135,6 +138,12 @@ private:
     int validateCaptureRequest(camera3_capture_request_t *request);
 
 public:
+
+    bool needOnlineRotation();
+    void getThumbnailSize(cam_dimension_t &dim);
+    int getJpegQuality();
+    int getJpegRotation();
+    QCamera3Exif *getExifData();
 
 private:
     camera3_device_t   mCameraDevice;

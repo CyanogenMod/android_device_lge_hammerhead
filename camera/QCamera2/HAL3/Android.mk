@@ -9,6 +9,7 @@ LOCAL_SRC_FILES := \
         QCamera3Mem.cpp \
         QCamera3Stream.cpp \
         QCamera3Channel.cpp \
+        QCamera3PostProc.cpp \
         ../util/QCameraCmdThread.cpp \
         ../util/QCameraQueue.cpp
 

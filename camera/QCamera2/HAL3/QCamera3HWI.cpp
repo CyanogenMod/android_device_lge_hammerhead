@@ -40,6 +40,7 @@
 #include "QCamera3HWI.h"
 #include "QCamera3Mem.h"
 #include "QCamera3Channel.h"
+#include "QCamera3PostProc.h"
 
 using namespace android;
 
@@ -165,7 +166,7 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId)
 /*===========================================================================
  * FUNCTION   : ~QCamera3HardwareInterface
  *
- * DESCRIPTION: destructor of QCamera2HardwareInterface
+ * DESCRIPTION: destructor of QCamera3HardwareInterface
  *
  * PARAMETERS : none
  *
@@ -386,6 +387,7 @@ int QCamera3HardwareInterface::configureStreams(
         camera3_stream_configuration_t *streamList)
 {
     pthread_mutex_lock(&mMutex);
+    int rc;
 
     // Sanity check stream_list
     if (streamList == NULL) {
@@ -476,6 +478,14 @@ int QCamera3HardwareInterface::configureStreams(
                         pthread_mutex_unlock(&mMutex);
                         return -ENOMEM;
                     }
+                    //Register Jpeg callback with mm-camera-interface
+                    rc = channel->initialize();
+                    if (rc < 0) {
+                        ALOGE("%s: snapshot channel initialization failed", __func__);
+                       delete channel;
+                       channel = NULL;
+                       goto end;
+                    }
 
                     newStream->priv = channel;
                     break;
@@ -494,6 +504,7 @@ int QCamera3HardwareInterface::configureStreams(
 
     // Cannot reuse settings across configure call
     memset(mParameters, 0, sizeof(parm_buffer_t));
+end:
     pthread_mutex_unlock(&mMutex);
     return 0;
 }
@@ -673,6 +684,18 @@ int QCamera3HardwareInterface::processCaptureRequest(
     for (size_t i = 0; i < request->num_output_buffers; i++) {
         const camera3_stream_buffer_t& output = request->output_buffers[i];
         sp<Fence> acquireFence = new Fence(output.acquire_fence);
+        int format = output.stream->format;
+
+        if (output.stream->format == HAL_PIXEL_FORMAT_BLOB) {
+        //Call function to store local copy of jpeg data for encode params.
+            rc = getJpegSettings(request->settings);
+            if (rc < 0) {
+                ALOGE("%s: failed to get jpeg parameters");
+                pthread_mutex_unlock(&mMutex);
+                return rc;
+            }
+        }
+
         rc = acquireFence->wait(Fence::TIMEOUT_NEVER);
         if (rc != OK) {
             ALOGE("%s: fence wait failed %d", __func__, rc);
@@ -688,12 +711,19 @@ int QCamera3HardwareInterface::processCaptureRequest(
     for (size_t i = 0; i < request->num_output_buffers; i++) {
         const camera3_stream_buffer_t& output = request->output_buffers[i];
         QCamera3Channel *channel = (QCamera3Channel *)output.stream->priv;
+        int format = output.stream->format;
+
+
         if (channel == NULL) {
             ALOGE("%s: invalid channel pointer for stream", __func__);
             continue;
         }
 
-        rc = channel->request(output.buffer, frameNumber);
+        if (output.stream->format == HAL_PIXEL_FORMAT_BLOB) {
+            rc = channel->request(output.buffer, frameNumber, mJpegSettings);
+        } else {
+            rc = channel->request(output.buffer, frameNumber);
+        }
         if (rc < 0)
             ALOGE("%s: request failed", __func__);
     }
@@ -2515,6 +2545,5 @@ int QCamera3HardwareInterface::close_camera_device(struct hw_device_t* device)
     delete hw;
     return ret;
 }
-
 
 }; //end namespace qcamera
