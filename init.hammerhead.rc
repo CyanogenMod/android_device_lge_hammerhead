@@ -128,6 +128,9 @@ service irsc_util /system/bin/logwrapper /system/bin/irsc_util "/etc/sec_config"
 service sdcard /system/bin/sdcard /data/media /mnt/shell/emulated 1023 1023
     class late_start
 
+service charger /charger
+    class charger
+
 # bugreport is triggered by holding down volume down, volume up and power
 service bugreport /system/bin/dumpstate -d -p -B \
         -o /data/data/com.android.shell/files/bugreports/bugreport
