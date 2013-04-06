@@ -27,13 +27,14 @@
 *
 */
 
-#ifndef __QCAMERA2HARDWAREINTERFACE_H__
-#define __QCAMERA2HARDWAREINTERFACE_H__
+#ifndef __QCAMERA3HARDWAREINTERFACE_H__
+#define __QCAMERA3HARDWAREINTERFACE_H__
 
 #include <pthread.h>
 #include <utils/List.h>
 #include <hardware/camera3.h>
 #include <camera/CameraMetadata.h>
+#include "QCamera3HALHeader.h"
 
 extern "C" {
 #include <mm_camera_interface.h>
@@ -78,13 +79,14 @@ public:
     virtual ~QCamera3HardwareInterface();
     int openCamera(struct hw_device_t **hw_device);
     int getMetadata(int type);
-    camera_metadata_t* translateToMetadata(int type);
-    int metadataToParam(CameraMetadata &metadata);
+    camera_metadata_t* translateCapabilityToMetadata(int type);
 
     static int getCamInfo(int cameraId, struct camera_info *info);
     static int initCapabilities(int cameraId);
     static int initStaticMetadata(int cameraId);
     static void makeTable(cam_dimension_t* dimTable, uint8_t size, int32_t* sizeTable);
+    static void convertRegions(cam_rect_t rect, int32_t* region, int weight);
+    static void convertLandmarks(cam_face_detection_info_t face, int32_t* landmarks);
     static int32_t getScalarFormat(int32_t format);
 
     static void captureResultCb(metadata_buffer_t *metadata,
@@ -105,6 +107,7 @@ public:
 
     int setFrameParameters(int frame_id, const camera_metadata_t *settings);
     int translateMetadataToParameters(const camera_metadata_t *settings);
+    camera_metadata_t* translateCbMetadataToResultMetadata(metadata_buffer_t *metadata);
     int getJpegSettings(const camera_metadata_t *settings);
     int initParameters();
 
@@ -158,18 +161,6 @@ private:
 
     //mutex to protect the critial section for processCaptureResult
     pthread_mutex_t mCaptureResultLock;
-
-    typedef struct {
-        int32_t jpeg_orientation;
-        uint8_t jpeg_quality;
-        cam_dimension_t thumbnail_size;
-        int64_t gps_timestamp;
-        double gps_coordinates[3];
-        uint8_t gps_processing_method;
-        int32_t sensor_sensitivity;
-        float lens_focal_length;
-    } jpeg_settings_t;
-
     jpeg_settings_t* mJpegSettings;
     static const QCameraMap EFFECT_MODES_MAP[];
     static const QCameraMap WHITE_BALANCE_MODES_MAP[];

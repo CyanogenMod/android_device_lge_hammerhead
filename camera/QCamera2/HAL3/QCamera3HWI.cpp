@@ -43,7 +43,6 @@
 
 using namespace android;
 
-//using namespace android;
 namespace qcamera {
 #define DATA_PTR(MEM_OBJ,INDEX) MEM_OBJ->getPtr( INDEX )
 cam_capability_t *gCamCapability[MM_CAMERA_MAX_NUM_SENSORS];
@@ -63,6 +62,7 @@ const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::EFFECT_MO
 };
 
 const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::WHITE_BALANCE_MODES_MAP[] = {
+    { ANDROID_CONTROL_AWB_MODE_OFF,            CAM_WB_MODE_OFF },
     { ANDROID_CONTROL_AWB_MODE_AUTO,            CAM_WB_MODE_AUTO },
     { ANDROID_CONTROL_AWB_MODE_INCANDESCENT,    CAM_WB_MODE_INCANDESCENT },
     { ANDROID_CONTROL_AWB_MODE_FLUORESCENT,     CAM_WB_MODE_FLUORESCENT },
@@ -89,10 +89,11 @@ const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::SCENE_MOD
     { ANDROID_CONTROL_SCENE_MODE_SPORTS ,        CAM_SCENE_MODE_SPORTS },
     { ANDROID_CONTROL_SCENE_MODE_PARTY,          CAM_SCENE_MODE_PARTY },
     { ANDROID_CONTROL_SCENE_MODE_CANDLELIGHT,    CAM_SCENE_MODE_CANDLELIGHT },
-    { ANDROID_CONTROL_SCENE_MODE_BARCODE,        CAM_SCENE_MODE_OFF}
+    { ANDROID_CONTROL_SCENE_MODE_BARCODE,        CAM_SCENE_MODE_BARCODE}
 };
 
 const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::FOCUS_MODES_MAP[] = {
+    { ANDROID_CONTROL_AF_MODE_OFF,               CAM_FOCUS_MODE_OFF },
     { ANDROID_CONTROL_AF_MODE_AUTO,               CAM_FOCUS_MODE_AUTO },
     { ANDROID_CONTROL_AF_MODE_MACRO,              CAM_FOCUS_MODE_MACRO },
     { ANDROID_CONTROL_AF_MODE_EDOF,               CAM_FOCUS_MODE_EDOF },
@@ -108,7 +109,7 @@ const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::ANTIBANDI
 };
 
 const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::AUTO_EXPOSURE_MAP[] = {
-    { ANDROID_CONTROL_AE_MODE_OFF,    CAM_AEC_MODE_FRAME_AVERAGE },
+    { ANDROID_CONTROL_AE_MODE_OFF,    CAM_AEC_MODE_OFF           },
     { ANDROID_CONTROL_AE_MODE_ON,     CAM_AEC_MODE_FRAME_AVERAGE },
 };
 
@@ -144,7 +145,8 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId)
     : mCameraId(cameraId),
       mCameraHandle(NULL),
       mCameraOpened(false),
-      mCallbackOps(NULL)
+      mCallbackOps(NULL),
+      mJpegSettings(NULL)
 {
     mCameraDevice.common.tag = HARDWARE_DEVICE_TAG;
     mCameraDevice.common.version = CAMERA_DEVICE_API_VERSION_3_0;
@@ -171,6 +173,10 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId)
  *==========================================================================*/
 QCamera3HardwareInterface::~QCamera3HardwareInterface()
 {
+    if (mJpegSettings != NULL) {
+        free(mJpegSettings);
+        mJpegSettings = NULL;
+    }
     closeCamera();
 
     pthread_mutex_destroy(&mRequestLock);
@@ -771,14 +777,9 @@ void QCamera3HardwareInterface::captureResultCb(metadata_buffer_t *metadata,
         pthread_cond_signal(&mRequestCond);
         pthread_mutex_unlock(&mRequestLock);
 
-        //TODO: Add translation from metadata_buffer_t to CameraMetadata
-        // for now, hardcode timestamp only.
-        CameraMetadata camMetadata;
         uint32_t *frame_number = (uint32_t *)POINTER_OF(CAM_INTF_META_FRAME_NUMBER, metadata);
-        nsecs_t captureTime = 1000000 * (*frame_number) * 33;
-        camMetadata.update(ANDROID_SENSOR_TIMESTAMP, &captureTime, 1);
 
-        result.result = camMetadata.release();
+        result.result = translateCbMetadataToResultMetadata(metadata);
         if (!result.result) {
             result.frame_number = *frame_number;
             result.num_output_buffers = 0;
@@ -797,6 +798,268 @@ void QCamera3HardwareInterface::captureResultCb(metadata_buffer_t *metadata,
 
     pthread_mutex_unlock(&mCaptureResultLock);
     return;
+}
+
+/*===========================================================================
+ * FUNCTION   : translateCbMetadataToResultMetadata
+ *
+ * DESCRIPTION:
+ *
+ * PARAMETERS :
+ *   @metadata : metadata information from callback
+ *
+ * RETURN     : camera_metadata_t*
+ *              metadata in a format specified by fwk
+ *==========================================================================*/
+camera_metadata_t*
+QCamera3HardwareInterface::translateCbMetadataToResultMetadata
+                                (metadata_buffer_t *metadata)
+{
+    CameraMetadata camMetadata;
+    camera_metadata_t* resultMetadata;
+
+    uint32_t *frame_number =
+        (uint32_t *)POINTER_OF(CAM_INTF_META_FRAME_NUMBER, metadata);
+    nsecs_t captureTime = 1000000 * (*frame_number) * 33;
+    camMetadata.update(ANDROID_SENSOR_TIMESTAMP, &captureTime, 1);
+
+    /*CAM_INTF_META_HISTOGRAM - TODO*/
+    /*cam_hist_stats_t  *histogram =
+      (cam_hist_stats_t *)POINTER_OF(CAM_INTF_META_HISTOGRAM,
+      metadata);*/
+
+    /*face detection*/
+    cam_face_detection_data_t *faceDetectionInfo =(cam_face_detection_data_t *)
+        POINTER_OF(CAM_INTF_META_FACE_DETECTION, metadata);
+    uint8_t numFaces = faceDetectionInfo->num_faces_detected;
+    int32_t faceIds[numFaces];
+    uint8_t faceScores[numFaces];
+    int32_t faceRectangles[numFaces * 4];
+    int32_t faceLandmarks[numFaces * 6];
+    int j = 0, k = 0;
+    for (int i = 0; i < numFaces; i++) {
+        faceIds[i] = faceDetectionInfo->faces[i].face_id;
+        faceScores[i] = faceDetectionInfo->faces[i].score;
+        convertRegions(faceDetectionInfo->faces[i].face_boundary,
+                faceRectangles+j, -1);
+        convertLandmarks(faceDetectionInfo->faces[i], faceLandmarks+k);
+        j+= 4;
+        k+= 6;
+    }
+    camMetadata.update(ANDROID_STATISTICS_FACE_IDS, faceIds, numFaces);
+    camMetadata.update(ANDROID_STATISTICS_FACE_SCORES, faceScores, numFaces);
+    camMetadata.update(ANDROID_STATISTICS_FACE_RECTANGLES,
+            faceRectangles, numFaces*4);
+    camMetadata.update(ANDROID_STATISTICS_FACE_LANDMARKS,
+            faceLandmarks, numFaces*6);
+
+
+    /*autofocus - TODO*/
+    /*cam_auto_focus_data_t  *afData =(cam_auto_focus_data_t *)
+      POINTER_OF(CAM_INTF_META_AUTOFOCUS_DATA,metadata);*/
+
+    int32_t  *color_correct_mode =
+        (int32_t *)POINTER_OF(CAM_INTF_META_COLOR_CORRECT_MODE, metadata);
+    camMetadata.update(ANDROID_COLOR_CORRECTION_MODE, color_correct_mode, 1);
+
+    int32_t  *ae_precapture_id =
+        (int32_t *)POINTER_OF(CAM_INTF_META_AEC_PRECAPTURE_ID, metadata);
+    camMetadata.update(ANDROID_CONTROL_AE_PRECAPTURE_ID, ae_precapture_id, 1);
+
+    /*aec regions*/
+    cam_area_t  *hAeRegions =
+        (cam_area_t *)POINTER_OF(CAM_INTF_META_AEC_ROI, metadata);
+    int32_t aeRegions[5];
+    convertRegions(hAeRegions->rect, aeRegions, hAeRegions->weight);
+    camMetadata.update(ANDROID_CONTROL_AE_REGIONS, aeRegions, 5);
+
+    int32_t  *ae_state =
+        (int32_t *)POINTER_OF(CAM_INTF_META_AEC_STATE, metadata);
+    camMetadata.update(ANDROID_CONTROL_AE_STATE, ae_state, 1);
+
+    int32_t  *focusMode =
+        (int32_t *)POINTER_OF(CAM_INTF_PARM_FOCUS_MODE, metadata);
+    camMetadata.update(ANDROID_CONTROL_AF_MODE, focusMode, 1);
+
+    /*af regions*/
+    cam_area_t  *hAfRegions =
+        (cam_area_t *)POINTER_OF(CAM_INTF_META_AF_ROI, metadata);
+    int32_t afRegions[5];
+    convertRegions(hAfRegions->rect, afRegions, hAfRegions->weight);
+    camMetadata.update(ANDROID_CONTROL_AF_REGIONS, afRegions, 5);
+
+    int32_t  *afState = (int32_t *)POINTER_OF(CAM_INTF_META_AF_STATE, metadata);
+    camMetadata.update(ANDROID_CONTROL_AF_STATE, afState, 1);
+
+    int32_t  *afTriggerId =
+        (int32_t *)POINTER_OF(CAM_INTF_META_AF_TRIGGER_ID, metadata);
+    camMetadata.update(ANDROID_CONTROL_AF_TRIGGER_ID, afTriggerId, 1);
+
+    int32_t  *whiteBalance =
+        (int32_t *)POINTER_OF(CAM_INTF_PARM_WHITE_BALANCE, metadata);
+    camMetadata.update(ANDROID_CONTROL_AWB_MODE, whiteBalance, 1);
+
+    /*awb regions*/
+    cam_area_t  *hAwbRegions =
+        (cam_area_t *)POINTER_OF(CAM_INTF_META_AWB_REGIONS, metadata);
+    int32_t awbRegions[5];
+    convertRegions(hAwbRegions->rect, awbRegions, hAwbRegions->weight);
+    camMetadata.update(ANDROID_CONTROL_AWB_REGIONS, awbRegions, 5);
+
+    int32_t  *whiteBalanceState =
+        (int32_t *)POINTER_OF(CAM_INTF_META_AWB_STATE, metadata);
+    camMetadata.update(ANDROID_CONTROL_AWB_STATE, whiteBalanceState, 1);
+
+    int32_t  *mode = (int32_t *)POINTER_OF(CAM_INTF_META_MODE, metadata);
+    camMetadata.update(ANDROID_CONTROL_MODE, mode, 1);
+
+    int32_t  *edgeMode = (int32_t *)POINTER_OF(CAM_INTF_META_EDGE, metadata);
+    camMetadata.update(ANDROID_EDGE_MODE, edgeMode, 1);
+
+    int32_t  *flashPower =
+        (int32_t *)POINTER_OF(CAM_INTF_META_FLASH_POWER, metadata);
+    camMetadata.update(ANDROID_FLASH_FIRING_POWER, flashPower, 1);
+
+    int64_t  *flashFiringTime =
+        (int64_t *)POINTER_OF(CAM_INTF_META_FLASH_FIRING_TIME, metadata);
+    camMetadata.update(ANDROID_FLASH_FIRING_TIME, flashFiringTime, 1);
+
+    /*int32_t  *ledMode =
+      (int32_t *)POINTER_OF(CAM_INTF_PARM_LED_MODE, metadata);
+      camMetadata.update(ANDROID_FLASH_FIRING_TIME, ledMode, 1);*/
+
+    int32_t  *flashState =
+        (int32_t *)POINTER_OF(CAM_INTF_META_FLASH_STATE, metadata);
+    camMetadata.update(ANDROID_FLASH_STATE, flashState, 1);
+
+    int32_t  *hotPixelMode =
+        (int32_t *)POINTER_OF(CAM_INTF_META_HOTPIXEL_MODE, metadata);
+    camMetadata.update(ANDROID_HOT_PIXEL_MODE, hotPixelMode, 1);
+
+    float  *lensAperture =
+        (float *)POINTER_OF(CAM_INTF_META_LENS_APERTURE, metadata);
+    camMetadata.update(ANDROID_LENS_APERTURE , lensAperture, 1);
+
+    float  *filterDensity =
+        (float *)POINTER_OF(CAM_INTF_META_LENS_FILTERDENSITY, metadata);
+    camMetadata.update(ANDROID_LENS_FILTER_DENSITY , filterDensity, 1);
+
+    float  *focalLength =
+        (float *)POINTER_OF(CAM_INTF_META_LENS_FOCAL_LENGTH, metadata);
+    camMetadata.update(ANDROID_LENS_FOCAL_LENGTH, focalLength, 1);
+
+    float  *focusDistance =
+        (float *)POINTER_OF(CAM_INTF_META_LENS_FOCUS_DISTANCE, metadata);
+    camMetadata.update(ANDROID_LENS_FOCUS_DISTANCE , focusDistance, 1);
+
+    float  *focusRange =
+        (float *)POINTER_OF(CAM_INTF_META_LENS_FOCUS_RANGE, metadata);
+    camMetadata.update(ANDROID_LENS_FOCUS_RANGE , focusRange, 1);
+
+    int32_t  *opticalStab =
+        (int32_t *)POINTER_OF(CAM_INTF_META_LENS_OPT_STAB_MODE, metadata);
+    camMetadata.update(ANDROID_LENS_OPTICAL_STABILIZATION_MODE, opticalStab, 1);
+
+    /*int32_t  *focusState =
+      (int32_t *)POINTER_OF(CAM_INTF_META_LENS_FOCUS_STATE, metadata);
+      camMetadata.update(ANDROID_LENS_STATE , focusState, 1); //check */
+
+    int32_t  *noiseRedMode =
+        (int32_t *)POINTER_OF(CAM_INTF_META_NOISE_REDUCTION_MODE, metadata);
+    camMetadata.update(ANDROID_NOISE_REDUCTION_MODE , noiseRedMode, 1);
+
+    /*CAM_INTF_META_SCALER_CROP_REGION - check size*/
+
+    cam_crop_region_t  *scalerCropRegion = (cam_crop_region_t *)
+        POINTER_OF(CAM_INTF_META_SCALER_CROP_REGION, metadata);
+    camMetadata.update(ANDROID_SCALER_CROP_REGION,
+            (int32_t*)scalerCropRegion,
+            sizeof(scalerCropRegion)/sizeof(cam_crop_region_t));
+
+    int64_t  *sensorExpTime =
+        (int64_t *)POINTER_OF(CAM_INTF_META_SENSOR_EXPOSURE_TIME, metadata);
+    camMetadata.update(ANDROID_SENSOR_EXPOSURE_TIME , sensorExpTime, 1);
+
+    int64_t  *sensorFameDuration =
+        (int64_t *)POINTER_OF(CAM_INTF_META_SENSOR_FRAME_DURATION, metadata);
+    camMetadata.update(ANDROID_SENSOR_FRAME_DURATION, sensorFameDuration, 1);
+
+    int32_t  *sensorSensitivity =
+        (int32_t *)POINTER_OF(CAM_INTF_META_SENSOR_SENSITIVITY, metadata);
+    camMetadata.update(ANDROID_SENSOR_SENSITIVITY, sensorSensitivity, 1);
+
+    int64_t  *sensorTimestamp =
+        (int64_t *)POINTER_OF(CAM_INTF_META_SENSOR_TIMESTAMP, metadata);
+    camMetadata.update(ANDROID_SENSOR_TIMESTAMP, sensorTimestamp, 1);
+
+    int32_t  *shadingMode =
+        (int32_t *)POINTER_OF(CAM_INTF_META_SHADING_MODE, metadata);
+    camMetadata.update(ANDROID_SHADING_MODE, shadingMode, 1);
+
+    int32_t  *faceDetectMode =
+        (int32_t *)POINTER_OF(CAM_INTF_META_STATS_FACEDETECT_MODE, metadata);
+    camMetadata.update(ANDROID_STATISTICS_FACE_DETECT_MODE, faceDetectMode, 1);
+
+    int32_t  *histogramMode =
+        (int32_t *)POINTER_OF(CAM_INTF_META_STATS_HISTOGRAM_MODE, metadata);
+    camMetadata.update(ANDROID_STATISTICS_HISTOGRAM_MODE, histogramMode, 1);
+
+    int32_t  *sharpnessMapMode =
+        (int32_t *)POINTER_OF(CAM_INTF_META_STATS_SHARPNESS_MAP_MODE, metadata);
+    camMetadata.update(ANDROID_STATISTICS_SHARPNESS_MAP_MODE,
+            sharpnessMapMode, 1);
+
+    /*CAM_INTF_META_STATS_SHARPNESS_MAP - check size*/
+    cam_sharpness_map_t  *sharpnessMap = (cam_sharpness_map_t *)
+        POINTER_OF(CAM_INTF_META_STATS_SHARPNESS_MAP, metadata);
+    camMetadata.update(ANDROID_STATISTICS_SHARPNESS_MAP,
+            (int32_t*)sharpnessMap->sharpness,
+            CAM_MAX_MAP_WIDTH*CAM_MAX_MAP_HEIGHT);
+
+    resultMetadata = camMetadata.release();
+    return NULL;
+}
+
+/*===========================================================================
+ * FUNCTION   : convertRegions
+ *
+ * DESCRIPTION: helper method to convert from cam_rect_t into int32_t array
+ *
+ * PARAMETERS :
+ *   @rect   : cam_rect_t struct to convert
+ *   @region : int32_t destination array
+ *   @weight : if we are converting from cam_area_t, weight is valid
+ *             else weight = -1
+ *
+ *==========================================================================*/
+void QCamera3HardwareInterface::convertRegions(cam_rect_t rect, int32_t* region, int weight){
+    region[0] = rect.left;
+    region[1] = rect.top;
+    region[2] = rect.width;
+    region[3] = rect.height;
+    if (weight > -1) {
+        region[4] = weight;
+    }
+}
+/*===========================================================================
+ * FUNCTION   : convertLandmarks
+ *
+ * DESCRIPTION: helper method to extract the landmarks from face detection info
+ *
+ * PARAMETERS :
+ *   @face   : cam_rect_t struct to convert
+ *   @landmarks : int32_t destination array
+ *
+ *
+ *==========================================================================*/
+void QCamera3HardwareInterface::convertLandmarks(cam_face_detection_info_t face, int32_t* landmarks)
+{
+    landmarks[0] = face.left_eye_center.x;
+    landmarks[1] = face.left_eye_center.y;
+    landmarks[2] = face.right_eye_center.y;
+    landmarks[3] = face.right_eye_center.y;
+    landmarks[4] = face.mouth_center.x;
+    landmarks[5] = face.mouth_center.y;
 }
 
 #define DATA_PTR(MEM_OBJ,INDEX) MEM_OBJ->getPtr( INDEX )
@@ -938,7 +1201,7 @@ int QCamera3HardwareInterface::initParameters()
 int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
 {
     int rc = 0;
-    android::CameraMetadata staticInfo;
+    CameraMetadata staticInfo;
     int facingBack = gCamCapability[cameraId]->position == CAM_POSITION_BACK;
     /*HAL 3 only*/
     #ifdef HAL_3_CAPABILITIES
@@ -1304,6 +1567,19 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                 available_jpeg_sizes,
                 sizeof(available_jpeg_sizes)/sizeof(int32_t));
 
+    static int32_t max_jpeg_size = 0;
+    int temp_width, temp_height;
+    for (int i = 0; i < gCamCapability[cameraId]->picture_sizes_tbl_cnt; i++) {
+        temp_width = gCamCapability[cameraId]->picture_sizes_tbl[i].width;
+        temp_height = gCamCapability[cameraId]->picture_sizes_tbl[i].height;
+        if (temp_width * temp_height > max_jpeg_size ) {
+            max_jpeg_size = temp_width * temp_height;
+        }
+    }
+    max_jpeg_size = max_jpeg_size * 3/2 + sizeof(camera3_jpeg_blob_t);
+    staticInfo.update(ANDROID_JPEG_MAX_SIZE,
+                      &max_jpeg_size, 1);
+
     static int32_t avail_effects[CAM_EFFECT_MODE_MAX];
     for (int i = 0; i < gCamCapability[cameraId]->supported_effects_cnt; i++) {
         avail_effects[i] = lookupFwkName(EFFECT_MODES_MAP,
@@ -1612,7 +1888,7 @@ int QCamera3HardwareInterface::getCamInfo(int cameraId,
  *              failure: NULL
  *
  *==========================================================================*/
-camera_metadata_t* QCamera3HardwareInterface::translateToMetadata(int type)
+camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int type)
 {
     pthread_mutex_lock(&mMutex);
 
@@ -1622,7 +1898,7 @@ camera_metadata_t* QCamera3HardwareInterface::translateToMetadata(int type)
     }
     //first time we are handling this request
     //fill up the metadata structure using the wrapper class
-    android::CameraMetadata settings;
+    CameraMetadata settings;
     //translate from cam_capability_t to camera_metadata_tag_t
     static const uint8_t requestType = ANDROID_REQUEST_TYPE_CAPTURE;
     settings.update(ANDROID_REQUEST_TYPE, &requestType, 1);
@@ -1748,40 +2024,220 @@ int QCamera3HardwareInterface::translateMetadataToParameters
                                   (const camera_metadata_t *settings)
 {
     int rc = 0;
-    android::CameraMetadata frame_settings;
+    CameraMetadata frame_settings;
     frame_settings = settings;
 
-    //white balance
-    int32_t fwk_whiteLevel = frame_settings.find(ANDROID_CONTROL_AWB_MODE).data.i32[0];
+    int32_t antibandingMode =
+        frame_settings.find(ANDROID_CONTROL_AE_ANTIBANDING_MODE).data.i32[0];
+    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_ANTIBANDING,
+            sizeof(antibandingMode), &antibandingMode);
+
+    /*int32_t expCompensation = frame_settings.find().data.i32[0];
+      rc = AddSetParmEntryToBatch(mParameters,
+      CAM_INTF_PARM_EXPOSURE_COMPENSATION,
+      sizeof(expCompensation), &expCompensation);*/
+
+    int32_t aeLock = frame_settings.find(ANDROID_CONTROL_AE_LOCK).data.i32[0];
+    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_AEC_LOCK,
+            sizeof(aeLock), &aeLock);
+
+    int32_t focusMode =
+        frame_settings.find(ANDROID_CONTROL_AF_MODE).data.i32[0];
+    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_FOCUS_MODE,
+            sizeof(focusMode), &focusMode);
+
+    int32_t awbLock = frame_settings.find(ANDROID_CONTROL_AWB_LOCK).data.i32[0];
+    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_AWB_LOCK,
+            sizeof(awbLock), &awbLock);
+
+    int32_t fwk_whiteLevel =
+        frame_settings.find(ANDROID_CONTROL_AWB_MODE).data.i32[0];
     int whiteLevel = lookupHalName(WHITE_BALANCE_MODES_MAP,
-                                   sizeof(WHITE_BALANCE_MODES_MAP)/ sizeof(int32_t),
-                                   fwk_whiteLevel);
+            sizeof(WHITE_BALANCE_MODES_MAP)/ sizeof(int32_t),
+            fwk_whiteLevel);
     rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_WHITE_BALANCE,
-                                sizeof(whiteLevel), &whiteLevel);
-    //effect
-    int32_t fwk_effectMode = frame_settings.find(ANDROID_CONTROL_EFFECT_MODE).data.i32[0];
+            sizeof(whiteLevel), &whiteLevel);
+
+    int32_t fwk_effectMode =
+        frame_settings.find(ANDROID_CONTROL_EFFECT_MODE).data.i32[0];
     int effectMode = lookupHalName(EFFECT_MODES_MAP,
-                                   sizeof(EFFECT_MODES_MAP)/ sizeof(int32_t),
-                                   fwk_effectMode);
+            sizeof(EFFECT_MODES_MAP)/ sizeof(int32_t),
+            fwk_effectMode);
     rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_EFFECT,
-                                sizeof(effectMode), &effectMode);
-    //ae mode
-    int32_t fwk_aeMode = frame_settings.find(ANDROID_CONTROL_AE_MODE).data.i32[0];
+            sizeof(effectMode), &effectMode);
+    int32_t fwk_aeMode =
+        frame_settings.find(ANDROID_CONTROL_AE_MODE).data.i32[0];
     int aeMode = lookupHalName(AUTO_EXPOSURE_MAP,
-                               sizeof(AUTO_EXPOSURE_MAP)/ sizeof(int32_t),
-                               fwk_aeMode);
+            sizeof(AUTO_EXPOSURE_MAP)/ sizeof(int32_t),
+            fwk_aeMode);
     rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_AEC_MODE,
-                                sizeof(aeMode), &aeMode);
+            sizeof(aeMode), &aeMode);
 
-    //scaler crop region
-    int32_t scalerCropRegion = frame_settings.find(ANDROID_SCALER_CROP_REGION).data.i32[0];
+    int32_t metaFrameNumber =
+        frame_settings.find(ANDROID_REQUEST_FRAME_COUNT).data.i32[0];
+    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_FRAME_NUMBER,
+            sizeof(metaFrameNumber), &metaFrameNumber);
+
+    int32_t colorCorrectMode =
+        frame_settings.find(ANDROID_COLOR_CORRECTION_MODE).data.i32[0];
+    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_COLOR_CORRECT_MODE,
+            sizeof(colorCorrectMode), &colorCorrectMode);
+
+    int32_t aecTrigger =
+        frame_settings.find(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER).data.i32[0];
+    rc = AddSetParmEntryToBatch(mParameters,
+            CAM_INTF_META_AEC_PRECAPTURE_TRIGGER, 
+            sizeof(aecTrigger), &aecTrigger);
+
+    int32_t afTrigger =
+        frame_settings.find(ANDROID_CONTROL_AF_TRIGGER).data.i32[0];
+    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_AF_TRIGGER,
+            sizeof(afTrigger), &afTrigger);
+
+
+    int32_t metaMode = frame_settings.find(ANDROID_CONTROL_MODE).data.i32[0];
+    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_MODE,
+            sizeof(metaMode), &metaMode);
+
+
+    int32_t demosaic = frame_settings.find(ANDROID_DEMOSAIC_MODE).data.u8[0];
+    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_DEMOSAIC,
+            sizeof(demosaic), &demosaic);
+
+    int32_t edgeMode = frame_settings.find(ANDROID_EDGE_MODE).data.u8[0];
+    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_EDGE,
+            sizeof(edgeMode), &edgeMode);
+
+
+    int32_t edgeStrength =
+        frame_settings.find(ANDROID_EDGE_STRENGTH).data.i32[0];
+    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_SHARPNESS_STRENGTH,
+            sizeof(edgeStrength), &edgeStrength);
+
+    int32_t flashPower =
+        frame_settings.find(ANDROID_FLASH_FIRING_POWER).data.u8[0];
+    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_FLASH_POWER,
+            sizeof(flashPower), &flashPower);
+
+    int64_t flashFiringTime =
+        frame_settings.find(ANDROID_FLASH_FIRING_TIME).data.i64[0];
+    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_FLASH_FIRING_TIME,
+            sizeof(flashFiringTime), &flashFiringTime);
+
+    int32_t geometricMode =
+        frame_settings.find(ANDROID_GEOMETRIC_MODE).data.u8[0];
+    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_GEOMETRIC_MODE,
+            sizeof(geometricMode), &geometricMode);
+
+    int32_t geometricStrength =
+        frame_settings.find(ANDROID_GEOMETRIC_STRENGTH).data.u8[0];
+    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_GEOMETRIC_STRENGTH,
+            sizeof(geometricStrength), &geometricStrength);
+
+    int32_t hotPixelMode =
+        frame_settings.find(ANDROID_HOT_PIXEL_MODE).data.u8[0];
+    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_HOTPIXEL_MODE,
+            sizeof(hotPixelMode), &hotPixelMode);
+
+
+    float lensAperture =
+        frame_settings.find( ANDROID_LENS_APERTURE).data.f[0];
+    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_LENS_APERTURE,
+            sizeof(lensAperture), &lensAperture);
+
+
+    float filterDensity =
+        frame_settings.find(ANDROID_LENS_FILTER_DENSITY).data.f[0];
+    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_LENS_FILTERDENSITY,
+            sizeof(filterDensity), &filterDensity);
+
+
+    float focalLength =
+        frame_settings.find(ANDROID_LENS_FOCAL_LENGTH).data.f[0];
+    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_LENS_FOCAL_LENGTH,
+            sizeof(focalLength), &focalLength);
+
+    float focalDistance =
+        frame_settings.find(ANDROID_LENS_FOCUS_DISTANCE).data.f[0];
+    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_LENS_FOCUS_DISTANCE,
+            sizeof(focalDistance), &focalDistance);
+
+    int32_t optStabMode =
+        frame_settings.find(ANDROID_LENS_OPTICAL_STABILIZATION_MODE).data.u8[0];
+    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_LENS_OPT_STAB_MODE,
+            sizeof(optStabMode), &optStabMode);
+
+    int32_t noiseRedMode =
+        frame_settings.find(ANDROID_NOISE_REDUCTION_MODE).data.u8[0];
+    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_NOISE_REDUCTION_MODE,
+            sizeof(noiseRedMode), &noiseRedMode);
+
+    int32_t noiseRedStrength =
+        frame_settings.find(ANDROID_NOISE_REDUCTION_STRENGTH).data.u8[0];
+    rc = AddSetParmEntryToBatch(mParameters,
+            CAM_INTF_META_NOISE_REDUCTION_STRENGTH,
+            sizeof(noiseRedStrength), &noiseRedStrength);
+
+    cam_crop_region_t scalerCropRegion;
+    scalerCropRegion.left =
+        frame_settings.find(ANDROID_SCALER_CROP_REGION).data.i32[0];
+    scalerCropRegion.top =
+        frame_settings.find(ANDROID_SCALER_CROP_REGION).data.i32[1];
+    scalerCropRegion.width =
+        frame_settings.find(ANDROID_SCALER_CROP_REGION).data.i32[2];
     rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_SCALER_CROP_REGION,
-                                sizeof(scalerCropRegion), &scalerCropRegion);
+            sizeof(scalerCropRegion), &scalerCropRegion);
 
-    //capture_intent
-    int32_t captureIntent = frame_settings.find(ANDROID_CONTROL_CAPTURE_INTENT).data.i32[0];
+    int64_t sensorExpTime =
+        frame_settings.find(ANDROID_SENSOR_EXPOSURE_TIME).data.i64[0];
+    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_SENSOR_EXPOSURE_TIME,
+            sizeof(sensorExpTime), &sensorExpTime);
+
+    int64_t sensorFrameDuration =
+        frame_settings.find(ANDROID_SENSOR_FRAME_DURATION).data.i64[0];
+    rc = AddSetParmEntryToBatch(mParameters,
+            CAM_INTF_META_SENSOR_FRAME_DURATION,
+            sizeof(sensorFrameDuration), &sensorFrameDuration);
+
+    int32_t sensorSensitivity =
+        frame_settings.find(ANDROID_SENSOR_SENSITIVITY).data.i32[0];
+    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_SENSOR_SENSITIVITY,
+            sizeof(sensorSensitivity), &sensorSensitivity);
+
+    int32_t shadingMode = frame_settings.find(ANDROID_SHADING_MODE).data.u8[0];
+    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_SHADING_MODE,
+            sizeof(shadingMode), &shadingMode);
+
+    int32_t shadingStrength =
+        frame_settings.find(ANDROID_SHADING_STRENGTH).data.u8[0];
+    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_SHADING_STRENGTH,
+            sizeof(shadingStrength), &shadingStrength);
+
+    int32_t facedetectMode =
+        frame_settings.find(ANDROID_STATISTICS_FACE_DETECT_MODE).data.u8[0];
+    rc = AddSetParmEntryToBatch(mParameters,
+            CAM_INTF_META_STATS_FACEDETECT_MODE,
+            sizeof(facedetectMode), &facedetectMode);
+
+    int32_t histogramMode =
+        frame_settings.find(ANDROID_STATISTICS_HISTOGRAM_MODE).data.u8[0];
+    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_STATS_HISTOGRAM_MODE,
+            sizeof(histogramMode), &histogramMode);
+
+    int32_t sharpnessMapMode =
+        frame_settings.find(ANDROID_STATISTICS_SHARPNESS_MAP_MODE).data.u8[0];
+    rc = AddSetParmEntryToBatch(mParameters,
+            CAM_INTF_META_STATS_SHARPNESS_MAP_MODE,
+            sizeof(sharpnessMapMode), &sharpnessMapMode);
+
+    int32_t tonemapMode = frame_settings.find(ANDROID_TONEMAP_MODE).data.u8[0];
+    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_TONEMAP_MODE,
+            sizeof(tonemapMode), &tonemapMode);
+
+    int32_t captureIntent =
+        frame_settings.find(ANDROID_CONTROL_CAPTURE_INTENT).data.i32[0];
     rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_CAPTURE_INTENT,
-                                sizeof(captureIntent), &captureIntent);
+            sizeof(captureIntent), &captureIntent);
 
     return rc;
 }
@@ -1807,7 +2263,7 @@ int QCamera3HardwareInterface::getJpegSettings
         mJpegSettings = NULL;
     }
     mJpegSettings = (jpeg_settings_t*) malloc(sizeof(jpeg_settings_t));
-    android::CameraMetadata jpeg_settings;
+    CameraMetadata jpeg_settings;
     jpeg_settings = settings;
 
     mJpegSettings->jpeg_orientation =
@@ -1956,7 +2412,7 @@ const camera_metadata_t* QCamera3HardwareInterface::
         return NULL;
     }
 
-    fwk_metadata = hw->translateToMetadata(type);
+    fwk_metadata = hw->translateCapabilityToMetadata(type);
 
     return fwk_metadata;
 }
