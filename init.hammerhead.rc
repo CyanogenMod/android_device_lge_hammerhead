@@ -51,6 +51,22 @@ on boot
     # Enable DEBUG_SUSPEND, DEBUG_EXIT_SUSPEND, and DEBUG_WAKEUP
     write /sys/module/wakelock/parameters/debug_mask 7
 
+    # bluetooth
+    chown bluetooth bluetooth /sys/module/bluetooth_power/parameters/power
+    chown bluetooth net_bt_stack /sys/class/rfkill/rfkill0/type
+    chown bluetooth net_bt_stack /sys/class/rfkill/rfkill0/state
+    chown bluetooth net_bt_stack /proc/bluetooth/sleep/proto
+    chown system system /sys/module/sco/parameters/disable_esco
+    chown bluetooth bluetooth /sys/module/hci_smd/parameters/hcismd_set
+    chmod 0660 /sys/module/bluetooth_power/parameters/power
+    chmod 0660 /sys/module/hci_smd/parameters/hcismd_set
+    chmod 0660 /sys/class/rfkill/rfkill0/state
+    chmod 0660 /proc/bluetooth/sleep/proto
+    chown bluetooth net_bt_stack /dev/ttyHS99
+    chmod 0660 /dev/ttyHS99
+    chown bluetooth net_bt_stack /sys/devices/platform/msm_serial_hs.0/clock
+    chmod 0660 /sys/devices/platform/msm_serial_hs.0/clock
+
     #Create QMUX deamon socket area
     mkdir /dev/socket/qmux_radio 0770 radio radio
     chmod 2770 /dev/socket/qmux_radio
@@ -77,6 +93,9 @@ on boot
 
 on post-fs-data
     mkdir /data/media 0770 media_rw media_rw
+
+    #  bluetooth
+    mkdir /data/misc/bluetooth 0770 bluetooth bluetooth
 
     # Create directory used by audio subsystem
     mkdir /data/misc/audio 0770 audio audio
