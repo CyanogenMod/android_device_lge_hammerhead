@@ -32,7 +32,7 @@ BOARD_MKBOOTIMG_ARGS := --ramdisk_offset 0x02900000 --tags_offset 0x02700000
 BOARD_USES_ALSA_AUDIO := true
 
 TARGET_NO_RADIOIMAGE := true
-TARGET_BOARD_PLATFORM := msm8x74
+TARGET_BOARD_PLATFORM := msm8974
 TARGET_BOOTLOADER_BOARD_NAME := hammerhead
 TARGET_BOARD_INFO_FILE := device/lge/hammerhead/board-info.txt
 

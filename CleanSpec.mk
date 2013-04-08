@@ -44,5 +44,7 @@
 #$(call add-clean-step, find $(OUT_DIR) -type f -name "IGTalkSession*" -print0 | xargs -0 rm -f)
 #$(call add-clean-step, rm -rf $(PRODUCT_OUT)/data/*)
 
-$(call add-clean-step, find $(PRODUCT_OUT) -name "*audio.primary.msm8x74*" -print0 | xargs -0 rm -rf)
+$(call add-clean-step, find $(PRODUCT_OUT) -name "*audio.primary.msm8974*" -print0 | xargs -0 rm -rf)
 $(call add-clean-step, rm -f $(OUT_DIR)/target/product/hammerhead/system/lib/modules/adsp*.ko)
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/system/build.prop)
+

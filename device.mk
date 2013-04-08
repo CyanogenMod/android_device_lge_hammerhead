@@ -95,13 +95,13 @@ PRODUCT_PACKAGES += \
     librs_jni
 
 PRODUCT_PACKAGES += \
-    gralloc.msm8x74 \
+    gralloc.msm8974 \
     libgenlock \
-    lights.msm8x74 \
-    hwcomposer.msm8x74
+    lights.msm8974 \
+    hwcomposer.msm8974
 
 PRODUCT_PACKAGES += \
-    audio.primary.msm8x74 \
+    audio.primary.msm8974 \
     audio.a2dp.default \
     audio.usb.default \
     audio.r_submix.default \
