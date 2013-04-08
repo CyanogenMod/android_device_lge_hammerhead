@@ -61,6 +61,11 @@
             <Quirk name="requires-allocate-on-output-ports"/>
             <Quirk name="defers-output-buffer-allocation"/>
         </MediaCodec>
+        <MediaCodec name="OMX.qcom.video.decoder.vp8" type="video/x-vnd.on2.vp8" >
+            <Quirk name="requires-allocate-on-input-ports" />
+            <Quirk name="requires-allocate-on-output-ports" />
+            <Quirk name="defers-output-buffer-allocation" />
+        </MediaCodec>
         <MediaCodec name="OMX.google.vpx.decoder" type="video/x-vnd.on2.vp8" />
         <MediaCodec name="OMX.google.h264.decoder" type="video/avc" />
         <MediaCodec name="OMX.google.h263.decoder" type="video/3gpp" />
