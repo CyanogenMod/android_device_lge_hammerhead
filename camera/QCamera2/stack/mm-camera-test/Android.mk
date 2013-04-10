@@ -59,7 +59,7 @@ endif
 LOCAL_CFLAGS += -Wall -Werror
 
 LOCAL_SHARED_LIBRARIES:= \
-         libcutils libdl
+         libcutils liblog libdl
 
 LOCAL_MODULE:= mm-qcamera-app
 
