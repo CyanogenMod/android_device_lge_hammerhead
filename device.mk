@@ -36,7 +36,9 @@ PRODUCT_COPY_FILES += \
     device/lge/hammerhead/gpio-keys.kl:system/usr/keylayout/gpio-keys.kl \
     device/lge/hammerhead/gpio-keys.kcm:system/usr/keychars/gpio-keys.kcm \
     device/lge/hammerhead/qpnp_pon.kl:system/usr/keylayout/qpnp_pon.kl \
-    device/lge/hammerhead/qpnp_pon.kcm:system/usr/keychars/qpnp_pon.kcm
+    device/lge/hammerhead/qpnp_pon.kcm:system/usr/keychars/qpnp_pon.kcm \
+    device/lge/hammerhead/Button_Jack.kl:system/usr/keylayout/msm8974-taiko-mtp-snd-card_Button_Jack.kl \
+    device/lge/hammerhead/Button_Jack.kcm:system/usr/keychars/msm8974-taiko-mtp-snd-card_Button_Jack.kcm
 
 # Prebuilt input device calibration files
 PRODUCT_COPY_FILES += \
