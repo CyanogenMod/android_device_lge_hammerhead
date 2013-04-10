@@ -250,7 +250,7 @@
     <path name="speaker">
         <ctl name="SLIM RX1 MUX" value="AIF1_PB" />
         <ctl name="SLIM_0_RX Channels" value="One" />
-        <ctl name="RX3 MIX1 INP1" value="RX1" />
+        <ctl name="RX7 MIX1 INP1" value="RX1" />
     </path>
 
     <path name="speaker-mic">
