@@ -37,17 +37,28 @@ extern "C" {
 using namespace android;
 
 namespace qcamera {
+    typedef enum {
+        INVALID,
+        VALID,
+        RECONFIGURE,
+    } stream_status_t;
 
-typedef struct {
-    int32_t jpeg_orientation;
-    uint8_t jpeg_quality;
-    cam_dimension_t thumbnail_size;
-    int64_t gps_timestamp;
-    double gps_coordinates[3];
-    uint8_t gps_processing_method;
-    int32_t sensor_sensitivity;
-    float lens_focal_length;
-} jpeg_settings_t;
+    typedef struct {
+        int32_t jpeg_orientation;
+        uint8_t jpeg_quality;
+        cam_dimension_t thumbnail_size;
+        int64_t gps_timestamp;
+        double gps_coordinates[3];
+        uint8_t gps_processing_method;
+        int32_t sensor_sensitivity;
+        float lens_focal_length;
+    } jpeg_settings_t;
+
+    typedef struct {
+        camera3_stream_t *stream;
+        camera3_stream_buffer_set_t buffer_set;
+        stream_status_t status;
+    } stream_info_t;
 
 };//namespace qcamera
 
