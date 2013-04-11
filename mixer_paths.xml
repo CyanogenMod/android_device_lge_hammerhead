@@ -43,8 +43,6 @@
     <ctl name="SLIMBUS_1_RX Port Mixer INTERNAL_BT_SCO_TX" value="0" />
     <ctl name="SLIMBUS_0_RX Port Mixer INTERNAL_FM_TX" value="0" />
     <ctl name="SLIMBUS_0_RX Port Mixer SLIM_0_TX" value="0" />
-    <ctl name="SLIMBUS_0_RX Port Mixer AUX_PCM_UL_TX" value="0" />
-    <ctl name="SLIMBUS_0_RX Port Mixer MI2S_TX" value="0" />
     <ctl name="SLIMBUS_3_RX_Voice Mixer Voice Stub" value="0" />
     <ctl name="SLIMBUS_1_RX Mixer Voice Stub" value="0" />
     <ctl name="STUB_RX Mixer Voice Stub" value="0" />
@@ -78,22 +76,20 @@
     <ctl name="MultiMedia5 Mixer INTERNAL_BT_SCO_TX" value="0" />
     <ctl name="MultiMedia4 Mixer MI2S_TX" value="0" />
     <ctl name="MultiMedia2 Mixer INTERNAL_FM_TX" value="0" />
-    <ctl name="MultiMedia1 Mixer PRI_TX" value="1" />
-    <ctl name="MultiMedia1 Mixer MI2S_TX" value="1" />
-    <ctl name="MultiMedia1 Mixer SLIM_0_TX" value="1" />
-    <ctl name="MultiMedia1 Mixer AUX_PCM_UL_TX" value="1" />
-    <ctl name="MultiMedia1 Mixer INTERNAL_BT_SCO_TX" value="1" />
-    <ctl name="MultiMedia1 Mixer SLIM_4_TX" value="1" />
+    <ctl name="MultiMedia1 Mixer MI2S_TX" value="0" />
+    <ctl name="MultiMedia1 Mixer SLIM_0_TX" value="0" />
+    <ctl name="MultiMedia1 Mixer INTERNAL_BT_SCO_TX" value="0" />
+    <ctl name="MultiMedia1 Mixer SLIM_4_TX" value="0" />
     <ctl name="HDMI Mixer MultiMedia1" value="0" />
     <ctl name="HDMI Mixer MultiMedia2" value="0" />
     <ctl name="HDMI Mixer MultiMedia3" value="0" />
     <ctl name="HDMI Mixer MultiMedia4" value="0" />
     <ctl name="HDMI Mixer MultiMedia5" value="0" />
-    <ctl name="SLIMBUS_0_RX Audio Mixer MultiMedia1" value="1" />
-    <ctl name="SLIMBUS_0_RX Audio Mixer MultiMedia2" value="1" />
-    <ctl name="SLIMBUS_0_RX Audio Mixer MultiMedia3" value="1" />
-    <ctl name="SLIMBUS_0_RX Audio Mixer MultiMedia4" value="1" />
-    <ctl name="SLIMBUS_0_RX Audio Mixer MultiMedia5" value="1" />
+    <ctl name="SLIMBUS_0_RX Audio Mixer MultiMedia1" value="0" />
+    <ctl name="SLIMBUS_0_RX Audio Mixer MultiMedia2" value="0" />
+    <ctl name="SLIMBUS_0_RX Audio Mixer MultiMedia3" value="0" />
+    <ctl name="SLIMBUS_0_RX Audio Mixer MultiMedia4" value="0" />
+    <ctl name="SLIMBUS_0_RX Audio Mixer MultiMedia5" value="0" />
     <ctl name="PCM_RX_DL_HL Switch" value="0" />
     <ctl name="SLIMBUS_DL_HL Switch" value="0" />
     <ctl name="SLIM TX10 MUX" value="ZERO" />
@@ -135,12 +131,13 @@
     <ctl name="RX1 MIX1 INP3" value="ZERO" />
     <ctl name="RX1 MIX1 INP2" value="ZERO" />
     <ctl name="RX1 MIX1 INP1" value="ZERO" />
-    <ctl name="HPHL DAC Switch" value="1" />
-    <ctl name="DAC1 Switch" value="1" />
+    <ctl name="HPHL DAC Switch" value="0" />
+    <ctl name="DAC1 Switch" value="0" />
     <ctl name="SLIM_0_RX Channels" value="One" />
     <ctl name="SLIM_0_TX Channels" value="One" />
     <ctl name="SLIM RX1 MUX" value="ZERO" />
     <ctl name="SPK DRV Volume" value="70" />
+    <ctl name="AIF1_CAP Mixer SLIM TX7" value="0"/>
 
     <!-- These are audio route (FE to BE) specific mixer settings -->
     <path name="deep-buffer-playback">
@@ -226,11 +223,11 @@
     </path>
 
     <path name="adc1">
+        <ctl name="AIF1_CAP Mixer SLIM TX7" value="1"/>
         <ctl name="SLIM_0_TX Channels" value="One" />
         <ctl name="SLIM TX7 MUX" value="DEC6" />
         <ctl name="DEC6 MUX" value="ADC1" />
-        <ctl name="ADC1 Volume" value="16" />
-        <ctl name="MICBIAS1 CAPLESS Switch" value="0" />
+        <ctl name="ADC1 Volume" value="100" />
     </path>
 
     <path name="adc2">
@@ -267,11 +264,8 @@
     </path>
 
     <path name="handset-mic">
-        <ctl name="SLIM_0_TX Channels" value="One" />
-        <ctl name="SLIM TX7 MUX" value="DEC7" />
-        <ctl name="DEC7 MUX" value="ADC1" />
-        <ctl name="DEC7 Volume" value="99" />
-        <ctl name="MICBIAS1 CAPLESS Switch" value="0" />
+        <path name="adc1" />
+        <ctl name="DEC6 Volume" value="99" />
     </path>
 
     <path name="hac-handset">
