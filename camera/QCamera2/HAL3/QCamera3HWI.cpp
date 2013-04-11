@@ -147,6 +147,11 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId)
       mCameraHandle(NULL),
       mCameraOpened(false),
       mCallbackOps(NULL),
+      mInputStream(NULL),
+      mMetadataChannel(NULL),
+      mFirstRequest(false),
+      mParamHeap(NULL),
+      mParameters(NULL),
       mJpegSettings(NULL)
 {
     mCameraDevice.common.tag = HARDWARE_DEVICE_TAG;
@@ -161,6 +166,10 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId)
     mPendingRequest = 0;
 
     pthread_mutex_init(&mMutex, NULL);
+    pthread_mutex_init(&mCaptureResultLock, NULL);
+
+    for (size_t i = 0; i < CAMERA3_TEMPLATE_COUNT; i++)
+        mDefaultMetadata[i] = NULL;
 }
 
 /*===========================================================================
@@ -178,12 +187,18 @@ QCamera3HardwareInterface::~QCamera3HardwareInterface()
         free(mJpegSettings);
         mJpegSettings = NULL;
     }
+    deinitParameters();
     closeCamera();
+
+    for (size_t i = 0; i < CAMERA3_TEMPLATE_COUNT; i++)
+        if (mDefaultMetadata[i])
+            free_camera_metadata(mDefaultMetadata[i]);
 
     pthread_mutex_destroy(&mRequestLock);
     pthread_cond_destroy(&mRequestCond);
 
     pthread_mutex_destroy(&mMutex);
+    pthread_mutex_destroy(&mCaptureResultLock);
 }
 
 /*===========================================================================
@@ -266,41 +281,6 @@ int QCamera3HardwareInterface::closeCamera()
 }
 
 /*===========================================================================
- * FUNCTION   : sendCaptureResult
- *
- * DESCRIPTION: send completed capture result metadata buffer along with possibly
- *              completed output stream buffers to the framework
- *
- * PARAMETERS :
- *
- * RETURN     :
- *==========================================================================*/
-void QCamera3HardwareInterface::sendCaptureResult(const struct camera3_callback_ops *,
-                                                 const camera3_capture_result_t *result)
-{
-    //TODO - Implement
-}
-
-/*===========================================================================
- * FUNCTION   : notify
- *
- * DESCRIPTION: Asynchronous notification callback to framework
- *
- * PARAMETERS :
- *
- * RETURN     :
- *
- *
- *==========================================================================*/
-
-void QCamera3HardwareInterface::notify(const struct camera3_callback_ops *,
-                                       const camera3_notify_msg_t *msg)
-{
-    //TODO - Implement
-}
-
-
-/*===========================================================================
  * FUNCTION   : initialize
  *
  * DESCRIPTION: Initialize frameworks callback functions
@@ -318,6 +298,11 @@ int QCamera3HardwareInterface::initialize(
 
     pthread_mutex_lock(&mMutex);
 
+    rc = initParameters();
+    if (rc < 0) {
+        ALOGE("%s: initParamters failed %d", __func__, rc);
+       goto err1;
+    }
     //Create metadata channel and initialize it
     mMetadataChannel = new QCamera3MetadataChannel(mCameraHandle->camera_handle,
                     mCameraHandle->ops, captureResultCb,
@@ -325,47 +310,24 @@ int QCamera3HardwareInterface::initialize(
     if (mMetadataChannel == NULL) {
         ALOGE("%s: failed to allocate metadata channel", __func__);
         rc = -ENOMEM;
-        goto err1;
+        goto err2;
     }
     rc = mMetadataChannel->initialize();
     if (rc < 0) {
         ALOGE("%s: metadata channel initialization failed", __func__);
-        goto err2;
-    }
-
-    /* Initialize parameter heap and structure */
-    mParamHeap = new QCamera3HeapMemory();
-    if (mParamHeap == NULL) {
-        ALOGE("%s: creation of mParamHeap failed", __func__);
-        goto err2;
-    }
-    rc = mParamHeap->allocate(1, sizeof(parm_buffer_t), false);
-    if (rc < 0) {
-        ALOGE("%s: allocation of mParamHeap failed", __func__);
         goto err3;
     }
-    rc = mCameraHandle->ops->map_buf(mCameraHandle->camera_handle,
-                CAM_MAPPING_BUF_TYPE_PARM_BUF,
-                mParamHeap->getFd(0), sizeof(parm_buffer_t));
-    if (rc < 0) {
-        ALOGE("%s: map_buf failed for mParamHeap", __func__);
-        goto err4;
-    }
-    mParameters = (parm_buffer_t *)DATA_PTR(mParamHeap, 0);
 
     mCallbackOps = callback_ops;
 
     pthread_mutex_unlock(&mMutex);
     return 0;
 
-err4:
-    mParamHeap->deallocate();
 err3:
-    delete mParamHeap;
-    mParamHeap = NULL;
-err2:
     delete mMetadataChannel;
     mMetadataChannel = NULL;
+err2:
+    deinitParameters();
 err1:
     pthread_mutex_unlock(&mMutex);
     return rc;
@@ -387,7 +349,7 @@ int QCamera3HardwareInterface::configureStreams(
         camera3_stream_configuration_t *streamList)
 {
     pthread_mutex_lock(&mMutex);
-    int rc;
+    int rc = 0;
 
     // Sanity check stream_list
     if (streamList == NULL) {
@@ -426,7 +388,7 @@ int QCamera3HardwareInterface::configureStreams(
     /* TODO: Clean up no longer used streams, and maintain others if this
      * is not the 1st time configureStreams is called */
 
-    mMetadataChannel->stop();
+    //mMetadataChannel->stop();
 
     /* Allocate channel objects for the requested streams */
     for (size_t i = 0; i < streamList->num_streams; i++) {
@@ -502,11 +464,13 @@ int QCamera3HardwareInterface::configureStreams(
         }
     }
 
-    // Cannot reuse settings across configure call
+    //settings/parameters don't carry over for new configureStreams
     memset(mParameters, 0, sizeof(parm_buffer_t));
+    mFirstRequest = true;
+
 end:
     pthread_mutex_unlock(&mMutex);
-    return 0;
+    return rc;
 }
 
 /*===========================================================================
@@ -673,12 +637,12 @@ int QCamera3HardwareInterface::processCaptureRequest(
     uint32_t frameNumber = request->frame_number;
 
     rc = setFrameParameters(request->frame_number, request->settings);
-
     if (rc < 0) {
         ALOGE("%s: fail to set frame parameters", __func__);
         pthread_mutex_unlock(&mMutex);
         return rc;
     }
+    mFirstRequest = false;
 
     // Acquire all request buffers first
     for (size_t i = 0; i < request->num_output_buffers; i++) {
@@ -785,11 +749,13 @@ void QCamera3HardwareInterface::dump(int fd)
 /*===========================================================================
  * FUNCTION   : captureResultCb
  *
- * DESCRIPTION: Callback handler for all capture result (streams, as well as metadata)
+ * DESCRIPTION: Callback handler for all capture result
+ *              (streams, as well as metadata)
  *
  * PARAMETERS :
  *   @metadata : metadata information
- *   @buffer   : actual gralloc buffer to be returned to frameworks. NULL if metadata.
+ *   @buffer   : actual gralloc buffer to be returned to frameworks.
+ *               NULL if metadata.
  *
  * RETURN     : NONE
  *==========================================================================*/
@@ -799,7 +765,6 @@ void QCamera3HardwareInterface::captureResultCb(metadata_buffer_t *metadata,
     pthread_mutex_lock(&mCaptureResultLock);
     camera3_capture_result_t result;
 
-
     if (metadata) {
         // Signal to unblock processCaptureRequest
         pthread_mutex_lock(&mRequestLock);
@@ -807,25 +772,56 @@ void QCamera3HardwareInterface::captureResultCb(metadata_buffer_t *metadata,
         pthread_cond_signal(&mRequestCond);
         pthread_mutex_unlock(&mRequestLock);
 
-        uint32_t *frame_number = (uint32_t *)POINTER_OF(CAM_INTF_META_FRAME_NUMBER, metadata);
+        int32_t frame_number_valid = *(int32_t *)
+            POINTER_OF(CAM_INTF_META_FRAME_NUMBER_VALID, metadata);
+        ALOGE("%s: frame_number_valid = %d", __func__, frame_number_valid);
+        if (!frame_number_valid) {
+            ALOGI("%s: Not a valid frame number, used as SOF only", __func__);
+            goto done;
+        }
 
+        uint32_t frame_number = *(uint32_t *)
+            POINTER_OF(CAM_INTF_META_FRAME_NUMBER, metadata);
+#if 1
+        nsecs_t capture_time = 1000000 * frame_number * 33;
+#else
+        nsecs_t capture_time = *(int64_t *)
+            POINTER_OF(CAM_INTF_META_SENSOR_EXPOSURE_TIME, metadata);
+#endif
+        ALOGE("%s: notify frame_number = %d, capture_time = %lld", __func__,
+                frame_number, capture_time);
+
+        /* Send shutter notify */
+        camera3_notify_msg_t notify_msg;
+        notify_msg.type = CAMERA3_MSG_SHUTTER;
+        notify_msg.message.shutter.frame_number = frame_number;
+        notify_msg.message.shutter.timestamp = capture_time;
+        mCallbackOps->notify(mCallbackOps, &notify_msg);
+
+        /* send capture result with metadata only */
         result.result = translateCbMetadataToResultMetadata(metadata);
-        if (!result.result) {
-            result.frame_number = *frame_number;
+        if (result.result) {
+            result.frame_number = frame_number;
             result.num_output_buffers = 0;
             result.output_buffers = NULL;
             mCallbackOps->process_capture_result(mCallbackOps, &result);
 
+            ALOGE("%s: metadata frame_number = %d, capture_time = %ld",
+                    __func__, frame_number, capture_time);
             free_camera_metadata((camera_metadata_t*)result.result);
+        } else {
+            ALOGE("%s: metadata is NULL", __func__);
         }
     } else {
         result.result = NULL;
         result.frame_number = frame_number;
         result.num_output_buffers = 1;
         result.output_buffers = buffer;
+        ALOGE("%s: result frame_number = %d", __func__, frame_number);
         mCallbackOps->process_capture_result(mCallbackOps, &result);
     }
 
+done:
     pthread_mutex_unlock(&mCaptureResultLock);
     return;
 }
@@ -848,10 +844,16 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
     CameraMetadata camMetadata;
     camera_metadata_t* resultMetadata;
 
-    uint32_t *frame_number =
-        (uint32_t *)POINTER_OF(CAM_INTF_META_FRAME_NUMBER, metadata);
-    nsecs_t captureTime = 1000000 * (*frame_number) * 33;
+#if 1
+    uint32_t frame_number = *(uint32_t *)
+        POINTER_OF(CAM_INTF_META_FRAME_NUMBER, metadata);
+    nsecs_t captureTime = 1000000 * frame_number * 33;
     camMetadata.update(ANDROID_SENSOR_TIMESTAMP, &captureTime, 1);
+#else
+    nsecs_t *captureTime = (nsecs_t *)POINTER_OF(CAM_INTF_META_SENSOR_TIMESTAMP, metadata);
+    camMetadata.update(ANDROID_SENSOR_TIMESTAMP, captureTime, 1);
+#endif
+
 
     /*CAM_INTF_META_HISTOGRAM - TODO*/
     /*cam_hist_stats_t  *histogram =
@@ -1047,7 +1049,7 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
             CAM_MAX_MAP_WIDTH*CAM_MAX_MAP_HEIGHT);
 
     resultMetadata = camMetadata.release();
-    return NULL;
+    return resultMetadata;
 }
 
 /*===========================================================================
@@ -1211,9 +1213,28 @@ int QCamera3HardwareInterface::initParameters()
     }
 
     mParameters = (parm_buffer_t*) DATA_PTR(mParamHeap,0);
-    memset(mParameters, 0, sizeof(parm_buffer_t));
-    mParameters->first_flagged_entry = CAM_INTF_PARM_MAX;
     return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : deinitParameters
+ *
+ * DESCRIPTION: de-initialize camera parameters
+ *
+ * PARAMETERS :
+ *
+ * RETURN     : NONE
+ *==========================================================================*/
+void QCamera3HardwareInterface::deinitParameters()
+{
+    mCameraHandle->ops->unmap_buf(mCameraHandle->camera_handle,
+            CAM_MAPPING_BUF_TYPE_PARM_BUF);
+
+    mParamHeap->deallocate();
+    delete mParamHeap;
+    mParamHeap = NULL;
+
+    mParameters = NULL;
 }
 
 /*===========================================================================
@@ -2018,10 +2039,13 @@ int QCamera3HardwareInterface::setFrameParameters(int frame_id,
 {
     /*translate from camera_metadata_t type to parm_type_t*/
     int rc = 0;
-    if (settings == NULL && mParameters == NULL) {
+    if (settings == NULL && mFirstRequest) {
         /*settings cannot be null for the first request*/
         return BAD_VALUE;
     }
+
+    mParameters->first_flagged_entry = CAM_INTF_PARM_MAX;
+
     /*we need to update the frame number in the parameters*/
     rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_FRAME_NUMBER,
                                 sizeof(frame_id), &frame_id);
@@ -2030,9 +2054,10 @@ int QCamera3HardwareInterface::setFrameParameters(int frame_id,
         return BAD_VALUE;
     }
     if(settings != NULL){
-        rc = translateMetadataToParameters(settings);
+        //rc = translateMetadataToParameters(settings);
     }
     /*set the parameters to backend*/
+    ALOGE("%s: %d", __func__, __LINE__);
     mCameraHandle->ops->set_parms(mCameraHandle->camera_handle, mParameters);
     return rc;
 }

@@ -99,6 +99,52 @@ int32_t QCamera3Stream::put_bufs(
 }
 
 /*===========================================================================
+ * FUNCTION   : invalidate_buf
+ *
+ * DESCRIPTION: static function entry to invalidate a specific stream buffer
+ *
+ * PARAMETERS :
+ *   @index      : index of the stream buffer to invalidate
+ *   @user_data  : user data ptr of ops_tbl
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCamera3Stream::invalidate_buf(int index, void *user_data)
+{
+    QCamera3Stream *stream = reinterpret_cast<QCamera3Stream *>(user_data);
+    if (!stream) {
+        ALOGE("invalid stream pointer");
+        return NO_MEMORY;
+    }
+    return stream->invalidateBuf(index);
+}
+
+/*===========================================================================
+ * FUNCTION   : clean_invalidate_buf
+ *
+ * DESCRIPTION: static function entry to clean and invalidate a specific stream buffer
+ *
+ * PARAMETERS :
+ *   @index      : index of the stream buffer to invalidate
+ *   @user_data  : user data ptr of ops_tbl
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCamera3Stream::clean_invalidate_buf(int index, void *user_data)
+{
+    QCamera3Stream *stream = reinterpret_cast<QCamera3Stream *>(user_data);
+    if (!stream) {
+        ALOGE("invalid stream pointer");
+        return NO_MEMORY;
+    }
+    return stream->cleanInvalidateBuf(index);
+}
+
+/*===========================================================================
  * FUNCTION   : QCamera3Stream
  *
  * DESCRIPTION: constructor of QCamera3Stream
@@ -132,6 +178,8 @@ QCamera3Stream::QCamera3Stream(uint32_t camHandle,
     mMemVtbl.user_data = this;
     mMemVtbl.get_bufs = get_bufs;
     mMemVtbl.put_bufs = put_bufs;
+    mMemVtbl.invalidate_buf = invalidate_buf;
+    mMemVtbl.clean_invalidate_buf = clean_invalidate_buf;
     memset(&mFrameLenOffset, 0, sizeof(mFrameLenOffset));
     memcpy(&mPaddingInfo, paddingInfo, sizeof(cam_padding_info_t));
 }
@@ -438,9 +486,6 @@ int32_t QCamera3Stream::bufDone(int index)
     if (rc < 0)
         return FAILED_TRANSACTION;
 
-    if ( !isTypeOf(CAM_STREAM_TYPE_METADATA) ) {
-        mStreamBufs->invalidateCache(index);
-    }
     return rc;
 }
 
@@ -565,6 +610,40 @@ int32_t QCamera3Stream::putBufs(mm_camera_map_unmap_ops_tbl_t *ops_tbl)
     mChannel->putStreamBufs();
 
     return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : invalidateBuf
+ *
+ * DESCRIPTION: invalidate a specific stream buffer
+ *
+ * PARAMETERS :
+ *   @index   : index of the buffer to invalidate
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCamera3Stream::invalidateBuf(int index)
+{
+    return mStreamBufs->invalidateCache(index);
+}
+
+/*===========================================================================
+ * FUNCTION   : cleanInvalidateBuf
+ *
+ * DESCRIPTION: clean and invalidate a specific stream buffer
+ *
+ * PARAMETERS :
+ *   @index   : index of the buffer to invalidate
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCamera3Stream::cleanInvalidateBuf(int index)
+{
+    return mStreamBufs->cleanInvalidateCache(index);
 }
 
 /*===========================================================================

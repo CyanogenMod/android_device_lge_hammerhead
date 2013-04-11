@@ -96,11 +96,6 @@ public:
                 camera3_stream_buffer_t *buffer, uint32_t frame_number,
                 void *userdata);
 
-    void sendCaptureResult(const struct camera3_callback_ops *,
-                        const camera3_capture_result_t *result);
-    void notify(const struct camera3_callback_ops *,
-                        const camera3_notify_msg_t *msg);
-
     int initialize(const camera3_callback_ops_t *callback_ops);
     int configureStreams(camera3_stream_configuration_t *stream_list);
     int registerStreamBuffers(const camera3_stream_buffer_set_t *buffer_set);
@@ -113,6 +108,7 @@ public:
     camera_metadata_t* translateCbMetadataToResultMetadata(metadata_buffer_t *metadata);
     int getJpegSettings(const camera_metadata_t *settings);
     int initParameters();
+    void deinitParameters();
 
     void captureResultCb(metadata_buffer_t *metadata,
                 camera3_stream_buffer_t *buffer, uint32_t frame_number);
@@ -157,6 +153,8 @@ private:
     camera3_stream_t *mInputStream;
     QCamera3MetadataChannel *mMetadataChannel;
 
+     //First request yet to be processed after configureStreams
+    bool mFirstRequest;
     QCamera3HeapMemory *mParamHeap;
     parm_buffer_t* mParameters;
 

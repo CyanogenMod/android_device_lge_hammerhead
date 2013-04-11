@@ -97,6 +97,7 @@ QCamera3Memory::~QCamera3Memory()
 int QCamera3Memory::cacheOpsInternal(int index, unsigned int cmd, void *vaddr)
 {
     struct ion_flush_data cache_inv_data;
+    struct ion_custom_data custom_data;
     int ret = OK;
 
     if (index >= mBufferCount) {
@@ -105,16 +106,19 @@ int QCamera3Memory::cacheOpsInternal(int index, unsigned int cmd, void *vaddr)
     }
 
     memset(&cache_inv_data, 0, sizeof(cache_inv_data));
+    memset(&custom_data, 0, sizeof(custom_data));
     cache_inv_data.vaddr = vaddr;
     cache_inv_data.fd = mMemInfo[index].fd;
     cache_inv_data.handle = mMemInfo[index].handle;
     cache_inv_data.length = mMemInfo[index].size;
+    custom_data.cmd = cmd;
+    custom_data.arg = (unsigned long)&cache_inv_data;
 
-    ALOGD("%s: addr = %p, fd = %d, handle = %p length = %d, ION Fd = %d",
+    ALOGV("%s: addr = %p, fd = %d, handle = %p length = %d, ION Fd = %d",
          __func__, cache_inv_data.vaddr, cache_inv_data.fd,
          cache_inv_data.handle, cache_inv_data.length,
          mMemInfo[index].main_ion_fd);
-    ret = ioctl(mMemInfo[index].main_ion_fd, cmd, &cache_inv_data);
+    ret = ioctl(mMemInfo[index].main_ion_fd, ION_IOC_CUSTOM, &custom_data);
     if (ret < 0)
         ALOGE("%s: Cache Invalidate failed: %s\n", __func__, strerror(errno));
 
