@@ -122,6 +122,9 @@ on post-fs-data
 
     setprop vold.post_fs_data_done 1
 
+on property:init.svc.wpa_supplicant=stopped
+    stop dhcpcd
+
 service rmt_storage /system/bin/rmt_storage
     class main
     user root
