@@ -167,6 +167,15 @@ PRODUCT_PROPERTY_OVERRIDES += \
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.radio.apm_sim_not_pwdn=1
 
+# Audio Configuration
+PRODUCT_PROPERTY_OVERRIDES += \
+    persist.audio.handset.mic.type=analog \
+    persist.audio.dualmic.config=endfire \
+    persist.audio.fluence.voicecall=true \
+    persist.audio.fluence.voicerec=true \
+    persist.audio.fluence.speaker=true \
+    af.resampler.quality=4
+
 # set default USB configuration
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
     persist.sys.usb.config=mtp
