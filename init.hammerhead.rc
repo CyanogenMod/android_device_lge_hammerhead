@@ -41,11 +41,11 @@ on init
 on fs
     mount_all ./fstab.hammerhead
     setprop ro.crypto.fuse_sdcard true
+    write /sys/kernel/boot_adsp/boot 1
 
 on early-boot
     # set RLIMIT_MEMLOCK to 64MB
     setrlimit 8 67108864 67108864
-    insmod /system/lib/modules/adsp-loader.ko
 
 on boot
     # Enable DEBUG_SUSPEND, DEBUG_EXIT_SUSPEND, and DEBUG_WAKEUP
