@@ -11,6 +11,7 @@
 /dev/ttyUSB0              0660   system     system
 /dev/msm_acdb             0660   system     audio
 /dev/msm_rtac             0660   system     audio
+/dev/msm_rotator          0660   system     system
 /dev/smd0                 0660   system     system
 /dev/smd4                 0660   system     system
 /dev/smd5                 0660   system     system
