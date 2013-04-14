@@ -25,3 +25,4 @@
 /system/lib/libsc-a3xx.so
 /system/vendor/firmware/a330_pfp.fw
 /system/vendor/firmware/a330_pm4.fw
+/system/vendor/firmware/bcm4335.hcd
