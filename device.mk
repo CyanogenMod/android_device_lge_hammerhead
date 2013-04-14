@@ -52,6 +52,11 @@ PRODUCT_COPY_FILES += \
     device/lge/hammerhead/media_codecs.xml:system/etc/media_codecs.xml \
     device/lge/hammerhead/media_profiles.xml:system/etc/media_profiles.xml
 
+PRODUCT_COPY_FILES += \
+    device/lge/hammerhead/bcmdhd.cal:system/etc/wifi/bcmdhd.cal \
+    device/lge/hammerhead/wpa_supplicant.conf:system/etc/wifi/wpa_supplicant.conf \
+    device/lge/hammerhead/p2p_supplicant.conf:system/etc/wifi/p2p_supplicant.conf
+
 # These are the hardware-specific features
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/handheld_core_hardware.xml:system/etc/permissions/handheld_core_hardware.xml \
@@ -147,6 +152,10 @@ PRODUCT_PROPERTY_OVERRIDES += \
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.telephony.call_ring.multiple=0
 
+PRODUCT_PROPERTY_OVERRIDES += \
+    wifi.interface=wlan0 \
+    wifi.supplicant_scan_interval=15
+
 # set default USB configuration
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
     persist.sys.usb.config=mtp
@@ -159,3 +168,4 @@ $(call inherit-product, frameworks/native/build/phone-xhdpi-2048-dalvik-heap.mk)
 
 $(call inherit-product-if-exists, hardware/qcom/msm8x74/msm8x74.mk)
 $(call inherit-product-if-exists, vendor/qcom/gpu/msm8x74/msm8x74-gpu-vendor.mk)
+$(call inherit-product-if-exists, hardware/broadcom/wlan/bcmdhd/firmware/bcm4335/device-bcm.mk)

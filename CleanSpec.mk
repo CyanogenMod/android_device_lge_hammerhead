@@ -48,3 +48,6 @@ $(call add-clean-step, find $(PRODUCT_OUT) -name "*audio.primary.msm8974*" -prin
 $(call add-clean-step, rm -f $(OUT_DIR)/target/product/hammerhead/system/lib/modules/adsp*.ko)
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/system/build.prop)
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/system/build.prop)
+$(call add-clean-step, find $(OUT_DIR) -name "wpa_supplicant*" -print0 | xargs -0 rm -rf)
+$(call add-clean-step, find $(OUT_DIR) -name "p2p_supplicant*" -print0 | xargs -0 rm -rf)
+$(call add-clean-step, rm -f $(OUT_DIR)/target/product/hammerhead/system/build.prop)
