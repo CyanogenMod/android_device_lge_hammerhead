@@ -110,7 +110,6 @@ PRODUCT_PACKAGES += \
     libion
 
 PRODUCT_PACKAGES += \
-    librs_jni \
     com.android.future.usb.accessory
 
 # Filesystem management tools
@@ -143,6 +142,10 @@ PRODUCT_PROPERTY_OVERRIDES += \
     ro.hwui.text_small_cache_height=1024 \
     ro.hwui.text_large_cache_width=2048 \
     ro.hwui.text_large_cache_height=1024
+
+# Ril sends only one RIL_UNSOL_CALL_RING, so set call_ring.multiple to false
+PRODUCT_PROPERTY_OVERRIDES += \
+    ro.telephony.call_ring.multiple=0
 
 # set default USB configuration
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
