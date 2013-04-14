@@ -54,6 +54,7 @@ TARGET_BOARD_INFO_FILE := device/lge/hammerhead/board-info.txt
 BOARD_EGL_CFG := device/lge/hammerhead/egl.cfg
 
 USE_OPENGL_RENDERER := true
+TARGET_USES_ION := true
 
 TARGET_USERIMAGES_USE_EXT4 := true
 BOARD_BOOTIMAGE_PARTITION_SIZE := 23068672
