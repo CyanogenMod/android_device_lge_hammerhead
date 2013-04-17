@@ -53,3 +53,4 @@ $(call add-clean-step, find $(OUT_DIR) -name "p2p_supplicant*" -print0 | xargs -
 $(call add-clean-step, rm -f $(OUT_DIR)/target/product/hammerhead/system/build.prop)
 $(call add-clean-step, rm -f $(OUT_DIR)/target/product/hammerhead/system/build.prop)
 $(call add-clean-step, rm -f $(OUT_DIR)/target/product/hammerhead/system/build.prop)
+$(call add-clean-step, rm -f $(OUT_DIR)/target/product/hammerhead/system/build.prop)
