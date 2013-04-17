@@ -449,6 +449,11 @@ typedef enum {
     CAM_FLASH_MODE_MAX
 } cam_flash_mode_t;
 
+typedef enum {
+    CAM_AEC_TRIGGER_IDLE,
+    CAM_AEC_TRIGGER_START
+} cam_aec_trigger_type_t;
+
 typedef struct  {
     int32_t left;
     int32_t top;
@@ -743,6 +748,7 @@ typedef enum {
      * color space from the scene illuminant to the sRGB-standard D65-illuminant. */
     CAM_INTF_META_COLOR_CORRECT_TRANSFORM, /* 50 */
     /* CONTROL */
+//    CAM_INTF_META_REQUEST_ID,
     /* A frame counter set by the framework. Must be maintained unchanged in
      * output frame. */
     CAM_INTF_META_FRAME_NUMBER,

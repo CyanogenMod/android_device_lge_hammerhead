@@ -58,6 +58,7 @@ namespace qcamera {
         camera3_stream_t *stream;
         camera3_stream_buffer_set_t buffer_set;
         stream_status_t status;
+        int registered;
     } stream_info_t;
 
 };//namespace qcamera

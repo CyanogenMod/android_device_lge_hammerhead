@@ -600,7 +600,7 @@ void QCamera3RegularChannel::putStreamBufs()
     mMemory = NULL;
 }
 
-int QCamera3RegularChannel::kMaxBuffers = 3;
+int QCamera3RegularChannel::kMaxBuffers = 7;
 
 QCamera3MetadataChannel::QCamera3MetadataChannel(uint32_t cam_handle,
                     mm_camera_ops_t *cam_ops,
@@ -685,8 +685,7 @@ void QCamera3MetadataChannel::streamCbRoutine(
 #ifdef FAKE_FRAME_NUMBERS
     requestNumber = startingFrameNumber++;
 #endif
-    mChannelCB((metadata_buffer_t *)(super_frame->bufs[0]->buffer),
-                                            NULL, requestNumber, mUserData);
+    mChannelCB(super_frame, NULL, requestNumber, mUserData);
 
     //Return the buffer
     stream->bufDone(super_frame->bufs[0]->buf_idx);
@@ -897,7 +896,7 @@ int32_t QCamera3PicChannel::registerBuffers(uint32_t num_buffers,
     /* Bookkeep buffer set because they go out of scope after register call */
     mNumBufs = num_buffers;
     if(mNumBufs > 1) {
-        ALOGE("%s: currently no support for multiple snapshot buffers");
+        ALOGE("%s: currently no support for multiple snapshot buffers", __func__);
         return -EINVAL;
     }
 

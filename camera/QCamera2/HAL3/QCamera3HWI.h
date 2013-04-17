@@ -32,6 +32,7 @@
 
 #include <pthread.h>
 #include <utils/List.h>
+#include <utils/KeyedVector.h>
 #include <hardware/camera3.h>
 #include <camera/CameraMetadata.h>
 #include "QCamera3HALHeader.h"
@@ -100,7 +101,7 @@ public:
     static void convertLandmarks(cam_face_detection_info_t face, int32_t* landmarks);
     static int32_t getScalarFormat(int32_t format);
 
-    static void captureResultCb(metadata_buffer_t *metadata,
+    static void captureResultCb(mm_camera_super_buf_t *metadata,
                 camera3_stream_buffer_t *buffer, uint32_t frame_number,
                 void *userdata);
 
@@ -119,7 +120,7 @@ public:
     int initParameters();
     void deinitParameters();
 
-    void captureResultCb(metadata_buffer_t *metadata,
+    void captureResultCb(mm_camera_super_buf_t *metadata,
                 camera3_stream_buffer_t *buffer, uint32_t frame_number);
 
     typedef struct {
@@ -167,7 +168,21 @@ private:
     QCamera3HeapMemory *mParamHeap;
     parm_buffer_t* mParameters;
 
-    //mutex and conditional variable for request
+    /* Data structure to store pending request */
+    typedef struct {
+        camera3_stream_t *stream;
+        camera3_stream_buffer_t *buffer;
+    } RequestedBufferInfo;
+    typedef struct {
+        uint32_t frame_number;
+        uint32_t num_buffers;
+        List<RequestedBufferInfo> buffers;
+        //mm_camera_super_buf_t *metadata;
+    } PendingRequestInfo;
+    typedef KeyedVector<camera3_stream_t *, uint32_t> PendingBuffersMap;
+
+    List<PendingRequestInfo> mPendingRequestsList;
+    PendingBuffersMap mPendingBuffersMap;
     pthread_mutex_t mRequestLock;
     pthread_cond_t mRequestCond;
     int mPendingRequest;
@@ -179,7 +194,8 @@ private:
     pthread_mutex_t mCaptureResultLock;
 
     jpeg_settings_t* mJpegSettings;
-    Vector<stream_info_t*> mStreamInfo;
+    List<stream_info_t*> mStreamInfo;
+
     static const QCameraMap EFFECT_MODES_MAP[];
     static const QCameraMap WHITE_BALANCE_MODES_MAP[];
     static const QCameraMap SCENE_MODES_MAP[];
