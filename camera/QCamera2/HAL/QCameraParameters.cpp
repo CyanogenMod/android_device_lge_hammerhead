@@ -3123,7 +3123,7 @@ int32_t QCameraParameters::initDefaultParameters()
     //Set ZSL
     set(KEY_QC_SUPPORTED_ZSL_MODES, onOffValues);
     set(KEY_QC_ZSL, VALUE_OFF);
-    m_bZslMode =false;
+    m_bZslMode =true;
 
     //Set Touch AF/AEC
     String8 touchValues = createValuesStringFromMap(
