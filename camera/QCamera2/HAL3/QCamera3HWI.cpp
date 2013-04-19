@@ -461,73 +461,64 @@ int QCamera3HardwareInterface::configureStreams(
             //New stream, construct channel
 
             switch (newStream->stream_type) {
-                case CAMERA3_STREAM_INPUT:
-                    newStream->usage = GRALLOC_USAGE_HW_CAMERA_READ;
-                    newStream->max_buffers = QCamera3PicChannel::kMaxBuffers;
-                    break;
-                case CAMERA3_STREAM_BIDIRECTIONAL:
-                    newStream->usage = GRALLOC_USAGE_HW_CAMERA_READ |
-                        GRALLOC_USAGE_HW_CAMERA_WRITE;
-                    newStream->max_buffers = QCamera3RegularChannel::kMaxBuffers;
-                    break;
-                case CAMERA3_STREAM_OUTPUT:
-                    newStream->usage = GRALLOC_USAGE_HW_CAMERA_WRITE;
-                    if (newStream->format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED)
-                        newStream->max_buffers = QCamera3RegularChannel::kMaxBuffers;
-                    else
-                        newStream->max_buffers = QCamera3PicChannel::kMaxBuffers;
-                    break;
-                default:
-                    ALOGE("%s: Invalid stream_type %d", __func__,
-                            newStream->stream_type);
-                    break;
+            case CAMERA3_STREAM_INPUT:
+                newStream->usage = GRALLOC_USAGE_HW_CAMERA_READ;
+                break;
+            case CAMERA3_STREAM_BIDIRECTIONAL:
+                newStream->usage = GRALLOC_USAGE_HW_CAMERA_READ |
+                    GRALLOC_USAGE_HW_CAMERA_WRITE;
+                break;
+            case CAMERA3_STREAM_OUTPUT:
+                newStream->usage = GRALLOC_USAGE_HW_CAMERA_WRITE;
+                break;
+            default:
+                ALOGE("%s: Invalid stream_type %d", __func__, newStream->stream_type);
+                break;
             }
 
             if (newStream->stream_type == CAMERA3_STREAM_OUTPUT ||
                     newStream->stream_type == CAMERA3_STREAM_BIDIRECTIONAL) {
                 QCamera3Channel *channel;
                 switch (newStream->format) {
-                    case HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED:
-                        channel = new QCamera3RegularChannel(
-                                mCameraHandle->camera_handle,
-                                mCameraHandle->ops, captureResultCb,
-                                &gCamCapability[mCameraId]->padding_info,
-                                this, newStream);
-                        if (channel == NULL) {
-                            ALOGE("%s: allocation of channel failed", __func__);
-                            pthread_mutex_unlock(&mMutex);
-                            return -ENOMEM;
-                        }
+                case HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED:
+                    newStream->max_buffers = QCamera3RegularChannel::kMaxBuffers;
+                    channel = new QCamera3RegularChannel(mCameraHandle->camera_handle,
+                            mCameraHandle->ops, captureResultCb,
+                            &gCamCapability[mCameraId]->padding_info, this, newStream);
+                    if (channel == NULL) {
+                        ALOGE("%s: allocation of channel failed", __func__);
+                        pthread_mutex_unlock(&mMutex);
+                        return -ENOMEM;
+                    }
 
-                        newStream->priv = channel;
-                        break;
-                    case HAL_PIXEL_FORMAT_BLOB:
-                        channel = new QCamera3PicChannel(mCameraHandle->camera_handle,
-                                mCameraHandle->ops, captureResultCb,
-                                &gCamCapability[mCameraId]->padding_info, this, newStream);
-                        if (channel == NULL) {
-                            ALOGE("%s: allocation of channel failed", __func__);
-                            pthread_mutex_unlock(&mMutex);
-                            return -ENOMEM;
-                        }
-                        //Register Jpeg callback with mm-camera-interface
-                        rc = channel->initialize();
-                        if (rc < 0) {
-                            ALOGE("%s: snapshot channel initialization failed",
-                                    __func__);
-                            delete channel;
-                            channel = NULL;
-                            goto end;
-                        }
+                    newStream->priv = channel;
+                    break;
+                case HAL_PIXEL_FORMAT_BLOB:
+                    newStream->max_buffers = QCamera3PicChannel::kMaxBuffers;
+                    channel = new QCamera3PicChannel(mCameraHandle->camera_handle,
+                            mCameraHandle->ops, captureResultCb,
+                            &gCamCapability[mCameraId]->padding_info, this, newStream);
+                    if (channel == NULL) {
+                        ALOGE("%s: allocation of channel failed", __func__);
+                        pthread_mutex_unlock(&mMutex);
+                        return -ENOMEM;
+                    }
+                    //Register Jpeg callback with mm-camera-interface
+                    rc = channel->initialize();
+                    if (rc < 0) {
+                        ALOGE("%s: snapshot channel initialization failed", __func__);
+                       delete channel;
+                       channel = NULL;
+                       goto end;
+                    }
 
-                        newStream->priv = channel;
-                        break;
+                    newStream->priv = channel;
+                    break;
 
-                        //TODO: Add support for app consumed format?
-                    default:
-                        ALOGE("%s: not a supported format 0x%x", __func__,
-                                newStream->format);
-                        break;
+                //TODO: Add support for app consumed format?
+                default:
+                    ALOGE("%s: not a supported format 0x%x", __func__, newStream->format);
+                    break;
                 }
             }
         } else {
@@ -2736,6 +2727,8 @@ int QCamera3HardwareInterface::getJpegSettings
             jpeg_settings.find(ANDROID_JPEG_THUMBNAIL_SIZE).data.i32[0];
         mJpegSettings->thumbnail_size.height =
             jpeg_settings.find(ANDROID_JPEG_THUMBNAIL_SIZE).data.i32[1];
+        mJpegSettings->thumbnail_size.width = 320;
+        mJpegSettings->thumbnail_size.height = 240;
     } else {
         mJpegSettings->thumbnail_size.width = 640;
         mJpegSettings->thumbnail_size.height = 480;

@@ -204,6 +204,8 @@ public:
             uint32_t jobId,
             mm_jpeg_output_t *p_output,
             void *userdata);
+    static void dataNotifyCB(mm_camera_super_buf_t *recvd_frame,
+            void *userdata);
 
 public:
     static int kMaxBuffers;

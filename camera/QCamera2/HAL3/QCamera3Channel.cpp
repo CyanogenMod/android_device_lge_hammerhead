@@ -150,7 +150,7 @@ int32_t QCamera3Channel::init(mm_camera_channel_attr_t *attr,
     m_handle = m_camOps->add_channel(m_camHandle,
                                       attr,
                                       dataCB,
-                                      mUserData);
+                                      this);
     if (m_handle == 0) {
         ALOGE("%s: Add channel failed", __func__);
         return UNKNOWN_ERROR;
@@ -181,6 +181,12 @@ int32_t QCamera3Channel::addStream(cam_stream_type_t streamType,
                                   uint8_t minStreamBufNum)
 {
     int32_t rc = NO_ERROR;
+
+    if (m_numStreams >= 1) {
+        ALOGE("%s: Only one stream per channel supported in v3 Hal", __func__);
+        return BAD_VALUE;
+    }
+
     if (m_numStreams >= MAX_STREAM_NUM_IN_BUNDLE) {
         ALOGE("%s: stream number (%d) exceeds max limit (%d)",
               __func__, m_numStreams, MAX_STREAM_NUM_IN_BUNDLE);
@@ -783,6 +789,7 @@ void QCamera3PicChannel::jpegEvtHandle(jpeg_job_status_t status,
         result.acquire_fence = -1;
         result.release_fence = -1;
 
+        ALOGE("%s: Issue Callback", __func__);
         obj->mChannelCB(NULL, &result, resultFrameNumber, obj->mUserData);
 
         // release internal data for jpeg job
@@ -803,18 +810,26 @@ QCamera3PicChannel::QCamera3PicChannel(uint32_t cam_handle,
                     cam_padding_info_t *paddingInfo,
                     void *userData,
                     camera3_stream_t *stream) :
-                        QCamera3Channel(cam_handle, cam_ops, cb_routine, paddingInfo, userData),
+                        QCamera3Channel(cam_handle, cam_ops, cb_routine,
+                        paddingInfo, userData),
                         mCamera3Stream(stream),
                         m_postprocessor(this),
                         mCamera3Buffers(NULL),
                         mMemory(NULL),
                         mYuvMemory(NULL)
 {
-    //TODO
+    int32_t rc = m_postprocessor.init(jpegEvtHandle, this);
+    if (rc != 0) {
+        ALOGE("Init Postprocessor failed");
+    }
 }
 
 QCamera3PicChannel::~QCamera3PicChannel()
 {
+    int32_t rc = m_postprocessor.deinit();
+    if (rc != 0) {
+        ALOGE("De-init Postprocessor failed");
+    }
     if (mCamera3Buffers) {
         delete[] mCamera3Buffers;
     }
@@ -822,11 +837,35 @@ QCamera3PicChannel::~QCamera3PicChannel()
 
 int32_t QCamera3PicChannel::initialize()
 {
-    int32_t rc = m_postprocessor.init(jpegEvtHandle, this);
-    if (rc != 0) {
-        ALOGE("Init Postprocessor failed");
-        return UNKNOWN_ERROR;
+    int32_t rc = NO_ERROR;
+    cam_dimension_t streamDim;
+    cam_stream_type_t streamType;
+    cam_format_t streamFormat;
+    mm_camera_channel_attr_t attr;
+
+    memset(&attr, 0, sizeof(mm_camera_channel_attr_t));
+    attr.notify_mode = MM_CAMERA_SUPER_BUF_NOTIFY_BURST;
+    attr.look_back = 1;
+    attr.post_frame_skip = 1;
+    attr.water_mark = 1;
+    attr.max_unmatched_frames = 1;
+
+    rc = init(&attr, QCamera3PicChannel::dataNotifyCB);
+    if (rc < 0) {
+        ALOGE("%s: init failed", __func__);
+        return rc;
     }
+
+    streamType = CAM_STREAM_TYPE_SNAPSHOT;
+    streamFormat = CAM_FORMAT_YUV_420_NV21;
+    streamDim.width = mCamera3Stream->width;
+    streamDim.height = mCamera3Stream->height;
+    int num_buffers = QCamera3PicChannel::kMaxBuffers + 1;
+
+    rc = QCamera3Channel::addStream(streamType, streamFormat, streamDim,
+            num_buffers);
+
+
     return rc;
 }
 
@@ -842,7 +881,7 @@ int32_t QCamera3PicChannel::request(buffer_handle_t *buffer, uint32_t frameNumbe
         //Stream on for main image. YUV buffer is queued to the kernel at the end of this call.
         rc = start();
     } else {
-        ALOGV("%s: Request on an existing stream",__func__);
+        ALOGE("%s: Request on an existing stream",__func__);
     }
 
     if(rc != NO_ERROR) {
@@ -866,8 +905,54 @@ int32_t QCamera3PicChannel::request(buffer_handle_t *buffer, uint32_t frameNumbe
 
     //Start the postprocessor for jpeg encoding. Pass mMemory as destination buffer
     m_postprocessor.start(mMemory);
+    if(m_camOps->request_super_buf(m_camHandle,m_handle,1) < 0) {
+        ALOGE("%s: Request for super buffer failed",__func__);
+    }
+
     return rc;
 }
+
+/*===========================================================================
+ * FUNCTION   : dataNotifyCB
+ *
+ * DESCRIPTION: Channel Level callback used for super buffer data notify.
+ *              This function is registered with mm-camera-interface to handle
+ *              data notify
+ *
+ * PARAMETERS :
+ *   @recvd_frame   : stream frame received
+ *   userdata       : user data ptr
+ *
+ * RETURN     : none
+ *==========================================================================*/
+void QCamera3PicChannel::dataNotifyCB(mm_camera_super_buf_t *recvd_frame,
+                                 void *userdata)
+{
+    ALOGE("%s: E\n", __func__);
+    QCamera3PicChannel *channel = (QCamera3PicChannel *)userdata;
+
+    if (channel == NULL) {
+        ALOGE("%s: invalid channel pointer", __func__);
+        return;
+    }
+
+    if(channel->m_numStreams != 1) {
+        ALOGE("%s: Error: Bug: This callback assumes one stream per channel",__func__);
+        return;
+    }
+
+
+    if(channel->mStreams[0] == NULL) {
+        ALOGE("%s: Error: Invalid Stream object",__func__);
+        return;
+    }
+
+    channel->QCamera3PicChannel::streamCbRoutine(recvd_frame, channel->mStreams[0]);
+    ALOGE("%s: X\n", __func__);
+
+    return;
+}
+
 
 int32_t QCamera3PicChannel::registerBuffers(uint32_t num_buffers,
                         buffer_handle_t **buffers)
@@ -878,11 +963,7 @@ int32_t QCamera3PicChannel::registerBuffers(uint32_t num_buffers,
     cam_format_t streamFormat;
     cam_dimension_t streamDim;
 
-    rc = init(NULL, NULL);
-    if (rc < 0) {
-        ALOGE("%s: init failed", __func__);
-        return rc;
-    }
+    ALOGE("%s: E",__func__);
 
     if (mCamera3Stream->format == HAL_PIXEL_FORMAT_BLOB) {
         streamType = CAM_STREAM_TYPE_SNAPSHOT;
@@ -902,11 +983,6 @@ int32_t QCamera3PicChannel::registerBuffers(uint32_t num_buffers,
     for (size_t i = 0; i < num_buffers; i++)
         mCamera3Buffers[i] = buffers[i];
 
-    streamDim.width = mCamera3Stream->width;
-    streamDim.height = mCamera3Stream->height;
-    rc = QCamera3Channel::addStream(streamType, streamFormat, streamDim,
-        num_buffers);
-
     return rc;
 }
 
@@ -919,6 +995,8 @@ void QCamera3PicChannel::streamCbRoutine(mm_camera_super_buf_t *super_frame,
 
     //Got the yuv callback. Calling yuv callback handler in PostProc
     uint8_t frameIndex;
+    mm_camera_super_buf_t* frame = NULL;
+
     if(!super_frame) {
          ALOGE("%s: Invalid Super buffer",__func__);
          return;
@@ -943,7 +1021,17 @@ void QCamera3PicChannel::streamCbRoutine(mm_camera_super_buf_t *super_frame,
          return;
     }
 
-    m_postprocessor.processData(super_frame);
+    frame = (mm_camera_super_buf_t *)malloc(sizeof(mm_camera_super_buf_t));
+    if (frame == NULL) {
+       ALOGE("%s: Error allocating memory to save received_frame structure.", __func__);
+       if(stream) {
+           stream->bufDone(frameIndex);
+       }
+       return;
+    }
+    *frame = *super_frame;
+
+    m_postprocessor.processData(frame);
     return;
 }
 
@@ -975,7 +1063,7 @@ QCamera3Memory* QCamera3PicChannel::getStreamBufs(uint32_t len)
     }
 
     //Queue YUV buffers in the beginning mQueueAll = true
-    rc = mYuvMemory->allocate(1, len, true);
+    rc = mYuvMemory->allocate(QCamera3PicChannel::kMaxBuffers + 1, len, true);
     if (rc < 0) {
         ALOGE("%s: unable to allocate metadata memory", __func__);
         delete mYuvMemory;

@@ -258,24 +258,19 @@ int32_t QCamera3Stream::init(cam_stream_type_t streamType,
         goto err2;
     }
 
-    mStreamInfo = reinterpret_cast<cam_stream_info_t *>(mStreamInfoBuf->getPtr(0));
+    mStreamInfo =
+        reinterpret_cast<cam_stream_info_t *>(mStreamInfoBuf->getPtr(0));
     memset(mStreamInfo, 0, sizeof(cam_stream_info_t));
     mStreamInfo->stream_type = streamType;
     mStreamInfo->fmt = streamFormat;
     mStreamInfo->dim = streamDim;
-    //TODO: Right now mm-camera daemon doesn't support 3 continuous streams. But for
-    // video use case, frameworks configure 3 streams: preview + capture + video.
-    // Set snapshot stream to burst mode until daemon support is added.
-    if (streamType == CAM_STREAM_TYPE_SNAPSHOT)
-        mStreamInfo->streaming_mode = CAM_STREAMING_MODE_BURST;
-    else
-        mStreamInfo->streaming_mode = CAM_STREAMING_MODE_CONTINUOUS;
+    mStreamInfo->streaming_mode = CAM_STREAMING_MODE_CONTINUOUS;
 
     mNumBufs = minNumBuffers;
 
     rc = mCamOps->map_stream_buf(mCamHandle,
-                mChannelHandle, mHandle, CAM_MAPPING_BUF_TYPE_STREAM_INFO,
-                0, -1, mStreamInfoBuf->getFd(0), mStreamInfoBuf->getSize(0));
+            mChannelHandle, mHandle, CAM_MAPPING_BUF_TYPE_STREAM_INFO,
+            0, -1, mStreamInfoBuf->getFd(0), mStreamInfoBuf->getSize(0));
     if (rc < 0) {
         ALOGE("Failed to map stream info buffer");
         goto err3;
@@ -284,11 +279,22 @@ int32_t QCamera3Stream::init(cam_stream_type_t streamType,
     // Configure the stream
     stream_config.stream_info = mStreamInfo;
     stream_config.mem_vtbl = mMemVtbl;
-    stream_config.stream_cb = dataNotifyCB;
     stream_config.padding_info = mPaddingInfo;
     stream_config.userdata = this;
+
+    switch(streamType) {
+        case CAM_STREAM_TYPE_SNAPSHOT:
+            stream_config.stream_cb = NULL;
+            ALOGE("%s: disabling stream_cb for snapshot", __func__);
+            break;
+        default:
+            stream_config.stream_cb = dataNotifyCB;
+            break;
+    }
+
+
     rc = mCamOps->config_stream(mCamHandle,
-                mChannelHandle, mHandle, &stream_config);
+            mChannelHandle, mHandle, &stream_config);
     if (rc < 0) {
         ALOGE("Failed to config stream, rc = %d", rc);
         goto err4;
@@ -300,7 +306,7 @@ int32_t QCamera3Stream::init(cam_stream_type_t streamType,
 
 err4:
     mCamOps->unmap_stream_buf(mCamHandle,
-                mChannelHandle, mHandle, CAM_MAPPING_BUF_TYPE_STREAM_INFO, 0, -1);
+            mChannelHandle, mHandle, CAM_MAPPING_BUF_TYPE_STREAM_INFO, 0, -1);
 err3:
     mStreamInfoBuf->deallocate();
 err2:
