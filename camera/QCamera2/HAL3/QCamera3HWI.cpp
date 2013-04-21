@@ -472,7 +472,10 @@ int QCamera3HardwareInterface::configureStreams(
                     break;
                 case CAMERA3_STREAM_OUTPUT:
                     newStream->usage = GRALLOC_USAGE_HW_CAMERA_WRITE;
-                    newStream->max_buffers = QCamera3RegularChannel::kMaxBuffers;
+                    if (newStream->format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED)
+                        newStream->max_buffers = QCamera3RegularChannel::kMaxBuffers;
+                    else
+                        newStream->max_buffers = QCamera3PicChannel::kMaxBuffers;
                     break;
                 default:
                     ALOGE("%s: Invalid stream_type %d", __func__,
@@ -547,6 +550,8 @@ int QCamera3HardwareInterface::configureStreams(
                     ALOGE("%s: Failed to register the buffers of old stream,\
                             rc = %d", __func__, rc);
                 }
+                ALOGE("%s: channel %p has %d buffers",
+                        __func__, channel, (*it)->buffer_set.num_buffers);
             }
         }
 
@@ -760,7 +765,8 @@ int QCamera3HardwareInterface::processCaptureRequest(
         return rc;
     }
 
-    ALOGV("%s: %d", __func__, __LINE__);
+    ALOGV("%s: %d, num_output_buffers = %d", __func__, __LINE__,
+                                    request->num_output_buffers);
     // Acquire all request buffers first
     for (size_t i = 0; i < request->num_output_buffers; i++) {
         const camera3_stream_buffer_t& output = request->output_buffers[i];
@@ -920,33 +926,44 @@ void QCamera3HardwareInterface::captureResultCb(mm_camera_super_buf_t *metadata_
             goto done_metadata;
         }
         ALOGE("%s: valid frame_number = %d, capture_time = %lld", __func__,
-                                                frame_number, capture_time);
+                frame_number, capture_time);
 
         // Go through the pending requests info and send shutter/results to frameworks
         for (List<PendingRequestInfo>::iterator i = mPendingRequestsList.begin();
-            i != mPendingRequestsList.end() && i->frame_number <= frame_number;) {
+                i != mPendingRequestsList.end() && i->frame_number <= frame_number;) {
             camera3_capture_result_t result;
             camera3_notify_msg_t notify_msg;
             ALOGE("%s: frame_number in the list is %d", __func__, i->frame_number);
 
             // Flush out all entries with less or equal frame numbers.
 
+            //TODO: Make sure shutter timestamp really reflects shutter timestamp.
+            //Right now it's the same as metadata timestamp
+
+            //TODO: When there is metadata drop, how do we derive the timestamp of
+            //dropped frames? For now, we fake the dropped timestamp by substracting
+            //from the reported timestamp
+            nsecs_t current_capture_time = capture_time -
+                (frame_number - i->frame_number) * NSEC_PER_33MSEC;
+
             // Send shutter notify to frameworks
             notify_msg.type = CAMERA3_MSG_SHUTTER;
             notify_msg.message.shutter.frame_number = i->frame_number;
-            notify_msg.message.shutter.timestamp = capture_time;
+            notify_msg.message.shutter.timestamp = current_capture_time;
             mCallbackOps->notify(mCallbackOps, &notify_msg);
             ALOGE("%s: notify frame_number = %d, capture_time = %lld", __func__,
-                                                    frame_number, capture_time);
+                    i->frame_number, capture_time);
 
             // Send empty metadata with already filled buffers for dropped metadata
             // and send valid metadata with already filled buffers for current metadata
             if (i->frame_number < frame_number) {
-	                CameraMetadata emptyMetadata(1, 0);
-        	        emptyMetadata.update(ANDROID_SENSOR_TIMESTAMP, &capture_time, 1);
-                    result.result = emptyMetadata.release();
+                CameraMetadata emptyMetadata(1, 0);
+                emptyMetadata.update(ANDROID_SENSOR_TIMESTAMP,
+                        &current_capture_time, 1);
+                result.result = emptyMetadata.release();
             } else {
-                result.result = translateCbMetadataToResultMetadata(metadata, capture_time);
+                result.result = translateCbMetadataToResultMetadata(metadata,
+                        current_capture_time);
                 // Return metadata buffer
                 mMetadataChannel->bufDone(metadata_buf);
             }
@@ -955,9 +972,9 @@ void QCamera3HardwareInterface::captureResultCb(mm_camera_super_buf_t *metadata_
             }
             result.frame_number = i->frame_number;
             result.num_output_buffers = 0;
-		    result.output_buffers = NULL;
+            result.output_buffers = NULL;
             for (List<RequestedBufferInfo>::iterator j = i->buffers.begin();
-                j != i->buffers.end(); j++) {
+                    j != i->buffers.end(); j++) {
                 if (j->buffer) {
                     result.num_output_buffers++;
                 }
@@ -971,7 +988,7 @@ void QCamera3HardwareInterface::captureResultCb(mm_camera_super_buf_t *metadata_
                 }
                 size_t result_buffers_idx = 0;
                 for (List<RequestedBufferInfo>::iterator j = i->buffers.begin();
-                    j != i->buffers.end(); j++) {
+                        j != i->buffers.end(); j++) {
                     if (j->buffer) {
                         result_buffers[result_buffers_idx++] = *(j->buffer);
                         free(j->buffer);
@@ -982,13 +999,14 @@ void QCamera3HardwareInterface::captureResultCb(mm_camera_super_buf_t *metadata_
 
                 mCallbackOps->process_capture_result(mCallbackOps, &result);
                 ALOGE("%s: meta frame_number = %d, capture_time = %lld", __func__,
-                                                    result.frame_number, capture_time);
+                        result.frame_number,
+                        current_capture_time);
                 free_camera_metadata((camera_metadata_t *)result.result);
                 delete[] result_buffers;
             } else {
                 mCallbackOps->process_capture_result(mCallbackOps, &result);
                 ALOGE("%s: meta frame_number = %d, capture_time = %lld", __func__,
-                                                    result.frame_number, capture_time);
+                        result.frame_number, current_capture_time);
                 free_camera_metadata((camera_metadata_t *)result.result);
             }
             // erase the element from the list
@@ -1000,7 +1018,7 @@ done_metadata:
         bool max_buffers_dequeued = false;
         for (size_t i = 0; i < mPendingBuffersMap.size(); i++) {
             const camera3_stream_t *stream = mPendingBuffersMap.keyAt(i);
-	        uint32_t queued_buffers = mPendingBuffersMap.valueAt(i);
+            uint32_t queued_buffers = mPendingBuffersMap.valueAt(i);
             if (queued_buffers == stream->max_buffers) {
                 max_buffers_dequeued = true;
                 break;
@@ -1021,7 +1039,7 @@ done_metadata:
         if (i == mPendingRequestsList.end()) {
             // Verify all pending requests frame_numbers are greater
             for (List<PendingRequestInfo>::iterator j = mPendingRequestsList.begin();
-                j != mPendingRequestsList.end(); j++) {
+                    j != mPendingRequestsList.end(); j++) {
                 if (j->frame_number < frame_number) {
                     ALOGE("%s: Error: pending frame number %d is smaller than %d",
                             __func__, j->frame_number, frame_number);
@@ -1033,12 +1051,12 @@ done_metadata:
             result.num_output_buffers = 1;
             result.output_buffers = buffer;
             ALOGE("%s: result frame_number = %d, buffer = %p",
-                                __func__, frame_number, buffer);
+                    __func__, frame_number, buffer);
             mPendingBuffersMap.editValueFor(buffer->stream)--;
             mCallbackOps->process_capture_result(mCallbackOps, &result);
         } else {
             for (List<RequestedBufferInfo>::iterator j = i->buffers.begin();
-                j != i->buffers.end(); j++) {
+                    j != i->buffers.end(); j++) {
                 if (j->stream == buffer->stream) {
                     if (j->buffer != NULL) {
                         ALOGE("%s: Error: buffer is already set", __func__);
@@ -1046,6 +1064,8 @@ done_metadata:
                         j->buffer = (camera3_stream_buffer_t *)malloc(
                                 sizeof(camera3_stream_buffer_t));
                         *(j->buffer) = *buffer;
+                        ALOGE("%s: cache buffer %p at result frame_number %d",
+                                __func__, buffer, frame_number);
                     }
                 }
             }
@@ -2335,17 +2355,6 @@ int QCamera3HardwareInterface::setFrameParameters(int frame_id,
         ALOGE("%s: Failed to set the frame number in the parameters", __func__);
         return BAD_VALUE;
     }
-
-    /*cam_fps_range_t fps_range;
-    fps_range.min_fps = 15;
-    fps_range.max_fps = 30;
-    ALOGE("%s: the fps range is (%f, %f)", __func__, fps_range.min_fps, fps_range.max_fps);
-    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_FPS_RANGE,
-                                    sizeof(cam_fps_range_t), &fps_range);
-    if (rc < 0) {
-        ALOGE("%s: Failed to set fps range in the parameters", __func__);
-        return BAD_VALUE;
-    }*/
 
     if(settings != NULL){
         rc = translateMetadataToParameters(settings);

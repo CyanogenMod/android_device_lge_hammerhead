@@ -59,7 +59,7 @@ namespace qcamera {
 typedef int64_t nsecs_t;
 #define NSEC_PER_SEC 1000000000LL
 #define NSEC_PER_USEC 1000
-
+#define NSEC_PER_33MSEC 33000000LL
 
 class QCamera3MetadataChannel;
 class QCamera3PicChannel;
