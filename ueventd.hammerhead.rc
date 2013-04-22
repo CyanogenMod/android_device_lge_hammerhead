@@ -16,6 +16,7 @@
 /dev/smd4                 0660   system     system
 /dev/smd5                 0660   system     system
 /dev/smd6                 0660   system     system
+/dev/smd7                 0660   bluetooth  bluetooth
 /dev/smd_cxm_qmi          0640   radio      radio
 /dev/smdcntl0             0640   radio      radio
 /dev/smdcntl1             0640   radio      radio
