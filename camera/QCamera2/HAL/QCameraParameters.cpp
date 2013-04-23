@@ -4730,7 +4730,16 @@ int32_t QCameraParameters::getStreamFormat(cam_stream_type_t streamType,
         if ( mPictureFormat == CAM_FORMAT_YUV_422_NV16 ) {
             format = CAM_FORMAT_YUV_422_NV16;
         } else {
-            format = CAM_FORMAT_YUV_420_NV21;
+            char prop[PROPERTY_VALUE_MAX];
+            int snapshotFormat;
+            memset(prop, 0, sizeof(prop));
+            property_get("persist.camera.snap.format", prop, "0");
+            snapshotFormat = atoi(prop);
+            if(snapshotFormat == 1) {
+                format = CAM_FORMAT_YUV_422_NV61;
+            } else {
+                format = CAM_FORMAT_YUV_420_NV21;
+            }
         }
         break;
     case CAM_STREAM_TYPE_VIDEO:
