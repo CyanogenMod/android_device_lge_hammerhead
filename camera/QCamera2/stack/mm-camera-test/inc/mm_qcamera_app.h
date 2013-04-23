@@ -190,6 +190,7 @@ extern int32_t mm_app_stream_deinitbuf(mm_camera_map_unmap_ops_tbl_t *ops_tbl,
 extern int mm_app_cache_ops(mm_camera_app_meminfo_t *mem_info,
                             unsigned int cmd);
 extern int32_t mm_app_stream_clean_invalidate_buf(int index, void *user_data);
+extern int32_t mm_app_stream_invalidate_buf(int index, void *user_data);
 extern int mm_app_open(mm_camera_app_t *cam_app,
                        uint8_t cam_id,
                        mm_camera_test_obj_t *test_obj);
