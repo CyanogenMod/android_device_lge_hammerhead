@@ -308,6 +308,7 @@ int32_t QCameraPostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& enc
         cam_frame_len_offset_t thumb_offset;
         memset(&thumb_offset, 0, sizeof(cam_frame_len_offset_t));
         thumb_stream->getFrameOffset(thumb_offset);
+        encode_parm.num_tmb_bufs =  pStreamMem->getCnt();
         for (int i = 0; i < pStreamMem->getCnt(); i++) {
             camera_memory_t *stream_mem = pStreamMem->getMemory(i, false);
             if (stream_mem != NULL) {

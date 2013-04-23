@@ -98,6 +98,7 @@ typedef struct {
 
   OMX_PARAM_PORTDEFINITIONTYPE inputPort;
   OMX_PARAM_PORTDEFINITIONTYPE outputPort;
+  OMX_PARAM_PORTDEFINITIONTYPE inputTmbPort;
 
   /* event locks */
   pthread_mutex_t lock;
