@@ -1082,13 +1082,40 @@ int32_t QCameraParameters::setLiveSnapshotSize(const QCameraParameters& params)
     // use picture size from user setting
     params.getPictureSize(&m_LiveSnapshotSize.width, &m_LiveSnapshotSize.height);
 
-    if (useOptimal) {
+    uint8_t livesnapshot_sizes_tbl_cnt = m_pCapability->livesnapshot_sizes_tbl_cnt;
+    cam_dimension_t *livesnapshot_sizes_tbl = &m_pCapability->livesnapshot_sizes_tbl[0];
+
+    // check if HFR is enabled
+    const char *hfrStr = params.get(KEY_QC_VIDEO_HIGH_FRAME_RATE);
+    cam_hfr_mode_t hfrMode = CAM_HFR_MODE_OFF;
+    if (hfrStr != NULL) {
+        int32_t value = lookupAttr(HFR_MODES_MAP,
+                                   sizeof(HFR_MODES_MAP)/sizeof(QCameraMap),
+                                   hfrStr);
+        if (value != NAME_NOT_FOUND) {
+            // if HFR is enabled, change live snapshot size
+            if (value > CAM_HFR_MODE_OFF) {
+                for (int i = 0; i < m_pCapability->hfr_tbl_cnt; i++) {
+                    if (m_pCapability->hfr_tbl[i].mode == value) {
+                        livesnapshot_sizes_tbl_cnt =
+                            m_pCapability->hfr_tbl[i].livesnapshot_sizes_tbl_cnt;
+                        livesnapshot_sizes_tbl =
+                            &m_pCapability->hfr_tbl[i].livesnapshot_sizes_tbl[0];
+                        hfrMode = m_pCapability->hfr_tbl[i].mode;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    if (useOptimal || hfrMode != CAM_HFR_MODE_OFF) {
         bool found = false;
 
         // first check if picture size is within the list of supported sizes
-        for (int i = 0; i < m_pCapability->livesnapshot_sizes_tbl_cnt; ++i) {
-            if (m_LiveSnapshotSize.width == m_pCapability->livesnapshot_sizes_tbl[i].width &&
-                m_LiveSnapshotSize.height == m_pCapability->livesnapshot_sizes_tbl[i].height) {
+        for (int i = 0; i < livesnapshot_sizes_tbl_cnt; ++i) {
+            if (m_LiveSnapshotSize.width == livesnapshot_sizes_tbl[i].width &&
+                m_LiveSnapshotSize.height == livesnapshot_sizes_tbl[i].height) {
                 found = true;
                 break;
             }
@@ -1101,20 +1128,25 @@ int32_t QCameraParameters::setLiveSnapshotSize(const QCameraParameters& params)
             params.getPreviewSize(&width, &height);
 
             double previewAspectRatio = (double)width / height;
-            for (int i = 0; i < m_pCapability->livesnapshot_sizes_tbl_cnt; ++i) {
-                double ratio = (double)m_pCapability->livesnapshot_sizes_tbl[i].width /
-                                m_pCapability->livesnapshot_sizes_tbl[i].height;
+            for (int i = 0; i < livesnapshot_sizes_tbl_cnt; ++i) {
+                double ratio = (double)livesnapshot_sizes_tbl[i].width /
+                                livesnapshot_sizes_tbl[i].height;
                 if (fabs(previewAspectRatio - ratio) <= ASPECT_TOLERANCE) {
-                    m_LiveSnapshotSize = m_pCapability->livesnapshot_sizes_tbl[i];
+                    m_LiveSnapshotSize = livesnapshot_sizes_tbl[i];
                     found = true;
                     break;
                 }
             }
 
-            if (!found) {
+            if (!found && hfrMode != CAM_HFR_MODE_OFF) {
                 // Cannot find matching aspect ration from supported live snapshot list
-                // fall back to picture size
-                ALOGI("%s: Cannot find matching aspect ratio, fall back to pic size", __func__);
+                // choose the max dim from preview and video size
+                ALOGI("%s: Cannot find matching aspect ratio, choose max of preview or video size", __func__);
+                params.getVideoSize(&m_LiveSnapshotSize.width, &m_LiveSnapshotSize.height);
+                if (m_LiveSnapshotSize.width < width && m_LiveSnapshotSize.height < height) {
+                    m_LiveSnapshotSize.width = width;
+                    m_LiveSnapshotSize.height = height;
+                }
             }
         }
     }
@@ -2675,7 +2707,6 @@ int32_t QCameraParameters::updateParameters(QCameraParameters& params,
     if ((rc = setPreviewSize(params)))                  final_rc = rc;
     if ((rc = setVideoSize(params)))                    final_rc = rc;
     if ((rc = setPictureSize(params)))                  final_rc = rc;
-    if ((rc = setLiveSnapshotSize(params)))             final_rc = rc;
     if ((rc = setPreviewFormat(params)))                final_rc = rc;
     if ((rc = setPictureFormat(params)))                final_rc = rc;
     if ((rc = setJpegThumbnailSize(params)))            final_rc = rc;
@@ -2721,6 +2752,9 @@ int32_t QCameraParameters::updateParameters(QCameraParameters& params,
     if ((rc = setFaceRecognition(params)))              final_rc = rc;
     if ((rc = setFlip(params)))                         final_rc = rc;
     if ((rc = setVideoHDR(params)))                     final_rc = rc;
+
+    // update live snapshot size after all other parameters are set
+    if ((rc = setLiveSnapshotSize(params)))             final_rc = rc;
 
 UPDATE_PARAM_DONE:
     needRestart = m_bNeedRestart;
@@ -4026,16 +4060,6 @@ int32_t QCameraParameters::setHighFrameRate(const char *hfrStr)
                                    sizeof(HFR_MODES_MAP)/sizeof(QCameraMap),
                                    hfrStr);
         if (value != NAME_NOT_FOUND) {
-            // if HFR is enabled, change live snapshot size
-            if (value > CAM_HFR_MODE_OFF) {
-                for (int i = 0; i < m_pCapability->hfr_tbl_cnt; i++) {
-                    if (m_pCapability->hfr_tbl[i].mode == value) {
-                        m_LiveSnapshotSize = m_pCapability->hfr_tbl[i].dim;
-                        break;
-                    }
-                }
-            }
-
             // HFR value changed, need to restart preview
             m_bNeedRestart = true;
             // Set HFR value
