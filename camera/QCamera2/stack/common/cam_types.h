@@ -36,6 +36,7 @@
 #include <media/msmb_camera.h>
 
 #define CAM_MAX_NUM_BUFS_PER_STREAM 24
+#define MAX_METADATA_PAYLOAD_SIZE 1024
 
 #define CEILING32(X) (((X) + 0x0001F) & 0xFFFFFFE0)
 #define CEILING16(X) (((X) + 0x000F) & 0xFFF0)
@@ -651,6 +652,8 @@ typedef  struct {
      * 1. good_frame_idx_range.min_frame_idx > current_frame_idx
      * 2. good_frame_idx_range.min_frame_idx - current_frame_idx < 100 */
     cam_frame_idx_range_t good_frame_idx_range;
+
+    char private_metadata[MAX_METADATA_PAYLOAD_SIZE];
 
 } cam_metadata_info_t;
 
