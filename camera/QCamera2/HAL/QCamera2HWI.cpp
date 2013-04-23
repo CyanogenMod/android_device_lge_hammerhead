@@ -1344,15 +1344,31 @@ QCameraMemory *QCamera2HardwareInterface::allocateStreamBuf(cam_stream_type_t st
     // Allocate stream buffer memory object
     switch (stream_type) {
     case CAM_STREAM_TYPE_PREVIEW:
-    case CAM_STREAM_TYPE_POSTVIEW: {
-        cam_dimension_t dim;
-        QCameraGrallocMemory *grallocMemory = new QCameraGrallocMemory(mGetMemory);
+        {
+            if (isNoDisplayMode()) {
+                mem = new QCameraStreamMemory(mGetMemory);
+            } else {
+                cam_dimension_t dim;
+                QCameraGrallocMemory *grallocMemory = new QCameraGrallocMemory(mGetMemory);
 
-        mParameters.getStreamDimension(stream_type, dim);
-        if (grallocMemory)
-            grallocMemory->setWindowInfo(mPreviewWindow, dim.width, dim.height,
-                    mParameters.getPreviewHalPixelFormat());
-        mem = grallocMemory;
+                mParameters.getStreamDimension(stream_type, dim);
+                if (grallocMemory)
+                    grallocMemory->setWindowInfo(mPreviewWindow, dim.width, dim.height,
+                            mParameters.getPreviewHalPixelFormat());
+                mem = grallocMemory;
+            }
+        }
+        break;
+    case CAM_STREAM_TYPE_POSTVIEW:
+        {
+            cam_dimension_t dim;
+            QCameraGrallocMemory *grallocMemory = new QCameraGrallocMemory(mGetMemory);
+
+            mParameters.getStreamDimension(stream_type, dim);
+            if (grallocMemory)
+                grallocMemory->setWindowInfo(mPreviewWindow, dim.width, dim.height,
+                        mParameters.getPreviewHalPixelFormat());
+            mem = grallocMemory;
         }
         break;
     case CAM_STREAM_TYPE_SNAPSHOT:
@@ -1439,8 +1455,10 @@ QCameraHeapMemory *QCamera2HardwareInterface::allocateStreamInfoBuf(
 
     //set flip mode based on Stream type;
     int flipMode = mParameters.getFlipMode(stream_type);
-    streamInfo->pp_config.feature_mask |= CAM_QCOM_FEATURE_FLIP;
-    streamInfo->pp_config.flip = flipMode;
+    if (flipMode > 0) {
+        streamInfo->pp_config.feature_mask |= CAM_QCOM_FEATURE_FLIP;
+        streamInfo->pp_config.flip = flipMode;
+    }
 
     // set Rotation if need online rotation per stream in CPP
     if (needOnlineRotation()) {
