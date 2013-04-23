@@ -612,7 +612,8 @@ int32_t QCameraReprocessChannel::addReprocStreamsFromSource(QCameraAllocator& al
             streamInfo->stream_type = CAM_STREAM_TYPE_OFFLINE_PROC;
             rc = pStream->getFormat(streamInfo->fmt);
             rc = pStream->getFrameDimension(streamInfo->dim);
-            streamInfo->streaming_mode = CAM_STREAMING_MODE_CONTINUOUS;
+            streamInfo->streaming_mode = CAM_STREAMING_MODE_BURST;
+            streamInfo->num_of_burst = minStreamBufNum;
 
             streamInfo->reprocess_config.pp_type = CAM_ONLINE_REPROCESS_TYPE;
             streamInfo->reprocess_config.online.input_stream_id = pStream->getMyServerID();
