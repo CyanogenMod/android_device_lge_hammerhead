@@ -266,7 +266,7 @@ int QCamera2HardwareInterface::start_preview(struct camera_device *device)
         ALOGE("NULL camera device");
         return BAD_VALUE;
     }
-
+    ALOGD("[KPI Perf] %s: E", __func__);
     hw->lockAPI();
     qcamera_sm_evt_enum_t evt = QCAMERA_SM_EVT_START_PREVIEW;
     if (hw->isNoDisplayMode()) {
@@ -278,6 +278,7 @@ int QCamera2HardwareInterface::start_preview(struct camera_device *device)
         ret = hw->m_apiResult.status;
     }
     hw->unlockAPI();
+    ALOGD("[KPI Perf] %s: X", __func__);
     return ret;
 }
 
@@ -299,12 +300,14 @@ void QCamera2HardwareInterface::stop_preview(struct camera_device *device)
         ALOGE("NULL camera device");
         return;
     }
+    ALOGD("[KPI Perf] %s: E", __func__);
     hw->lockAPI();
     int32_t ret = hw->processAPI(QCAMERA_SM_EVT_STOP_PREVIEW, NULL);
     if (ret == NO_ERROR) {
         hw->waitAPIResult(QCAMERA_SM_EVT_STOP_PREVIEW);
     }
     hw->unlockAPI();
+    ALOGD("[KPI Perf] %s: X", __func__);
 }
 
 /*===========================================================================
@@ -395,6 +398,7 @@ int QCamera2HardwareInterface::start_recording(struct camera_device *device)
         ALOGE("NULL camera device");
         return BAD_VALUE;
     }
+    ALOGD("[KPI Perf] %s: E", __func__);
     hw->lockAPI();
     ret = hw->processAPI(QCAMERA_SM_EVT_START_RECORDING, NULL);
     if (ret == NO_ERROR) {
@@ -402,7 +406,7 @@ int QCamera2HardwareInterface::start_recording(struct camera_device *device)
         ret = hw->m_apiResult.status;
     }
     hw->unlockAPI();
-
+    ALOGD("[KPI Perf] %s: X", __func__);
     return ret;
 }
 
@@ -424,12 +428,14 @@ void QCamera2HardwareInterface::stop_recording(struct camera_device *device)
         ALOGE("NULL camera device");
         return;
     }
+    ALOGD("[KPI Perf] %s: E", __func__);
     hw->lockAPI();
     int32_t ret = hw->processAPI(QCAMERA_SM_EVT_STOP_RECORDING, NULL);
     if (ret == NO_ERROR) {
         hw->waitAPIResult(QCAMERA_SM_EVT_STOP_RECORDING);
     }
     hw->unlockAPI();
+    ALOGD("[KPI Perf] %s: X", __func__);
 }
 
 /*===========================================================================
@@ -483,12 +489,14 @@ void QCamera2HardwareInterface::release_recording_frame(
         ALOGE("NULL camera device");
         return;
     }
+    ALOGD("%s: E", __func__);
     hw->lockAPI();
     int32_t ret = hw->processAPI(QCAMERA_SM_EVT_RELEASE_RECORIDNG_FRAME, (void *)opaque);
     if (ret == NO_ERROR) {
         hw->waitAPIResult(QCAMERA_SM_EVT_RELEASE_RECORIDNG_FRAME);
     }
     hw->unlockAPI();
+    ALOGD("%s: X", __func__);
 }
 
 /*===========================================================================
@@ -512,6 +520,7 @@ int QCamera2HardwareInterface::auto_focus(struct camera_device *device)
         ALOGE("NULL camera device");
         return BAD_VALUE;
     }
+    ALOGD("[KPI Perf] %s : E", __func__);
     hw->lockAPI();
     ret = hw->processAPI(QCAMERA_SM_EVT_START_AUTO_FOCUS, NULL);
     if (ret == NO_ERROR) {
@@ -519,6 +528,7 @@ int QCamera2HardwareInterface::auto_focus(struct camera_device *device)
         ret = hw->m_apiResult.status;
     }
     hw->unlockAPI();
+    ALOGD("[KPI Perf] %s : X", __func__);
 
     return ret;
 }
@@ -576,7 +586,7 @@ int QCamera2HardwareInterface::take_picture(struct camera_device *device)
         ALOGE("NULL camera device");
         return BAD_VALUE;
     }
-
+    ALOGD("[KPI Perf] %s: E", __func__);
     hw->lockAPI();
 
     /* Prepare snapshot in case LED needs to be flashed */
@@ -598,6 +608,7 @@ int QCamera2HardwareInterface::take_picture(struct camera_device *device)
     }
 
     hw->unlockAPI();
+    ALOGD("[KPI Perf] %s: X", __func__);
     return ret;
 }
 
@@ -1585,14 +1596,14 @@ int QCamera2HardwareInterface::msgTypeEnabledWithLock(int32_t msg_type)
 int QCamera2HardwareInterface::startPreview()
 {
     int32_t rc = NO_ERROR;
-
+    ALOGD("%s: E", __func__);
     // start preview stream
     if (mParameters.isZSLMode() && mParameters.getRecordingHintValue() !=true) {
         rc = startChannel(QCAMERA_CH_TYPE_ZSL);
     } else {
         rc = startChannel(QCAMERA_CH_TYPE_PREVIEW);
     }
-
+    ALOGD("%s: X", __func__);
     return rc;
 }
 
@@ -1609,6 +1620,7 @@ int QCamera2HardwareInterface::startPreview()
  *==========================================================================*/
 int QCamera2HardwareInterface::stopPreview()
 {
+    ALOGD("%s: E", __func__);
     // stop preview stream
     if (mParameters.isZSLMode() && mParameters.getRecordingHintValue() !=true) {
         stopChannel(QCAMERA_CH_TYPE_ZSL);
@@ -1618,7 +1630,7 @@ int QCamera2HardwareInterface::stopPreview()
 
     // delete all channels from preparePreview
     unpreparePreview();
-
+    ALOGD("%s: X", __func__);
     return NO_ERROR;
 }
 
@@ -1654,6 +1666,7 @@ int QCamera2HardwareInterface::storeMetaDataInBuffers(int enable)
 int QCamera2HardwareInterface::startRecording()
 {
     int32_t rc = NO_ERROR;
+    ALOGD("%s: E", __func__);
     if (mParameters.getRecordingHintValue() == false) {
         ALOGE("%s: start recording when hint is false, stop preview first", __func__);
         stopChannel(QCAMERA_CH_TYPE_PREVIEW);
@@ -1680,6 +1693,7 @@ int QCamera2HardwareInterface::startRecording()
         }
     }
 #endif
+    ALOGD("%s: X", __func__);
     return rc;
 }
 
@@ -1697,6 +1711,7 @@ int QCamera2HardwareInterface::startRecording()
 int QCamera2HardwareInterface::stopRecording()
 {
     int rc = stopChannel(QCAMERA_CH_TYPE_VIDEO);
+    ALOGD("%s: E", __func__);
 #ifdef QCOM_POWER_H_EXTENDED
     if (m_pPowerModule) {
         if (m_pPowerModule->powerHint) {
@@ -1704,6 +1719,7 @@ int QCamera2HardwareInterface::stopRecording()
         }
     }
 #endif
+    ALOGD("%s: X", __func__);
     return rc;
 }
 
@@ -1724,6 +1740,7 @@ int QCamera2HardwareInterface::releaseRecordingFrame(const void * opaque)
     int32_t rc = UNKNOWN_ERROR;
     QCameraVideoChannel *pChannel =
         (QCameraVideoChannel *)m_channels[QCAMERA_CH_TYPE_VIDEO];
+    ALOGD("%s: opaque data = %p", __func__,opaque);
     if(pChannel != NULL) {
         rc = pChannel->releaseFrame(opaque, mStoreMetaDataInFrame > 0);
     }
@@ -1862,7 +1879,7 @@ int QCamera2HardwareInterface::takePicture()
 {
     int rc = NO_ERROR;
     uint8_t numSnapshots = mParameters.getNumOfSnapshots();
-
+    ALOGD("%s: E", __func__);
     if (mParameters.isZSLMode()) {
         QCameraPicChannel *pZSLChannel =
             (QCameraPicChannel *)m_channels[QCAMERA_CH_TYPE_ZSL];
@@ -1923,7 +1940,7 @@ int QCamera2HardwareInterface::takePicture()
             }
         }
     }
-
+    ALOGD("%s: X", __func__);
     return rc;
 }
 

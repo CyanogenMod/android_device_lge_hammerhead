@@ -539,6 +539,8 @@ int32_t QCameraPostProcessor::processJpegEvt(qcamera_jpeg_evt_payload_t *evt)
         goto end;
     }
 
+    ALOGD("[KPI Perf] %s : jpeg job %d", __func__, evt->jobId);
+
     if (m_parent->mDataCb == NULL ||
         m_parent->msgTypeEnabledWithLock(CAMERA_MSG_COMPRESSED_IMAGE) == 0 ) {
         ALOGD("%s: No dataCB or CAMERA_MSG_COMPRESSED_IMAGE not enabled",
@@ -995,6 +997,7 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
         mm_jpeg_encode_params_t encodeParam;
         memset(&encodeParam, 0, sizeof(mm_jpeg_encode_params_t));
         getJpegEncodingConfig(encodeParam, main_stream, thumb_stream);
+        ALOGD("[KPI Perf] %s : call jpeg create_session", __func__);
         ret = mJpegHandle.create_session(mJpegClientHandle, &encodeParam, &mJpegSessionId);
         if (ret != NO_ERROR) {
             ALOGE("%s: error creating a new jpeg encoding session", __func__);
@@ -1071,13 +1074,13 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
         jpg_job.encode_job.p_metadata = (cam_metadata_info_t *)meta_frame->buffer;
     }
 
+    ALOGD("[KPI Perf] %s : call jpeg start_job", __func__);
     ret = mJpegHandle.start_job(&jpg_job, &jobId);
     if (ret == NO_ERROR) {
         // remember job info
         jpeg_job_data->jobId = jobId;
     }
 
-    ALOGD("%s : X", __func__);
     return ret;
 }
 
