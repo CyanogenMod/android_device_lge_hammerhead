@@ -2028,13 +2028,14 @@ OMX_ERRORTYPE mm_jpeg_fbd(OMX_HANDLETYPE hComponent,
 
   CDBG("%s:%d] count %d ", __func__, __LINE__, p_session->fbd_count);
 
+  if (OMX_TRUE == p_session->abort_flag) {
+    pthread_cond_signal(&p_session->cond);
+    return ret;
+  }
+
   pthread_mutex_lock(&p_session->lock);
   p_session->fbd_count++;
-
-  if (OMX_TRUE == p_session->abort_flag) {
-    p_session->encoding = OMX_FALSE;
-    pthread_cond_signal(&p_session->cond);
-  } else if (NULL != p_session->params.jpeg_cb) {
+  if (NULL != p_session->params.jpeg_cb) {
     p_session->job_status = JPEG_JOB_STATUS_DONE;
     output_buf.buf_filled_len = (uint32_t)pBuffer->nFilledLen;
     output_buf.buf_vaddr = pBuffer->pBuffer;
