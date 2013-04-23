@@ -312,6 +312,7 @@ const QCameraParameters::QCameraMap QCameraParameters::PREVIEW_FORMATS_MAP[] = {
 
 const QCameraParameters::QCameraMap QCameraParameters::PICTURE_TYPES_MAP[] = {
     {PIXEL_FORMAT_JPEG,                          CAM_FORMAT_JPEG},
+    {PIXEL_FORMAT_YUV422SP,                      CAM_FORMAT_YUV_422_NV16},
     {QC_PIXEL_FORMAT_YUV_RAW_8BIT_YUYV,          CAM_FORMAT_YUV_RAW_8BIT_YUYV},
     {QC_PIXEL_FORMAT_YUV_RAW_8BIT_YVYU,          CAM_FORMAT_YUV_RAW_8BIT_YVYU},
     {QC_PIXEL_FORMAT_YUV_RAW_8BIT_UYVY,          CAM_FORMAT_YUV_RAW_8BIT_UYVY},
@@ -4726,7 +4727,11 @@ int32_t QCameraParameters::getStreamFormat(cam_stream_type_t streamType,
         format = mPreviewFormat;
         break;
     case CAM_STREAM_TYPE_SNAPSHOT:
-        format = CAM_FORMAT_YUV_420_NV21;
+        if ( mPictureFormat == CAM_FORMAT_YUV_422_NV16 ) {
+            format = CAM_FORMAT_YUV_422_NV16;
+        } else {
+            format = CAM_FORMAT_YUV_420_NV21;
+        }
         break;
     case CAM_STREAM_TYPE_VIDEO:
         format = CAM_FORMAT_YUV_420_NV12;
@@ -4812,7 +4817,6 @@ int32_t QCameraParameters::getStreamDimension(cam_stream_type_t streamType,
                                                cam_dimension_t &dim)
 {
     int32_t ret = NO_ERROR;
-
     memset(&dim, 0, sizeof(cam_dimension_t));
 
     switch (streamType) {

@@ -468,6 +468,8 @@ int32_t QCameraPostProcessor::processData(mm_camera_super_buf_t *frame)
         ALOGD("%s: need reprocess", __func__);
         // enqueu to post proc input queue
         m_inputPPQ.enqueue((void *)frame);
+    } else if (m_parent->mParameters.isNV16PictureFormat()) {
+        processRawData(frame);
     } else {
         ALOGD("%s: no need offline reprocess, sending to jpeg encoding", __func__);
         qcamera_jpeg_data_t *jpeg_job =
@@ -1100,7 +1102,19 @@ int32_t QCameraPostProcessor::processRawImageImpl(mm_camera_super_buf_t *recvd_f
 {
     int32_t rc = NO_ERROR;
 
-    mm_camera_buf_def_t *frame = recvd_frame->bufs[0];
+    mm_camera_buf_def_t *frame = NULL;
+    for ( int i= 0 ; i < recvd_frame->num_bufs ; i++ ) {
+        if ( recvd_frame->bufs[i]->stream_type == CAM_STREAM_TYPE_SNAPSHOT ||
+             recvd_frame->bufs[i]->stream_type == CAM_STREAM_TYPE_RAW ) {
+            frame = recvd_frame->bufs[i];
+            break;
+        }
+    }
+    if ( NULL == frame ) {
+        ALOGE("%s: No valid raw buffer", __func__);
+        return BAD_VALUE;
+    }
+
     QCameraMemory *rawMemObj = (QCameraMemory *)frame->mem_info;
     camera_memory_t *raw_mem = NULL;
 
