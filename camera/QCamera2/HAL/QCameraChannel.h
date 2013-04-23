@@ -56,7 +56,7 @@ public:
                               cam_padding_info_t *paddingInfo,
                               stream_cb_routine stream_cb,
                               void *userdata);
-    virtual int32_t start(QCameraParameters &param);
+    virtual int32_t start();
     virtual int32_t stop();
     virtual int32_t bufDone(mm_camera_super_buf_t *recvd_frame);
     virtual int32_t processZoomDone(preview_stream_ops_t *previewWindow,
@@ -65,6 +65,7 @@ public:
     uint32_t getMyHandle() const {return m_handle;};
     uint8_t getNumOfStreams() const {return m_numStreams;};
     QCameraStream *getStreamByIndex(uint8_t index);
+    QCameraStream *getStreamByServerID(uint32_t serverID);
 
 protected:
     uint32_t m_camHandle;

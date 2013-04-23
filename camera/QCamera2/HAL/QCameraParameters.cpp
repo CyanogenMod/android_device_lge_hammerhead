@@ -5636,45 +5636,6 @@ int32_t QCameraParameters::setLockCAF(bool bLock)
 }
 
 /*===========================================================================
- * FUNCTION   : setBundleInfo
- *
- * DESCRIPTION: send bundle info of a channel to backend
- *
- * PARAMETERS :
- *   @bundle_info : reference to bundle info struct
- *
- * RETURN     : int32_t type of status
- *              NO_ERROR  -- success
- *              none-zero failure code
- *==========================================================================*/
-int32_t QCameraParameters::setBundleInfo(cam_bundle_config_t &bundle_info)
-{
-    int32_t rc = NO_ERROR;
-
-    if(initBatchUpdate(m_pParamBuf) < 0 ) {
-        ALOGE("%s:Failed to initialize group update table", __func__);
-        return BAD_TYPE;
-    }
-
-    rc = AddSetParmEntryToBatch(m_pParamBuf,
-                                CAM_INTF_PARM_SET_BUNDLE,
-                                sizeof(cam_bundle_config_t),
-                                &bundle_info);
-    if (rc != NO_ERROR) {
-        ALOGE("%s:Failed to update table", __func__);
-        return rc;
-    }
-
-    rc = commitSetBatch();
-    if (rc != NO_ERROR) {
-        ALOGE("%s:Failed to set bundle info parm", __func__);
-        return rc;
-    }
-
-    return rc;
-}
-
-/*===========================================================================
  * FUNCTION   : setFrameSkip
  *
  * DESCRIPTION: send ISP frame skip pattern to camera daemon

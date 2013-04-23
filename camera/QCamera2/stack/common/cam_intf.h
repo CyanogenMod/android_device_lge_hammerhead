@@ -160,7 +160,8 @@ typedef struct{
 } cam_capability_t;
 
 typedef enum {
-    CAM_STREAM_PARAM_TYPE_DO_REPROCESS,
+    CAM_STREAM_PARAM_TYPE_DO_REPROCESS = CAM_INTF_PARM_DO_REPROCESS,
+    CAM_STREAM_PARAM_TYPE_SET_BUNDLE_INFO = CAM_INTF_PARM_SET_BUNDLE,
     CAM_STREAM_PARAM_TYPE_MAX
 } cam_stream_param_type_e;
 
@@ -178,7 +179,8 @@ typedef struct {
 typedef struct {
     cam_stream_param_type_e type;
     union {
-        cam_reprocess_param reprocess; /* do reprocess */
+        cam_reprocess_param reprocess;  /* do reprocess */
+        cam_bundle_config_t bundleInfo; /* set bundle info*/
     };
 } cam_stream_parm_buffer_t;
 
@@ -278,7 +280,6 @@ typedef union {
     INCLUDE(CAM_INTF_PARM_RECORDING_HINT,           int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_DIS_ENABLE,               int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_HDR,                      cam_exp_bracketing_t,        1);
-    INCLUDE(CAM_INTF_PARM_SET_BUNDLE,               cam_bundle_config_t,         1);
     INCLUDE(CAM_INTF_PARM_FRAMESKIP,                int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_ZSL_MODE,                 int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_HDR_NEED_1X,              int32_t,                     1);

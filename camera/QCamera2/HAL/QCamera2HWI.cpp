@@ -2186,7 +2186,7 @@ int QCamera2HardwareInterface::registerFaceImage(void *img_ptr,
         return UNKNOWN_ERROR;
     }
 
-    rc = pChannel->start(mParameters);
+    rc = pChannel->start();
     if (rc != NO_ERROR) {
         ALOGE("%s: Cannot start reprocess channel", __func__);
         imgBuf->deallocate();
@@ -3329,7 +3329,7 @@ int32_t QCamera2HardwareInterface::startChannel(qcamera_ch_type_enum_t ch_type)
 {
     int32_t rc = UNKNOWN_ERROR;
     if (m_channels[ch_type] != NULL) {
-        rc = m_channels[ch_type]->start(mParameters);
+        rc = m_channels[ch_type]->start();
     }
 
     return rc;
