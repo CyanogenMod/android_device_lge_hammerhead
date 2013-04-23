@@ -952,9 +952,6 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
         return NO_MEMORY;
     }
 
-    // clean and invalidate cache ops through mem obj of the frame
-    memObj->cleanInvalidateCache(main_frame->buf_idx);
-
     // dump snapshot frame if enabled
     m_parent->dumpFrameToFile(main_frame->buffer, main_frame->frame_len,
                               main_frame->frame_idx, QCAMERA_DUMP_FRM_SNAPSHOT);
@@ -983,12 +980,6 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
     }
 
     if (thumb_frame != NULL) {
-        QCameraMemory *thumb_memObj = (QCameraMemory *)thumb_frame->mem_info;
-        if (NULL != thumb_memObj) {
-            // clean and invalidate cache ops through mem obj of the frame
-            thumb_memObj->cleanInvalidateCache(thumb_frame->buf_idx);
-        }
-
         // dump thumbnail frame if enabled
         m_parent->dumpFrameToFile(thumb_frame->buffer, thumb_frame->frame_len,
                                   thumb_frame->frame_idx, QCAMERA_DUMP_FRM_THUMBNAIL);
@@ -1115,9 +1106,6 @@ int32_t QCameraPostProcessor::processRawImageImpl(mm_camera_super_buf_t *recvd_f
     }
 
     if (NULL != rawMemObj && NULL != raw_mem) {
-        // send data callback for COMPRESSED_IMAGE
-        rawMemObj->cleanCache(frame->buf_idx);
-
         // dump frame into file
         m_parent->dumpFrameToFile(frame->buffer, frame->frame_len,
                                   frame->frame_idx, QCAMERA_DUMP_FRM_RAW);
