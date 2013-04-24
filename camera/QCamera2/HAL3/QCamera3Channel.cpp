@@ -266,6 +266,11 @@ int32_t QCamera3Channel::start()
 int32_t QCamera3Channel::stop()
 {
     int32_t rc = NO_ERROR;
+    if(!m_bIsActive) {
+        ALOGE("%s: Attempt to stop inactive channel",__func__);
+        return rc;
+    }
+
     rc = m_camOps->stop_channel(m_camHandle, m_handle);
 
     for (int i = 0; i < m_numStreams; i++) {
@@ -779,9 +784,8 @@ void QCamera3PicChannel::jpegEvtHandle(jpeg_job_status_t status,
         memcpy(jpeg_eof, &jpegHeader, sizeof(jpegHeader));
 
         ////Use below data to issue framework callback
-
-        resultBuffer = obj->mCamera3Buffers[0];
-        resultFrameNumber = obj->mMemory->getFrameNumber(0);
+        resultBuffer = obj->mCamera3Buffers[obj->mCurrentBufIndex];
+        resultFrameNumber = obj->mMemory->getFrameNumber(obj->mCurrentBufIndex);
 
         result.stream = obj->mCamera3Stream;
         result.buffer = resultBuffer;
@@ -876,6 +880,7 @@ int32_t QCamera3PicChannel::request(buffer_handle_t *buffer, uint32_t frameNumbe
     int32_t rc = NO_ERROR;
     int index;
     mJpegSettings = jpegSettings;
+
     if(!m_bIsActive) {
         ALOGD("%s: First request on this channel starting stream",__func__);
         //Stream on for main image. YUV buffer is queued to the kernel at the end of this call.
@@ -900,11 +905,11 @@ int32_t QCamera3PicChannel::request(buffer_handle_t *buffer, uint32_t frameNumbe
         ALOGE("%s: Could not find object among registered buffers",__func__);
         return DEAD_OBJECT;
     }
-
     rc = mMemory->markFrameNumber(index, frameNumber);
 
     //Start the postprocessor for jpeg encoding. Pass mMemory as destination buffer
-    m_postprocessor.start(mMemory);
+    mCurrentBufIndex = index;
+    m_postprocessor.start(mMemory, index);
     if(m_camOps->request_super_buf(m_camHandle,m_handle,1) < 0) {
         ALOGE("%s: Request for super buffer failed",__func__);
     }
@@ -964,7 +969,6 @@ int32_t QCamera3PicChannel::registerBuffers(uint32_t num_buffers,
     cam_dimension_t streamDim;
 
     ALOGE("%s: E",__func__);
-
     if (mCamera3Stream->format == HAL_PIXEL_FORMAT_BLOB) {
         streamType = CAM_STREAM_TYPE_SNAPSHOT;
         streamFormat = CAM_FORMAT_YUV_420_NV21;
