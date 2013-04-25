@@ -70,8 +70,11 @@ public:
     virtual int32_t registerBuffers(uint32_t num_buffers,
                         buffer_handle_t **buffers) = 0;
     virtual int32_t initialize() = 0;
-    virtual int32_t request(buffer_handle_t *buffer, uint32_t frameNumber){ return 0;};
-    virtual int32_t request(buffer_handle_t *buffer, uint32_t frameNumber, jpeg_settings_t* mJpegSettings){ return 0;};
+    virtual int32_t request(buffer_handle_t * /*buffer*/,
+                uint32_t /*frameNumber*/){ return 0;};
+    virtual int32_t request(buffer_handle_t * /*buffer*/,
+                uint32_t /*frameNumber*/,
+                jpeg_settings_t* /*mJpegSettings*/){ return 0;};
     virtual void streamCbRoutine(mm_camera_super_buf_t *super_frame,
                             QCamera3Stream *stream) = 0;
 
