@@ -66,5 +66,7 @@ service bugreport /system/bin/dumpstate -d -p -B \
     disabled
     oneshot
     keycodes 114 115 116
+<<<<<<< HEAD
 
-
+=======
+>>>>>>> e4876408
