@@ -53,9 +53,7 @@ PRODUCT_COPY_FILES += \
     device/lge/hammerhead/media_profiles.xml:system/etc/media_profiles.xml
 
 PRODUCT_COPY_FILES += \
-    device/lge/hammerhead/bcmdhd.cal:system/etc/wifi/bcmdhd.cal \
-    device/lge/hammerhead/wpa_supplicant.conf:system/etc/wifi/wpa_supplicant.conf \
-    device/lge/hammerhead/p2p_supplicant.conf:system/etc/wifi/p2p_supplicant.conf
+    device/lge/hammerhead/bcmdhd.cal:system/etc/wifi/bcmdhd.cal
 
 # These are the hardware-specific features
 PRODUCT_COPY_FILES += \
