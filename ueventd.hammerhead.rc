@@ -33,3 +33,5 @@
 /dev/hsicctl2             0640   radio      radio
 /dev/hsicctl3             0640   radio      radio
 /dev/qseecom              0660   system     drmrpc
+/dev/video32              0660   system     camera
+/dev/video33              0660   system     camera

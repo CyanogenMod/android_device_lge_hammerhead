@@ -101,7 +101,9 @@ PRODUCT_PACKAGES += \
     gralloc.msm8974 \
     libgenlock \
     lights.msm8974 \
-    hwcomposer.msm8974
+    hwcomposer.msm8974 \
+    libqdutils \
+    libqdMetaData
 
 PRODUCT_PACKAGES += \
     audio.primary.msm8974 \
