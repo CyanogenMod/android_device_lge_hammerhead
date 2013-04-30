@@ -125,7 +125,7 @@ PRODUCT_PACKAGES += \
     charger_res_images
 
 PRODUCT_PROPERTY_OVERRIDES += \
-    ro.opengles.version=131072
+    ro.opengles.version=196608
 
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.sf.lcd_density=320
