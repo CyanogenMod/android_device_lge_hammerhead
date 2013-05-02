@@ -460,7 +460,6 @@ int QCamera3HardwareInterface::configureStreams(
         camera3_stream_t *newStream = streamList->streams[i];
         if (newStream->priv == NULL) {
             //New stream, construct channel
-
             switch (newStream->stream_type) {
             case CAMERA3_STREAM_INPUT:
                 newStream->usage = GRALLOC_USAGE_HW_CAMERA_READ;
@@ -504,15 +503,6 @@ int QCamera3HardwareInterface::configureStreams(
                         pthread_mutex_unlock(&mMutex);
                         return -ENOMEM;
                     }
-                    //Register Jpeg callback with mm-camera-interface
-                    rc = channel->initialize();
-                    if (rc < 0) {
-                        ALOGE("%s: snapshot channel initialization failed", __func__);
-                       delete channel;
-                       channel = NULL;
-                       goto end;
-                    }
-
                     newStream->priv = channel;
                     break;
 

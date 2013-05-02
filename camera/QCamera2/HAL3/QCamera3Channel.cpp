@@ -970,6 +970,12 @@ int32_t QCamera3PicChannel::registerBuffers(uint32_t num_buffers,
     cam_dimension_t streamDim;
 
     ALOGE("%s: E",__func__);
+    rc = QCamera3PicChannel::initialize();
+    if (rc < 0) {
+        ALOGE("%s: init failed", __func__);
+        return rc;
+    }
+
     if (mCamera3Stream->format == HAL_PIXEL_FORMAT_BLOB) {
         streamType = CAM_STREAM_TYPE_SNAPSHOT;
         streamFormat = CAM_FORMAT_YUV_420_NV21;
