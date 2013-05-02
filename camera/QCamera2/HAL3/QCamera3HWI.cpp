@@ -83,6 +83,10 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId)
     mCameraDevice.ops = &mCameraOps;
     mCameraDevice.priv = this;
     gCamCapability[cameraId]->version = CAM_HAL_V3;
+
+    pthread_mutex_init(&mRequestLock, NULL);
+    pthread_cond_init(&mRequestCond, NULL);
+    mPendingRequest = 0;
 }
 
 /*===========================================================================
@@ -227,16 +231,55 @@ void QCamera3HardwareInterface::notify(const struct camera3_callback_ops *,
 int QCamera3HardwareInterface::initialize(
         const struct camera3_callback_ops *callback_ops)
 {
-    mCallbackOps = callback_ops;
+    int rc;
 
-    //TODO:Create metadata channel and initialize it
+    //Create metadata channel and initialize it
     mMetadataChannel = new QCamera3MetadataChannel(mCameraHandle->camera_handle,
-                                        mCameraHandle->ops, channelCbRoutine);
+                                        mCameraHandle->ops, channelCb);
     if (mMetadataChannel == NULL) {
         ALOGE("%s: failed to allocate metadata channel", __func__);
-        return -ENOMEM;
+        rc = -ENOMEM;
+        goto err1;
     }
-    return mMetadataChannel->initialize();
+    rc = mMetadataChannel->initialize();
+    if (rc < 0) {
+        ALOGE("%s: metadata channel initialization failed", __func__);
+        goto err2;
+    }
+
+    /* Initialize parameter heap and structure */
+    mParamHeap = new QCamera3HeapMemory();
+    if (mParamHeap == NULL) {
+        ALOGE("%s: creation of mParamHeap failed", __func__);
+        goto err2;
+    }
+    rc = mParamHeap->allocate(sizeof(parm_buffer_t), 1, false);
+    if (rc < 0) {
+        ALOGE("%s: allocation of mParamHeap failed", __func__);
+        goto err3;
+    }
+    rc = mCameraHandle->ops->map_buf(mCameraHandle->camera_handle,
+                CAM_MAPPING_BUF_TYPE_PARM_BUF,
+                mParamHeap->getFd(0), sizeof(parm_buffer_t));
+    if (rc < 0) {
+        ALOGE("%s: map_buf failed for mParamHeap", __func__);
+        goto err4;
+    }
+    mParameters = (parm_buffer_t *)DATA_PTR(mParamHeap, 0);
+
+    mCallbackOps = callback_ops;
+    return 0;
+
+err4:
+    mParamHeap->deallocate();
+err3:
+    delete mParamHeap;
+    mParamHeap = NULL;
+err2:
+    delete mMetadataChannel;
+    mMetadataChannel = NULL;
+err1:
+    return rc;
 }
 
 /*===========================================================================
@@ -287,7 +330,7 @@ int QCamera3HardwareInterface::configureStreams(
     /* TODO: Clean up no longer used streams, and maintain others if this
      * is not the 1st time configureStreams is called */
 
-    /* TODO: Reconstruct/reset metadata stream/channel */
+    mMetadataChannel->stop();
 
     /* Allocate channel objects for the requested streams */
     for (size_t i = 0; i < streamList->num_streams; i++) {
@@ -320,7 +363,7 @@ int QCamera3HardwareInterface::configureStreams(
                 switch (newStream->format) {
                 case HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED:
                     channel = new QCamera3RegularChannel(mCameraHandle->camera_handle,
-                            mCameraHandle->ops, channelCbRoutine, newStream);
+                            mCameraHandle->ops, channelCb, newStream);
                     if (channel == NULL) {
                         ALOGE("%s: allocation of channel failed", __func__);
                         return -ENOMEM;
@@ -330,7 +373,7 @@ int QCamera3HardwareInterface::configureStreams(
                     break;
                 case HAL_PIXEL_FORMAT_BLOB:
                     channel = new QCamera3PicChannel(mCameraHandle->camera_handle,
-                            mCameraHandle->ops, channelCbRoutine, newStream);
+                            mCameraHandle->ops, channelCb, newStream);
                     if (channel == NULL) {
                         ALOGE("%s: allocation of channel failed", __func__);
                         return -ENOMEM;
@@ -350,6 +393,9 @@ int QCamera3HardwareInterface::configureStreams(
             // Do nothing for now
         }
     }
+
+    // Cannot reuse settings across configure call
+    memset(mParameters, 0, sizeof(parm_buffer_t));
     return 0;
 }
 
@@ -405,8 +451,7 @@ int QCamera3HardwareInterface::registerStreamBuffers(
 /*===========================================================================
  * FUNCTION   : processCaptureRequest
  *
- * DESCRIPTION:
- *
+ * DESCRIPTION: process a capture request from camera service
  *
  * PARAMETERS :
  *   @request : request from framework to process
@@ -414,14 +459,125 @@ int QCamera3HardwareInterface::registerStreamBuffers(
  * RETURN     :
  *
  *==========================================================================*/
-int QCamera3HardwareInterface::processCaptureRequest
-                                (camera3_capture_request_t *request)
+int QCamera3HardwareInterface::processCaptureRequest(
+                    camera3_capture_request_t *request)
 {
-    /*For each frame, we have to set the requested settings*/
     int rc = NO_ERROR;
+    ssize_t idx = 0;
+    const camera3_stream_buffer_t *b;
+    CameraMetadata meta;
+
+    /* Sanity check the request */
+    if (request == NULL) {
+        ALOGE("%s: NULL capture request", __func__);
+        return BAD_VALUE;
+    }
+
+    uint32_t frameNumber = request->frame_number;
+    if (request->input_buffer != NULL &&
+            request->input_buffer->stream != mInputStream) {
+        ALOGE("%s: Request %d: Input buffer not from input stream!",
+                __FUNCTION__, frameNumber);
+        return BAD_VALUE;
+    }
+    if (request->num_output_buffers < 1 || request->output_buffers == NULL) {
+        ALOGE("%s: Request %d: No output buffers provided!",
+                __FUNCTION__, frameNumber);
+        return BAD_VALUE;
+    }
+    if (request->input_buffer != NULL) {
+        //TODO
+        ALOGE("%s: Not supporting input buffer yet", __func__);
+        return BAD_VALUE;
+    }
+
+    // Validate all buffers
+    b = request->output_buffers;
+    do {
+        QCamera3Channel *channel =
+                static_cast<QCamera3Channel*>(b->stream->priv);
+        if (channel == NULL) {
+            ALOGE("%s: Request %d: Buffer %d: Unconfigured stream!",
+                    __func__, frameNumber, idx);
+            return BAD_VALUE;
+        }
+        if (b->status != CAMERA3_BUFFER_STATUS_OK) {
+            ALOGE("%s: Request %d: Buffer %d: Status not OK!",
+                    __func__, frameNumber, idx);
+            return BAD_VALUE;
+        }
+        if (b->release_fence != -1) {
+            ALOGE("%s: Request %d: Buffer %d: Has a release fence!",
+                    __func__, frameNumber, idx);
+            return BAD_VALUE;
+        }
+        if (b->buffer == NULL) {
+            ALOGE("%s: Request %d: Buffer %d: NULL buffer handle!",
+                    __func__, frameNumber, idx);
+            return BAD_VALUE;
+        }
+        idx++;
+        b = request->output_buffers + idx;
+    } while (idx < (ssize_t)request->num_output_buffers);
+
     rc = setFrameParameters(request->settings);
-    /*do the actual processing*/
+    if (rc < 0) {
+        ALOGE("%s: fail to set frame parameters", __func__);
+        return rc;
+    }
+
+    // Notify metadata channel we receive a request
+    mMetadataChannel->request(NULL);
+
+    // Call request on other streams
+    for (size_t i = 0; i < request->num_output_buffers; i++) {
+        const camera3_stream_buffer_t& output = request->output_buffers[i];
+        QCamera3Channel *channel = (QCamera3Channel *)output.stream->priv;
+        if (channel == NULL) {
+            ALOGE("%s: invalid channel pointer for stream", __func__);
+            continue;
+        }
+
+        rc = channel->request(&output);
+        if (rc < 0)
+            ALOGE("%s: request failed", __func__);
+    }
+
+    //Block on conditional variable
+    pthread_mutex_lock(&mRequestLock);
+    mPendingRequest = 1;
+    while (mPendingRequest == 1) {
+        pthread_cond_wait(&mRequestCond, &mRequestLock);
+    }
+    pthread_mutex_unlock(&mRequestLock);
+
     return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : channelCb
+ *
+ * DESCRIPTION: Callback handler for all channels (streams, as well as metadata)
+ *
+ * PARAMETERS :
+ *   @frame  : frame information from mm-camera-interface
+ *   @buffer : actual gralloc buffer to be returned to frameworks. NULL if metadata.
+ *
+ * RETURN     : NONE
+ *==========================================================================*/
+void QCamera3HardwareInterface::channelCb(mm_camera_buf_def_t *frame,
+                camera3_stream_buffer_t *buffer)
+{
+    if (frame->stream_type == CAM_STREAM_TYPE_METADATA) {
+        // Signal to unblock processCaptureRequest
+        pthread_mutex_lock(&mRequestLock);
+        mPendingRequest = 0;
+        pthread_cond_signal(&mRequestCond);
+        pthread_mutex_unlock(&mRequestLock);
+    }
+
+    //TODO: Gives frame and buffer to buffer aggregator.
+    return;
 }
 
 #define DATA_PTR(MEM_OBJ,INDEX) MEM_OBJ->getPtr( INDEX )
@@ -451,7 +607,6 @@ int QCamera3HardwareInterface::initCapabilities(int cameraId)
     }
 
     /* Allocate memory for capability buffer */
-    capabilityHeap = new QCamera3HeapMemory();
     rc = capabilityHeap->allocate(1, sizeof(cam_capability_t), false);
     if(rc != OK) {
         ALOGE("%s: No memory for cappability", __func__);
@@ -738,7 +893,8 @@ camera_metadata_t* QCamera3HardwareInterface::translateMetadata(int type)
     }
     settings.update(ANDROID_CONTROL_CAPTURE_INTENT, &controlIntent, 1);
 
-    settings.update(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION, &gCamCapability[mCameraId]->exposure_compensation_default, 1);
+    settings.update(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION,
+            &gCamCapability[mCameraId]->exposure_compensation_default, 1);
 
     static const uint8_t aeLock = ANDROID_CONTROL_AE_LOCK_OFF;
     settings.update(ANDROID_CONTROL_AE_LOCK, &aeLock, 1);
@@ -832,7 +988,7 @@ int QCamera3HardwareInterface::translateMetadataToParameters
 }
 
 /*===========================================================================
- * FUNCTION   : channelCbRoutine
+ * FUNCTION   : channelCb
  *
  * DESCRIPTION: Callback handler for all channels (streams, as well as metadata)
  *
@@ -843,7 +999,7 @@ int QCamera3HardwareInterface::translateMetadataToParameters
  *
  * RETURN     : NONE
  *==========================================================================*/
-void QCamera3HardwareInterface::channelCbRoutine(mm_camera_buf_def_t *frame,
+void QCamera3HardwareInterface::channelCb(mm_camera_buf_def_t *frame,
                 camera3_stream_buffer_t *buffer, void *userdata)
 {
     QCamera3HardwareInterface *hw = (QCamera3HardwareInterface *)userdata;
@@ -852,8 +1008,7 @@ void QCamera3HardwareInterface::channelCbRoutine(mm_camera_buf_def_t *frame,
         return;
     }
 
-    //TODO: Gives frame and buffer to buffer aggregator.
-
+    hw->channelCb(frame, buffer);
     return;
 }
 
@@ -941,8 +1096,9 @@ int QCamera3HardwareInterface::register_stream_buffers(
  * RETURN     : Success: Return valid metadata
  *              Failure: Return NULL
  *==========================================================================*/
-const camera_metadata_t* QCamera3HardwareInterface::construct_default_request_settings
-(const struct camera3_device *device, int type)
+const camera_metadata_t* QCamera3HardwareInterface::
+    construct_default_request_settings(const struct camera3_device *device,
+                                        int type)
 {
 
     camera_metadata_t* fwk_metadata = NULL;
@@ -968,19 +1124,18 @@ const camera_metadata_t* QCamera3HardwareInterface::construct_default_request_se
  *
  * RETURN     :
  *==========================================================================*/
-int QCamera3HardwareInterface::process_capture_request(const struct camera3_device *device,
-                                                       camera3_capture_request_t *request)
+int QCamera3HardwareInterface::process_capture_request(
+                    const struct camera3_device *device,
+                    camera3_capture_request_t *request)
 {
-    /*TODO - Implement*/
     QCamera3HardwareInterface *hw =
         reinterpret_cast<QCamera3HardwareInterface *>(device->priv);
-    int rc = NO_ERROR;
     if (!hw) {
         ALOGE("%s: NULL camera device", __func__);
-        return -ENODEV;
+        return -EINVAL;
     }
-    rc = hw->processCaptureRequest(request);
-    return rc;
+
+    return hw->processCaptureRequest(request);
 }
 
 /*===========================================================================

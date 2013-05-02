@@ -53,20 +53,24 @@ public:
                    channel_cb_routine cb_routine);
     QCamera3Channel();
     virtual ~QCamera3Channel();
-    virtual int32_t addStream(cam_stream_type_t streamType,
+
+    int32_t addStream(cam_stream_type_t streamType,
                               cam_format_t streamFormat,
                               cam_dimension_t streamDim,
                               uint8_t minStreamBufnum,
-                              cam_padding_info_t *paddingInfo,
-                              QCamera3Memory *memory);
-    virtual int32_t start();
-    virtual int32_t stop();
-    virtual int32_t bufDone(mm_camera_super_buf_t *recvd_frame);
+                              cam_padding_info_t *paddingInfo);
+    int32_t start();
+    int32_t stop();
+    int32_t bufDone(mm_camera_super_buf_t *recvd_frame);
+
     virtual int32_t registerBuffers(uint32_t num_buffers,
                         buffer_handle_t **buffers) = 0;
-    virtual int32_t request(camera3_stream_buffer_t *buffer) = 0;
+    virtual int32_t request(const camera3_stream_buffer_t *buffer) = 0;
     virtual void streamCbRoutine(mm_camera_super_buf_t *super_frame,
                             QCamera3Stream *stream) = 0;
+
+    virtual QCamera3Memory *getStreamBufs(uint32_t len) = 0;
+    virtual void putStreamBufs() = 0;
 
     QCamera3Stream *getStreamByHandle(uint32_t streamHandle);
     uint32_t getMyHandle() const {return m_handle;};
@@ -110,16 +114,21 @@ public:
                     camera3_stream_t *stream);
     virtual ~QCamera3RegularChannel();
 
-    virtual int32_t request(camera3_stream_buffer_t *buffer);
-    virtual int32_t registerBuffers(uint32_t num_buffers, buffer_handle_t **buffers);
-    void streamCbRoutine(mm_camera_super_buf_t *super_frame, QCamera3Stream *stream);
+    virtual int32_t request(const camera3_stream_buffer_t *buffer);
+    virtual int32_t registerBuffers(uint32_t num_buffers,
+                                buffer_handle_t **buffers);
+    virtual void streamCbRoutine(mm_camera_super_buf_t *super_frame,
+                                            QCamera3Stream *stream);
+
+    virtual QCamera3Memory *getStreamBufs(uint32_t le);
+    virtual void putStreamBufs();
 
 public:
     static int kMaxBuffers;
 private:
     camera3_stream_t *mCamera3Stream;
     uint32_t mNumBufs;
-    camera3_stream_buffer_set_t *mCamera3Buffers;
+    buffer_handle_t **mCamera3Buffers;
 
     QCamera3GrallocMemory *mMemory;
 };
@@ -135,14 +144,18 @@ public:
 
     int32_t initialize();
 
-    virtual int32_t request(camera3_stream_buffer_t *buffer);
+    virtual int32_t request(const camera3_stream_buffer_t *buffer);
     virtual int32_t registerBuffers(uint32_t num_buffers,
                 buffer_handle_t **buffers);
     virtual void streamCbRoutine(mm_camera_super_buf_t *super_frame,
                             QCamera3Stream *stream);
 
+    virtual QCamera3Memory *getStreamBufs(uint32_t le);
+    virtual void putStreamBufs();
+
 private:
     QCamera3HeapMemory *mMemory;
+    bool mStarted;
 };
 
 /* QCamera3PicChannel is for JPEG stream, which contains a YUV stream generated
@@ -156,11 +169,15 @@ public:
                     camera3_stream_t *stream);
     ~QCamera3PicChannel();
 
-    virtual int32_t request(camera3_stream_buffer_t *buffer);
+    virtual int32_t request(const camera3_stream_buffer_t *buffer);
     virtual int32_t registerBuffers(uint32_t num_buffers,
                         buffer_handle_t **buffers);
     virtual void streamCbRoutine(mm_camera_super_buf_t *super_frame,
                             QCamera3Stream *stream);
+
+    virtual QCamera3Memory *getStreamBufs(uint32_t le);
+    virtual void putStreamBufs();
+
 public:
     static int kMaxBuffers;
 private:

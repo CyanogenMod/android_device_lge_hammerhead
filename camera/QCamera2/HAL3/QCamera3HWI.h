@@ -30,6 +30,7 @@
 #ifndef __QCAMERA2HARDWAREINTERFACE_H__
 #define __QCAMERA2HARDWAREINTERFACE_H__
 
+#include <pthread.h>
 #include <utils/List.h>
 #include <hardware/camera3.h>
 #include <camera/CameraMetadata.h>
@@ -52,17 +53,24 @@ namespace qcamera {
 #endif
 
 class QCamera3MetadataChannel;
+class QCamera3HeapMemory;
 
 class QCamera3HardwareInterface {
 public:
     /* static variable and functions accessed by camera service */
     static camera3_device_ops_t mCameraOps;
-    static int initialize(const struct camera3_device *, const camera3_callback_ops_t *callback_ops);
-    static int configure_streams(const struct camera3_device *, camera3_stream_configuration_t *stream_list);
-    static int register_stream_buffers(const struct camera3_device *, const camera3_stream_buffer_set_t *buffer_set);
-    static const camera_metadata_t* construct_default_request_settings(const struct camera3_device *, int type);
-    static int process_capture_request(const struct camera3_device *, camera3_capture_request_t *request);
-    static void get_metadata_vendor_tag_ops(const struct camera3_device *, vendor_tag_query_ops_t* ops);
+    static int initialize(const struct camera3_device *,
+                const camera3_callback_ops_t *callback_ops);
+    static int configure_streams(const struct camera3_device *,
+                camera3_stream_configuration_t *stream_list);
+    static int register_stream_buffers(const struct camera3_device *,
+                const camera3_stream_buffer_set_t *buffer_set);
+    static const camera_metadata_t* construct_default_request_settings(
+                                const struct camera3_device *, int type);
+    static int process_capture_request(const struct camera3_device *,
+                                camera3_capture_request_t *request);
+    static void get_metadata_vendor_tag_ops(const struct camera3_device *,
+                                               vendor_tag_query_ops_t* ops);
     static void dump(const struct camera3_device *, int fd);
 
 public:
@@ -71,16 +79,19 @@ public:
     int openCamera(struct hw_device_t **hw_device);
     int getMetadata(int type);
     camera_metadata_t* translateMetadata(int type);
+    int metadataToParam(CameraMetadata &metadata);
 
     static int getCamInfo(int cameraId, struct camera_info *info);
     static int initCapabilities(int cameraId);
     static int initStaticMetadata(int cameraId);
 
-    static void channelCbRoutine(mm_camera_buf_def_t *frame,
+    static void channelCb(mm_camera_buf_def_t *frame,
                 camera3_stream_buffer_t *buffer, void *userdata);
 
-    void sendCaptureResult(const struct camera3_callback_ops *, const camera3_capture_result_t *result);
-    void notify(const struct camera3_callback_ops *, const camera3_notify_msg_t *msg);
+    void sendCaptureResult(const struct camera3_callback_ops *,
+                        const camera3_capture_result_t *result);
+    void notify(const struct camera3_callback_ops *,
+                        const camera3_notify_msg_t *msg);
 
     int initialize(const camera3_callback_ops_t *callback_ops);
     int configureStreams(camera3_stream_configuration_t *stream_list);
@@ -89,6 +100,10 @@ public:
 
     int setFrameParameters(const camera_metadata_t *settings);
     int translateMetadataToParameters(const camera_metadata_t *settings);
+
+    void channelCb(mm_camera_buf_def_t *frame,
+                camera3_stream_buffer_t *buffer);
+
 private:
 
     int openCamera();
@@ -107,6 +122,14 @@ private:
 
     camera3_stream_t *mInputStream;
     QCamera3MetadataChannel *mMetadataChannel;
+
+    QCamera3HeapMemory *mParamHeap;
+    parm_buffer_t* mParameters;
+
+    //mutex and conditional variable for request
+    pthread_mutex_t mRequestLock;
+    pthread_cond_t mRequestCond;
+    int mPendingRequest;
 };
 
 }; // namespace qcamera
