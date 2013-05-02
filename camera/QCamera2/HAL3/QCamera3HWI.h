@@ -54,6 +54,12 @@ namespace qcamera {
 #define FALSE 0
 #endif
 
+/* Time related macros */
+typedef int64_t nsecs_t;
+#define NSEC_PER_SEC 1000000000LL
+#define NSEC_PER_USEC 1000
+
+
 class QCamera3MetadataChannel;
 class QCamera3PicChannel;
 class QCamera3HeapMemory;
@@ -88,6 +94,8 @@ public:
     static int initCapabilities(int cameraId);
     static int initStaticMetadata(int cameraId);
     static void makeTable(cam_dimension_t* dimTable, uint8_t size, int32_t* sizeTable);
+    static void makeFPSTable(cam_fps_range_t* fpsTable, uint8_t size,
+                                          float* fpsRangesTable);
     static void convertRegions(cam_rect_t rect, int32_t* region, int weight);
     static void convertLandmarks(cam_face_detection_info_t face, int32_t* landmarks);
     static int32_t getScalarFormat(int32_t format);
@@ -105,7 +113,8 @@ public:
 
     int setFrameParameters(int frame_id, const camera_metadata_t *settings);
     int translateMetadataToParameters(const camera_metadata_t *settings);
-    camera_metadata_t* translateCbMetadataToResultMetadata(metadata_buffer_t *metadata);
+    camera_metadata_t* translateCbMetadataToResultMetadata(metadata_buffer_t *metadata,
+                            nsecs_t timestamp);
     int getJpegSettings(const camera_metadata_t *settings);
     int initParameters();
     void deinitParameters();
@@ -114,8 +123,8 @@ public:
                 camera3_stream_buffer_t *buffer, uint32_t frame_number);
 
     typedef struct {
-        int fwk_name;
-        int hal_name;
+        uint8_t fwk_name;
+        uint8_t hal_name;
     } QCameraMap;
 
 private:
@@ -126,9 +135,9 @@ private:
                                cam_intf_parm_type_t paramType,
                                uint32_t paramLength,
                                void *paramValue);
-    static int lookupHalName(const QCameraMap arr[],
+    static int8_t lookupHalName(const QCameraMap arr[],
                       int len, int fwk_name);
-    static int lookupFwkName(const QCameraMap arr[],
+    static int8_t lookupFwkName(const QCameraMap arr[],
                       int len, int hal_name);
 
     int validateCaptureRequest(camera3_capture_request_t *request);
@@ -168,7 +177,9 @@ private:
 
     //mutex to protect the critial section for processCaptureResult
     pthread_mutex_t mCaptureResultLock;
+
     jpeg_settings_t* mJpegSettings;
+    Vector<stream_info_t*> mStreamInfo;
     static const QCameraMap EFFECT_MODES_MAP[];
     static const QCameraMap WHITE_BALANCE_MODES_MAP[];
     static const QCameraMap SCENE_MODES_MAP[];
