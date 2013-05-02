@@ -1438,7 +1438,7 @@ QCameraHeapMemory *QCamera2HardwareInterface::allocateStreamInfoBuf(
     switch (stream_type) {
     case CAM_STREAM_TYPE_SNAPSHOT:
     case CAM_STREAM_TYPE_RAW:
-        if (mParameters.isZSLMode()) {
+        if (mParameters.isZSLMode() && mParameters.getRecordingHintValue() != true) {
             streamInfo->streaming_mode = CAM_STREAMING_MODE_CONTINUOUS;
         } else {
             streamInfo->streaming_mode = CAM_STREAMING_MODE_BURST;
@@ -3378,24 +3378,29 @@ int32_t QCamera2HardwareInterface::preparePreview()
             return rc;
         }
     } else {
+        bool recordingHint = mParameters.getRecordingHintValue();
+        if(recordingHint) {
+            rc = addChannel(QCAMERA_CH_TYPE_SNAPSHOT);
+            if (rc != NO_ERROR) {
+                return rc;
+            }
+
+            rc = addChannel(QCAMERA_CH_TYPE_VIDEO);
+            if (rc != NO_ERROR) {
+                delChannel(QCAMERA_CH_TYPE_SNAPSHOT);
+                return rc;
+            }
+        }
+
         rc = addChannel(QCAMERA_CH_TYPE_PREVIEW);
         if (rc != NO_ERROR) {
+            if (recordingHint) {
+                delChannel(QCAMERA_CH_TYPE_SNAPSHOT);
+                delChannel(QCAMERA_CH_TYPE_VIDEO);
+            }
             return rc;
         }
 
-        if(mParameters.getRecordingHintValue() == true) {
-            rc = addChannel(QCAMERA_CH_TYPE_VIDEO);
-            if (rc != NO_ERROR) {
-                delChannel(QCAMERA_CH_TYPE_PREVIEW);
-                return rc;
-            }
-            rc = addChannel(QCAMERA_CH_TYPE_SNAPSHOT);
-            if (rc != NO_ERROR) {
-                delChannel(QCAMERA_CH_TYPE_METADATA);
-                delChannel(QCAMERA_CH_TYPE_PREVIEW);
-                delChannel(QCAMERA_CH_TYPE_VIDEO);
-            }
-        }
     }
 
     return rc;
