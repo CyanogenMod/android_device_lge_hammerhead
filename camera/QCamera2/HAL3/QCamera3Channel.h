@@ -214,6 +214,7 @@ private:
     uint32_t mNumBufs;
     buffer_handle_t **mCamera3Buffers;
     jpeg_settings_t* mJpegSettings;
+    int32_t mCurrentBufIndex;
 
 
     QCamera3GrallocMemory *mMemory;

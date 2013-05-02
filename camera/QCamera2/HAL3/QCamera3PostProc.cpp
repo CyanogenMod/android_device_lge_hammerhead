@@ -154,10 +154,11 @@ int32_t QCamera3PostProcessor::deinit()
  * NOTE       : if any reprocess is needed, a reprocess channel/stream
  *              will be started.
  *==========================================================================*/
-int32_t QCamera3PostProcessor::start(QCamera3Memory* mMemory)
+int32_t QCamera3PostProcessor::start(QCamera3Memory* mMemory, int index)
 {
     int32_t rc = NO_ERROR;
     mJpegMem = mMemory;
+    mJpegMemIndex = index;
     m_dataProcTh.sendCmd(CAMERA_CMD_TYPE_START_DATA_PROC, FALSE, FALSE);
 
     return rc;
@@ -293,9 +294,9 @@ int32_t QCamera3PostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& en
     //mJpegMem is allocated by framework.
     encode_parm.num_dst_bufs = 1;
     encode_parm.dest_buf[0].index = 0;
-    encode_parm.dest_buf[0].buf_size = mJpegMem->getSize(0);
-    encode_parm.dest_buf[0].buf_vaddr = (uint8_t *)mJpegMem->getPtr(0);
-    encode_parm.dest_buf[0].fd = mJpegMem->getFd(0);
+    encode_parm.dest_buf[0].buf_size = mJpegMem->getSize(mJpegMemIndex);
+    encode_parm.dest_buf[0].buf_vaddr = (uint8_t *)mJpegMem->getPtr(mJpegMemIndex);
+    encode_parm.dest_buf[0].fd = mJpegMem->getFd(mJpegMemIndex);
     encode_parm.dest_buf[0].format = MM_JPEG_FMT_YUV;
     encode_parm.dest_buf[0].offset = main_offset;
 
