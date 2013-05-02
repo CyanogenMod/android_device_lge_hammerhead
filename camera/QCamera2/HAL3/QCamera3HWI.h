@@ -78,12 +78,14 @@ public:
     virtual ~QCamera3HardwareInterface();
     int openCamera(struct hw_device_t **hw_device);
     int getMetadata(int type);
-    camera_metadata_t* translateMetadata(int type);
+    camera_metadata_t* translateToMetadata(int type);
     int metadataToParam(CameraMetadata &metadata);
 
     static int getCamInfo(int cameraId, struct camera_info *info);
     static int initCapabilities(int cameraId);
     static int initStaticMetadata(int cameraId);
+    static void makeTable(cam_dimension_t* dimTable, uint8_t size, int32_t* sizeTable);
+    static int32_t getScalarFormat(int32_t format);
 
     static void captureResultCb(metadata_buffer_t *metadata,
                 camera3_stream_buffer_t *buffer, uint32_t frame_number,
@@ -101,16 +103,31 @@ public:
     void getMetadataVendorTagOps(vendor_tag_query_ops_t* ops);
     void dump(int fd);
 
-    int setFrameParameters(const camera_metadata_t *settings);
+    int setFrameParameters(int frame_id, const camera_metadata_t *settings);
     int translateMetadataToParameters(const camera_metadata_t *settings);
+    int getJpegSettings(const camera_metadata_t *settings);
+    int initParameters();
 
     void captureResultCb(metadata_buffer_t *metadata,
                 camera3_stream_buffer_t *buffer, uint32_t frame_number);
+
+    typedef struct {
+        int fwk_name;
+        int hal_name;
+    } QCameraMap;
 
 private:
 
     int openCamera();
     int closeCamera();
+    int AddSetParmEntryToBatch(parm_buffer_t *p_table,
+                               cam_intf_parm_type_t paramType,
+                               uint32_t paramLength,
+                               void *paramValue);
+    static int lookupHalName(const QCameraMap arr[],
+                      int len, int fwk_name);
+    static int lookupFwkName(const QCameraMap arr[],
+                      int len, int hal_name);
 
     int validateCaptureRequest(camera3_capture_request_t *request);
 
@@ -141,6 +158,26 @@ private:
 
     //mutex to protect the critial section for processCaptureResult
     pthread_mutex_t mCaptureResultLock;
+
+    typedef struct {
+        int32_t jpeg_orientation;
+        uint8_t jpeg_quality;
+        cam_dimension_t thumbnail_size;
+        int64_t gps_timestamp;
+        double gps_coordinates[3];
+        uint8_t gps_processing_method;
+        int32_t sensor_sensitivity;
+        float lens_focal_length;
+    } jpeg_settings_t;
+
+    jpeg_settings_t* mJpegSettings;
+    static const QCameraMap EFFECT_MODES_MAP[];
+    static const QCameraMap WHITE_BALANCE_MODES_MAP[];
+    static const QCameraMap SCENE_MODES_MAP[];
+    static const QCameraMap FOCUS_MODES_MAP[];
+    static const QCameraMap ANTIBANDING_MODES_MAP[];
+    static const QCameraMap AUTO_EXPOSURE_MAP[];
+    static const QCameraMap FLASH_MODES_MAP[];
 };
 
 }; // namespace qcamera
