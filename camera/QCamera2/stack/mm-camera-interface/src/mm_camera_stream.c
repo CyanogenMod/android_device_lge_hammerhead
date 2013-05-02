@@ -975,7 +975,7 @@ int32_t mm_stream_read_msm_frame(mm_stream_t * my_obj,
         buf_info->buf->frame_idx = vb.sequence;
         buf_info->buf->ts.tv_sec  = vb.timestamp.tv_sec;
         buf_info->buf->ts.tv_nsec = vb.timestamp.tv_usec * 1000;
-        CDBG_HIGH("%s: VIDIOC_DQBUF buf_index %d, frame_idx %d, stream type %d\n",
+        CDBG("%s: VIDIOC_DQBUF buf_index %d, frame_idx %d, stream type %d\n",
              __func__, vb.index, buf_info->buf->frame_idx, my_obj->stream_info->stream_type);
         if ( NULL != my_obj->mem_vtbl.clean_invalidate_buf ) {
             rc = my_obj->mem_vtbl.clean_invalidate_buf(idx,
@@ -1179,7 +1179,6 @@ int32_t mm_stream_qbuf(mm_stream_t *my_obj, mm_camera_buf_def_t *buf)
 int32_t mm_stream_request_buf(mm_stream_t * my_obj)
 {
     int32_t rc = 0;
-    uint8_t i,reg = 0;
     struct v4l2_requestbuffers bufreq;
     uint8_t buf_num = my_obj->buf_num;
     CDBG("%s: E, my_handle = 0x%x, fd = %d, state = %d",
@@ -1191,20 +1190,6 @@ int32_t mm_stream_request_buf(mm_stream_t * my_obj)
         return -1;
     }
 
-    pthread_mutex_lock(&my_obj->buf_lock);
-    for(i = 0; i < buf_num; i++){
-        if (my_obj->buf_status[i].initial_reg_flag){
-            reg = 1;
-            break;
-        }
-    }
-    pthread_mutex_unlock(&my_obj->buf_lock);
-
-    if(!reg) {
-        /* No need to register a buffer */
-        CDBG_ERROR("No Need to register this buffer");
-        return rc;
-    }
     memset(&bufreq, 0, sizeof(bufreq));
     bufreq.count = buf_num;
     bufreq.type  = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;

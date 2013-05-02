@@ -7,8 +7,8 @@ LOCAL_SRC_FILES := \
         QCamera2Hal.cpp \
         QCamera2HWI.cpp \
         QCameraMem.cpp \
-        QCameraQueue.cpp \
-        QCameraCmdThread.cpp \
+        ../util/QCameraQueue.cpp \
+        ../util/QCameraCmdThread.cpp \
         QCameraStateMachine.cpp \
         QCameraChannel.cpp \
         QCameraStream.cpp \
@@ -27,7 +27,8 @@ LOCAL_C_INCLUDES := \
         hardware/qcom/display/libgralloc \
         hardware/qcom/media/libstagefrighthw \
         $(LOCAL_PATH)/../../mm-image-codec/qexif \
-        $(LOCAL_PATH)/../../mm-image-codec/qomx_core
+        $(LOCAL_PATH)/../../mm-image-codec/qomx_core \
+        $(LOCAL_PATH)/../util
 
 LOCAL_SHARED_LIBRARIES := libcamera_client liblog libhardware libutils libcutils libdl
 LOCAL_SHARED_LIBRARIES += libmmcamera_interface libmmjpeg_interface

@@ -5856,10 +5856,13 @@ bool QCameraParameters::validateCameraAreas(cam_area_t *areas, int num_areas)
  *==========================================================================*/
 int32_t QCameraParameters::initBatchUpdate(parm_buffer_t *p_table)
 {
+    int32_t hal_version = CAM_HAL_V1;
     m_tempMap.clear();
 
     memset(p_table, 0, sizeof(parm_buffer_t));
     p_table->first_flagged_entry = CAM_INTF_PARM_MAX;
+    AddSetParmEntryToBatch(p_table, CAM_INTF_PARM_HAL_VERSION,
+                sizeof(hal_version), &hal_version);
     return NO_ERROR;
 }
 
