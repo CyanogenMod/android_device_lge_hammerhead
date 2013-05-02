@@ -85,6 +85,10 @@ public:
     int initialize(const camera3_callback_ops_t *callback_ops);
     int configureStreams(camera3_stream_configuration_t *stream_list);
     int registerStreamBuffers(const camera3_stream_buffer_set_t *buffer_set);
+    int processCaptureRequest(camera3_capture_request_t *request);
+
+    int setFrameParameters(const camera_metadata_t *settings);
+    int translateMetadataToParameters(const camera_metadata_t *settings);
 private:
 
     int openCamera();

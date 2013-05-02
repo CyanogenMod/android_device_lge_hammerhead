@@ -46,6 +46,7 @@ using namespace android;
 namespace qcamera {
 #define DATA_PTR(MEM_OBJ,INDEX) MEM_OBJ->getPtr( INDEX )
 cam_capability_t *gCamCapability[MM_CAMERA_MAX_NUM_SENSORS];
+parm_buffer_t *prevSettings;
 const camera_metadata_t *gStaticMetadata;
 
 
@@ -401,6 +402,28 @@ int QCamera3HardwareInterface::registerStreamBuffers(
     return NO_ERROR;
 }
 
+/*===========================================================================
+ * FUNCTION   : processCaptureRequest
+ *
+ * DESCRIPTION:
+ *
+ *
+ * PARAMETERS :
+ *   @request : request from framework to process
+ *
+ * RETURN     :
+ *
+ *==========================================================================*/
+int QCamera3HardwareInterface::processCaptureRequest
+                                (camera3_capture_request_t *request)
+{
+    /*For each frame, we have to set the requested settings*/
+    int rc = NO_ERROR;
+    rc = setFrameParameters(request->settings);
+    /*do the actual processing*/
+    return rc;
+}
+
 #define DATA_PTR(MEM_OBJ,INDEX) MEM_OBJ->getPtr( INDEX )
 /*===========================================================================
  * FUNCTION   : initCapabilities
@@ -515,15 +538,96 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       (int*)gCamCapability[cameraId]->optical_stab_modes,
                       gCamCapability[cameraId]->optical_stab_modes_count);
 
-
-   /* staticInfo.update(ANDROID_LENS_INFO_SHADING_MAP_SIZE,
-                      gCamCapability[cameraId]->lens_shading_map_size,
-                      sizeof(cam_dimension_t)/sizeof(int32_t)); */
-
     staticInfo.update(ANDROID_LENS_POSITION,
-                gCamCapability[cameraId]->lens_position,
-                sizeof(gCamCapability[cameraId]->lens_position)/ sizeof(float));
+                      gCamCapability[cameraId]->lens_position,
+                      sizeof(gCamCapability[cameraId]->lens_position)/ sizeof(float));
 
+    static const int32_t lens_shading_map_size[] = {gCamCapability[cameraId]->lens_shading_map_size.width,
+                                                    gCamCapability[cameraId]->lens_shading_map_size.height};
+    staticInfo.update(ANDROID_LENS_INFO_SHADING_MAP_SIZE,
+                      lens_shading_map_size,
+                      sizeof(lens_shading_map_size)/sizeof(int32_t));
+
+    staticInfo.update(ANDROID_LENS_INFO_SHADING_MAP, gCamCapability[cameraId]->lens_shading_map,
+            sizeof(gCamCapability[cameraId]->lens_shading_map_size)/ sizeof(cam_dimension_t));
+
+    static const int32_t geo_correction_map_size[] = {gCamCapability[cameraId]->geo_correction_map_size.width,
+                                                            gCamCapability[cameraId]->geo_correction_map_size.height};
+    staticInfo.update(ANDROID_LENS_INFO_GEOMETRIC_CORRECTION_MAP_SIZE,
+            geo_correction_map_size,
+            sizeof(geo_correction_map_size)/sizeof(int32_t));
+
+    staticInfo.update(ANDROID_LENS_INFO_GEOMETRIC_CORRECTION_MAP,
+                       gCamCapability[cameraId]->geo_correction_map,
+            sizeof(gCamCapability[cameraId]->geo_correction_map_size)/ sizeof(cam_dimension_t));
+
+    staticInfo.update(ANDROID_SENSOR_INFO_PHYSICAL_SIZE,
+            gCamCapability[cameraId]->sensor_physical_size, 2);
+
+    staticInfo.update(ANDROID_SENSOR_INFO_EXPOSURE_TIME_RANGE,
+            gCamCapability[cameraId]->exposure_time_range, 2);
+
+    staticInfo.update(ANDROID_SENSOR_INFO_MAX_FRAME_DURATION,
+            &gCamCapability[cameraId]->max_frame_duration, 1);
+
+
+    staticInfo.update(ANDROID_SENSOR_INFO_COLOR_FILTER_ARRANGEMENT,
+                     (int*)&gCamCapability[cameraId]->color_arrangement, 1);
+
+    static const int32_t pixel_array_size[] = {gCamCapability[cameraId]->pixel_array_size.width,
+                                               gCamCapability[cameraId]->pixel_array_size.height};
+    staticInfo.update(ANDROID_SENSOR_INFO_PIXEL_ARRAY_SIZE,
+                      pixel_array_size, 2);
+
+    static const int32_t active_array_size[] = {gCamCapability[cameraId]->active_array_size.width,
+                                                gCamCapability[cameraId]->active_array_size.height};
+    staticInfo.update(ANDROID_SENSOR_INFO_ACTIVE_ARRAY_SIZE,
+                      active_array_size, 2);
+
+    staticInfo.update(ANDROID_SENSOR_INFO_WHITE_LEVEL,
+            &gCamCapability[cameraId]->white_level, 1);
+
+    staticInfo.update(ANDROID_SENSOR_BLACK_LEVEL_PATTERN,
+            gCamCapability[cameraId]->black_level_pattern, 4);
+
+    staticInfo.update(ANDROID_FLASH_INFO_CHARGE_DURATION,
+                      &gCamCapability[cameraId]->flash_charge_duration, 1);
+
+    staticInfo.update(ANDROID_TONEMAP_MAX_CURVE_POINTS,
+                      &gCamCapability[cameraId]->max_tone_map_curve_points, 1);
+
+    staticInfo.update(ANDROID_STATISTICS_INFO_MAX_FACE_COUNT,
+                      (int*)&gCamCapability[cameraId]->max_face_detection_count, 1);
+
+    staticInfo.update(ANDROID_STATISTICS_INFO_HISTOGRAM_BUCKET_COUNT,
+                      &gCamCapability[cameraId]->histogram_size, 1);
+
+    staticInfo.update(ANDROID_STATISTICS_INFO_MAX_HISTOGRAM_COUNT,
+            &gCamCapability[cameraId]->max_histogram_count, 1);
+
+    static const int32_t sharpness_map_size[] = {gCamCapability[cameraId]->sharpness_map_size.width,
+                                                gCamCapability[cameraId]->sharpness_map_size.height};
+
+    staticInfo.update(ANDROID_STATISTICS_INFO_SHARPNESS_MAP_SIZE,
+            sharpness_map_size, sizeof(sharpness_map_size)/sizeof(int32_t));
+
+    staticInfo.update(ANDROID_STATISTICS_INFO_MAX_SHARPNESS_MAP_VALUE,
+            &gCamCapability[cameraId]->max_sharpness_map_value, 1);
+
+
+    staticInfo.update(ANDROID_SCALER_AVAILABLE_RAW_MIN_DURATIONS,
+                      &gCamCapability[cameraId]->raw_min_duration,
+                       1);
+
+    static const int32_t exposureCompensationRange[] = {gCamCapability[cameraId]->exposure_compensation_min,
+                                                        gCamCapability[cameraId]->exposure_compensation_max};
+    staticInfo.update(ANDROID_CONTROL_AE_COMPENSATION_RANGE,
+            exposureCompensationRange,
+            sizeof(exposureCompensationRange)/sizeof(int32_t));
+
+    uint8_t lensFacing = (gCamCapability[cameraId]->position == CAM_POSITION_BACK) ?
+            ANDROID_LENS_FACING_BACK : ANDROID_LENS_FACING_FRONT;
+    staticInfo.update(ANDROID_LENS_FACING, &lensFacing, 1);
 
     gStaticMetadata = staticInfo.release();
     return rc;
@@ -584,69 +688,7 @@ int QCamera3HardwareInterface::getCamInfo(int cameraId,
 
     return rc;
 }
-#if 0
-/*===========================================================================
- * FUNCTION   : getMetadata
- *
- * DESCRIPTION: query camera metadata
- *
- * PARAMETERS :
- *   @cameraId  : camera Id
- *   @info      : camera info struct to be filled in with camera metadata
- *
- * RETURN     : int32_t type of status
- *              NO_ERROR  -- success
- *              none-zero failure code
- *==========================================================================*/
-int QCamera3HardwareInterface::getMetadata(int type)
-{
-    QCamera3HeapMemory *metadataHeap = NULL;
-    int rc = 0;
 
-    metadataHeap = new QCamera3HeapMemory();
-    rc = metadataHeap->allocate(1, sizeof(metadata_type_t));
-    if(rc != 0) {
-        ALOGE("%s: No memory for metadata", __func__);
-    }
-
-    rc = mCameraHandle->ops->map_buf(mCameraHandle->camera_handle,
-                                CAM_MAPPING_BUF_TYPE_CAPABILITY,
-                                metadataHeap->getFd(0),
-                                sizeof(metadata_type_t));
-    if(rc < 0) {
-        ALOGE("%s: failed to map capability buffer", __func__);
-        metadataHeap->deallocate();
-        delete metadataHeap;
-    }
-
-       /* Query Metadata */
-    //rc = cameraHandle->ops->query_metadata(cameraHandle->camera_handle, type);
-    rc = mCameraHandle->ops->query_capability(mCameraHandle->camera_handle);
-
-    if(rc < 0) {
-        ALOGE("%s: failed to query metadata",__func__);
-        mCameraHandle->ops->unmap_buf(mCameraHandle->camera_handle,
-                                     CAM_MAPPING_BUF_TYPE_CAPABILITY);
-    }
-    /*delete the old metadata saved in the HAL*/
-    if (curr_metadata != NULL) {
-        free(curr_metadata);
-        curr_metadata = NULL;
-    }
-    curr_metadata = (metadata_type_t *)malloc(sizeof(metadata_type_t));
-    if (!curr_metadata) {
-        ALOGE("%s: out of memory", __func__);
-        mCameraHandle->ops->unmap_buf(mCameraHandle->camera_handle,
-                                     CAM_MAPPING_BUF_TYPE_CAPABILITY);
-    }
-    memcpy(curr_metadata, DATA_PTR(metadataHeap,0),
-            sizeof(metadata_type_t));
-
-    //metadata now saved in the HAL - still need to copy over to correct
-    //format and send to fwk
-    return rc;
-}
-#endif
 /*===========================================================================
  * FUNCTION   : translateMetadata
  *
@@ -731,15 +773,62 @@ camera_metadata_t* QCamera3HardwareInterface::translateMetadata(int type)
     static const float default_focal_length = gCamCapability[mCameraId]->focal_lengths[0];
     settings.update(ANDROID_LENS_FOCAL_LENGTH, &default_focal_length, 1);
 
-
-    /* scalar */
-    //settings.update(ANDROID_SCALER_AVAILABLE_PROCESSED_MIN_DURATIONS, &gCamCapability[mCameraId]->min_duration, 1);
-    //settings.update(ANDROID_SCALER_AVAILABLE_RAW_MIN_DURATIONS, &gCamCapability[mCameraId]->raw_min_duration, 1);
-
-
-
     mDefaultMetadata[type] = settings.release();
     return mDefaultMetadata[type];
+}
+
+/*===========================================================================
+ * FUNCTION   : setFrameParameters
+ *
+ * DESCRIPTION: set parameters per frame as requested in the metadata from
+ *              framework
+ *
+ * PARAMETERS :
+ *   @settings  : frame settings information from framework
+ *
+ *
+ * RETURN     : success: NO_ERROR
+ *              failure:
+ *==========================================================================*/
+int QCamera3HardwareInterface::setFrameParameters(const camera_metadata_t *settings)
+{
+    /*translate from camera_metadata_t type to parm_type_t*/
+    int rc = 0;
+    android::CameraMetadata frame_settings;
+    if (settings == NULL && prevSettings == NULL) {
+        /*settings cannot be null for the first request*/
+        return BAD_VALUE;
+    } else if (settings == NULL) {
+        /*do nothing? we have already configured the settings previously*/
+    } else{
+        //reset the prevSettings
+        if (prevSettings != NULL) {
+            free(prevSettings);
+            prevSettings = NULL;
+        }
+        rc = translateMetadataToParameters(settings);
+    }
+    /*set the parameters to backend*/
+    return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : translateMetadataToParameters
+ *
+ * DESCRIPTION: read from the camera_metadata_t and change to parm_type_t
+ *
+ *
+ * PARAMETERS :
+ *   @settings  : frame settings information from framework
+ *
+ *
+ * RETURN     : success: NO_ERROR
+ *              failure:
+ *==========================================================================*/
+int QCamera3HardwareInterface::translateMetadataToParameters
+                                  (const camera_metadata_t *settings)
+{
+    return 0;
 }
 
 /*===========================================================================
@@ -879,11 +968,19 @@ const camera_metadata_t* QCamera3HardwareInterface::construct_default_request_se
  *
  * RETURN     :
  *==========================================================================*/
-int QCamera3HardwareInterface::process_capture_request(const struct camera3_device *,
+int QCamera3HardwareInterface::process_capture_request(const struct camera3_device *device,
                                                        camera3_capture_request_t *request)
 {
     /*TODO - Implement*/
-    return 0;
+    QCamera3HardwareInterface *hw =
+        reinterpret_cast<QCamera3HardwareInterface *>(device->priv);
+    int rc = NO_ERROR;
+    if (!hw) {
+        ALOGE("%s: NULL camera device", __func__);
+        return -ENODEV;
+    }
+    rc = hw->processCaptureRequest(request);
+    return rc;
 }
 
 /*===========================================================================
