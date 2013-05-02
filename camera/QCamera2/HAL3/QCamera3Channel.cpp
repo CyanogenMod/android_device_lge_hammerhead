@@ -521,7 +521,6 @@ int32_t QCamera3RegularChannel::registerBuffers(uint32_t num_buffers, buffer_han
     streamDim.height = mCamera3Stream->height;
     rc = QCamera3Channel::addStream(streamType, streamFormat, streamDim,
         num_buffers);
-
     return rc;
 }
 
@@ -895,11 +894,6 @@ int32_t QCamera3PicChannel::registerBuffers(uint32_t num_buffers,
     }
     /* Bookkeep buffer set because they go out of scope after register call */
     mNumBufs = num_buffers;
-    if(mNumBufs > 1) {
-        ALOGE("%s: currently no support for multiple snapshot buffers", __func__);
-        return -EINVAL;
-    }
-
     mCamera3Buffers = new buffer_handle_t*[num_buffers];
     if (mCamera3Buffers == NULL) {
         ALOGE("%s: Failed to allocate buffer_handle_t*", __func__);

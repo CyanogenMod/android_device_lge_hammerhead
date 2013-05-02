@@ -263,7 +263,13 @@ int32_t QCamera3Stream::init(cam_stream_type_t streamType,
     mStreamInfo->stream_type = streamType;
     mStreamInfo->fmt = streamFormat;
     mStreamInfo->dim = streamDim;
-    mStreamInfo->streaming_mode = CAM_STREAMING_MODE_CONTINUOUS;
+    //TODO: Right now mm-camera daemon doesn't support 3 continuous streams. But for
+    // video use case, frameworks configure 3 streams: preview + capture + video.
+    // Set snapshot stream to burst mode until daemon support is added.
+    if (streamType == CAM_STREAM_TYPE_SNAPSHOT)
+        mStreamInfo->streaming_mode = CAM_STREAMING_MODE_BURST;
+    else
+        mStreamInfo->streaming_mode = CAM_STREAMING_MODE_CONTINUOUS;
 
     mNumBufs = minNumBuffers;
 
