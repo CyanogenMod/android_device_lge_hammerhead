@@ -493,7 +493,7 @@ int32_t QCamera3RegularChannel::registerBuffers(uint32_t num_buffers, buffer_han
         if (priv_handle->flags & private_handle_t::PRIV_FLAGS_VIDEO_ENCODER) {
             streamType = CAM_STREAM_TYPE_VIDEO;
             streamFormat = CAM_FORMAT_YUV_420_NV12;
-        } else if (priv_handle->flags & private_handle_t::PRIV_FLAGS_EXTERNAL_ONLY) {
+        } else if (priv_handle->flags & private_handle_t::PRIV_FLAGS_HW_TEXTURE) {
             streamType = CAM_STREAM_TYPE_PREVIEW;
             streamFormat = CAM_FORMAT_YUV_420_NV21;
         } else {
@@ -644,7 +644,7 @@ int32_t QCamera3MetadataChannel::initialize()
         return rc;
     }
 
-    streamDim.width = sizeof(parm_buffer_t),
+    streamDim.width = sizeof(metadata_buffer_t),
     streamDim.height = 1;
     rc = QCamera3Channel::addStream(CAM_STREAM_TYPE_METADATA, CAM_FORMAT_MAX,
         streamDim, MIN_STREAMING_BUFFER_NUM);
@@ -695,9 +695,9 @@ void QCamera3MetadataChannel::streamCbRoutine(
 QCamera3Memory* QCamera3MetadataChannel::getStreamBufs(uint32_t len)
 {
     int rc;
-    if (len != sizeof(parm_buffer_t)) {
+    if (len != sizeof(metadata_buffer_t)) {
         ALOGE("%s: size doesn't match %d vs %d", __func__,
-                len, sizeof(parm_buffer_t));
+                len, sizeof(metadata_buffer_t));
         return NULL;
     }
     mMemory = new QCamera3HeapMemory();
@@ -712,7 +712,7 @@ QCamera3Memory* QCamera3MetadataChannel::getStreamBufs(uint32_t len)
         mMemory = NULL;
         return NULL;
     }
-    memset(mMemory->getPtr(0), 0, sizeof(parm_buffer_t));
+    memset(mMemory->getPtr(0), 0, sizeof(metadata_buffer_t));
     return mMemory;
 }
 
