@@ -44,7 +44,7 @@ using namespace android;
 
 namespace qcamera {
 
-typedef void (*channel_cb_routine)(metadata_buffer_t *metadata,
+typedef void (*channel_cb_routine)(mm_camera_super_buf_t *metadata,
                                 camera3_stream_buffer_t *buffer,
                                 uint32_t frame_number, void *userdata);
 
@@ -161,6 +161,7 @@ public:
 
     virtual QCamera3Memory *getStreamBufs(uint32_t le);
     virtual void putStreamBufs();
+
 #ifdef FAKE_FRAME_NUMBERS
     uint32_t startingFrameNumber;
 #endif
