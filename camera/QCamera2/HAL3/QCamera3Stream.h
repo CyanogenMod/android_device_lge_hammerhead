@@ -63,7 +63,6 @@ public:
                          stream_cb_routine stream_cb,
                          void *userdata);
     virtual int32_t bufDone(int index);
-    virtual int32_t bufDone(const void *opaque, bool isMetaData);
     virtual int32_t processDataNotify(mm_camera_super_buf_t *bufs);
     virtual int32_t start();
     virtual int32_t stop();

@@ -53,7 +53,7 @@ public:
 
     virtual int cacheOps(int index, unsigned int cmd) = 0;
     virtual int getRegFlags(uint8_t *regFlags) const = 0;
-    virtual int getMatchBufIndex(const void *opaque, bool metadata) const = 0;
+    virtual int getMatchBufIndex(void *object) = 0;
     virtual void *getPtr(int index) const= 0;
 
     QCamera3Memory();
@@ -90,7 +90,7 @@ public:
 
     virtual int cacheOps(int index, unsigned int cmd);
     virtual int getRegFlags(uint8_t *regFlags) const;
-    virtual int getMatchBufIndex(const void *opaque, bool metadata) const;
+    virtual int getMatchBufIndex(void *object);
     virtual void *getPtr(int index) const;
 private:
     int alloc(int count, int size, int heap_id);
@@ -111,12 +111,15 @@ public:
     void unregisterBuffers();
     virtual int cacheOps(int index, unsigned int cmd);
     virtual int getRegFlags(uint8_t *regFlags) const;
-    virtual int getMatchBufIndex(const void *opaque, bool metadata) const;
+    virtual int getMatchBufIndex(void *object);
     virtual void *getPtr(int index) const;
+    int32_t markFrameNumber(int index, uint32_t frameNumber);
+    int32_t getFrameNumber(int index);
 
 private:
     buffer_handle_t *mBufferHandle[MM_CAMERA_MAX_NUM_FRAMES];
     struct private_handle_t *mPrivateHandle[MM_CAMERA_MAX_NUM_FRAMES];
+    uint32_t mCurrentFrameNumbers[MM_CAMERA_MAX_NUM_FRAMES];
 };
 
 };

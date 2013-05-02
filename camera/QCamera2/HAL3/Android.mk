@@ -13,11 +13,15 @@ LOCAL_SRC_FILES := \
         ../util/QCameraQueue.cpp
 
 #LOCAL_CFLAGS = -Wall -Werror
-LOCAL_CFLAGS = -Wall
+LOCAL_CFLAGS := -Wall
+LOCAL_CFLAGS += -DFAKE_FRAME_NUMBERS
+
 
 LOCAL_C_INCLUDES := \
         $(LOCAL_PATH)/../stack/common \
         frameworks/native/include/media/openmax \
+        frameworks/native/include \
+        frameworks/av/include \
         hardware/qcom/display/libgralloc \
         hardware/qcom/media/libstagefrighthw \
         system/media/camera/include \
@@ -26,7 +30,7 @@ LOCAL_C_INCLUDES := \
         $(LOCAL_PATH)/../util
 
 LOCAL_SHARED_LIBRARIES := libcamera_client liblog libhardware libutils libcutils libdl
-LOCAL_SHARED_LIBRARIES += libmmcamera_interface libmmjpeg_interface
+LOCAL_SHARED_LIBRARIES += libmmcamera_interface libmmjpeg_interface libui libcamera_metadata
 
 LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
 LOCAL_MODULE := camera.$(TARGET_BOARD_PLATFORM)
