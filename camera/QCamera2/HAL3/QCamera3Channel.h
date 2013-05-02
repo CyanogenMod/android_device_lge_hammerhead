@@ -33,6 +33,8 @@
 #include <hardware/camera3.h>
 #include "QCamera3Stream.h"
 #include "QCamera3Mem.h"
+#include "QCamera3PostProc.h"
+#include "QCamera3HALHeader.h"
 
 extern "C" {
 #include <mm_camera_interface.h>
@@ -67,7 +69,9 @@ public:
 
     virtual int32_t registerBuffers(uint32_t num_buffers,
                         buffer_handle_t **buffers) = 0;
-    virtual int32_t request(buffer_handle_t *buffer, uint32_t frameNumber) = 0;
+    virtual int32_t initialize() = 0;
+    virtual int32_t request(buffer_handle_t *buffer, uint32_t frameNumber){ return 0;};
+    virtual int32_t request(buffer_handle_t *buffer, uint32_t frameNumber, jpeg_settings_t* mJpegSettings){ return 0;};
     virtual void streamCbRoutine(mm_camera_super_buf_t *super_frame,
                             QCamera3Stream *stream) = 0;
 
@@ -83,7 +87,7 @@ public:
                 QCamera3Stream *stream, void *userdata);
 protected:
 
-    virtual int32_t init(mm_camera_channel_attr_t *attr,
+   virtual int32_t init(mm_camera_channel_attr_t *attr,
                          mm_camera_buf_notify_t dataCB);
     int32_t allocateStreamInfoBuf(camera3_stream_t *stream);
 
@@ -116,6 +120,7 @@ public:
                     camera3_stream_t *stream);
     virtual ~QCamera3RegularChannel();
 
+    virtual int32_t initialize();
     virtual int32_t request(buffer_handle_t *buffer, uint32_t frameNumber);
     virtual int32_t registerBuffers(uint32_t num_buffers,
                                 buffer_handle_t **buffers);
@@ -146,7 +151,7 @@ public:
                     void *userData);
     virtual ~QCamera3MetadataChannel();
 
-    int32_t initialize();
+    virtual int32_t initialize();
 
     virtual int32_t request(buffer_handle_t *buffer, uint32_t frameNumber);
     virtual int32_t registerBuffers(uint32_t num_buffers,
@@ -170,31 +175,47 @@ class QCamera3PicChannel : public QCamera3Channel
 {
 public:
     QCamera3PicChannel(uint32_t cam_handle,
-                    mm_camera_ops_t *cam_ops,
-                    channel_cb_routine cb_routine,
-                    cam_padding_info_t *paddingInfo,
-                    void *userData,
-                    camera3_stream_t *stream);
+            mm_camera_ops_t *cam_ops,
+            channel_cb_routine cb_routine,
+            cam_padding_info_t *paddingInfo,
+            void *userData,
+            camera3_stream_t *stream);
     ~QCamera3PicChannel();
 
-    virtual int32_t request(buffer_handle_t *buffer, uint32_t frameNumber);
+    virtual int32_t initialize();
+
+    virtual int32_t request(buffer_handle_t *buffer,
+            uint32_t frameNumber, jpeg_settings_t* mJpegSettings);
     virtual int32_t registerBuffers(uint32_t num_buffers,
-                        buffer_handle_t **buffers);
+            buffer_handle_t **buffers);
     virtual void streamCbRoutine(mm_camera_super_buf_t *super_frame,
-                            QCamera3Stream *stream);
+            QCamera3Stream *stream);
 
     virtual QCamera3Memory *getStreamBufs(uint32_t le);
     virtual void putStreamBufs();
+    bool needOnlineRotation();
+    void getThumbnailSize(cam_dimension_t &dim);
+    int getJpegQuality();
+    int getJpegRotation();
+    QCamera3Exif *getExifData();
+    static void jpegEvtHandle(jpeg_job_status_t status,
+            uint32_t /*client_hdl*/,
+            uint32_t jobId,
+            mm_jpeg_output_t *p_output,
+            void *userdata);
 
 public:
     static int kMaxBuffers;
 private:
     camera3_stream_t *mCamera3Stream;
     uint32_t mNumBufs;
-    camera3_stream_buffer_set_t *mCamera3Buffers;
+    buffer_handle_t **mCamera3Buffers;
+    jpeg_settings_t* mJpegSettings;
 
-    QCamera3GrallocMemory *mJpegMemory;
+
+    QCamera3GrallocMemory *mMemory;
     QCamera3HeapMemory *mYuvMemory;
+    QCamera3PostProcessor m_postprocessor; // post processor
 };
 
 }; // namespace qcamera
