@@ -94,7 +94,8 @@ const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::SCENE_MOD
 };
 
 const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::FOCUS_MODES_MAP[] = {
-    { ANDROID_CONTROL_AF_MODE_OFF,               CAM_FOCUS_MODE_OFF },
+    { ANDROID_CONTROL_AF_MODE_OFF,                CAM_FOCUS_MODE_OFF },
+    { ANDROID_CONTROL_AF_MODE_OFF,                CAM_FOCUS_MODE_FIXED },
     { ANDROID_CONTROL_AF_MODE_AUTO,               CAM_FOCUS_MODE_AUTO },
     { ANDROID_CONTROL_AF_MODE_MACRO,              CAM_FOCUS_MODE_MACRO },
     { ANDROID_CONTROL_AF_MODE_EDOF,               CAM_FOCUS_MODE_EDOF },
@@ -580,7 +581,6 @@ end:
 int QCamera3HardwareInterface::validateCaptureRequest(
                     camera3_capture_request_t *request)
 {
-    int rc = NO_ERROR;
     ssize_t idx = 0;
     const camera3_stream_buffer_t *b;
     CameraMetadata meta;
@@ -734,8 +734,6 @@ int QCamera3HardwareInterface::processCaptureRequest(
                     camera3_capture_request_t *request)
 {
     int rc = NO_ERROR;
-    ssize_t idx = 0;
-    const camera3_stream_buffer_t *b;
     CameraMetadata meta;
 
     pthread_mutex_lock(&mMutex);
@@ -762,7 +760,6 @@ int QCamera3HardwareInterface::processCaptureRequest(
     for (size_t i = 0; i < request->num_output_buffers; i++) {
         const camera3_stream_buffer_t& output = request->output_buffers[i];
         sp<Fence> acquireFence = new Fence(output.acquire_fence);
-        int format = output.stream->format;
 
         if (output.stream->format == HAL_PIXEL_FORMAT_BLOB) {
         //Call function to store local copy of jpeg data for encode params.
@@ -808,8 +805,6 @@ int QCamera3HardwareInterface::processCaptureRequest(
     for (size_t i = 0; i < request->num_output_buffers; i++) {
         const camera3_stream_buffer_t& output = request->output_buffers[i];
         QCamera3Channel *channel = (QCamera3Channel *)output.stream->priv;
-        int format = output.stream->format;
-
 
         if (channel == NULL) {
             ALOGE("%s: invalid channel pointer for stream", __func__);
@@ -850,7 +845,8 @@ int QCamera3HardwareInterface::processCaptureRequest(
  *
  * RETURN     :
  *==========================================================================*/
-void QCamera3HardwareInterface::getMetadataVendorTagOps(vendor_tag_query_ops_t* ops)
+void QCamera3HardwareInterface::getMetadataVendorTagOps(
+                    vendor_tag_query_ops_t* /*ops*/)
 {
     /* Enable locks when we eventually add Vendor Tags */
     /*
@@ -871,7 +867,7 @@ void QCamera3HardwareInterface::getMetadataVendorTagOps(vendor_tag_query_ops_t* 
  *
  * RETURN     :
  *==========================================================================*/
-void QCamera3HardwareInterface::dump(int fd)
+void QCamera3HardwareInterface::dump(int /*fd*/)
 {
     /*Enable lock when we implement this function*/
     /*
@@ -1871,7 +1867,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     int32_t size = 0;
     for (int i = 0; i < gCamCapability[cameraId]->supported_effects_cnt; i++) {
         int val = lookupFwkName(EFFECT_MODES_MAP,
-                                   gCamCapability[cameraId]->supported_effects_cnt,
+                                   sizeof(EFFECT_MODES_MAP)/sizeof(EFFECT_MODES_MAP[0]),
                                    gCamCapability[cameraId]->supported_effects[i]);
         if (val != NAME_NOT_FOUND) {
             avail_effects[size] = (uint8_t)val;
@@ -1886,7 +1882,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     size = 0;
     for (int i = 0; i < gCamCapability[cameraId]->supported_scene_modes_cnt; i++) {
         int val = lookupFwkName(SCENE_MODES_MAP,
-                                gCamCapability[cameraId]->supported_scene_modes_cnt,
+                                sizeof(SCENE_MODES_MAP)/sizeof(SCENE_MODES_MAP[0]),
                                 gCamCapability[cameraId]->supported_scene_modes[i]);
         if (val != NAME_NOT_FOUND) {
             avail_scene_modes[size] = (uint8_t)val;
@@ -1901,8 +1897,8 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     size = 0;
     for (int i = 0; i < gCamCapability[cameraId]->supported_antibandings_cnt; i++) {
         int val = lookupFwkName(ANTIBANDING_MODES_MAP,
-                                         gCamCapability[cameraId]->supported_antibandings_cnt,
-                                         gCamCapability[cameraId]->supported_antibandings[i]);
+                                 sizeof(ANTIBANDING_MODES_MAP)/sizeof(ANTIBANDING_MODES_MAP[0]),
+                                 gCamCapability[cameraId]->supported_antibandings[i]);
         if (val != NAME_NOT_FOUND) {
             avail_antibanding_modes[size] = (uint8_t)val;
             size++;
@@ -1913,11 +1909,12 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       avail_antibanding_modes,
                       size);
 
+    ALOGE("%s: %d", __func__, __LINE__);
     static uint8_t avail_af_modes[CAM_FOCUS_MODE_MAX];
     size = 0;
     for (int i = 0; i < gCamCapability[cameraId]->supported_focus_modes_cnt; i++) {
         int val = lookupFwkName(FOCUS_MODES_MAP,
-                                gCamCapability[cameraId]->supported_focus_modes_cnt,
+                                sizeof(FOCUS_MODES_MAP)/sizeof(FOCUS_MODES_MAP[0]),
                                 gCamCapability[cameraId]->supported_focus_modes[i]);
         if (val != NAME_NOT_FOUND) {
             avail_af_modes[size] = (uint8_t)val;
@@ -1932,7 +1929,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     size = 0;
     for (int i = 0; i < gCamCapability[cameraId]->supported_white_balances_cnt; i++) {
         int8_t val = lookupFwkName(WHITE_BALANCE_MODES_MAP,
-                                    gCamCapability[cameraId]->supported_white_balances_cnt,
+                                    sizeof(WHITE_BALANCE_MODES_MAP)/sizeof(WHITE_BALANCE_MODES_MAP[0]),
                                     gCamCapability[cameraId]->supported_white_balances[i]);
         if (val != NAME_NOT_FOUND) {
             avail_awb_modes[size] = (uint8_t)val;
@@ -1947,7 +1944,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     size = 0;
     for (int i = 0; i < gCamCapability[cameraId]->supported_flash_modes_cnt; i++) {
         int val = lookupFwkName(FLASH_MODES_MAP,
-                                gCamCapability[cameraId]->supported_flash_modes_cnt,
+                                sizeof(FLASH_MODES_MAP)/sizeof(FLASH_MODES_MAP[0]),
                                 gCamCapability[cameraId]->supported_flash_modes[i]);
         if (val != NAME_NOT_FOUND) {
             avail_flash_modes[size] = (uint8_t)val;
@@ -2302,11 +2299,17 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
     static const float default_aperture = gCamCapability[mCameraId]->apertures[0];
     settings.update(ANDROID_LENS_APERTURE, &default_aperture, 1);
 
-    static const float default_filter_density = gCamCapability[mCameraId]->filter_densities[0];
-    settings.update(ANDROID_LENS_FILTER_DENSITY, &default_filter_density, 1);
+    if (gCamCapability[mCameraId]->filter_densities_count) {
+        static const float default_filter_density = gCamCapability[mCameraId]->filter_densities[0];
+        settings.update(ANDROID_LENS_FILTER_DENSITY, &default_filter_density,
+                        gCamCapability[mCameraId]->filter_densities_count);
+    }
 
-    static const float default_focal_length = gCamCapability[mCameraId]->focal_lengths[0];
-    settings.update(ANDROID_LENS_FOCAL_LENGTH, &default_focal_length, 1);
+    /* TODO: Enable focus lengths once supported*/
+    /*if (gCamCapability[mCameraId]->focal_lengths_count) {
+        static const float default_focal_length = gCamCapability[mCameraId]->focal_lengths[0];
+        settings.update(ANDROID_LENS_FOCAL_LENGTH, &default_focal_length, 1);
+    }*/
 
     mDefaultMetadata[type] = settings.release();
 
@@ -2337,7 +2340,12 @@ int QCamera3HardwareInterface::setFrameParameters(int frame_id,
         return BAD_VALUE;
     }
 
+    int32_t hal_version = CAM_HAL_V3;
+
+    memset(mParameters, 0, sizeof(parm_buffer_t));
     mParameters->first_flagged_entry = CAM_INTF_PARM_MAX;
+    AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_HAL_VERSION,
+                sizeof(hal_version), &hal_version);
 
     /*we need to update the frame number in the parameters*/
     rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_FRAME_NUMBER,

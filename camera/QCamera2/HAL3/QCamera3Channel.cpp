@@ -583,7 +583,7 @@ void QCamera3RegularChannel::streamCbRoutine(
     return;
 }
 
-QCamera3Memory* QCamera3RegularChannel::getStreamBufs(uint32_t len)
+QCamera3Memory* QCamera3RegularChannel::getStreamBufs(uint32_t /*len*/)
 {
     if (mNumBufs == 0 || mCamera3Buffers == NULL) {
         ALOGE("%s: buffers not registered yet", __func__);
@@ -664,7 +664,8 @@ int32_t QCamera3MetadataChannel::initialize()
     return rc;
 }
 
-int32_t QCamera3MetadataChannel::request(buffer_handle_t *buffer, uint32_t frameNumber)
+int32_t QCamera3MetadataChannel::request(buffer_handle_t * /*buffer*/,
+                                                uint32_t frameNumber)
 {
     if (!m_bIsActive) {
 #ifdef FAKE_FRAME_NUMBERS
