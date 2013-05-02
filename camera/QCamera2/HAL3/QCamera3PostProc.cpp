@@ -276,6 +276,7 @@ int32_t QCamera3PostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& en
         cam_frame_len_offset_t thumb_offset;
         memset(&thumb_offset, 0, sizeof(cam_frame_len_offset_t));
         thumb_stream->getFrameOffset(thumb_offset);
+        encode_parm.num_tmb_bufs = pStreamMem->getCnt();
         for (int i = 0; i < pStreamMem->getCnt(); i++) {
             if (pStreamMem != NULL) {
                 encode_parm.src_thumb_buf[i].index = i;
@@ -690,12 +691,15 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
         return UNKNOWN_ERROR;
     }
 
+    ALOGE("%s: Need new session?:%d",__func__, needNewSess);
     if (needNewSess) {
         // create jpeg encoding session
         mm_jpeg_encode_params_t encodeParam;
         memset(&encodeParam, 0, sizeof(mm_jpeg_encode_params_t));
 
         getJpegEncodingConfig(encodeParam, main_stream, thumb_stream);
+        ALOGE("%s: #src bufs:%d # tmb bufs:%d #dst_bufs:%d", __func__,
+                     encodeParam.num_src_bufs,encodeParam.num_tmb_bufs,encodeParam.num_dst_bufs);
         ret = mJpegHandle.create_session(mJpegClientHandle, &encodeParam, &mJpegSessionId);
         if (ret != NO_ERROR) {
             ALOGE("%s: error creating a new jpeg encoding session", __func__);
@@ -726,6 +730,7 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
     jpg_job.encode_job.main_dim.crop = crop;
 
     // thumbnail dim
+    ALOGE("%s: Thumbnail needed:%d",__func__, m_bThumbnailNeeded);
     if (m_bThumbnailNeeded == TRUE) {
         if (thumb_stream == NULL) {
             // need jpeg thumbnail, but no postview/preview stream exists
