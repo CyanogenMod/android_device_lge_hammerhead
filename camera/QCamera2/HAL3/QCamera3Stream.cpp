@@ -285,7 +285,7 @@ int32_t QCamera3Stream::init(cam_stream_type_t streamType,
     switch(streamType) {
         case CAM_STREAM_TYPE_SNAPSHOT:
             stream_config.stream_cb = NULL;
-            ALOGE("%s: disabling stream_cb for snapshot", __func__);
+            ALOGI("%s: disabling stream_cb for snapshot", __func__);
             break;
         default:
             stream_config.stream_cb = dataNotifyCB;
@@ -372,9 +372,11 @@ int32_t QCamera3Stream::stop()
  *==========================================================================*/
 int32_t QCamera3Stream::processDataNotify(mm_camera_super_buf_t *frame)
 {
-    ALOGI("%s:\n", __func__);
+    ALOGV("%s: E\n", __func__);
     mDataQ.enqueue((void *)frame);
-    return mProcTh.sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE, FALSE);
+    int32_t rc = mProcTh.sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE, FALSE);
+    ALOGV("%s: X\n", __func__);
+    return rc;
 }
 
 /*===========================================================================
@@ -392,7 +394,7 @@ int32_t QCamera3Stream::processDataNotify(mm_camera_super_buf_t *frame)
 void QCamera3Stream::dataNotifyCB(mm_camera_super_buf_t *recvd_frame,
                                  void *userdata)
 {
-    ALOGI("%s:\n", __func__);
+    ALOGV("%s: E\n", __func__);
     QCamera3Stream* stream = (QCamera3Stream *)userdata;
     if (stream == NULL ||
         recvd_frame == NULL ||
@@ -431,7 +433,7 @@ void *QCamera3Stream::dataProcRoutine(void *data)
     QCamera3Stream *pme = (QCamera3Stream *)data;
     QCameraCmdThread *cmdThread = &pme->mProcTh;
 
-    ALOGI("%s: E", __func__);
+    ALOGV("%s: E", __func__);
     do {
         do {
             ret = cam_sem_wait(&cmdThread->cmd_sem);
@@ -471,7 +473,7 @@ void *QCamera3Stream::dataProcRoutine(void *data)
             break;
         }
     } while (running);
-    ALOGD("%s: X", __func__);
+    ALOGV("%s: X", __func__);
     return NULL;
 }
 
@@ -564,7 +566,7 @@ int32_t QCamera3Stream::getBufs(cam_frame_len_offset_t *offset,
 
     mBufDefs = (mm_camera_buf_def_t *)malloc(mNumBufs * sizeof(mm_camera_buf_def_t));
     if (mBufDefs == NULL) {
-        ALOGE("%s: getRegFlags failed %d", __func__, rc);
+        ALOGE("%s: Failed to allocate mm_camera_buf_def_t %d", __func__, rc);
         for (int i = 0; i < mNumBufs; i++) {
             ops_tbl->unmap_ops(i, -1, ops_tbl->userdata);
         }
@@ -802,7 +804,6 @@ int32_t QCamera3Stream::unmapBuf(uint8_t buf_type, uint32_t buf_idx, int32_t pla
     return mCamOps->unmap_stream_buf(mCamHandle, mChannelHandle,
                                      mHandle, buf_type,
                                      buf_idx, plane_idx);
-
 }
 
 /*===========================================================================

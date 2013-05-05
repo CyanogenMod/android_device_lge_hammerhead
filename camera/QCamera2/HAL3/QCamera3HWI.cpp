@@ -184,30 +184,31 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId)
  *==========================================================================*/
 QCamera3HardwareInterface::~QCamera3HardwareInterface()
 {
-    ALOGE("%s: %d", __func__, __LINE__);
+    ALOGV("%s: E", __func__);
     /* Clean up all channels */
     mMetadataChannel->stop();
     delete mMetadataChannel;
     mMetadataChannel = NULL;
+    /* We need to stop all streams before deleting any stream */
     for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
         it != mStreamInfo.end(); it++) {
         QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
         channel->stop();
+    }
+    for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
+        it != mStreamInfo.end(); it++) {
+        QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
         delete channel;
         free (*it);
     }
 
-    ALOGE("%s: %d", __func__, __LINE__);
     if (mJpegSettings != NULL) {
         free(mJpegSettings);
         mJpegSettings = NULL;
     }
-    ALOGE("%s: %d", __func__, __LINE__);
     deinitParameters();
-    ALOGE("%s: %d", __func__, __LINE__);
     closeCamera();
 
-    ALOGE("%s: %d", __func__, __LINE__);
     for (size_t i = 0; i < CAMERA3_TEMPLATE_COUNT; i++)
         if (mDefaultMetadata[i])
             free_camera_metadata(mDefaultMetadata[i]);
@@ -217,6 +218,7 @@ QCamera3HardwareInterface::~QCamera3HardwareInterface()
 
     pthread_mutex_destroy(&mMutex);
     pthread_mutex_destroy(&mCaptureResultLock);
+    ALOGV("%s: X", __func__);
 }
 
 /*===========================================================================
@@ -394,8 +396,11 @@ int QCamera3HardwareInterface::configureStreams(
      * if they appear again, they will be validated */
     for (List<stream_info_t*>::iterator it=mStreamInfo.begin();
             it != mStreamInfo.end(); it++) {
+        QCamera3Channel *channel = (QCamera3Channel*)(*it)->stream->priv;
+        channel->stop();
         (*it)->status = INVALID;
     }
+
     for (size_t i = 0; i < streamList->num_streams; i++) {
         camera3_stream_t *newStream = streamList->streams[i];
         ALOGV("%s: newStream type = %d, stream format = %d",
@@ -411,7 +416,6 @@ int QCamera3HardwareInterface::configureStreams(
                 (*it)->status = RECONFIGURE;
                 /*delete the channel object associated with the stream because
                   we need to reconfigure*/
-                channel->stop();
                 delete channel;
                 (*it)->stream->priv = NULL;
             }
@@ -436,14 +440,11 @@ int QCamera3HardwareInterface::configureStreams(
     }
     mInputStream = inputStream;
 
-    /* TODO: Clean up no longer used streams, and maintain others if this
-     * is not the 1st time configureStreams is called */
     /*clean up invalid streams*/
     for (List<stream_info_t*>::iterator it=mStreamInfo.begin();
             it != mStreamInfo.end();) {
         if(((*it)->status) == INVALID){
             QCamera3Channel *channel = (QCamera3Channel*)(*it)->stream->priv;
-            channel->stop();
             delete channel;
             delete[] (buffer_handle_t*)(*it)->buffer_set.buffers;
             free(*it);
@@ -532,7 +533,7 @@ int QCamera3HardwareInterface::configureStreams(
                     ALOGE("%s: Failed to register the buffers of old stream,\
                             rc = %d", __func__, rc);
                 }
-                ALOGE("%s: channel %p has %d buffers",
+                ALOGD("%s: channel %p has %d buffers",
                         __func__, channel, (*it)->buffer_set.num_buffers);
             }
         }
@@ -552,7 +553,6 @@ int QCamera3HardwareInterface::configureStreams(
     memset(mParameters, 0, sizeof(parm_buffer_t));
     mFirstRequest = true;
 
-end:
     pthread_mutex_unlock(&mMutex);
     return rc;
 }
@@ -769,14 +769,11 @@ int QCamera3HardwareInterface::processCaptureRequest(
         }
     }
 
-    ALOGV("%s: %d", __func__, __LINE__);
-
     /* Update pending request list and pending buffers map */
     pthread_mutex_lock(&mRequestLock);
     PendingRequestInfo pendingRequest;
     pendingRequest.frame_number = frameNumber;
     pendingRequest.num_buffers = request->num_output_buffers;
-//    pendingRequest.metadata = NULL;
     for (size_t i = 0; i < request->num_output_buffers; i++) {
         RequestedBufferInfo requestedBuf;
         requestedBuf.stream = request->output_buffers[i].stream;
@@ -804,7 +801,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
         if (output.stream->format == HAL_PIXEL_FORMAT_BLOB) {
             rc = channel->request(output.buffer, frameNumber, mJpegSettings);
         } else {
-            ALOGE("%s: %d, request with buffer %p, frame_number %d", __func__, __LINE__, output.buffer, frameNumber);
+            ALOGI("%s: %d, request with buffer %p, frame_number %d", __func__, __LINE__, output.buffer, frameNumber);
             rc = channel->request(output.buffer, frameNumber);
         }
         if (rc < 0)
@@ -898,11 +895,11 @@ void QCamera3HardwareInterface::captureResultCb(mm_camera_super_buf_t *metadata_
             tv->tv_usec * NSEC_PER_USEC;
 
         if (!frame_number_valid) {
-            ALOGI("%s: Not a valid frame number, used as SOF only", __func__);
+            ALOGD("%s: Not a valid frame number, used as SOF only", __func__);
             mMetadataChannel->bufDone(metadata_buf);
             goto done_metadata;
         }
-        ALOGE("%s: valid frame_number = %d, capture_time = %lld", __func__,
+        ALOGD("%s: valid frame_number = %d, capture_time = %lld", __func__,
                 frame_number, capture_time);
 
         // Go through the pending requests info and send shutter/results to frameworks
@@ -910,7 +907,7 @@ void QCamera3HardwareInterface::captureResultCb(mm_camera_super_buf_t *metadata_
                 i != mPendingRequestsList.end() && i->frame_number <= frame_number;) {
             camera3_capture_result_t result;
             camera3_notify_msg_t notify_msg;
-            ALOGE("%s: frame_number in the list is %d", __func__, i->frame_number);
+            ALOGD("%s: frame_number in the list is %d", __func__, i->frame_number);
 
             // Flush out all entries with less or equal frame numbers.
 
@@ -928,7 +925,7 @@ void QCamera3HardwareInterface::captureResultCb(mm_camera_super_buf_t *metadata_
             notify_msg.message.shutter.frame_number = i->frame_number;
             notify_msg.message.shutter.timestamp = current_capture_time;
             mCallbackOps->notify(mCallbackOps, &notify_msg);
-            ALOGE("%s: notify frame_number = %d, capture_time = %lld", __func__,
+            ALOGD("%s: notify frame_number = %d, capture_time = %lld", __func__,
                     i->frame_number, capture_time);
 
             // Send empty metadata with already filled buffers for dropped metadata
@@ -975,15 +972,14 @@ void QCamera3HardwareInterface::captureResultCb(mm_camera_super_buf_t *metadata_
                 result.output_buffers = result_buffers;
 
                 mCallbackOps->process_capture_result(mCallbackOps, &result);
-                ALOGE("%s: meta frame_number = %d, capture_time = %lld", __func__,
-                        result.frame_number,
-                        current_capture_time);
+                ALOGD("%s: meta frame_number = %d, capture_time = %lld",
+                        __func__, result.frame_number, current_capture_time);
                 free_camera_metadata((camera_metadata_t *)result.result);
                 delete[] result_buffers;
             } else {
                 mCallbackOps->process_capture_result(mCallbackOps, &result);
-                ALOGE("%s: meta frame_number = %d, capture_time = %lld", __func__,
-                        result.frame_number, current_capture_time);
+                ALOGD("%s: meta frame_number = %d, capture_time = %lld",
+                        __func__, result.frame_number, current_capture_time);
                 free_camera_metadata((camera_metadata_t *)result.result);
             }
             // erase the element from the list
@@ -1027,7 +1023,7 @@ done_metadata:
             result.frame_number = frame_number;
             result.num_output_buffers = 1;
             result.output_buffers = buffer;
-            ALOGE("%s: result frame_number = %d, buffer = %p",
+            ALOGD("%s: result frame_number = %d, buffer = %p",
                     __func__, frame_number, buffer);
             mPendingBuffersMap.editValueFor(buffer->stream)--;
             mCallbackOps->process_capture_result(mCallbackOps, &result);
@@ -1041,7 +1037,7 @@ done_metadata:
                         j->buffer = (camera3_stream_buffer_t *)malloc(
                                 sizeof(camera3_stream_buffer_t));
                         *(j->buffer) = *buffer;
-                        ALOGE("%s: cache buffer %p at result frame_number %d",
+                        ALOGD("%s: cache buffer %p at result frame_number %d",
                                 __func__, buffer, frame_number);
                     }
                 }
@@ -1921,7 +1917,6 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       avail_antibanding_modes,
                       size);
 
-    ALOGE("%s: %d", __func__, __LINE__);
     static uint8_t avail_af_modes[CAM_FOCUS_MODE_MAX];
     size = 0;
     for (int i = 0; i < gCamCapability[cameraId]->supported_focus_modes_cnt; i++) {
@@ -2139,12 +2134,16 @@ int8_t QCamera3HardwareInterface::lookupFwkName(const QCameraMap arr[],
                                              int len, int hal_name)
 {
 
-   for (int i = 0; i < len; i++) {
-       if (arr[i].hal_name == hal_name)
-           return arr[i].fwk_name;
+    for (int i = 0; i < len; i++) {
+        if (arr[i].hal_name == hal_name)
+            return arr[i].fwk_name;
     }
-   ALOGE("%s: Cannot find matching framework type", __func__);
-   return NAME_NOT_FOUND;
+
+    /* Not able to find matching framework type is not necessarily
+     * an error case. This happens when mm-camera supports more attributes
+     * than the frameworks do */
+    ALOGD("%s: Cannot find matching framework type", __func__);
+    return NAME_NOT_FOUND;
 }
 
 /*===========================================================================
@@ -2371,7 +2370,6 @@ int QCamera3HardwareInterface::setFrameParameters(int frame_id,
         rc = translateMetadataToParameters(settings);
     }
     /*set the parameters to backend*/
-    ALOGE("%s: %d", __func__, __LINE__);
     mCameraHandle->ops->set_parms(mCameraHandle->camera_handle, mParameters);
     return rc;
 }
@@ -2820,7 +2818,7 @@ void QCamera3HardwareInterface::captureResultCb(mm_camera_super_buf_t *metadata,
 int QCamera3HardwareInterface::initialize(const struct camera3_device *device,
                                   const camera3_callback_ops_t *callback_ops)
 {
-    ALOGE("%s: E", __func__);
+    ALOGV("%s: E", __func__);
     QCamera3HardwareInterface *hw =
         reinterpret_cast<QCamera3HardwareInterface *>(device->priv);
     if (!hw) {
@@ -2829,7 +2827,7 @@ int QCamera3HardwareInterface::initialize(const struct camera3_device *device,
     }
 
     int rc = hw->initialize(callback_ops);
-    ALOGE("%s: X", __func__);
+    ALOGV("%s: X", __func__);
     return rc;
 }
 
@@ -2850,7 +2848,7 @@ int QCamera3HardwareInterface::configure_streams(
         const struct camera3_device *device,
         camera3_stream_configuration_t *stream_list)
 {
-    ALOGE("%s: E", __func__);
+    ALOGV("%s: E", __func__);
     QCamera3HardwareInterface *hw =
         reinterpret_cast<QCamera3HardwareInterface *>(device->priv);
     if (!hw) {
@@ -2858,7 +2856,7 @@ int QCamera3HardwareInterface::configure_streams(
         return -ENODEV;
     }
     int rc = hw->configureStreams(stream_list);
-    ALOGE("%s: X", __func__);
+    ALOGV("%s: X", __func__);
     return rc;
 }
 
@@ -2875,7 +2873,7 @@ int QCamera3HardwareInterface::register_stream_buffers(
         const struct camera3_device *device,
         const camera3_stream_buffer_set_t *buffer_set)
 {
-    ALOGE("%s: E", __func__);
+    ALOGV("%s: E", __func__);
     QCamera3HardwareInterface *hw =
         reinterpret_cast<QCamera3HardwareInterface *>(device->priv);
     if (!hw) {
@@ -2883,7 +2881,7 @@ int QCamera3HardwareInterface::register_stream_buffers(
         return -ENODEV;
     }
     int rc = hw->registerStreamBuffers(buffer_set);
-    ALOGE("%s: X", __func__);
+    ALOGV("%s: X", __func__);
     return rc;
 }
 
@@ -2903,7 +2901,7 @@ const camera_metadata_t* QCamera3HardwareInterface::
                                         int type)
 {
 
-    ALOGE("%s: E", __func__);
+    ALOGV("%s: E", __func__);
     camera_metadata_t* fwk_metadata = NULL;
     QCamera3HardwareInterface *hw =
         reinterpret_cast<QCamera3HardwareInterface *>(device->priv);
@@ -2914,7 +2912,7 @@ const camera_metadata_t* QCamera3HardwareInterface::
 
     fwk_metadata = hw->translateCapabilityToMetadata(type);
 
-    ALOGE("%s: X", __func__);
+    ALOGV("%s: X", __func__);
     return fwk_metadata;
 }
 
@@ -2932,7 +2930,7 @@ int QCamera3HardwareInterface::process_capture_request(
                     const struct camera3_device *device,
                     camera3_capture_request_t *request)
 {
-    ALOGE("%s: E", __func__);
+    ALOGV("%s: E", __func__);
     QCamera3HardwareInterface *hw =
         reinterpret_cast<QCamera3HardwareInterface *>(device->priv);
     if (!hw) {
@@ -2941,7 +2939,7 @@ int QCamera3HardwareInterface::process_capture_request(
     }
 
     int rc = hw->processCaptureRequest(request);
-    ALOGE("%s: X", __func__);
+    ALOGV("%s: X", __func__);
     return rc;
 }
 
@@ -2960,7 +2958,7 @@ void QCamera3HardwareInterface::get_metadata_vendor_tag_ops(
                 const struct camera3_device *device,
                 vendor_tag_query_ops_t* ops)
 {
-    ALOGE("%s: E", __func__);
+    ALOGV("%s: E", __func__);
     QCamera3HardwareInterface *hw =
         reinterpret_cast<QCamera3HardwareInterface *>(device->priv);
     if (!hw) {
@@ -2969,7 +2967,7 @@ void QCamera3HardwareInterface::get_metadata_vendor_tag_ops(
     }
 
     hw->getMetadataVendorTagOps(ops);
-    ALOGE("%s: X", __func__);
+    ALOGV("%s: X", __func__);
     return;
 }
 
@@ -2987,7 +2985,7 @@ void QCamera3HardwareInterface::get_metadata_vendor_tag_ops(
 void QCamera3HardwareInterface::dump(
                 const struct camera3_device *device, int fd)
 {
-    ALOGE("%s: E", __func__);
+    ALOGV("%s: E", __func__);
     QCamera3HardwareInterface *hw =
         reinterpret_cast<QCamera3HardwareInterface *>(device->priv);
     if (!hw) {
@@ -2996,7 +2994,7 @@ void QCamera3HardwareInterface::dump(
     }
 
     hw->dump(fd);
-    ALOGE("%s: X", __func__);
+    ALOGV("%s: X", __func__);
     return;
 }
 
@@ -3012,7 +3010,7 @@ void QCamera3HardwareInterface::dump(
  *==========================================================================*/
 int QCamera3HardwareInterface::close_camera_device(struct hw_device_t* device)
 {
-    ALOGE("%s: E", __func__);
+    ALOGV("%s: E", __func__);
     int ret = NO_ERROR;
     QCamera3HardwareInterface *hw =
         reinterpret_cast<QCamera3HardwareInterface *>(
@@ -3022,7 +3020,7 @@ int QCamera3HardwareInterface::close_camera_device(struct hw_device_t* device)
         return BAD_VALUE;
     }
     delete hw;
-    ALOGE("%s: X", __func__);
+    ALOGV("%s: X", __func__);
     return ret;
 }
 
