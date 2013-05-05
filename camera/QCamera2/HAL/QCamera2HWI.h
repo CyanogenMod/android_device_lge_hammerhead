@@ -101,6 +101,9 @@ typedef struct {
 
 #define QCAMERA_DUMP_FRM_MASK_ALL    0x000000ff
 
+#define QCAMERA_ION_USE_CACHE   true
+#define QCAMERA_ION_USE_NOCACHE false
+
 typedef enum {
     QCAMERA_NOTIFY_CALLBACK,
     QCAMERA_DATA_CALLBACK,
@@ -259,10 +262,12 @@ private:
 
     int processAPI(qcamera_sm_evt_enum_t api, void *api_payload);
     int processEvt(qcamera_sm_evt_enum_t evt, void *evt_payload);
+    int processSyncEvt(qcamera_sm_evt_enum_t evt, void *evt_payload);
     void lockAPI();
     void waitAPIResult(qcamera_sm_evt_enum_t api_evt);
     void unlockAPI();
     void signalAPIResult(qcamera_api_result_t *result);
+    void signalEvtResult(qcamera_api_result_t *result);
 
     int updateThermalLevel(qcamera_thermal_level_enum_t level);
 
@@ -272,9 +277,9 @@ private:
     int commitParameterChanges();
 
     bool needDebugFps();
+    bool isCACEnabled();
     bool needReprocess();
     bool needRotationReprocess();
-    bool needOnlineRotation();
     void debugShowVideoFPS();
     void debugShowPreviewFPS();
     void dumpFrameToFile(const void *data, uint32_t size,
@@ -402,6 +407,10 @@ private:
     pthread_mutex_t m_lock;
     pthread_cond_t m_cond;
     qcamera_api_result_t m_apiResult;
+
+    pthread_mutex_t m_evtLock;
+    pthread_cond_t m_evtCond;
+    qcamera_api_result_t m_evtResult;
 
     QCameraChannel *m_channels[QCAMERA_CH_TYPE_MAX]; // array holding channel ptr
 

@@ -684,6 +684,7 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
                 __func__, pMetaData->faces_data.num_faces_detected);
         } else {
             // process face detection result
+            ALOGD("[KPI Perf] %s: Number of faces detected %d",__func__,pMetaData->faces_data.num_faces_detected);
             pme->processFaceDetectionResult(&pMetaData->faces_data);
         }
     }
@@ -987,12 +988,9 @@ void QCameraCbNotifier::releaseNotifications(void *data, void *user_data)
     qcamera_callback_argm_t *arg = ( qcamera_callback_argm_t * ) data;
 
     if ( ( NULL != arg ) && ( NULL != user_data ) ) {
-
         if ( arg->release_cb ) {
             arg->release_cb(arg->user_data, arg->cookie);
         }
-
-        delete arg;
     }
 }
 
@@ -1131,18 +1129,18 @@ void * QCameraCbNotifier::cbNotifyRoutine(void * data)
                         case QCAMERA_DATA_SNAPSHOT_CALLBACK:
                             {
                                 if (TRUE == isSnapshotActive && pme->mDataCb ) {
+                                    numOfSnapshotRcvd++;
+                                    if (numOfSnapshotExpected > 0 &&
+                                        numOfSnapshotExpected == numOfSnapshotRcvd) {
+                                        // notify HWI that snapshot is done
+                                        pme->mParent->processSyncEvt(QCAMERA_SM_EVT_SNAPSHOT_DONE,
+                                                                     NULL);
+                                    }
                                     pme->mDataCb(cb->msg_type,
                                                  cb->data,
                                                  cb->index,
                                                  cb->metadata,
                                                  pme->mCallbackCookie);
-                                    numOfSnapshotRcvd++;
-                                    if (numOfSnapshotExpected > 0 &&
-                                        numOfSnapshotExpected == numOfSnapshotRcvd) {
-                                        // notify HWI that snapshot is done
-                                        pme->mParent->processEvt(QCAMERA_SM_EVT_SNAPSHOT_DONE,
-                                                                 NULL);
-                                    }
                                 }
                             }
                             break;

@@ -54,6 +54,7 @@ typedef enum {
 #define QOMX_IMAGE_EXT_THUMBNAIL_NAME        "OMX.QCOM.image.exttype.thumbnail"
 #define QOMX_IMAGE_EXT_BUFFER_OFFSET_NAME "OMX.QCOM.image.exttype.bufferOffset"
 #define QOMX_IMAGE_EXT_MOBICAT_NAME            "OMX.QCOM.image.exttype.mobicat"
+#define QOMX_IMAGE_EXT_ENCODING_MODE_NAME        "OMX.QCOM.image.encoding.mode"
 
 /** QOMX_IMAGE_EXT_INDEXTYPE
 *  This enum is an extension of the OMX_INDEXTYPE enum and
@@ -74,6 +75,9 @@ typedef enum {
 
   //Name: OMX.QCOM.image.exttype.mobicat
   QOMX_IMAGE_EXT_MOBICAT = 0x07F00003,
+
+  //Name: OMX.QCOM.image.encoding.approach
+  QOMX_IMAGE_EXT_ENCODING_MODE = 0x07F00004,
 
 } QOMX_IMAGE_EXT_INDEXTYPE;
 
@@ -194,6 +198,16 @@ typedef enum QOMX_IMG_COLOR_FORMATTYPE {
   OMX_QCOM_IMG_COLOR_FormatYVU444Planar,
   OMX_QCOM_IMG_COLOR_FormatYUV444Planar
 } QOMX_IMG_COLOR_FORMATTYPE;
+
+/** QOMX_ENCODING_MODE
+*  This enum is used to select parallel encoding
+*  or sequential encoding for the thumbnail and
+*  main image
+**/
+typedef enum {
+  OMX_Serial_Encoding,
+  OMX_Parallel_Encoding
+} QOMX_ENCODING_MODE;
 
 #ifdef __cplusplus
  }

@@ -1,4 +1,4 @@
-LOCAL_PATH := $(call my-dir)
+LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
@@ -10,6 +10,8 @@ LOCAL_SRC_FILES := \
         QCamera3Stream.cpp \
         QCamera3Channel.cpp \
         QCamera3PostProc.cpp \
+        ../util/QCameraCmdThread.cpp \
+        ../util/QCameraQueue.cpp
 
 LOCAL_CFLAGS = -Wall -Werror
 LOCAL_CFLAGS := -Wall
@@ -27,7 +29,6 @@ LOCAL_C_INCLUDES := \
         $(LOCAL_PATH)/../../mm-image-codec/qomx_core \
         $(LOCAL_PATH)/../util
 
-LOCAL_STATIC_LIBRARIES := libqcamera2_util
 LOCAL_SHARED_LIBRARIES := libcamera_client liblog libhardware libutils libcutils libdl
 LOCAL_SHARED_LIBRARIES += libmmcamera_interface libmmjpeg_interface libui libcamera_metadata
 

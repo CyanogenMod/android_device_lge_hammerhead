@@ -540,7 +540,9 @@ QCameraParameters::QCameraParameters()
       m_pParamHeap(NULL),
       m_pParamBuf(NULL),
       m_bZslMode(false),
+      m_bZslMode_new(false),
       m_bRecordingHint(false),
+      m_bRecordingHint_new(false),
       m_bHistogramEnabled(false),
       m_nFaceProcMask(0),
       m_bDebugFps(false),
@@ -592,7 +594,9 @@ QCameraParameters::QCameraParameters(const String8 &params)
     m_pParamHeap(NULL),
     m_pParamBuf(NULL),
     m_bZslMode(false),
+    m_bZslMode_new(false),
     m_bRecordingHint(false),
+    m_bRecordingHint_new(false),
     m_bHistogramEnabled(false),
     m_nFaceProcMask(0),
     m_bDebugFps(false),
@@ -816,6 +820,30 @@ String8 QCameraParameters::createHfrSizesString(
 }
 
 /*===========================================================================
+ * FUNCTION   : compareFPSValues
+ *
+ * DESCRIPTION: helper function for fps sorting
+ *
+ * PARAMETERS :
+ *   @p1     : first array element
+ *   @p2     : second array element
+ *
+ * RETURN     : -1 - left element is greater than right
+ *              0  - elements are equals
+ *              1  - left element is less than right
+ *==========================================================================*/
+int QCameraParameters::compareFPSValues(const void *p1, const void *p2)
+{
+    if ( *( (int *) p1) > *( (int *) p2) ) {
+        return -1;
+    } else if (  *( (int *) p1) < *( (int *) p2) ) {
+        return 1;
+    }
+
+    return 0;
+}
+
+/*===========================================================================
  * FUNCTION   : createFpsString
  *
  * DESCRIPTION: create string obj contains array of FPS rates
@@ -830,13 +858,29 @@ String8 QCameraParameters::createFpsString(const cam_fps_range_t *fps, int len)
 {
     String8 str;
     char buffer[32];
+    int duplicate = INT_MAX;
+
+    int *fpsValues = new int[len];
 
     for (int i = 0; i < len; i++ ) {
-        snprintf(buffer, sizeof(buffer), "%d", int(fps[i].max_fps * 1000));
-        str.append(buffer);
-        if (i < len-1)
-            str.append(",");
+        fpsValues[i] = int(fps[i].max_fps);
     }
+
+    qsort(fpsValues, len, sizeof(int), compareFPSValues);
+
+    for (int i = 0; i < len; i++ ) {
+        if ( duplicate != fpsValues[i] ) {
+            snprintf(buffer, sizeof(buffer), "%d", fpsValues[i]);
+            str.append(buffer);
+            if (i < len-1) {
+                str.append(",");
+            }
+            duplicate = fpsValues[i];
+        }
+    }
+
+    delete [] fpsValues;
+
     return str;
 }
 
@@ -958,10 +1002,7 @@ int32_t QCameraParameters::setPreviewSize(const QCameraParameters& params)
             }
 
             // set the new value
-            char val[32];
-            sprintf(val, "%dx%d", width, height);
-            updateParamEntry(KEY_PREVIEW_SIZE, val);
-            ALOGV("%s: %s", __func__, val);
+            CameraParameters::setPreviewSize(width, height);
             return NO_ERROR;
         }
     }
@@ -1000,10 +1041,7 @@ int32_t QCameraParameters::setPictureSize(const QCameraParameters& params)
             }
 
             // set the new value
-            char val[32];
-            sprintf(val, "%dx%d", width, height);
-            updateParamEntry(KEY_PICTURE_SIZE, val);
-            ALOGV("%s: %s", __func__, val);
+            CameraParameters::setPictureSize(width, height);
             return NO_ERROR;
         }
     }
@@ -1050,10 +1088,7 @@ int32_t QCameraParameters::setVideoSize(const QCameraParameters& params)
             }
 
             // set the new value
-            char val[32];
-            sprintf(val, "%dx%d", width, height);
-            updateParamEntry(KEY_VIDEO_SIZE, val);
-            ALOGV("%s: %s", __func__, val);
+            CameraParameters::setVideoSize(width, height);
             return NO_ERROR;
         }
     }
@@ -1179,7 +1214,7 @@ int32_t QCameraParameters::setPreviewFormat(const QCameraParameters& params)
     if (previewFormat != NAME_NOT_FOUND) {
         mPreviewFormat = (cam_format_t)previewFormat;
 
-        updateParamEntry(KEY_PREVIEW_FORMAT, str);
+        CameraParameters::setPreviewFormat(str);
         ALOGV("%s: format %d\n", __func__, mPreviewFormat);
         return NO_ERROR;
     }
@@ -1209,7 +1244,7 @@ int32_t QCameraParameters::setPictureFormat(const QCameraParameters& params)
     if (pictureFormat != NAME_NOT_FOUND) {
         mPictureFormat = pictureFormat;
 
-        updateParamEntry(KEY_PICTURE_FORMAT, str);
+        CameraParameters::setPictureFormat(str);
         ALOGE("%s: format %d\n", __func__, mPictureFormat);
         return NO_ERROR;
     }
@@ -1271,11 +1306,8 @@ int32_t QCameraParameters::setJpegThumbnailSize(const QCameraParameters& params)
         }
     }
 
-    char val[16];
-    sprintf(val, "%d", optimalWidth);
-    updateParamEntry(KEY_JPEG_THUMBNAIL_WIDTH, val);
-    sprintf(val, "%d", optimalHeight);
-    updateParamEntry(KEY_JPEG_THUMBNAIL_HEIGHT, val);
+    set(KEY_JPEG_THUMBNAIL_WIDTH, optimalWidth);
+    set(KEY_JPEG_THUMBNAIL_HEIGHT, optimalHeight);
     return NO_ERROR;
 }
 
@@ -1304,9 +1336,7 @@ int32_t QCameraParameters::setJpegQuality(const QCameraParameters& params)
 
     quality = params.getInt(KEY_JPEG_THUMBNAIL_QUALITY);
     if (quality >= 0 && quality <= 100) {
-        char val[16];
-        sprintf(val, "%d", quality);
-        updateParamEntry(KEY_JPEG_THUMBNAIL_QUALITY, val);
+        set(KEY_JPEG_THUMBNAIL_QUALITY, quality);
     } else {
         ALOGE("%s: Invalid jpeg thumbnail quality=%d", __func__, quality);
         rc = BAD_VALUE;
@@ -1334,7 +1364,7 @@ int32_t QCameraParameters::setOrientation(const QCameraParameters& params)
         if (strcmp(str, portrait) == 0 || strcmp(str, landscape) == 0) {
             // Camera service needs this to decide if the preview frames and raw
             // pictures should be rotated.
-            updateParamEntry(KEY_QC_ORIENTATION, str);
+            set(KEY_QC_ORIENTATION, str);
         } else {
             ALOGE("%s: Invalid orientation value: %s", __func__, str);
             return BAD_VALUE;
@@ -2477,7 +2507,7 @@ int32_t QCameraParameters::setNoDisplayMode(const QCameraParameters& params)
     if(str_val && strlen(str_val) > 0) {
         if (prev_str == NULL || strcmp(str_val, prev_str) != 0) {
             m_bNoDisplayMode = atoi(str_val);
-            updateParamEntry(KEY_QC_NO_DISPLAY_MODE, str_val);
+            set(KEY_QC_NO_DISPLAY_MODE, str_val);
             m_bNeedRestart = true;
         }
     } else {
@@ -2510,8 +2540,8 @@ int32_t QCameraParameters::setZslMode(const QCameraParameters& params)
                                        sizeof(ON_OFF_MODES_MAP)/sizeof(QCameraMap),
                                        str_val);
             if (value != NAME_NOT_FOUND) {
-                updateParamEntry(KEY_QC_ZSL, str_val);
-                m_bZslMode = (value > 0)? true : false;
+                set(KEY_QC_ZSL, str_val);
+                m_bZslMode_new = (value > 0)? true : false;
 
                 // ZSL mode changed, need restart preview
                 m_bNeedRestart = true;
@@ -2945,7 +2975,7 @@ int32_t QCameraParameters::initDefaultParameters()
         String8 fpsValues = createFpsString(m_pCapability->fps_ranges_tbl,
                                             m_pCapability->fps_ranges_tbl_cnt);
         set(KEY_SUPPORTED_PREVIEW_FRAME_RATES, fpsValues.string());
-        CameraParameters::setPreviewFrameRate(max_fps);
+        CameraParameters::setPreviewFrameRate(int(m_pCapability->fps_ranges_tbl[default_fps_index].max_fps));
     } else {
         ALOGE("%s: supported fps ranges cnt is 0 or exceeds max!!!", __func__);
     }
@@ -3196,6 +3226,7 @@ int32_t QCameraParameters::initDefaultParameters()
     set(KEY_QC_ZSL, VALUE_OFF);
     m_bZslMode = false;
 #endif
+    m_bZslMode_new = m_bZslMode;
 
     //Set video HDR
     if ((m_pCapability->qcom_supported_feature_mask & CAM_QCOM_FEATURE_VIDEO_HDR) > 0) {
@@ -3260,7 +3291,7 @@ int32_t QCameraParameters::init(cam_capability_t *capabilities, mm_camera_vtbl_t
     m_pCamOpsTbl = mmOps;
 
     //Allocate Set Param Buffer
-    m_pParamHeap = new QCameraHeapMemory();
+    m_pParamHeap = new QCameraHeapMemory(QCAMERA_ION_USE_CACHE);
     rc = m_pParamHeap->allocate(1, sizeof(parm_buffer_t));
     if(rc != OK) {
         rc = NO_MEMORY;
@@ -3441,6 +3472,10 @@ int32_t QCameraParameters::adjustPreviewFpsRange(cam_fps_range_t *fpsRange)
 {
     if ( fpsRange == NULL ) {
         return BAD_VALUE;
+    }
+
+    if ( m_pParamBuf == NULL ) {
+        return NO_INIT;
     }
 
     int32_t rc = initBatchUpdate(m_pParamBuf);
@@ -5009,7 +5044,14 @@ int QCameraParameters::getMaxUnmatchedFramesInQueue()
 int QCameraParameters::setRecordingHintValue(int32_t value)
 {
     ALOGD("%s: VideoHint = %d", __func__, value);
-    m_bRecordingHint = (value > 0)? true : false;
+    bool newValue = (value > 0)? true : false;
+
+    if ( m_bRecordingHint != newValue ) {
+        m_bNeedRestart = true;
+        m_bRecordingHint_new = newValue;
+    } else {
+        m_bRecordingHint_new = m_bRecordingHint;
+    }
     return AddSetParmEntryToBatch(m_pParamBuf,
                                   CAM_INTF_PARM_RECORDING_HINT,
                                   sizeof(value),
@@ -5486,6 +5528,41 @@ int32_t QCameraParameters::updateFocusDistances(cam_focus_distances_info_t *focu
 }
 
 /*===========================================================================
+ * FUNCTION   : updateRecordingHintValue
+ *
+ * DESCRIPTION: update recording hint locally and to daemon
+ *
+ * PARAMETERS :
+ *   @value   : video hint value
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraParameters::updateRecordingHintValue(int32_t value)
+{
+    int32_t rc = NO_ERROR;
+    if(initBatchUpdate(m_pParamBuf) < 0 ) {
+        ALOGE("%s:Failed to initialize group update table", __func__);
+        return BAD_TYPE;
+    }
+
+    rc = setRecordingHintValue(value);
+    if (rc != NO_ERROR) {
+        ALOGE("%s:Failed to update table", __func__);
+        return rc;
+    }
+
+    rc = commitSetBatch();
+    if (rc != NO_ERROR) {
+        ALOGE("%s:Failed to update recording hint", __func__);
+        return rc;
+    }
+
+    return rc;
+}
+
+/*===========================================================================
  * FUNCTION   : setHistogram
  *
  * DESCRIPTION: set histogram
@@ -5568,6 +5645,8 @@ int32_t QCameraParameters::setFaceDetection(bool enabled)
     fd_set_parm.fd_mode = faceProcMask;
     fd_set_parm.num_fd = requested_faces;
 
+    ALOGD("[KPI Perf] %s: Face detection value = %d num_fd = %d",
+          __func__, faceProcMask,requested_faces);
     if(initBatchUpdate(m_pParamBuf) < 0 ) {
         ALOGE("%s:Failed to initialize group update table", __func__);
         return BAD_TYPE;
@@ -5651,6 +5730,10 @@ int32_t QCameraParameters::setFrameSkip(enum msm_vfe_frame_skip_pattern pattern)
 {
     int32_t rc = NO_ERROR;
     int32_t value = (int32_t)pattern;
+
+    if ( m_pParamBuf == NULL ) {
+        return NO_INIT;
+    }
 
     if(initBatchUpdate(m_pParamBuf) < 0 ) {
         ALOGE("%s:Failed to initialize group update table", __func__);
@@ -6051,6 +6134,11 @@ int32_t QCameraParameters::commitParamChanges()
         set(k, v);
     }
     m_tempMap.clear();
+
+    // update local changes
+    m_bRecordingHint = m_bRecordingHint_new;
+    m_bZslMode = m_bZslMode_new;
+
     return NO_ERROR;
 }
 

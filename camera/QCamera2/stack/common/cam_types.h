@@ -479,6 +479,7 @@ typedef enum {
     CAM_EVENT_TYPE_MAP_UNMAP_DONE  = (1<<0),
     CAM_EVENT_TYPE_AUTO_FOCUS_DONE = (1<<1),
     CAM_EVENT_TYPE_ZOOM_DONE       = (1<<2),
+    CAM_EVENT_TYPE_DAEMON_DIED     = (1<<3),
     CAM_EVENT_TYPE_MAX
 } cam_event_type_t;
 
@@ -736,6 +737,7 @@ typedef enum {
     CAM_INTF_PARM_HDR_NEED_1X, /* if HDR needs 1x output */ /* 40 */
     CAM_INTF_PARM_LOCK_CAF,
     CAM_INTF_PARM_VIDEO_HDR,
+    CAM_INTF_PARM_ROTATION,
     CAM_INTF_META_CROP_DATA,
     CAM_INTF_META_PREP_SNAPSHOT_DONE,
     CAM_INTF_META_GOOD_FRAME_IDX_RANGE,
@@ -877,7 +879,6 @@ typedef enum {
     /* Tone map mode */
     CAM_INTF_META_TONEMAP_MODE,
     CAM_INTF_META_PRIVATE_DATA,
-
     CAM_INTF_PARM_MAX
 } cam_intf_parm_type_t;
 
@@ -986,6 +987,7 @@ typedef struct {
 #define CAM_QCOM_FEATURE_REGISTER_FACE  (1<<6)
 #define CAM_QCOM_FEATURE_SHARPNESS      (1<<7)
 #define CAM_QCOM_FEATURE_VIDEO_HDR      (1<<8)
+#define CAM_QCOM_FEATURE_CAC            (1<<9)
 
 // Counter clock wise
 typedef enum {
@@ -1059,6 +1061,17 @@ typedef struct {
     cam_pp_feature_config_t pp_feature_config;
 } cam_stream_reproc_config_t;
 
+typedef struct {
+    uint8_t crop_enabled;
+    cam_rect_t input_crop;
+} cam_crop_param_t;
+
+typedef struct {
+    cam_denoise_param_t denoise;
+    cam_crop_param_t crop;
+    uint32_t flip;     /* 0 means no flip */
+    int32_t sharpness; /* 0 means no sharpness */
+} cam_per_frame_pp_config_t;
 typedef enum {
     CAM_OPT_STAB_OFF,
     CAM_OPT_STAB_ON,

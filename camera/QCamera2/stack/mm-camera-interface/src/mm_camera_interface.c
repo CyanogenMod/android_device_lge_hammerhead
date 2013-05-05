@@ -923,6 +923,43 @@ static int32_t mm_camera_intf_flush_super_buf_queue(uint32_t camera_handle,
 }
 
 /*===========================================================================
+ * FUNCTION   : mm_camera_intf_configure_notify_mode
+ *
+ * DESCRIPTION: Configures channel notification mode
+ *
+ * PARAMETERS :
+ *   @camera_handle: camera handle
+ *   @ch_id        : channel handle
+ *   @notify_mode  : notification mode
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
+static int32_t mm_camera_intf_configure_notify_mode(uint32_t camera_handle,
+                                                    uint32_t ch_id,
+                                                    mm_camera_super_buf_notify_mode_t notify_mode)
+{
+    int32_t rc = -1;
+    mm_camera_obj_t * my_obj = NULL;
+
+    CDBG("%s :E camera_handler = %d,ch_id = %d",
+         __func__, camera_handle, ch_id);
+    pthread_mutex_lock(&g_intf_lock);
+    my_obj = mm_camera_util_get_camera_by_handler(camera_handle);
+
+    if(my_obj) {
+        pthread_mutex_lock(&my_obj->cam_lock);
+        pthread_mutex_unlock(&g_intf_lock);
+        rc = mm_camera_config_channel_notify(my_obj, ch_id, notify_mode);
+    } else {
+        pthread_mutex_unlock(&g_intf_lock);
+    }
+    CDBG("%s :X rc = %d", __func__, rc);
+    return rc;
+}
+
+/*===========================================================================
  * FUNCTION   : mm_camera_intf_map_buf
  *
  * DESCRIPTION: mapping camera buffer via domain socket to server
@@ -1304,7 +1341,8 @@ static mm_camera_ops_t mm_camera_ops = {
     .stop_channel = mm_camera_intf_stop_channel,
     .request_super_buf = mm_camera_intf_request_super_buf,
     .cancel_super_buf_request = mm_camera_intf_cancel_super_buf_request,
-    .flush_super_buf_queue = mm_camera_intf_flush_super_buf_queue
+    .flush_super_buf_queue = mm_camera_intf_flush_super_buf_queue,
+    .configure_notify_mode = mm_camera_intf_configure_notify_mode
 };
 
 /*===========================================================================

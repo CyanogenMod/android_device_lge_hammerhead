@@ -53,11 +53,13 @@ namespace qcamera {
  *
  * DESCRIPTION: default constructor of QCameraMemory
  *
- * PARAMETERS : none
+ * PARAMETERS :
+ *   @cached  : flag indicates if using cached memory
  *
  * RETURN     : None
  *==========================================================================*/
-QCameraMemory::QCameraMemory()
+QCameraMemory::QCameraMemory(bool cached)
+    :m_bCached(cached)
 {
     mBufferCount = 0;
     for (int i = 0; i < MM_CAMERA_MAX_NUM_FRAMES; i++) {
@@ -97,6 +99,12 @@ QCameraMemory::~QCameraMemory()
  *==========================================================================*/
 int QCameraMemory::cacheOpsInternal(int index, unsigned int cmd, void *vaddr)
 {
+    if (!m_bCached) {
+        // Memory is not cached, no need for cache ops
+        ALOGV("%s: No cache ops here for uncached memory", __func__);
+        return OK;
+    }
+
     struct ion_flush_data cache_inv_data;
     struct ion_custom_data custom_data;
     int ret = OK;
@@ -293,7 +301,7 @@ int QCameraMemory::allocOneBuffer(QCameraMemInfo &memInfo, int heap_id, int size
     int main_ion_fd = 0;
 
     main_ion_fd = open("/dev/ion", O_RDONLY);
-    if (main_ion_fd <= 0) {
+    if (main_ion_fd < 0) {
         ALOGE("Ion dev open failed: %s\n", strerror(errno));
         goto ION_OPEN_FAILED;
     }
@@ -303,7 +311,9 @@ int QCameraMemory::allocOneBuffer(QCameraMemInfo &memInfo, int heap_id, int size
     /* to make it page size aligned */
     alloc.len = (alloc.len + 4095) & (~4095);
     alloc.align = 4096;
-    alloc.flags = ION_FLAG_CACHED;
+    if (m_bCached) {
+        alloc.flags = ION_FLAG_CACHED;
+    }
     alloc.heap_mask = heap_id;
     rc = ioctl(main_ion_fd, ION_IOC_ALLOC, &alloc);
     if (rc < 0) {
@@ -370,12 +380,13 @@ void QCameraMemory::deallocOneBuffer(QCameraMemInfo &memInfo)
  *
  * DESCRIPTION: constructor of QCameraHeapMemory for ion memory used internally in HAL
  *
- * PARAMETERS : none
+ * PARAMETERS :
+ *   @cached  : flag indicates if using cached memory
  *
  * RETURN     : none
  *==========================================================================*/
-QCameraHeapMemory::QCameraHeapMemory()
-    : QCameraMemory()
+QCameraHeapMemory::QCameraHeapMemory(bool cached)
+    : QCameraMemory(cached)
 {
     for (int i = 0; i < MM_CAMERA_MAX_NUM_FRAMES; i ++)
         mPtr[i] = NULL;
@@ -563,11 +574,14 @@ int QCameraHeapMemory::getMatchBufIndex(const void *opaque,
  *
  * PARAMETERS :
  *   @getMemory : camera memory request ops table
+ *   @cached    : flag indicates if using cached memory
  *
  * RETURN     : none
  *==========================================================================*/
-QCameraStreamMemory::QCameraStreamMemory(camera_request_memory getMemory) :
-        mGetMemory(getMemory)
+QCameraStreamMemory::QCameraStreamMemory(camera_request_memory getMemory,
+                                         bool cached)
+    :QCameraMemory(cached),
+     mGetMemory(getMemory)
 {
     for (int i = 0; i < MM_CAMERA_MAX_NUM_FRAMES; i ++)
         mCameraMemory[i] = NULL;
@@ -745,11 +759,13 @@ void *QCameraStreamMemory::getPtr(int index) const
  *
  * PARAMETERS :
  *   @getMemory : camera memory request ops table
+ *   @cached    : flag indicates if using cached ION memory
  *
  * RETURN     : none
  *==========================================================================*/
-QCameraVideoMemory::QCameraVideoMemory(camera_request_memory getMemory)
-    : QCameraStreamMemory(getMemory)
+QCameraVideoMemory::QCameraVideoMemory(camera_request_memory getMemory,
+                                       bool cached)
+    : QCameraStreamMemory(getMemory, cached)
 {
     memset(mMetadata, 0, sizeof(mMetadata));
 }
@@ -894,7 +910,7 @@ int QCameraVideoMemory::getMatchBufIndex(const void *opaque,
  * RETURN     : none
  *==========================================================================*/
 QCameraGrallocMemory::QCameraGrallocMemory(camera_request_memory getMemory)
-        : QCameraMemory()
+        : QCameraMemory(true)
 {
     mMinUndequeuedBuffers = 0;
     mWindow = NULL;
@@ -1091,7 +1107,7 @@ int QCameraGrallocMemory::allocate(int count, int /*size*/)
         mPrivateHandle[cnt] =
             (struct private_handle_t *)(*mBufferHandle[cnt]);
         mMemInfo[cnt].main_ion_fd = open("/dev/ion", O_RDONLY);
-        if (mMemInfo[cnt].main_ion_fd <= 0) {
+        if (mMemInfo[cnt].main_ion_fd < 0) {
             ALOGE("%s: failed: could not open ion device", __func__);
             for(int i = 0; i < cnt; i++) {
                 struct ion_handle_data ion_handle;
