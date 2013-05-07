@@ -151,6 +151,7 @@ public:
     void getThumbnailSize(cam_dimension_t &dim);
     int getJpegQuality();
     int getJpegRotation();
+    int calcMaxJpegSize();
     QCamera3Exif *getExifData();
 
 private:

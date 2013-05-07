@@ -757,6 +757,7 @@ void QCamera3PicChannel::jpegEvtHandle(jpeg_job_status_t status,
     camera3_stream_buffer_t result;
     camera3_jpeg_blob_t jpegHeader;
     char* jpeg_eof = 0;
+    int maxJpegSize;
     QCamera3PicChannel *obj = (QCamera3PicChannel *)userdata;
     if (obj) {
         //Construct payload for process_capture_result. Call mChannelCb
@@ -777,8 +778,18 @@ void QCamera3PicChannel::jpegEvtHandle(jpeg_job_status_t status,
 
         char* jpeg_buf = (char *)p_output->buf_vaddr;
 
-        jpeg_eof = &jpeg_buf[p_output->buf_filled_len];
+        if(obj->mJpegSettings->max_jpeg_size <= 0 ||
+                obj->mJpegSettings->max_jpeg_size > obj->mMemory->getSize(obj->mCurrentBufIndex)){
+            ALOGE("%s:Max Jpeg size :%d is out of valid range setting to size of buffer",
+                    __func__, obj->mJpegSettings->max_jpeg_size);
+            maxJpegSize =  obj->mMemory->getSize(obj->mCurrentBufIndex);
+        } else {
+            maxJpegSize = obj->mJpegSettings->max_jpeg_size;
+            ALOGE("%s: Setting max jpeg size to %d",__func__, maxJpegSize);
+        }
+        jpeg_eof = &jpeg_buf[maxJpegSize-sizeof(jpegHeader)];
         memcpy(jpeg_eof, &jpegHeader, sizeof(jpegHeader));
+        obj->mMemory->cleanInvalidateCache(obj->mCurrentBufIndex);
 
         ////Use below data to issue framework callback
         resultBuffer = obj->mCamera3Buffers[obj->mCurrentBufIndex];
@@ -864,6 +875,7 @@ int32_t QCamera3PicChannel::initialize()
     streamFormat = CAM_FORMAT_YUV_420_NV21;
     streamDim.width = mCamera3Stream->width;
     streamDim.height = mCamera3Stream->height;
+
     int num_buffers = QCamera3PicChannel::kMaxBuffers + 1;
 
     rc = QCamera3Channel::addStream(streamType, streamFormat, streamDim,

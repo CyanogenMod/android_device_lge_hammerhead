@@ -101,7 +101,6 @@ public:
     int32_t processRawData(mm_camera_super_buf_t *frame);
     int32_t processPPData(mm_camera_super_buf_t *frame);
     int32_t processJpegEvt(qcamera_jpeg_evt_payload_t *evt);
-    int32_t getJpegPaddingReq(cam_padding_info_t &padding_info);
     qcamera_jpeg_data_t *findJpegJobByJobId(uint32_t jobId);
     void releaseJpegJobData(qcamera_jpeg_data_t *job);
 

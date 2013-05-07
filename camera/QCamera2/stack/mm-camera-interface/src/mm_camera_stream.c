@@ -1805,7 +1805,7 @@ int32_t mm_stream_calc_offset_snapshot(cam_format_t fmt,
 
     if (isAFamily) {
         stride = dim->width;
-        scanline = PAD_TO_SIZE(dim->height, CAM_PAD_TO_16);
+        scanline = dim->height;
         offset_x = 0;
         offset_y = scanline - dim->height;
         scanline += offset_y; /* double padding */

@@ -965,27 +965,6 @@ void *QCamera3PostProcessor::dataProcessRoutine(void *data)
 }
 
 /*===========================================================================
- * FUNCTION   : getJpegPaddingReq
- *
- * DESCRIPTION: function to add an entry to exif data
- *
- * PARAMETERS :
- *   @padding_info : jpeg specific padding requirement
- *
- * RETURN     : int32_t type of status
- *              NO_ERROR  -- success
- *              none-zero failure code
- *==========================================================================*/
-int32_t QCamera3PostProcessor::getJpegPaddingReq(cam_padding_info_t &padding_info)
-{
-    // TODO: hardcode for now, needs to query from mm-jpeg-interface
-    padding_info.width_padding  = CAM_PAD_NONE;
-    padding_info.height_padding  = CAM_PAD_TO_16;
-    padding_info.plane_padding  = CAM_PAD_TO_WORD;
-    return NO_ERROR;
-}
-
-/*===========================================================================
  * FUNCTION   : QCamera3Exif
  *
  * DESCRIPTION: constructor of QCamera3Exif
