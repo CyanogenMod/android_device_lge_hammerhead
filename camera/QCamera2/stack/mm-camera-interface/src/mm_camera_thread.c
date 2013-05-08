@@ -92,6 +92,9 @@ static int32_t mm_camera_poll_sig(mm_camera_poll_thread_t *poll_cb,
     len = write(poll_cb->pfds[1], &cmd_evt, sizeof(cmd_evt));
     if(len < 1) {
         CDBG_ERROR("%s: len = %d, errno = %d", __func__, len, errno);
+        /* Avoid waiting for the signal */
+        pthread_mutex_unlock(&poll_cb->mutex);
+        return 0;
     }
     CDBG("%s: begin IN mutex write done, len = %d", __func__, len);
     /* wait till worker task gives positive signal */
@@ -482,6 +485,7 @@ static void *mm_camera_cmd_thread(void *data)
             case MM_CAMERA_CMD_TYPE_DATA_CB:
             case MM_CAMERA_CMD_TYPE_REQ_DATA_CB:
             case MM_CAMERA_CMD_TYPE_SUPER_BUF_DATA_CB:
+            case MM_CAMERA_CMD_TYPE_CONFIG_NOTIFY:
             case MM_CAMERA_CMD_TYPE_FLUSH_QUEUE:
                 if (NULL != cmd_thread->cb) {
                     cmd_thread->cb(node, cmd_thread->user_data);

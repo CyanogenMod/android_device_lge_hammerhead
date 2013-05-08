@@ -655,6 +655,20 @@ int32_t QCameraReprocessChannel::addReprocStreamsFromSource(QCameraAllocator& al
             streamInfo->reprocess_config.online.input_stream_type = pStream->getMyType();
             streamInfo->reprocess_config.pp_feature_config = config;
 
+            if (!(pStream->isTypeOf(CAM_STREAM_TYPE_SNAPSHOT) ||
+                pStream->isOrignalTypeOf(CAM_STREAM_TYPE_SNAPSHOT))) {
+                streamInfo->reprocess_config.pp_feature_config.feature_mask &= ~CAM_QCOM_FEATURE_CAC;
+            }
+            if (streamInfo->reprocess_config.pp_feature_config.feature_mask & CAM_QCOM_FEATURE_ROTATION) {
+                if (streamInfo->reprocess_config.pp_feature_config.rotation == ROTATE_90 ||
+                    streamInfo->reprocess_config.pp_feature_config.rotation == ROTATE_270) {
+                    // rotated by 90 or 270, need to switch width and height
+                    int32_t temp = streamInfo->dim.height;
+                    streamInfo->dim.height = streamInfo->dim.width;
+                    streamInfo->dim.width = temp;
+                }
+            }
+
             // save source stream handler
             mSrcStreamHandles[m_numStreams] = pStream->getMyHandle();
 

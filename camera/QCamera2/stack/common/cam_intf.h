@@ -287,6 +287,8 @@ typedef struct {
     uint8_t meta_present;         /* if there is meta data associated with this reprocess frame */
     uint32_t meta_stream_handle;  /* meta data stream ID. only valid if meta_present != 0 */
     uint8_t meta_buf_index;       /* buf index to meta data buffer. only valid if meta_present != 0 */
+
+    cam_per_frame_pp_config_t frame_pp_config; /* per frame post-proc configuration */
 } cam_reprocess_param;
 
 typedef struct {

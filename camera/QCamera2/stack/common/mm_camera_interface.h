@@ -608,6 +608,18 @@ typedef struct {
      **/
     int32_t (*flush_super_buf_queue) (uint32_t camera_handle,
                                       uint32_t ch_id, uint32_t frame_idx);
+
+    /** configure_notify_mode: function definition for configuring the
+     *                         notification mode of channel
+     *    @camera_handle : camera handler
+     *    @ch_id : channel handler
+     *    @notify_mode : notification mode
+     *  Return value: 0 -- success
+     *                -1 -- failure
+     **/
+    int32_t (*configure_notify_mode) (uint32_t camera_handle,
+                                      uint32_t ch_id,
+                                      mm_camera_super_buf_notify_mode_t notify_mode);
 } mm_camera_ops_t;
 
 /** mm_camera_vtbl_t: virtual table for camera operations

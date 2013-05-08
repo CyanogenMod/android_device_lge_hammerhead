@@ -266,5 +266,3 @@ int32_t releaseExifEntry(QOMX_EXIF_INFO *p_exif_info)
 
   return 0;
 }
-
-

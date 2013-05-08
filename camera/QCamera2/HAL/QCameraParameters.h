@@ -401,6 +401,7 @@ public:
     int32_t setLockCAF(bool bLock);
     int32_t setFrameSkip(enum msm_vfe_frame_skip_pattern pattern);
     qcamera_thermal_mode getThermalMode() {return m_ThermalMode;};
+    int32_t updateRecordingHintValue(int32_t value);
 
     cam_focus_mode_type getFocusMode() const {return mFocusMode;};
     int32_t setNumOfSnapshot();
@@ -520,6 +521,7 @@ private:
     String8 createFpsRangeString(const cam_fps_range_t *fps,
                                  int len,
                                  int &default_fps_index);
+    static int compareFPSValues(const void *p1, const void *p2);
     String8 createFpsString(const cam_fps_range_t *fps, int len);
     String8 createZoomRatioValuesString(int *zoomRatios, int length);
     int lookupAttr(const QCameraMap arr[], int len, const char *name);
@@ -569,7 +571,9 @@ private:
     parm_buffer_t     *m_pParamBuf;  // ptr to param buf in m_pParamHeap
 
     bool m_bZslMode;                // if ZSL is enabled
+    bool m_bZslMode_new;
     bool m_bRecordingHint;          // local copy of recording hint
+    bool m_bRecordingHint_new;
     bool m_bHistogramEnabled;       // if histogram is enabled
     int  m_nFaceProcMask;           // face process mask
     bool m_bDebugFps;               // if FPS need to be logged

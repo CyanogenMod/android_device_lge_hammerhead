@@ -67,6 +67,8 @@ int32_t mm_channel_request_super_buf(mm_channel_t *my_obj,
 int32_t mm_channel_cancel_super_buf_request(mm_channel_t *my_obj);
 int32_t mm_channel_flush_super_buf_queue(mm_channel_t *my_obj,
                                          uint32_t frame_idx);
+int32_t mm_channel_config_notify_mode(mm_channel_t *my_obj,
+                                      mm_camera_super_buf_notify_mode_t notify_mode);
 int32_t mm_channel_superbuf_flush(mm_channel_t* my_obj, mm_channel_queue_t * queue);
 int32_t mm_channel_set_stream_parm(mm_channel_t *my_obj,
                                    mm_evt_paylod_set_get_stream_parms_t *payload);
@@ -203,12 +205,13 @@ static void mm_channel_process_stream_buf(mm_camera_cmdcb_t * cmd_cb,
         /* skip frames if needed */
         ch_obj->pending_cnt = cmd_cb->u.req_buf.num_buf_requested;
         mm_channel_superbuf_skip(ch_obj, &ch_obj->bundle.superbuf_queue);
+    } else if (MM_CAMERA_CMD_TYPE_CONFIG_NOTIFY == cmd_cb->cmd_type) {
+           ch_obj->bundle.superbuf_queue.attr.notify_mode = cmd_cb->u.notify_mode;
     } else if (MM_CAMERA_CMD_TYPE_FLUSH_QUEUE  == cmd_cb->cmd_type) {
         ch_obj->bundle.superbuf_queue.expected_frame_id = cmd_cb->u.frame_idx;
         mm_channel_superbuf_flush(ch_obj, &ch_obj->bundle.superbuf_queue);
         return;
     }
-
     notify_mode = ch_obj->bundle.superbuf_queue.attr.notify_mode;
 
     /* bufdone for overflowed bufs */
@@ -516,6 +519,12 @@ int32_t mm_channel_fsm_fn_active(mm_channel_t *my_obj,
         {
             uint32_t frame_idx = (uint32_t)in_val;
             rc = mm_channel_flush_super_buf_queue(my_obj, frame_idx);
+        }
+        break;
+    case MM_CHANNEL_EVT_CONFIG_NOTIFY_MODE:
+        {
+            mm_camera_super_buf_notify_mode_t notify_mode = ( mm_camera_super_buf_notify_mode_t ) in_val;
+            rc = mm_channel_config_notify_mode(my_obj, notify_mode);
         }
         break;
     case MM_CHANNEL_EVT_SET_STREAM_PARM:
@@ -1139,6 +1148,44 @@ int32_t mm_channel_flush_super_buf_queue(mm_channel_t *my_obj, uint32_t frame_id
         memset(node, 0, sizeof(mm_camera_cmdcb_t));
         node->cmd_type = MM_CAMERA_CMD_TYPE_FLUSH_QUEUE;
         node->u.frame_idx = frame_idx;
+
+        /* enqueue to cmd thread */
+        cam_queue_enq(&(my_obj->cmd_thread.cmd_queue), node);
+
+        /* wake up cmd thread */
+        cam_sem_post(&(my_obj->cmd_thread.cmd_sem));
+    } else {
+        CDBG_ERROR("%s: No memory for mm_camera_node_t", __func__);
+        rc = -1;
+    }
+
+    return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : mm_channel_config_notify_mode
+ *
+ * DESCRIPTION: configure notification mode
+ *
+ * PARAMETERS :
+ *   @my_obj  : channel object
+ *   @notify_mode : notification mode
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
+int32_t mm_channel_config_notify_mode(mm_channel_t *my_obj,
+                                      mm_camera_super_buf_notify_mode_t notify_mode)
+{
+    int32_t rc = 0;
+    mm_camera_cmdcb_t* node = NULL;
+
+    node = (mm_camera_cmdcb_t *)malloc(sizeof(mm_camera_cmdcb_t));
+    if (NULL != node) {
+        memset(node, 0, sizeof(mm_camera_cmdcb_t));
+        node->u.notify_mode = notify_mode;
+        node->cmd_type = MM_CAMERA_CMD_TYPE_CONFIG_NOTIFY;
 
         /* enqueue to cmd thread */
         cam_queue_enq(&(my_obj->cmd_thread.cmd_queue), node);

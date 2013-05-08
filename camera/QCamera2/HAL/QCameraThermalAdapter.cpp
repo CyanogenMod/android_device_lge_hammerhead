@@ -63,7 +63,7 @@ int QCameraThermalAdapter::init(QCameraThermalCallback *thermalCb)
     int rc = NO_ERROR;
 
     ALOGV("%s E", __func__);
-    mHandle = dlopen("/system/lib/libthermalclient.so", RTLD_NOW);
+    mHandle = dlopen("/vendor/lib/libthermalclient.so", RTLD_NOW);
     if (!mHandle) {
         error = dlerror();
         ALOGE("%s: dlopen failed with error %s",

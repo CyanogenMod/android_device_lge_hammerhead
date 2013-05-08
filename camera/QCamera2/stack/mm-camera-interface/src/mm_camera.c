@@ -152,7 +152,8 @@ static void mm_camera_event_notify(void* user_data)
     struct v4l2_event ev;
     struct msm_v4l2_event_data *msm_evt = NULL;
     int rc;
-    mm_camera_cmdcb_t *node = NULL;
+    mm_camera_event_t evt;
+    memset(&evt, 0, sizeof(mm_camera_event_t));
 
     mm_camera_obj_t *my_obj = (mm_camera_obj_t*)user_data;
     if (NULL != my_obj) {
@@ -170,30 +171,14 @@ static void mm_camera_event_notify(void* user_data)
                 pthread_cond_signal(&my_obj->evt_cond);
                 pthread_mutex_unlock(&my_obj->evt_lock);
                 break;
-            case CAM_EVENT_TYPE_AUTO_FOCUS_DONE:
-            case CAM_EVENT_TYPE_ZOOM_DONE:
+            case MSM_CAMERA_PRIV_SHUTDOWN:
                 {
-                    node = (mm_camera_cmdcb_t *)malloc(sizeof(mm_camera_cmdcb_t));
-                    if (NULL != node) {
-                        memset(node, 0, sizeof(mm_camera_cmdcb_t));
-                        node->cmd_type = MM_CAMERA_CMD_TYPE_EVT_CB;
-                        node->u.evt.server_event_type = msm_evt->command;
-                        if (msm_evt->status == MSM_CAMERA_STATUS_SUCCESS) {
-                            node->u.evt.status = CAM_STATUS_SUCCESS;
-                        } else {
-                            node->u.evt.status = CAM_STATUS_FAILED;
-                        }
-                    }
+                    evt.server_event_type = CAM_EVENT_TYPE_DAEMON_DIED;
+                    mm_camera_enqueue_evt(my_obj, &evt);
                 }
                 break;
             default:
                 break;
-            }
-            if (NULL != node) {
-                /* enqueue to evt cmd thread */
-                cam_queue_enq(&(my_obj->evt_thread.cmd_queue), node);
-                /* wake up evt cmd thread */
-                cam_sem_post(&(my_obj->evt_thread.cmd_sem));
             }
         }
     }
@@ -305,6 +290,7 @@ int32_t mm_camera_open(mm_camera_obj_t *my_obj)
         rc = -1;
         goto on_error;
     }
+    pthread_mutex_init(&my_obj->msg_lock, NULL);
 
     pthread_mutex_init(&my_obj->cb_lock, NULL);
     pthread_mutex_init(&my_obj->evt_lock, NULL);
@@ -375,6 +361,7 @@ int32_t mm_camera_close(mm_camera_obj_t *my_obj)
         mm_camera_socket_close(my_obj->ds_fd);
         my_obj->ds_fd = 0;
     }
+    pthread_mutex_destroy(&my_obj->msg_lock);
 
     pthread_mutex_destroy(&my_obj->cb_lock);
     pthread_mutex_destroy(&my_obj->evt_lock);
@@ -1118,6 +1105,43 @@ int32_t mm_camera_flush_super_buf_queue(mm_camera_obj_t *my_obj, uint32_t ch_id,
 }
 
 /*===========================================================================
+ * FUNCTION   : mm_camera_config_channel_notify
+ *
+ * DESCRIPTION: configures the channel notification mode
+ *
+ * PARAMETERS :
+ *   @my_obj       : camera object
+ *   @ch_id        : channel handle
+ *   @notify_mode  : notification mode
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
+int32_t mm_camera_config_channel_notify(mm_camera_obj_t *my_obj,
+                                        uint32_t ch_id,
+                                        mm_camera_super_buf_notify_mode_t notify_mode)
+{
+    int32_t rc = -1;
+    mm_channel_t * ch_obj =
+        mm_camera_util_get_channel_by_handler(my_obj, ch_id);
+
+    if (NULL != ch_obj) {
+        pthread_mutex_lock(&ch_obj->ch_lock);
+        pthread_mutex_unlock(&my_obj->cam_lock);
+
+        rc = mm_channel_fsm_fn(ch_obj,
+                               MM_CHANNEL_EVT_CONFIG_NOTIFY_MODE,
+                               (void *)notify_mode,
+                               NULL);
+    } else {
+        pthread_mutex_unlock(&my_obj->cam_lock);
+    }
+
+    return rc;
+}
+
+/*===========================================================================
  * FUNCTION   : mm_camera_set_stream_parms
  *
  * DESCRIPTION: set parameters per stream
@@ -1476,6 +1500,9 @@ int32_t mm_camera_util_sendmsg(mm_camera_obj_t *my_obj,
 {
     int32_t rc = -1;
     int32_t status;
+
+    /* need to lock msg_lock, since sendmsg until reposonse back is deemed as one operation*/
+    pthread_mutex_lock(&my_obj->msg_lock);
     if(mm_camera_socket_sendmsg(my_obj->ds_fd, msg, buf_size, sendfd) > 0) {
         /* wait for event that mapping/unmapping is done */
         mm_camera_util_wait_for_event(my_obj, CAM_EVENT_TYPE_MAP_UNMAP_DONE, &status);
@@ -1483,6 +1510,7 @@ int32_t mm_camera_util_sendmsg(mm_camera_obj_t *my_obj,
             rc = 0;
         }
     }
+    pthread_mutex_unlock(&my_obj->msg_lock);
     return rc;
 }
 

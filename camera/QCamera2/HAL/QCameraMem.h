@@ -60,7 +60,7 @@ public:
     virtual int getMatchBufIndex(const void *opaque, bool metadata) const = 0;
     virtual void *getPtr(int index) const= 0;
 
-    QCameraMemory();
+    QCameraMemory(bool cached);
     virtual ~QCameraMemory();
 
     void getBufDef(const cam_frame_len_offset_t &offset,
@@ -80,6 +80,7 @@ protected:
     void deallocOneBuffer(struct QCameraMemInfo &memInfo);
     int cacheOpsInternal(int index, unsigned int cmd, void *vaddr);
 
+    bool m_bCached;
     int mBufferCount;
     struct QCameraMemInfo mMemInfo[MM_CAMERA_MAX_NUM_FRAMES];
 };
@@ -88,7 +89,7 @@ protected:
 // They are allocated from /dev/ion.
 class QCameraHeapMemory : public QCameraMemory {
 public:
-    QCameraHeapMemory();
+    QCameraHeapMemory(bool cached);
     virtual ~QCameraHeapMemory();
 
     virtual int allocate(int count, int size);
@@ -107,7 +108,7 @@ private:
 // framework. They are allocated from /dev/ion or gralloc.
 class QCameraStreamMemory : public QCameraMemory {
 public:
-    QCameraStreamMemory(camera_request_memory getMemory);
+    QCameraStreamMemory(camera_request_memory getMemory, bool cached);
     virtual ~QCameraStreamMemory();
 
     virtual int allocate(int count, int size);
@@ -127,7 +128,7 @@ protected:
 // framework. They are allocated from /dev/ion or gralloc.
 class QCameraVideoMemory : public QCameraStreamMemory {
 public:
-    QCameraVideoMemory(camera_request_memory getMemory);
+    QCameraVideoMemory(camera_request_memory getMemory, bool cached);
     virtual ~QCameraVideoMemory();
 
     virtual int allocate(int count, int size);

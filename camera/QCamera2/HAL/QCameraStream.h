@@ -71,6 +71,7 @@ public:
     static void *dataProcRoutine(void *data);
     uint32_t getMyHandle() const {return mHandle;}
     bool isTypeOf(cam_stream_type_t type);
+    bool isOrignalTypeOf(cam_stream_type_t type);
     int32_t getFrameOffset(cam_frame_len_offset_t &offset);
     int32_t getCropInfo(cam_rect_t &crop);
     int32_t getFrameDimension(cam_dimension_t &dim);

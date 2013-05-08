@@ -10,7 +10,6 @@ LOCAL_SHARED_LIBRARIES:= \
     libui \
     libutils \
     libcutils \
-    liblog \
     libbinder \
     libmedia \
     libmedia_native \
