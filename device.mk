@@ -75,6 +75,10 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.audio.low_latency.xml:system/etc/permissions/android.hardware.audio.low_latency.xml \
     frameworks/native/data/etc/android.hardware.bluetooth_le.xml:system/etc/permissions/android.hardware.bluetooth_le.xml
 
+# For GPS
+PRODUCT_COPY_FILES += \
+    device/lge/hammerhead/sec_config:system/etc/sec_config
+
 PRODUCT_TAGS += dalvik.gc.type-precise
 
 # This device is xhdpi.  However the platform doesn't
@@ -120,6 +124,15 @@ PRODUCT_PACKAGES += \
     audio.usb.default \
     audio.r_submix.default \
     libaudio-resampler
+
+# GPS
+PRODUCT_PACKAGES += \
+    libloc_adapter \
+    libloc_eng \
+    libloc_api_v02 \
+    libgps.utils \
+    gps.msm8974 \
+    gps.conf
 
 PRODUCT_PACKAGES += \
     libion

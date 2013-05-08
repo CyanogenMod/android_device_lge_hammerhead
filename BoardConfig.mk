@@ -52,6 +52,8 @@ TARGET_NO_RADIOIMAGE := true
 TARGET_BOARD_PLATFORM := msm8974
 TARGET_BOOTLOADER_BOARD_NAME := hammerhead
 TARGET_BOARD_INFO_FILE := device/lge/hammerhead/board-info.txt
+BOARD_VENDOR_QCOM_GPS_LOC_API_HARDWARE := $(TARGET_BOARD_PLATFORM)
+TARGET_NO_RPC := true
 
 BOARD_EGL_CFG := device/lge/hammerhead/egl.cfg
 
