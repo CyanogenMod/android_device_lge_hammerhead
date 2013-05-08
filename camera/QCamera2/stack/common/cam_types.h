@@ -508,6 +508,11 @@ typedef struct {
 } cam_coordinate_type_t;
 
 typedef struct {
+    int32_t numerator;
+    int32_t denominator;
+} cam_rational_type_t;
+
+typedef struct {
     cam_aec_roi_ctrl_t aec_roi_enable;
     cam_aec_roi_type_t aec_roi_type;
     union {

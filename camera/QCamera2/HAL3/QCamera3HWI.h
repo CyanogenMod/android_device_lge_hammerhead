@@ -55,6 +55,8 @@ namespace qcamera {
 #define FALSE 0
 #endif
 
+#define HAL_3_CAPABILITIES
+
 /* Time related macros */
 typedef int64_t nsecs_t;
 #define NSEC_PER_SEC 1000000000LL
@@ -96,7 +98,7 @@ public:
     static int initStaticMetadata(int cameraId);
     static void makeTable(cam_dimension_t* dimTable, uint8_t size, int32_t* sizeTable);
     static void makeFPSTable(cam_fps_range_t* fpsTable, uint8_t size,
-                                          float* fpsRangesTable);
+                                          int32_t* fpsRangesTable);
     static void convertRegions(cam_rect_t rect, int32_t* region, int weight);
     static void convertLandmarks(cam_face_detection_info_t face, int32_t* landmarks);
     static int32_t getScalarFormat(int32_t format);

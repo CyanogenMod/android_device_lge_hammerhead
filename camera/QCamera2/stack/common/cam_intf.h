@@ -103,7 +103,8 @@ typedef struct{
     int exposure_compensation_min;       /* min value of exposure compensation index */
     int exposure_compensation_max;       /* max value of exposure compensation index */
     int exposure_compensation_default;   /* default value of exposure compensation index */
-    float exposure_compensation_step;    /* exposure compensation step value */
+    float exposure_compensation_step;
+    cam_rational_type_t exp_compensation_step;    /* exposure compensation step value */
 
     uint8_t video_stablization_supported; /* flag id video stablization is supported */
 

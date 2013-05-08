@@ -1479,10 +1479,10 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_LENS_INFO_HYPERFOCAL_DISTANCE,
                     &gCamCapability[cameraId]->hyper_focal_distance, 1);
 
+    /*should be using focal lengths but sensor doesn't provide that info now*/
     staticInfo.update(ANDROID_LENS_INFO_AVAILABLE_FOCAL_LENGTHS,
-                      gCamCapability[cameraId]->focal_lengths,
-                      gCamCapability[cameraId]->focal_lengths_count);
-
+                      &gCamCapability[cameraId]->focal_length,
+                      1);
 
     staticInfo.update(ANDROID_LENS_INFO_AVAILABLE_APERTURES,
                       gCamCapability[cameraId]->apertures,
@@ -1494,7 +1494,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
 
 
     staticInfo.update(ANDROID_LENS_INFO_AVAILABLE_OPTICAL_STABILIZATION,
-                      (int*)gCamCapability[cameraId]->optical_stab_modes,
+                      (uint8_t*)gCamCapability[cameraId]->optical_stab_modes,
                       gCamCapability[cameraId]->optical_stab_modes_count);
 
     staticInfo.update(ANDROID_LENS_POSITION,
@@ -1518,7 +1518,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
 
     staticInfo.update(ANDROID_LENS_INFO_GEOMETRIC_CORRECTION_MAP,
                        gCamCapability[cameraId]->geo_correction_map,
-                       sizeof(geo_correction_map)/sizeof(float));
+                       sizeof(gCamCapability[cameraId]->geo_correction_map)/sizeof(float));
 
     staticInfo.update(ANDROID_SENSOR_INFO_PHYSICAL_SIZE,
             gCamCapability[cameraId]->sensor_physical_size, 2);
@@ -1531,7 +1531,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
 
 
     staticInfo.update(ANDROID_SENSOR_INFO_COLOR_FILTER_ARRANGEMENT,
-                     (int*)&gCamCapability[cameraId]->color_arrangement, 1);
+                     (uint8_t*)&gCamCapability[cameraId]->color_arrangement, 1);
 
     static const int32_t pixel_array_size[] = {gCamCapability[cameraId]->pixel_array_size.width,
                                                gCamCapability[cameraId]->pixel_array_size.height};
@@ -1555,8 +1555,12 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_TONEMAP_MAX_CURVE_POINTS,
                       &gCamCapability[cameraId]->max_tone_map_curve_points, 1);
 
+    /*staticInfo.update(ANDROID_STATISTICS_INFO_MAX_FACE_COUNT,
+                      (int*)&gCamCapability[cameraId]->max_face_detection_count, 1);*/
+    /*hardcode 0 for now*/
+    int32_t max_face_count = 0;
     staticInfo.update(ANDROID_STATISTICS_INFO_MAX_FACE_COUNT,
-                      (int*)&gCamCapability[cameraId]->max_face_detection_count, 1);
+                      &max_face_count, 1);
 
     staticInfo.update(ANDROID_STATISTICS_INFO_HISTOGRAM_BUCKET_COUNT,
                       &gCamCapability[cameraId]->histogram_size, 1);
@@ -1592,12 +1596,26 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
               available_processed_sizes);
     staticInfo.update(ANDROID_SCALER_AVAILABLE_PROCESSED_SIZES,
                 available_processed_sizes,
-                gCamCapability[cameraId]->supported_sizes_tbl_cnt);
+                (gCamCapability[cameraId]->supported_sizes_tbl_cnt) * 2);
 
-    static float available_fps_ranges[gCamCapability[cameraId]->fps_ranges_tbl_cnt];
+    static int32_t available_fps_ranges[MAX_SIZES_CNT];
     makeFPSTable(gCamCapability[cameraId]->fps_ranges_tbl,
                  gCamCapability[cameraId]->fps_ranges_tbl_cnt,
                  available_fps_ranges);
+    staticInfo.update(ANDROID_CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES,
+            available_fps_ranges, (gCamCapability[cameraId]->fps_ranges_tbl_cnt*2) );
+
+    static const camera_metadata_rational exposureCompensationStep = {
+            gCamCapability[cameraId]->exp_compensation_step.numerator,
+            gCamCapability[cameraId]->exp_compensation_step.denominator};
+    staticInfo.update(ANDROID_CONTROL_AE_COMPENSATION_STEP,
+                      &exposureCompensationStep, 1);
+
+    /*TO DO*/
+    static const uint8_t availableVstabModes[] = {ANDROID_CONTROL_VIDEO_STABILIZATION_MODE_OFF};
+    staticInfo.update(ANDROID_CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES,
+                      availableVstabModes, sizeof(availableVstabModes));
+
     #else
     const float minFocusDistance = 0;
     staticInfo.update(ANDROID_LENS_INFO_MINIMUM_FOCUS_DISTANCE,
@@ -1757,13 +1775,6 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       resolution,
                      sizeof(resolution)/sizeof(int));
 
-    static const uint8_t availableFaceDetectModes[] = {
-        ANDROID_STATISTICS_FACE_DETECT_MODE_OFF };
-
-    staticInfo.update(ANDROID_STATISTICS_INFO_AVAILABLE_FACE_DETECT_MODES,
-                      availableFaceDetectModes,
-                      sizeof(availableFaceDetectModes));
-
     static const uint8_t availableSceneModes[] = {
             ANDROID_CONTROL_SCENE_MODE_UNSUPPORTED };
 
@@ -1784,14 +1795,6 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_CONTROL_AE_AVAILABLE_ANTIBANDING_MODES,
             availableAntibandingModes, sizeof(availableAntibandingModes));
 
-    static const uint8_t flashAvailable = 0;
-    staticInfo.update(ANDROID_FLASH_INFO_AVAILABLE,
-            &flashAvailable, sizeof(flashAvailable));
-
-    static const int32_t max3aRegions = 0;
-    staticInfo.update(ANDROID_CONTROL_MAX_REGIONS,
-            &max3aRegions, 1);
-
     static const camera_metadata_rational exposureCompensationStep = {
             1, 3
     };
@@ -1806,17 +1809,32 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_JPEG_AVAILABLE_THUMBNAIL_SIZES,
             jpegThumbnailSizes, sizeof(jpegThumbnailSizes)/sizeof(int32_t));
 
-    static const int32_t maxZoom = 10;
-    staticInfo.update(ANDROID_SCALER_AVAILABLE_MAX_DIGITAL_ZOOM,
-            &maxZoom, 1);
-
     static int64_t jpegMinDuration[] = {33331760L, 30000000000L};
     staticInfo.update(ANDROID_SCALER_AVAILABLE_JPEG_MIN_DURATIONS,
                       jpegMinDuration,
                       sizeof(jpegMinDuration)/sizeof(uint64_t));
     #endif
      /*HAL 1 and HAL 3 common*/
-     static const int32_t raw_size[] = {gCamCapability[cameraId]->raw_dim.width,
+    static const int32_t maxZoom = 10;
+    staticInfo.update(ANDROID_SCALER_AVAILABLE_MAX_DIGITAL_ZOOM,
+            &maxZoom, 1);
+
+    static const int32_t max3aRegions = 0;
+    staticInfo.update(ANDROID_CONTROL_MAX_REGIONS,
+            &max3aRegions, 1);
+
+    static const uint8_t flashAvailable = 0;
+    staticInfo.update(ANDROID_FLASH_INFO_AVAILABLE,
+            &flashAvailable, sizeof(flashAvailable));
+
+    static const uint8_t availableFaceDetectModes[] = {
+    ANDROID_STATISTICS_FACE_DETECT_MODE_OFF };
+
+    staticInfo.update(ANDROID_STATISTICS_INFO_AVAILABLE_FACE_DETECT_MODES,
+                      availableFaceDetectModes,
+                      sizeof(availableFaceDetectModes));
+
+    static const int32_t raw_size[] = {gCamCapability[cameraId]->raw_dim.width,
                                        gCamCapability[cameraId]->raw_dim.height};
     staticInfo.update(ANDROID_SCALER_AVAILABLE_RAW_SIZES,
                       raw_size,
@@ -1838,7 +1856,11 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
               available_jpeg_sizes);
     staticInfo.update(ANDROID_SCALER_AVAILABLE_JPEG_SIZES,
                 available_jpeg_sizes,
-                gCamCapability[cameraId]->picture_sizes_tbl_cnt);
+                (gCamCapability[cameraId]->picture_sizes_tbl_cnt * 2));
+
+    staticInfo.update(ANDROID_JPEG_AVAILABLE_THUMBNAIL_SIZES,
+                      available_jpeg_sizes,
+                      (gCamCapability[cameraId]->picture_sizes_tbl_cnt * 2));
 
     static int32_t max_jpeg_size = 0;
     int temp_width, temp_height;
@@ -1996,12 +2018,12 @@ void QCamera3HardwareInterface::makeTable(cam_dimension_t* dimTable, uint8_t siz
  *              none-zero failure code
  *==========================================================================*/
 void QCamera3HardwareInterface::makeFPSTable(cam_fps_range_t* fpsTable, uint8_t size,
-                                          float* fpsRangesTable)
+                                          int32_t* fpsRangesTable)
 {
     int j = 0;
     for (int i = 0; i < size; i++) {
-        fpsRangesTable[j] = fpsTable[i].min_fps;
-        fpsRangesTable[j+1] = fpsTable[i].max_fps;
+        fpsRangesTable[j] = (int32_t)fpsTable[i].min_fps;
+        fpsRangesTable[j+1] = (int32_t)fpsTable[i].max_fps;
         j+=2;
     }
 }
