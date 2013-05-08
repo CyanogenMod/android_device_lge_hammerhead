@@ -73,14 +73,16 @@ QCamera3Channel::QCamera3Channel(uint32_t cam_handle,
 {
     m_camHandle = cam_handle;
     m_camOps = cam_ops;
-    mChannelCB = cb_routine;
-    mPaddingInfo = paddingInfo;
-    mUserData = userData;
     m_bIsActive = false;
 
     m_handle = 0;
     m_numStreams = 0;
     memset(mStreams, 0, sizeof(mStreams));
+    mUserData = userData;
+
+    mStreamInfoBuf = NULL;
+    mChannelCB = cb_routine;
+    mPaddingInfo = paddingInfo;
 }
 
 /*===========================================================================
@@ -96,13 +98,16 @@ QCamera3Channel::QCamera3Channel()
 {
     m_camHandle = 0;
     m_camOps = NULL;
-    mPaddingInfo = NULL;
-    mUserData = NULL;
     m_bIsActive = false;
 
     m_handle = 0;
     m_numStreams = 0;
     memset(mStreams, 0, sizeof(mStreams));
+    mUserData = NULL;
+
+    mStreamInfoBuf = NULL;
+    mChannelCB = NULL;
+    mPaddingInfo = NULL;
 }
 
 /*===========================================================================
@@ -610,7 +615,7 @@ void QCamera3RegularChannel::putStreamBufs()
     mMemory = NULL;
 }
 
-int QCamera3RegularChannel::kMaxBuffers = 7;
+int QCamera3RegularChannel::kMaxBuffers = 4;
 
 QCamera3MetadataChannel::QCamera3MetadataChannel(uint32_t cam_handle,
                     mm_camera_ops_t *cam_ops,
@@ -621,9 +626,6 @@ QCamera3MetadataChannel::QCamera3MetadataChannel(uint32_t cam_handle,
                                 cb_routine, paddingInfo, userData),
                         mMemory(NULL)
 {
-#ifdef FAKE_FRAME_NUMBERS
-    startingFrameNumber=0;
-#endif
 }
 
 QCamera3MetadataChannel::~QCamera3MetadataChannel()
@@ -668,9 +670,6 @@ int32_t QCamera3MetadataChannel::request(buffer_handle_t * /*buffer*/,
                                                 uint32_t frameNumber)
 {
     if (!m_bIsActive) {
-#ifdef FAKE_FRAME_NUMBERS
-        startingFrameNumber=frameNumber;
-#endif
         return start();
     }
     else
@@ -693,9 +692,6 @@ void QCamera3MetadataChannel::streamCbRoutine(
         ALOGE("%s: super_frame is not valid", __func__);
         return;
     }
-#ifdef FAKE_FRAME_NUMBERS
-    requestNumber = startingFrameNumber++;
-#endif
     mChannelCB(super_frame, NULL, requestNumber, mUserData);
 
     //Return the buffer
@@ -794,7 +790,7 @@ void QCamera3PicChannel::jpegEvtHandle(jpeg_job_status_t status,
         result.acquire_fence = -1;
         result.release_fence = -1;
 
-        ALOGE("%s: Issue Callback", __func__);
+        ALOGD("%s: Issue Callback", __func__);
         obj->mChannelCB(NULL, &result, resultFrameNumber, obj->mUserData);
 
         // release internal data for jpeg job
@@ -818,10 +814,13 @@ QCamera3PicChannel::QCamera3PicChannel(uint32_t cam_handle,
                         QCamera3Channel(cam_handle, cam_ops, cb_routine,
                         paddingInfo, userData),
                         mCamera3Stream(stream),
-                        m_postprocessor(this),
+                        mNumBufs(0),
                         mCamera3Buffers(NULL),
+                        mJpegSettings(NULL),
+                        mCurrentBufIndex(-1),
                         mMemory(NULL),
-                        mYuvMemory(NULL)
+                        mYuvMemory(NULL),
+                        m_postprocessor(this)
 {
     int32_t rc = m_postprocessor.init(jpegEvtHandle, this);
     if (rc != 0) {
@@ -887,7 +886,7 @@ int32_t QCamera3PicChannel::request(buffer_handle_t *buffer, uint32_t frameNumbe
         //Stream on for main image. YUV buffer is queued to the kernel at the end of this call.
         rc = start();
     } else {
-        ALOGE("%s: Request on an existing stream",__func__);
+        ALOGD("%s: Request on an existing stream",__func__);
     }
 
     if(rc != NO_ERROR) {
@@ -934,7 +933,7 @@ int32_t QCamera3PicChannel::request(buffer_handle_t *buffer, uint32_t frameNumbe
 void QCamera3PicChannel::dataNotifyCB(mm_camera_super_buf_t *recvd_frame,
                                  void *userdata)
 {
-    ALOGE("%s: E\n", __func__);
+    ALOGV("%s: E\n", __func__);
     QCamera3PicChannel *channel = (QCamera3PicChannel *)userdata;
 
     if (channel == NULL) {
@@ -954,8 +953,8 @@ void QCamera3PicChannel::dataNotifyCB(mm_camera_super_buf_t *recvd_frame,
     }
 
     channel->QCamera3PicChannel::streamCbRoutine(recvd_frame, channel->mStreams[0]);
-    ALOGE("%s: X\n", __func__);
 
+    ALOGV("%s: X\n", __func__);
     return;
 }
 
@@ -964,12 +963,10 @@ int32_t QCamera3PicChannel::registerBuffers(uint32_t num_buffers,
                         buffer_handle_t **buffers)
 {
     int rc = 0;
-    struct private_handle_t *priv_handle = (struct private_handle_t *)(*buffers[0]);
     cam_stream_type_t streamType;
     cam_format_t streamFormat;
-    cam_dimension_t streamDim;
 
-    ALOGE("%s: E",__func__);
+    ALOGV("%s: E",__func__);
     rc = QCamera3PicChannel::initialize();
     if (rc < 0) {
         ALOGE("%s: init failed", __func__);
@@ -994,6 +991,7 @@ int32_t QCamera3PicChannel::registerBuffers(uint32_t num_buffers,
     for (size_t i = 0; i < num_buffers; i++)
         mCamera3Buffers[i] = buffers[i];
 
+    ALOGV("%s: X",__func__);
     return rc;
 }
 
@@ -1001,8 +999,8 @@ void QCamera3PicChannel::streamCbRoutine(mm_camera_super_buf_t *super_frame,
                             QCamera3Stream *stream)
 {
     //TODO
-    //Used only for getting YUV. Jpeg callback will be sent back from channel directly to HWI.
-    //Refer to func jpegEvtHandle
+    //Used only for getting YUV. Jpeg callback will be sent back from channel
+    //directly to HWI. Refer to func jpegEvtHandle
 
     //Got the yuv callback. Calling yuv callback handler in PostProc
     uint8_t frameIndex;
@@ -1034,7 +1032,8 @@ void QCamera3PicChannel::streamCbRoutine(mm_camera_super_buf_t *super_frame,
 
     frame = (mm_camera_super_buf_t *)malloc(sizeof(mm_camera_super_buf_t));
     if (frame == NULL) {
-       ALOGE("%s: Error allocating memory to save received_frame structure.", __func__);
+       ALOGE("%s: Error allocating memory to save received_frame structure.",
+                                                                    __func__);
        if(stream) {
            stream->bufDone(frameIndex);
        }
@@ -1109,7 +1108,7 @@ bool QCamera3PicChannel::needOnlineRotation()
 {
     //TBD_Later
     //if ((gCamCapability[mCameraId]->qcom_supported_feature_mask & CAM_QCOM_FEATURE_ROTATION) > 0 &&
-       if (mJpegSettings->jpeg_orientation > 0) {
+    if (mJpegSettings->jpeg_orientation > 0) {
         // current rotation is not zero, and pp has the capability to process rotation
         ALOGD("%s: need do online rotation", __func__);
         return true;
@@ -1420,11 +1419,11 @@ int32_t getExifAltitude(rat_t *altitude,
  *              none-zero failure code
  *==========================================================================*/
 int32_t getExifGpsDateTimeStamp(char *gpsDateStamp,
-                                                   uint32_t bufLen,
-                                                   rat_t *gpsTimeStamp, int64_t value)
+                                           uint32_t bufLen,
+                                           rat_t *gpsTimeStamp, int64_t value)
 {
     char str[30];
-    snprintf(str, sizeof(str), "%d", value);
+    snprintf(str, sizeof(str), "%lld", value);
     if(str != NULL) {
         time_t unixTime = (time_t)atol(str);
         struct tm *UTCTimestamp = gmtime(&unixTime);

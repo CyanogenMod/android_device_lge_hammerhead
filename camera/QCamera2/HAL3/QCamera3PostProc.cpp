@@ -129,7 +129,7 @@ int32_t QCamera3PostProcessor::deinit()
 
     if(mJpegClientHandle > 0) {
         int rc = mJpegHandle.close(mJpegClientHandle);
-        ALOGE("%s: Jpeg closed, rc = %d, mJpegClientHandle = %x",
+        ALOGD("%s: Jpeg closed, rc = %d, mJpegClientHandle = %x",
               __func__, rc, mJpegClientHandle);
         mJpegClientHandle = 0;
         memset(&mJpegHandle, 0, sizeof(mJpegHandle));
@@ -692,14 +692,14 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
         return UNKNOWN_ERROR;
     }
 
-    ALOGE("%s: Need new session?:%d",__func__, needNewSess);
+    ALOGD("%s: Need new session?:%d",__func__, needNewSess);
     if (needNewSess) {
         // create jpeg encoding session
         mm_jpeg_encode_params_t encodeParam;
         memset(&encodeParam, 0, sizeof(mm_jpeg_encode_params_t));
 
         getJpegEncodingConfig(encodeParam, main_stream, thumb_stream);
-        ALOGE("%s: #src bufs:%d # tmb bufs:%d #dst_bufs:%d", __func__,
+        ALOGD("%s: #src bufs:%d # tmb bufs:%d #dst_bufs:%d", __func__,
                      encodeParam.num_src_bufs,encodeParam.num_tmb_bufs,encodeParam.num_dst_bufs);
         ret = mJpegHandle.create_session(mJpegClientHandle, &encodeParam, &mJpegSessionId);
         if (ret != NO_ERROR) {
@@ -731,7 +731,7 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
     jpg_job.encode_job.main_dim.crop = crop;
 
     // thumbnail dim
-    ALOGE("%s: Thumbnail needed:%d",__func__, m_bThumbnailNeeded);
+    ALOGD("%s: Thumbnail needed:%d",__func__, m_bThumbnailNeeded);
     if (m_bThumbnailNeeded == TRUE) {
         if (thumb_stream == NULL) {
             // need jpeg thumbnail, but no postview/preview stream exists
@@ -791,7 +791,7 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
         jpeg_job_data->jobId = jobId;
     }
 
-    ALOGD("%s : X", __func__);
+    ALOGV("%s : X", __func__);
     return ret;
 }
 
@@ -813,10 +813,10 @@ void *QCamera3PostProcessor::dataProcessRoutine(void *data)
     int ret;
     uint8_t is_active = FALSE;
     uint8_t needNewSess = TRUE;
+    ALOGV("%s: E", __func__);
     QCamera3PostProcessor *pme = (QCamera3PostProcessor *)data;
     QCameraCmdThread *cmdThread = &pme->m_dataProcTh;
 
-    ALOGD("%s: E", __func__);
     do {
         do {
             ret = cam_sem_wait(&cmdThread->cmd_sem);
@@ -960,7 +960,7 @@ void *QCamera3PostProcessor::dataProcessRoutine(void *data)
             break;
         }
     } while (running);
-    ALOGD("%s: X", __func__);
+    ALOGV("%s: X", __func__);
     return NULL;
 }
 

@@ -600,9 +600,10 @@ int QCamera3GrallocMemory::registerBuffers(uint32_t num_buffers, buffer_handle_t
 {
     status_t ret = NO_ERROR;
     struct ion_fd_data ion_info_fd;
+    ALOGV(" %s : E ", __FUNCTION__);
+
     memset(&ion_info_fd, 0, sizeof(ion_info_fd));
 
-    ALOGI(" %s : E ", __FUNCTION__);
 
     if (num_buffers > MM_CAMERA_MAX_NUM_FRAMES) {
         ALOGE("%s: Number of buffers %d greater than what's supported %d",
@@ -683,7 +684,7 @@ int QCamera3GrallocMemory::registerBuffers(uint32_t num_buffers, buffer_handle_t
     mBufferCount = num_buffers;
 
 end:
-    ALOGI(" %s : X ",__func__);
+    ALOGV(" %s : X ",__func__);
     return ret;
 }
 
@@ -698,7 +699,7 @@ end:
  *==========================================================================*/
 void QCamera3GrallocMemory::unregisterBuffers()
 {
-    ALOGI("%s: E ", __FUNCTION__);
+    ALOGV("%s: E ", __FUNCTION__);
 
     for (int cnt = 0; cnt < mBufferCount; cnt++) {
         munmap(mPtr[cnt], mMemInfo[cnt].size);
@@ -714,7 +715,7 @@ void QCamera3GrallocMemory::unregisterBuffers()
         ALOGD("put buffer %d successfully", cnt);
     }
     mBufferCount = 0;
-    ALOGI(" %s : X ",__FUNCTION__);
+    ALOGV(" %s : X ",__FUNCTION__);
 }
 
 /*===========================================================================

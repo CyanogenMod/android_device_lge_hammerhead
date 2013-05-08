@@ -179,7 +179,6 @@ private:
         uint32_t frame_number;
         uint32_t num_buffers;
         List<RequestedBufferInfo> buffers;
-        //mm_camera_super_buf_t *metadata;
     } PendingRequestInfo;
     typedef KeyedVector<camera3_stream_t *, uint32_t> PendingBuffersMap;
 

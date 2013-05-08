@@ -165,10 +165,6 @@ public:
     virtual QCamera3Memory *getStreamBufs(uint32_t le);
     virtual void putStreamBufs();
 
-#ifdef FAKE_FRAME_NUMBERS
-    uint32_t startingFrameNumber;
-#endif
-
 private:
     QCamera3HeapMemory *mMemory;
 };
