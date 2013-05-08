@@ -1451,6 +1451,30 @@ void QCamera3HardwareInterface::deinitParameters()
 }
 
 /*===========================================================================
+ * FUNCTION   : calcMaxJpegSize
+ *
+ * DESCRIPTION: Calculates maximum jpeg size supported by the cameraId
+ *
+ * PARAMETERS :
+ *
+ * RETURN     : max_jpeg_size
+ *==========================================================================*/
+int QCamera3HardwareInterface::calcMaxJpegSize()
+{
+    int32_t max_jpeg_size = 0;
+    int temp_width, temp_height;
+    for (int i = 0; i < gCamCapability[mCameraId]->picture_sizes_tbl_cnt; i++) {
+        temp_width = gCamCapability[mCameraId]->picture_sizes_tbl[i].width;
+        temp_height = gCamCapability[mCameraId]->picture_sizes_tbl[i].height;
+        if (temp_width * temp_height > max_jpeg_size ) {
+            max_jpeg_size = temp_width * temp_height;
+        }
+    }
+    max_jpeg_size = max_jpeg_size * 3/2 + sizeof(camera3_jpeg_blob_t);
+    return max_jpeg_size;
+}
+
+/*===========================================================================
  * FUNCTION   : initStaticMetadata
  *
  * DESCRIPTION: initialize the static metadata
@@ -2774,6 +2798,7 @@ int QCamera3HardwareInterface::getJpegSettings
         mJpegSettings->lens_focal_length =
             jpeg_settings.find(ANDROID_LENS_FOCAL_LENGTH).data.f[0];
     }
+    mJpegSettings->max_jpeg_size = calcMaxJpegSize();
     return 0;
 }
 

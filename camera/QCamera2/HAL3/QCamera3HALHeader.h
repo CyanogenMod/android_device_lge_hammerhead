@@ -52,6 +52,7 @@ namespace qcamera {
         uint8_t gps_processing_method;
         int32_t sensor_sensitivity;
         float lens_focal_length;
+        int32_t max_jpeg_size;
     } jpeg_settings_t;
 
     typedef struct {
