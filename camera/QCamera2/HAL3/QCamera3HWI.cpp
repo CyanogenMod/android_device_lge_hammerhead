@@ -1835,7 +1835,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       sizeof(jpegMinDuration)/sizeof(uint64_t));
     #endif
      /*HAL 1 and HAL 3 common*/
-    static const int32_t maxZoom = 10;
+    static const float maxZoom = 10;
     staticInfo.update(ANDROID_SCALER_AVAILABLE_MAX_DIGITAL_ZOOM,
             &maxZoom, 1);
 
