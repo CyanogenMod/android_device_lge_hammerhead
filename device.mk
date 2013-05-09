@@ -215,10 +215,10 @@ PRODUCT_PROPERTY_OVERRIDES += \
 
 # Audio Configuration
 PRODUCT_PROPERTY_OVERRIDES += \
-    persist.audio.handset.mic.type=analog \
+    persist.audio.handset.mic.type=digital \
     persist.audio.dualmic.config=endfire \
     persist.audio.fluence.voicecall=true \
-    persist.audio.fluence.voicerec=true \
+    persist.audio.fluence.voicerec=false \
     persist.audio.fluence.speaker=true \
     af.resampler.quality=4
 
