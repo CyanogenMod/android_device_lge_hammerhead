@@ -35,3 +35,4 @@
 /dev/qseecom              0660   system     drmrpc
 /dev/video32              0660   system     camera
 /dev/video33              0660   system     camera
+/dev/bcm2079x             0660   nfc        nfc
