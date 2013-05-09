@@ -172,6 +172,9 @@ PRODUCT_PACKAGES += \
     charger \
     charger_res_images
 
+PRODUCT_PACKAGES += \
+    camera.msm8974
+
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.opengles.version=196608
 
