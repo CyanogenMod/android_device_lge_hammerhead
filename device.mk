@@ -141,6 +141,13 @@ PRODUCT_PACKAGES += \
     audio.r_submix.default \
     libaudio-resampler
 
+PRODUCT_PACKAGES += \
+    libqomx_core \
+    libmmcamera_interface \
+    libmmjpeg_interface \
+    camera.msm8974 \
+    mm-qcamera-app
+
 # GPS
 PRODUCT_PACKAGES += \
     libloc_adapter \

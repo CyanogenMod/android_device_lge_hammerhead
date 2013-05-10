@@ -305,6 +305,12 @@ service sdcard /system/bin/sdcard /data/media /mnt/shell/emulated 1023 1023
 service charger /charger
     class charger
 
+
+service qcamerasvr /system/bin/mm-qcamera-daemon
+    class late_start
+    user camera
+    group camera system inet input
+
 # bugreport is triggered by holding down volume down, volume up and power
 service bugreport /system/bin/dumpstate -d -p -B \
         -o /data/data/com.android.shell/files/bugreports/bugreport
