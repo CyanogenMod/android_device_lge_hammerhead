@@ -482,6 +482,7 @@ int QCamera3HardwareInterface::configureStreams(
                 QCamera3Channel *channel;
                 switch (newStream->format) {
                 case HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED:
+                case HAL_PIXEL_FORMAT_YCbCr_420_888:
                     newStream->max_buffers = QCamera3RegularChannel::kMaxBuffers;
                     channel = new QCamera3RegularChannel(mCameraHandle->camera_handle,
                             mCameraHandle->ops, captureResultCb,
@@ -518,7 +519,7 @@ int QCamera3HardwareInterface::configureStreams(
             // Do nothing for now
         }
     }
-    /*For the streams to be reconfigured we need to register the buffers 
+    /*For the streams to be reconfigured we need to register the buffers
       since the framework wont*/
     for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
             it != mStreamInfo.end(); it++) {
@@ -1105,7 +1106,7 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
     /*cam_auto_focus_data_t  *afData =(cam_auto_focus_data_t *)
       POINTER_OF(CAM_INTF_META_AUTOFOCUS_DATA,metadata);*/
 
-    uint8_t  *color_correct_mode = 
+    uint8_t  *color_correct_mode =
         (uint8_t *)POINTER_OF(CAM_INTF_META_COLOR_CORRECT_MODE, metadata);
     camMetadata.update(ANDROID_COLOR_CORRECTION_MODE, color_correct_mode, 1);
 
@@ -1603,12 +1604,15 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                        1);
 
     static int32_t scalar_formats[CAM_FORMAT_MAX];
-    for (int i = 0; i < gCamCapability[cameraId]->supported_scalar_format_cnt; i++) {
+    int scalar_formats_count = gCamCapability[cameraId]->supported_scalar_format_cnt;
+    for (int i = 0; i < scalar_formats_count; i++) {
         scalar_formats[i] = getScalarFormat(gCamCapability[cameraId]->supported_scalar_fmts[i]);
     }
+    scalar_formats[scalar_formats_count] = HAL_PIXEL_FORMAT_YCbCr_420_888;
+    scalar_formats_count++;
     staticInfo.update(ANDROID_SCALER_AVAILABLE_FORMATS,
                       scalar_formats,
-                      gCamCapability[cameraId]->supported_scalar_format_cnt);
+                      scalar_formats_count);
 
     static int32_t available_processed_sizes[CAM_FORMAT_MAX];
     makeTable(gCamCapability[cameraId]->supported_sizes_tbl,
@@ -1776,15 +1780,16 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       (int64_t*)&availableRawMinDurations,
                        1);
 
-    const uint32_t availableFormats[4] = {
+    const uint32_t availableFormats[5] = {
         HAL_PIXEL_FORMAT_RAW_SENSOR,
         HAL_PIXEL_FORMAT_BLOB,
         HAL_PIXEL_FORMAT_RGBA_8888,
-        HAL_PIXEL_FORMAT_YCrCb_420_SP
+        HAL_PIXEL_FORMAT_YCrCb_420_SP,
+        HAL_PIXEL_FORMAT_YCbCr_420_888
     };
     staticInfo.update(ANDROID_SCALER_AVAILABLE_FORMATS,
                       (int32_t*)availableFormats,
-                      4);
+                      5);
 
     const uint32_t availableProcessedSizes[4] = {1280, 720, 640, 480};
     staticInfo.update(ANDROID_SCALER_AVAILABLE_PROCESSED_SIZES,
@@ -2567,7 +2572,7 @@ int QCamera3HardwareInterface::translateMetadataToParameters
     }
 
     if (frame_settings.exists(ANDROID_GEOMETRIC_STRENGTH)) {
-        uint8_t geometricStrength = 
+        uint8_t geometricStrength =
             frame_settings.find(ANDROID_GEOMETRIC_STRENGTH).data.u8[0];
         rc = AddSetParmEntryToBatch(mParameters,
                 CAM_INTF_META_GEOMETRIC_STRENGTH,
@@ -2606,7 +2611,7 @@ int QCamera3HardwareInterface::translateMetadataToParameters
     if (frame_settings.exists(ANDROID_LENS_FOCUS_DISTANCE)) {
         float focalDistance =
             frame_settings.find(ANDROID_LENS_FOCUS_DISTANCE).data.f[0];
-        rc = AddSetParmEntryToBatch(mParameters, 
+        rc = AddSetParmEntryToBatch(mParameters,
                 CAM_INTF_META_LENS_FOCUS_DISTANCE,
                 sizeof(focalDistance), &focalDistance);
     }
@@ -2614,7 +2619,7 @@ int QCamera3HardwareInterface::translateMetadataToParameters
     if (frame_settings.exists(ANDROID_LENS_OPTICAL_STABILIZATION_MODE)) {
         uint8_t optStabMode =
             frame_settings.find(ANDROID_LENS_OPTICAL_STABILIZATION_MODE).data.u8[0];
-        rc = AddSetParmEntryToBatch(mParameters, 
+        rc = AddSetParmEntryToBatch(mParameters,
                 CAM_INTF_META_LENS_OPT_STAB_MODE,
                 sizeof(optStabMode), &optStabMode);
     }
@@ -2622,7 +2627,7 @@ int QCamera3HardwareInterface::translateMetadataToParameters
     if (frame_settings.exists(ANDROID_NOISE_REDUCTION_MODE)) {
         uint8_t noiseRedMode =
             frame_settings.find(ANDROID_NOISE_REDUCTION_MODE).data.u8[0];
-        rc = AddSetParmEntryToBatch(mParameters, 
+        rc = AddSetParmEntryToBatch(mParameters,
                 CAM_INTF_META_NOISE_REDUCTION_MODE,
                 sizeof(noiseRedMode), &noiseRedMode);
     }
@@ -2630,7 +2635,7 @@ int QCamera3HardwareInterface::translateMetadataToParameters
     if (frame_settings.exists(ANDROID_NOISE_REDUCTION_STRENGTH)) {
         uint8_t noiseRedStrength =
             frame_settings.find(ANDROID_NOISE_REDUCTION_STRENGTH).data.u8[0];
-        rc = AddSetParmEntryToBatch(mParameters, 
+        rc = AddSetParmEntryToBatch(mParameters,
                 CAM_INTF_META_NOISE_REDUCTION_STRENGTH,
                 sizeof(noiseRedStrength), &noiseRedStrength);
     }
