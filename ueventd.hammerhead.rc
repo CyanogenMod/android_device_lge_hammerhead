@@ -36,3 +36,6 @@
 /dev/video32              0660   system     camera
 /dev/video33              0660   system     camera
 /dev/bcm2079x             0660   nfc        nfc
+/dev/jpeg0                0660   system     camera
+/dev/jpeg1                0660   system     camera
+/dev/jpeg2                0660   system     camera
