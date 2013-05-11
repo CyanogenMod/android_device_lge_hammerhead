@@ -179,7 +179,6 @@
     </path>
 
     <path name="voice-call bt-sco">
-        <ctl name="Internal BTSCO SampleRate" value="8000" />
         <ctl name="INTERNAL_BT_SCO_RX_Voice Mixer CSVoice" value="1" />
         <ctl name="Voice_Tx Mixer INTERNAL_BT_SCO_TX_Voice" value="1" />
     </path>
