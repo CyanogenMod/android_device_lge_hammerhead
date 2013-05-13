@@ -37,35 +37,28 @@
     <ctl name="COMP0 Switch" value="0" />
     <ctl name="COMP1 Switch" value="0" />
     <ctl name="COMP2 Switch" value="0" />
-    <ctl name="SLIMBUS_3_RX Port Mixer INTERNAL_BT_SCO_RX" value="0" />
     <ctl name="SLIMBUS_3_RX Port Mixer MI2S_TX" value="0" />
     <ctl name="HDMI_RX Port Mixer MI2S_TX" value="0" />
-    <ctl name="SLIMBUS_1_RX Port Mixer INTERNAL_BT_SCO_TX" value="0" />
-    <ctl name="SLIMBUS_0_RX Port Mixer INTERNAL_FM_TX" value="0" />
     <ctl name="SLIMBUS_0_RX Port Mixer SLIM_0_TX" value="0" />
-    <ctl name="INTERNAL_BT_SCO_RX Audio Mixer MultiMedia1" value="0" />
-    <ctl name="INTERNAL_BT_SCO_RX Audio Mixer MultiMedia2" value="0" />
-    <ctl name="INTERNAL_BT_SCO_RX Audio Mixer MultiMedia3" value="0" />
-    <ctl name="INTERNAL_BT_SCO_RX Audio Mixer MultiMedia4" value="0" />
-    <ctl name="INTERNAL_BT_SCO_RX Audio Mixer MultiMedia5" value="0" />
+    <ctl name="SEC_AUX_PCM_RX Audio Mixer MultiMedia1" value="0" />
+    <ctl name="SEC_AUX_PCM_RX Audio Mixer MultiMedia2" value="0" />
+    <ctl name="SEC_AUX_PCM_RX Audio Mixer MultiMedia3" value="0" />
+    <ctl name="SEC_AUX_PCM_RX Audio Mixer MultiMedia4" value="0" />
+    <ctl name="SEC_AUX_PCM_RX Audio Mixer MultiMedia5" value="0" />
     <ctl name="AUX_PCM_RX Audio Mixer MultiMedia5" value="0" />
     <ctl name="AUX_PCM_RX_Voice Mixer CSVoice" value="0" />
+    <ctl name="SEC_AUX_PCM_RX_Voice Mixer CSVoice" value="0" />
     <ctl name="Voice_Tx Mixer SLIM_0_TX_Voice" value="0" />
-    <ctl name="Voice_Tx Mixer INTERNAL_BT_SCO_TX_Voice" value="0" />
+    <ctl name="Voice_Tx Mixer SEC_AUX_PCM_TX_Voice" value="0" />
     <ctl name="HDMI_RX_Voice Mixer CSVoice" value="0" />
-    <ctl name="INTERNAL_BT_SCO_RX_Voice Mixer CSVoice" value="0" />
     <ctl name="SLIM_0_RX_Voice Mixer CSVoice" value="0" />
     <ctl name="SLIMBUS_4_RX Audio Mixer MultiMedia1" value="0" />
     <ctl name="SLIMBUS_4_RX Audio Mixer MultiMedia2" value="0" />
     <ctl name="MultiMedia5 Mixer SLIM_0_TX" value="0" />
-    <ctl name="MultiMedia5 Mixer INTERNAL_FM_TX" value="0" />
     <ctl name="MultiMedia5 Mixer AFE_PCM_TX" value="0" />
-    <ctl name="MultiMedia5 Mixer INTERNAL_BT_SCO_TX" value="0" />
     <ctl name="MultiMedia4 Mixer MI2S_TX" value="0" />
-    <ctl name="MultiMedia2 Mixer INTERNAL_FM_TX" value="0" />
     <ctl name="MultiMedia1 Mixer MI2S_TX" value="0" />
     <ctl name="MultiMedia1 Mixer SLIM_0_TX" value="0" />
-    <ctl name="MultiMedia1 Mixer INTERNAL_BT_SCO_TX" value="0" />
     <ctl name="MultiMedia1 Mixer SLIM_4_TX" value="0" />
     <ctl name="HDMI Mixer MultiMedia1" value="0" />
     <ctl name="HDMI Mixer MultiMedia2" value="0" />
@@ -142,7 +135,7 @@
     </path>
 
     <path name="deep-buffer-playback bt-sco">
-        <ctl name="INTERNAL_BT_SCO_RX Audio Mixer MultiMedia1" value="1" />
+        <ctl name="SEC_AUX_PCM_RX Audio Mixer MultiMedia1" value="1" />
     </path>
 
     <path name="low-latency-playback">
@@ -153,7 +146,7 @@
         <ctl name="HDMI Mixer MultiMedia5" value="1" />
     </path>
     <path name="low-latency-playback bt-sco">
-        <ctl name="AUX_PCM_RX Audio Mixer MultiMedia5" value="1" />
+        <ctl name="SEC_AUX_PCM_RX Audio Mixer MultiMedia5" value="1" />
     </path>
 
     <path name="low-latency-playback speaker-and-hdmi">
@@ -184,8 +177,8 @@
     </path>
 
     <path name="voice-call bt-sco">
-        <ctl name="INTERNAL_BT_SCO_RX_Voice Mixer CSVoice" value="1" />
-        <ctl name="Voice_Tx Mixer INTERNAL_BT_SCO_TX_Voice" value="1" />
+        <ctl name="SEC_AUX_PCM_RX_Voice Mixer CSVoice" value="1" />
+        <ctl name="Voice_Tx Mixer SEC_AUX_PCM_TX_Voice" value="1" />
     </path>
 
     <!-- These are actual sound device specific mixer settings -->
