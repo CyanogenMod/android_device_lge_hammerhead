@@ -48,7 +48,7 @@ namespace qcamera {
 #define DATA_PTR(MEM_OBJ,INDEX) MEM_OBJ->getPtr( INDEX )
 cam_capability_t *gCamCapability[MM_CAMERA_MAX_NUM_SENSORS];
 parm_buffer_t *prevSettings;
-const camera_metadata_t *gStaticMetadata;
+const camera_metadata_t *gStaticMetadata[MM_CAMERA_MAX_NUM_SENSORS];
 
 const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::EFFECT_MODES_MAP[] = {
     { ANDROID_CONTROL_EFFECT_MODE_OFF,       CAM_EFFECT_MODE_OFF },
@@ -1493,7 +1493,6 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     CameraMetadata staticInfo;
     int facingBack = gCamCapability[cameraId]->position == CAM_POSITION_BACK;
     /*HAL 3 only*/
-    #ifdef HAL_3_CAPABILITIES
     staticInfo.update(ANDROID_LENS_INFO_MINIMUM_FOCUS_DISTANCE,
                     &gCamCapability[cameraId]->min_focus_distance, 1);
 
@@ -1640,206 +1639,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES,
                       availableVstabModes, sizeof(availableVstabModes));
 
-    #else
-    const float minFocusDistance = 0;
-    staticInfo.update(ANDROID_LENS_INFO_MINIMUM_FOCUS_DISTANCE,
-                    &minFocusDistance, 1);
-
-    const float hyperFocusDistance = 0;
-    staticInfo.update(ANDROID_LENS_INFO_HYPERFOCAL_DISTANCE,
-                     &hyperFocusDistance, 1);
-
-    static const float focalLength = 3.30f;
-    staticInfo.update(ANDROID_LENS_INFO_AVAILABLE_FOCAL_LENGTHS,
-                      &focalLength,
-                      1);
-
-    static const float aperture = 2.8f;
-    staticInfo.update(ANDROID_LENS_INFO_AVAILABLE_APERTURES,
-                      &aperture,
-                      1);
-
-    static const float filterDensity = 0;
-    staticInfo.update(ANDROID_LENS_INFO_AVAILABLE_FILTER_DENSITIES,
-                      &filterDensity, 1);
-
-    static const uint8_t availableOpticalStabilization =
-            ANDROID_LENS_OPTICAL_STABILIZATION_MODE_OFF;
-    staticInfo.update(ANDROID_LENS_INFO_AVAILABLE_OPTICAL_STABILIZATION,
-                      &availableOpticalStabilization, 1);
-
-    float lensPosition[3];
-    if (facingBack) {
-        // Back-facing camera is center-top on device
-        lensPosition[0] = 0;
-        lensPosition[1] = 20;
-        lensPosition[2] = -5;
-    } else {
-        // Front-facing camera is center-right on device
-        lensPosition[0] = 20;
-        lensPosition[1] = 20;
-        lensPosition[2] = 0;
-    }
-    staticInfo.update(ANDROID_LENS_POSITION,
-                      lensPosition,
-                      sizeof(lensPosition)/ sizeof(float));
-
-    static const int32_t lensShadingMapSize[] = {1, 1};
-    staticInfo.update(ANDROID_LENS_INFO_SHADING_MAP_SIZE,
-                      lensShadingMapSize,
-                      sizeof(lensShadingMapSize)/sizeof(int32_t));
-
-    static const float lensShadingMap[3 * 1 * 1 ] =
-            { 1.f, 1.f, 1.f };
-    staticInfo.update(ANDROID_LENS_INFO_SHADING_MAP,
-                      lensShadingMap,
-                      sizeof(lensShadingMap)/ sizeof(float));
-
-    static const int32_t geometricCorrectionMapSize[] = {2, 2};
-    staticInfo.update(ANDROID_LENS_INFO_GEOMETRIC_CORRECTION_MAP_SIZE,
-                      geometricCorrectionMapSize,
-                      sizeof(geometricCorrectionMapSize)/sizeof(int32_t));
-
-    static const float geometricCorrectionMap[2 * 3 * 2 * 2] = {
-            0.f, 0.f,  0.f, 0.f,  0.f, 0.f,
-            1.f, 0.f,  1.f, 0.f,  1.f, 0.f,
-            0.f, 1.f,  0.f, 1.f,  0.f, 1.f,
-            1.f, 1.f,  1.f, 1.f,  1.f, 1.f};
-    staticInfo.update(ANDROID_LENS_INFO_GEOMETRIC_CORRECTION_MAP,
-                      geometricCorrectionMap,
-                      sizeof(geometricCorrectionMap)/ sizeof(float));
-
-    static const float sensorPhysicalSize[2] = {3.20f, 2.40f};
-    staticInfo.update(ANDROID_SENSOR_INFO_PHYSICAL_SIZE,
-                      sensorPhysicalSize, 2);
-
-    const int64_t exposureTimeRange[2] = {1000L, 30000000000L} ; // 1 us - 30 sec
-    staticInfo.update(ANDROID_SENSOR_INFO_EXPOSURE_TIME_RANGE,
-                      exposureTimeRange, 2);
-
-    const int64_t frameDurationRange[2] = {33331760L, 30000000000L};
-    staticInfo.update(ANDROID_SENSOR_INFO_MAX_FRAME_DURATION,
-                      frameDurationRange, 1);
-
-    const uint8_t colorFilterArrangement =
-                         ANDROID_SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_RGGB;
-    staticInfo.update(ANDROID_SENSOR_INFO_COLOR_FILTER_ARRANGEMENT,
-                      &colorFilterArrangement, 1);
-
-    const int resolution[2]  = {640, 480};
-    staticInfo.update(ANDROID_SENSOR_INFO_PIXEL_ARRAY_SIZE,
-                      resolution, 2);
-
-    staticInfo.update(ANDROID_SENSOR_INFO_ACTIVE_ARRAY_SIZE,
-                      resolution, 2);
-
-    const uint32_t whiteLevel = 4000;
-    staticInfo.update(ANDROID_SENSOR_INFO_WHITE_LEVEL,
-                      (int32_t*)&whiteLevel, 1);
-
-    static const int32_t blackLevelPattern[4] = {
-            1000, 1000,
-            1000, 1000 };
-    staticInfo.update(ANDROID_SENSOR_BLACK_LEVEL_PATTERN,
-                      blackLevelPattern, 4);
-
-    static const int64_t flashChargeDuration = 0;
-    staticInfo.update(ANDROID_FLASH_INFO_CHARGE_DURATION,
-                      &flashChargeDuration, 1);
-
-    static const int32_t tonemapCurvePoints = 128;
-    staticInfo.update(ANDROID_TONEMAP_MAX_CURVE_POINTS,
-                      &tonemapCurvePoints, 1);
-
-    static const int32_t maxFaceCount = 0;
-    staticInfo.update(ANDROID_STATISTICS_INFO_MAX_FACE_COUNT,
-                      &maxFaceCount, 1);
-
-    static const int32_t histogramSize = 64;
-    staticInfo.update(ANDROID_STATISTICS_INFO_HISTOGRAM_BUCKET_COUNT,
-                      &histogramSize, 1);
-
-    static const int32_t maxHistogramCount = 1000;
-    staticInfo.update(ANDROID_STATISTICS_INFO_MAX_HISTOGRAM_COUNT,
-                      &maxHistogramCount, 1);
-
-    static const int32_t sharpnessMapSize[2] = {64, 64};
-    staticInfo.update(ANDROID_STATISTICS_INFO_SHARPNESS_MAP_SIZE,
-                      sharpnessMapSize, sizeof(sharpnessMapSize)/sizeof(int32_t));
-
-    static const int32_t maxSharpnessMapValue = 1000;
-    staticInfo.update(ANDROID_STATISTICS_INFO_MAX_SHARPNESS_MAP_VALUE,
-                      &maxSharpnessMapValue, 1);
-
-    static const uint8_t availableVstabModes[] = {ANDROID_CONTROL_VIDEO_STABILIZATION_MODE_OFF};
-    staticInfo.update(ANDROID_CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES,
-                      availableVstabModes, sizeof(availableVstabModes));
-
-    const uint64_t availableRawMinDurations[1] = {33331760L};
-    staticInfo.update(ANDROID_SCALER_AVAILABLE_RAW_MIN_DURATIONS,
-                      (int64_t*)&availableRawMinDurations,
-                       1);
-
-    const uint32_t availableFormats[5] = {
-        HAL_PIXEL_FORMAT_RAW_SENSOR,
-        HAL_PIXEL_FORMAT_BLOB,
-        HAL_PIXEL_FORMAT_RGBA_8888,
-        HAL_PIXEL_FORMAT_YCrCb_420_SP,
-        HAL_PIXEL_FORMAT_YCbCr_420_888
-    };
-    staticInfo.update(ANDROID_SCALER_AVAILABLE_FORMATS,
-                      (int32_t*)availableFormats,
-                      5);
-
-    const uint32_t availableProcessedSizes[4] = {1280, 720, 640, 480};
-    staticInfo.update(ANDROID_SCALER_AVAILABLE_PROCESSED_SIZES,
-                      (int32_t*)availableProcessedSizes,
-                      sizeof(availableProcessedSizes)/sizeof(int32_t));
-
-    staticInfo.update(ANDROID_SCALER_AVAILABLE_JPEG_SIZES,
-                      resolution,
-                     sizeof(resolution)/sizeof(int));
-
-    static const uint8_t availableSceneModes[] = {
-            ANDROID_CONTROL_SCENE_MODE_UNSUPPORTED };
-
-    staticInfo.update(ANDROID_CONTROL_AVAILABLE_SCENE_MODES,
-            availableSceneModes, sizeof(availableSceneModes));
-
-    static const int32_t availableFpsRanges[] = {15, 30};
-    staticInfo.update(ANDROID_CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES,
-            availableFpsRanges, sizeof(availableFpsRanges)/sizeof(int32_t));
-
-    static const uint8_t availableEffectsModes[] = {
-            ANDROID_CONTROL_EFFECT_MODE_OFF };
-    staticInfo.update(ANDROID_CONTROL_AVAILABLE_EFFECTS,
-            availableEffectsModes, sizeof(availableEffectsModes));
-
-    static const uint8_t availableAntibandingModes[] = {
-            ANDROID_CONTROL_AE_ANTIBANDING_MODE_OFF };
-    staticInfo.update(ANDROID_CONTROL_AE_AVAILABLE_ANTIBANDING_MODES,
-            availableAntibandingModes, sizeof(availableAntibandingModes));
-
-    static const camera_metadata_rational exposureCompensationStep = {
-            1, 3
-    };
-    staticInfo.update(ANDROID_CONTROL_AE_COMPENSATION_STEP,
-            &exposureCompensationStep, 1);
-
-    static const int32_t jpegThumbnailSizes[] = {
-            0, 0,
-            160, 120,
-            320, 240
-     };
-    staticInfo.update(ANDROID_JPEG_AVAILABLE_THUMBNAIL_SIZES,
-            jpegThumbnailSizes, sizeof(jpegThumbnailSizes)/sizeof(int32_t));
-
-    static int64_t jpegMinDuration[] = {33331760L, 30000000000L};
-    staticInfo.update(ANDROID_SCALER_AVAILABLE_JPEG_MIN_DURATIONS,
-                      jpegMinDuration,
-                      sizeof(jpegMinDuration)/sizeof(uint64_t));
-    #endif
-     /*HAL 1 and HAL 3 common*/
+    /*HAL 1 and HAL 3 common*/
     static const float maxZoom = 10;
     staticInfo.update(ANDROID_SCALER_AVAILABLE_MAX_DIGITAL_ZOOM,
             &maxZoom, 1);
@@ -2000,7 +1800,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       avail_ae_modes,
                       sizeof(avail_ae_modes));
 
-    gStaticMetadata = staticInfo.release();
+    gStaticMetadata[cameraId] = staticInfo.release();
     return rc;
 }
 
@@ -2227,7 +2027,7 @@ int QCamera3HardwareInterface::getCamInfo(int cameraId,
         }
     }
 
-    if (NULL == gStaticMetadata) {
+    if (NULL == gStaticMetadata[cameraId]) {
         rc = initStaticMetadata(cameraId);
         if (rc < 0) {
             return rc;
@@ -2252,7 +2052,7 @@ int QCamera3HardwareInterface::getCamInfo(int cameraId,
 
     info->orientation = gCamCapability[cameraId]->sensor_mount_angle;
     info->device_version = HARDWARE_DEVICE_API_VERSION(3, 0);
-    info->static_camera_characteristics = gStaticMetadata;
+    info->static_camera_characteristics = gStaticMetadata[cameraId];
 
     return rc;
 }
