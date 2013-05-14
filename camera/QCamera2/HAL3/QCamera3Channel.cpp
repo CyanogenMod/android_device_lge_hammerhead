@@ -517,9 +517,12 @@ int32_t QCamera3RegularChannel::registerBuffers(uint32_t num_buffers, buffer_han
                     __func__, priv_handle->flags);
             return -EINVAL;
         }
+    } else if(mCamera3Stream->format == HAL_PIXEL_FORMAT_YCbCr_420_888) {
+         streamType = CAM_STREAM_TYPE_PREVIEW;
+         streamFormat = CAM_FORMAT_YUV_420_NV21;
     } else {
         //TODO: Fail for other types of streams for now
-        ALOGE("%s: format is not IMPLEMENTATION_DEFINED", __func__);
+        ALOGE("%s: format is not IMPLEMENTATION_DEFINED or flexible", __func__);
         return -EINVAL;
     }
 
