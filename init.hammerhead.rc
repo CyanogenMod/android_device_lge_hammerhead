@@ -93,6 +93,9 @@ on boot
 on post-fs-data
     mkdir /data/media 0770 media_rw media_rw
 
+    # wifi
+    chown wifi system /persist/wifi
+
     #  bluetooth
     mkdir /data/misc/bluetooth 0770 bluetooth bluetooth
 
