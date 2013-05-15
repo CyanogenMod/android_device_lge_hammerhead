@@ -97,6 +97,8 @@ public:
     static void makeTable(cam_dimension_t* dimTable, uint8_t size, int32_t* sizeTable);
     static void makeFPSTable(cam_fps_range_t* fpsTable, uint8_t size,
                                           int32_t* fpsRangesTable);
+    static void makeOverridesList(cam_scene_mode_overrides_t* overridesTable, uint8_t size,
+                                   uint8_t* overridesList);
     static void convertToRegions(cam_rect_t rect, int32_t* region, int weight);
     static void convertFromRegions(cam_area_t* roi, const camera_metadata_t *settings,
                                    uint32_t tag);
@@ -203,7 +205,7 @@ private:
     static const QCameraMap SCENE_MODES_MAP[];
     static const QCameraMap FOCUS_MODES_MAP[];
     static const QCameraMap ANTIBANDING_MODES_MAP[];
-    static const QCameraMap AUTO_EXPOSURE_MAP[];
+    static const QCameraMap AE_MODE_MAP[];
     static const QCameraMap FLASH_MODES_MAP[];
 };
 

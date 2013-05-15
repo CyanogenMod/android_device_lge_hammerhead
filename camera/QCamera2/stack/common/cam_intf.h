@@ -263,6 +263,9 @@ typedef struct{
     /* Maximum value possible for a sharpness map region */
     int32_t max_sharpness_map_value;
 
+    uint8_t supported_overrides_cnt; // == supported_scene_modes_cnt
+    cam_scene_mode_overrides_t scene_mode_overrides[CAM_SCENE_MODE_MAX];
+
 } cam_capability_t;
 
 typedef enum {
@@ -411,9 +414,9 @@ typedef union {
     INCLUDE(CAM_INTF_META_COLOR_CORRECT_TRANSFORM,  cam_color_correct_matrix_t,  1);
     INCLUDE(CAM_INTF_META_AEC_MODE,                 uint8_t,                     1);
     INCLUDE(CAM_INTF_META_AEC_ROI,                  cam_area_t,                  5);
-    INCLUDE(CAM_INTF_META_AEC_PRECAPTURE_TRIGGER,   uint8_t,                     1);
+    INCLUDE(CAM_INTF_META_AEC_PRECAPTURE_TRIGGER,   cam_trigger_t,               1);
     INCLUDE(CAM_INTF_META_AF_ROI,                   cam_area_t,                  5);
-    INCLUDE(CAM_INTF_META_AF_TRIGGER,               uint8_t,                     1);
+    INCLUDE(CAM_INTF_META_AF_TRIGGER,               cam_trigger_t,               1);
     INCLUDE(CAM_INTF_META_AWB_REGIONS,              cam_area_t,                  5);
     INCLUDE(CAM_INTF_META_CAPTURE_INTENT,           uint8_t,                     1);
     INCLUDE(CAM_INTF_META_MODE,                     uint8_t,                     1);

@@ -94,7 +94,6 @@ const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::SCENE_MOD
 };
 
 const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::FOCUS_MODES_MAP[] = {
-    { ANDROID_CONTROL_AF_MODE_OFF,                CAM_FOCUS_MODE_OFF },
     { ANDROID_CONTROL_AF_MODE_OFF,                CAM_FOCUS_MODE_FIXED },
     { ANDROID_CONTROL_AF_MODE_AUTO,               CAM_FOCUS_MODE_AUTO },
     { ANDROID_CONTROL_AF_MODE_MACRO,              CAM_FOCUS_MODE_MACRO },
@@ -110,9 +109,12 @@ const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::ANTIBANDI
     { ANDROID_CONTROL_AE_ANTIBANDING_MODE_AUTO, CAM_ANTIBANDING_MODE_AUTO }
 };
 
-const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::AUTO_EXPOSURE_MAP[] = {
-    { ANDROID_CONTROL_AE_MODE_OFF,    CAM_AEC_MODE_OFF           },
-    { ANDROID_CONTROL_AE_MODE_ON,     CAM_AEC_MODE_FRAME_AVERAGE },
+const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::AE_MODE_MAP[] = {
+    { ANDROID_CONTROL_AE_MODE_OFF,                  CAM_AE_MODE_OFF                  },
+    { ANDROID_CONTROL_AE_MODE_ON,                   CAM_AE_MODE_ON                   },
+    { ANDROID_CONTROL_AE_MODE_ON_AUTO_FLASH,        CAM_AE_MODE_ON_AUTO_FLASH        },
+    { ANDROID_CONTROL_AE_MODE_ON_ALWAYS_FLASH,      CAM_AE_MODE_ON_ALWAYS_FLASH      },
+    { ANDROID_CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE, CAM_AE_MODE_ON_AUTO_FLASH_REDEYE }
 };
 
 const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::FLASH_MODES_MAP[] = {
@@ -1522,8 +1524,12 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     CameraMetadata staticInfo;
     int facingBack = gCamCapability[cameraId]->position == CAM_POSITION_BACK;
     /*HAL 3 only*/
+    /*staticInfo.update(ANDROID_LENS_INFO_MINIMUM_FOCUS_DISTANCE,
+                    &gCamCapability[cameraId]->min_focus_distance, 1); */
+
+    float min_focus_distance = 10;
     staticInfo.update(ANDROID_LENS_INFO_MINIMUM_FOCUS_DISTANCE,
-                    &gCamCapability[cameraId]->min_focus_distance, 1);
+                    &min_focus_distance, 1);
 
     staticInfo.update(ANDROID_LENS_INFO_HYPERFOCAL_DISTANCE,
                     &gCamCapability[cameraId]->hyper_focal_distance, 1);
@@ -1642,7 +1648,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       scalar_formats,
                       scalar_formats_count);
 
-    static int32_t available_processed_sizes[CAM_FORMAT_MAX];
+    static int32_t available_processed_sizes[CAM_FORMAT_MAX * 2];
     makeTable(gCamCapability[cameraId]->supported_sizes_tbl,
               gCamCapability[cameraId]->supported_sizes_tbl_cnt,
               available_processed_sizes);
@@ -1650,7 +1656,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                 available_processed_sizes,
                 (gCamCapability[cameraId]->supported_sizes_tbl_cnt) * 2);
 
-    static int32_t available_fps_ranges[MAX_SIZES_CNT];
+    static int32_t available_fps_ranges[MAX_SIZES_CNT * 2];
     makeFPSTable(gCamCapability[cameraId]->fps_ranges_tbl,
                  gCamCapability[cameraId]->fps_ranges_tbl_cnt,
                  available_fps_ranges);
@@ -1673,7 +1679,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_SCALER_AVAILABLE_MAX_DIGITAL_ZOOM,
             &maxZoom, 1);
 
-    static const int32_t max3aRegions = 0;
+    static const int32_t max3aRegions = 1;
     staticInfo.update(ANDROID_CONTROL_MAX_REGIONS,
             &max3aRegions, 1);
 
@@ -1704,7 +1710,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
             ANDROID_LENS_FACING_BACK : ANDROID_LENS_FACING_FRONT;
     staticInfo.update(ANDROID_LENS_FACING, &lensFacing, 1);
 
-    static int32_t available_jpeg_sizes[MAX_SIZES_CNT];
+    static int32_t available_jpeg_sizes[MAX_SIZES_CNT * 2];
     makeTable(gCamCapability[cameraId]->picture_sizes_tbl,
               gCamCapability[cameraId]->picture_sizes_tbl_cnt,
               available_jpeg_sizes);
@@ -1745,19 +1751,19 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       size);
 
     static uint8_t avail_scene_modes[CAM_SCENE_MODE_MAX];
-    size = 0;
+    int32_t supported_scene_modes_cnt = 0;
     for (int i = 0; i < gCamCapability[cameraId]->supported_scene_modes_cnt; i++) {
         int val = lookupFwkName(SCENE_MODES_MAP,
                                 sizeof(SCENE_MODES_MAP)/sizeof(SCENE_MODES_MAP[0]),
                                 gCamCapability[cameraId]->supported_scene_modes[i]);
         if (val != NAME_NOT_FOUND) {
             avail_scene_modes[size] = (uint8_t)val;
-            size++;
+            supported_scene_modes_cnt++;
         }
     }
     staticInfo.update(ANDROID_CONTROL_AVAILABLE_SCENE_MODES,
                       avail_scene_modes,
-                      size);
+                      supported_scene_modes_cnt);
 
     static uint8_t avail_antibanding_modes[CAM_ANTIBANDING_MODE_MAX];
     size = 0;
@@ -1829,6 +1835,14 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       avail_ae_modes,
                       sizeof(avail_ae_modes));
 
+    static uint8_t scene_mode_overrides[CAM_SCENE_MODE_MAX * 3];
+    makeOverridesList(gCamCapability[cameraId]->scene_mode_overrides,
+                      supported_scene_modes_cnt,
+                      scene_mode_overrides);
+    staticInfo.update(ANDROID_CONTROL_SCENE_MODE_OVERRIDES,
+                      scene_mode_overrides,
+                      supported_scene_modes_cnt*3);
+
     gStaticMetadata[cameraId] = staticInfo.release();
     return rc;
 }
@@ -1841,10 +1855,6 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
  * PARAMETERS :
  *
  *
- *
- * RETURN     : int32_t type of status
- *              NO_ERROR  -- success
- *              none-zero failure code
  *==========================================================================*/
 void QCamera3HardwareInterface::makeTable(cam_dimension_t* dimTable, uint8_t size,
                                           int32_t* sizeTable)
@@ -1864,11 +1874,6 @@ void QCamera3HardwareInterface::makeTable(cam_dimension_t* dimTable, uint8_t siz
  *
  * PARAMETERS :
  *
- *
- *
- * RETURN     : int32_t type of status
- *              NO_ERROR  -- success
- *              none-zero failure code
  *==========================================================================*/
 void QCamera3HardwareInterface::makeFPSTable(cam_fps_range_t* fpsTable, uint8_t size,
                                           int32_t* fpsRangesTable)
@@ -1880,6 +1885,31 @@ void QCamera3HardwareInterface::makeFPSTable(cam_fps_range_t* fpsTable, uint8_t 
         j+=2;
     }
 }
+
+/*===========================================================================
+ * FUNCTION   : makeOverridesList
+ *
+ * DESCRIPTION: make a list of scene mode overrides
+ *
+ * PARAMETERS :
+ *
+ *
+ *==========================================================================*/
+void QCamera3HardwareInterface::makeOverridesList(cam_scene_mode_overrides_t* overridesTable,
+                                                  uint8_t size, uint8_t* overridesList)
+{
+    /*daemon will give a list of overrides for all scene modes.
+      However we should send the fwk only the overrides for the scene modes
+      supported by the framework*/
+    int j = 0;
+    for (int i = 0; i < size; i++) {
+        overridesList[j] = (int32_t)overridesTable[i].ae_mode;
+        overridesList[j+1] = (int32_t)overridesTable[i].awb_mode;
+        overridesList[j+2] = (int32_t)overridesTable[i].af_mode;
+        j+=3;
+    }
+}
+
 /*===========================================================================
  * FUNCTION   : getPreviewHalPixelFormat
  *
@@ -2159,6 +2189,12 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
     static const uint8_t sceneMode = ANDROID_CONTROL_SCENE_MODE_FACE_PRIORITY; //similar to AUTO?
     settings.update(ANDROID_CONTROL_SCENE_MODE, &sceneMode, 1);
 
+    static const uint8_t focusMode = ANDROID_CONTROL_AF_MODE_AUTO;
+    settings.update(ANDROID_CONTROL_AF_MODE, &focusMode, 1);
+
+    static const uint8_t aeMode = ANDROID_CONTROL_AE_MODE_ON;
+    settings.update(ANDROID_CONTROL_AE_MODE, &aeMode, 1);
+
     /*flash*/
     static const uint8_t flashMode = ANDROID_FLASH_MODE_OFF;
     settings.update(ANDROID_FLASH_MODE, &flashMode, 1);
@@ -2280,8 +2316,11 @@ int QCamera3HardwareInterface::translateMetadataToParameters
     }
 
     if (frame_settings.exists(ANDROID_CONTROL_AF_MODE)) {
-        uint8_t focusMode =
+        uint8_t fwk_focusMode =
             frame_settings.find(ANDROID_CONTROL_AF_MODE).data.u8[0];
+        uint8_t focusMode = lookupHalName(FOCUS_MODES_MAP,
+                                          sizeof(FOCUS_MODES_MAP),
+                                          fwk_focusMode);
         rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_FOCUS_MODE,
                 sizeof(focusMode), &focusMode);
     }
@@ -2316,9 +2355,9 @@ int QCamera3HardwareInterface::translateMetadataToParameters
     if (frame_settings.exists(ANDROID_CONTROL_AE_MODE)) {
         uint8_t fwk_aeMode =
             frame_settings.find(ANDROID_CONTROL_AE_MODE).data.u8[0];
-        uint8_t aeMode = lookupHalName(AUTO_EXPOSURE_MAP,
-                sizeof(AUTO_EXPOSURE_MAP),
-                fwk_aeMode);
+        uint8_t aeMode = lookupHalName(AE_MODE_MAP,
+                                       sizeof(AE_MODE_MAP),
+                                       fwk_aeMode);
         rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_AEC_MODE,
                 sizeof(aeMode), &aeMode);
     }
@@ -2339,18 +2378,27 @@ int QCamera3HardwareInterface::translateMetadataToParameters
     }
 
     uint8_t aecTrigger = CAM_AEC_TRIGGER_IDLE;
-    if (frame_settings.exists(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER)) {
-        aecTrigger =
+    if (frame_settings.exists(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER)&&
+        frame_settings.exists(ANDROID_CONTROL_AE_PRECAPTURE_ID)) {
+        cam_trigger_t aecTrigger;
+        aecTrigger.trigger =
             frame_settings.find(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER).data.u8[0];
+        aecTrigger.trigger_id =
+            frame_settings.find(ANDROID_CONTROL_AE_PRECAPTURE_ID).data.i32[0];
     }
     rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_AEC_PRECAPTURE_TRIGGER,
                                 sizeof(aecTrigger), &aecTrigger);
 
-    if (frame_settings.exists(ANDROID_CONTROL_AF_TRIGGER)) {
-        uint8_t afTrigger =
+    /*af_trigger must come with a trigger id*/
+    if (frame_settings.exists(ANDROID_CONTROL_AF_TRIGGER) &&
+        frame_settings.exists(ANDROID_CONTROL_AF_TRIGGER_ID)) {
+        cam_trigger_t af_trigger;
+        af_trigger.trigger =
             frame_settings.find(ANDROID_CONTROL_AF_TRIGGER).data.u8[0];
+        af_trigger.trigger_id =
+            frame_settings.find(ANDROID_CONTROL_AF_TRIGGER_ID).data.i32[0];
         rc = AddSetParmEntryToBatch(mParameters,
-                CAM_INTF_META_AF_TRIGGER, sizeof(afTrigger), &afTrigger);
+                CAM_INTF_META_AF_TRIGGER, sizeof(af_trigger), &af_trigger);
     }
 
     if (frame_settings.exists(ANDROID_CONTROL_MODE)) {

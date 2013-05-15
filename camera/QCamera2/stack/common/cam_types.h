@@ -380,6 +380,15 @@ typedef enum {
 } cam_auto_exposure_mode_type;
 
 typedef enum {
+    CAM_AE_MODE_OFF,
+    CAM_AE_MODE_ON,
+    CAM_AE_MODE_ON_AUTO_FLASH,
+    CAM_AE_MODE_ON_ALWAYS_FLASH,
+    CAM_AE_MODE_ON_AUTO_FLASH_REDEYE,
+    CAM_AE_MODE_MAX
+} cam_ae_mode_type;
+
+typedef enum {
     CAM_FOCUS_MODE_OFF,
     CAM_FOCUS_ALGO_AUTO,
     CAM_FOCUS_ALGO_SPOT,
@@ -453,6 +462,21 @@ typedef enum {
     CAM_AEC_TRIGGER_IDLE,
     CAM_AEC_TRIGGER_START
 } cam_aec_trigger_type_t;
+
+typedef enum {
+    CAM_AF_TRIGGER_IDLE,
+    CAM_AF_TRIGGER_START,
+    CAM_AF_TRIGGER_CANCEL
+} cam_af_trigger_type_t;
+
+typedef enum {
+    CAM_AE_STATE_INACTIVE,
+    CAM_AE_STATE_SEARCHING,
+    CAM_AE_STATE_CONVERGED,
+    CAM_AE_STATE_LOCKED,
+    CAM_AE_STATE_FLASH_REQUIRED,
+    CAM_AE_STATE_PRECAPTURE
+} cam_ae_state_t;
 
 typedef struct  {
     int32_t left;
@@ -959,6 +983,12 @@ typedef enum {
 } cam_quality_preference_t;
 
 typedef struct {
+    uint8_t ae_mode;
+    uint8_t awb_mode;
+    uint8_t af_mode;
+} cam_scene_mode_overrides_t;
+
+typedef struct {
     int32_t left;
     int32_t top;
     int32_t width;
@@ -1067,11 +1097,17 @@ typedef struct {
 } cam_crop_param_t;
 
 typedef struct {
+    uint8_t trigger;
+    int32_t trigger_id;
+} cam_trigger_t;
+
+typedef struct {
     cam_denoise_param_t denoise;
     cam_crop_param_t crop;
     uint32_t flip;     /* 0 means no flip */
     int32_t sharpness; /* 0 means no sharpness */
 } cam_per_frame_pp_config_t;
+
 typedef enum {
     CAM_OPT_STAB_OFF,
     CAM_OPT_STAB_ON,
@@ -1088,5 +1124,21 @@ typedef enum {
      * instead of just 1 16-bit value per pixel.*/
     CAM_FILTER_ARRANGEMENT_RGB
 } cam_color_filter_arrangement_t;
+
+typedef enum {
+    CAM_AF_STATE_INACTIVE,
+    CAM_AF_STATE_PASSIVE_SCAN,
+    CAM_AF_STATE_PASSIVE_FOCUSED,
+    CAM_AF_STATE_ACTIVE_SCAN,
+    CAM_AF_STATE_FOCUSED_LOCKED,
+    CAM_AF_STATE_NOT_FOCUSED_LOCKED
+} cam_af_state_t;
+
+typedef enum {
+    CAM_AWB_STATE_INACTIVE,
+    CAM_AWB_STATE_SEARCHING,
+    CAM_AWB_STATE_CONVERGED,
+    CAM_AWB_STATE_LOCKED
+} cam_awb_state_t;
 
 #endif /* __QCAMERA_TYPES_H__ */
