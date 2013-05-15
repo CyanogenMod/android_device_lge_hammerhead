@@ -97,7 +97,9 @@ public:
     static void makeTable(cam_dimension_t* dimTable, uint8_t size, int32_t* sizeTable);
     static void makeFPSTable(cam_fps_range_t* fpsTable, uint8_t size,
                                           int32_t* fpsRangesTable);
-    static void convertRegions(cam_rect_t rect, int32_t* region, int weight);
+    static void convertToRegions(cam_rect_t rect, int32_t* region, int weight);
+    static void convertFromRegions(cam_area_t* roi, const camera_metadata_t *settings,
+                                   uint32_t tag);
     static void convertLandmarks(cam_face_detection_info_t face, int32_t* landmarks);
     static int32_t getScalarFormat(int32_t format);
 
