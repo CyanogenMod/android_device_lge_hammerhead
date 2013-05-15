@@ -55,8 +55,6 @@ namespace qcamera {
 #define FALSE 0
 #endif
 
-#define HAL_3_CAPABILITIES
-
 /* Time related macros */
 typedef int64_t nsecs_t;
 #define NSEC_PER_SEC 1000000000LL
