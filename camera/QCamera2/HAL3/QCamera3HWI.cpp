@@ -1088,7 +1088,7 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
     for (int i = 0; i < numFaces; i++) {
         faceIds[i] = faceDetectionInfo->faces[i].face_id;
         faceScores[i] = faceDetectionInfo->faces[i].score;
-        convertRegions(faceDetectionInfo->faces[i].face_boundary,
+        convertToRegions(faceDetectionInfo->faces[i].face_boundary,
                 faceRectangles+j, -1);
         convertLandmarks(faceDetectionInfo->faces[i], faceLandmarks+k);
         j+= 4;
@@ -1118,7 +1118,7 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
     cam_area_t  *hAeRegions =
         (cam_area_t *)POINTER_OF(CAM_INTF_META_AEC_ROI, metadata);
     int32_t aeRegions[5];
-    convertRegions(hAeRegions->rect, aeRegions, hAeRegions->weight);
+    convertToRegions(hAeRegions->rect, aeRegions, hAeRegions->weight);
     camMetadata.update(ANDROID_CONTROL_AE_REGIONS, aeRegions, 5);
 
     uint8_t  *ae_state =
@@ -1133,7 +1133,7 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
     cam_area_t  *hAfRegions =
         (cam_area_t *)POINTER_OF(CAM_INTF_META_AF_ROI, metadata);
     int32_t afRegions[5];
-    convertRegions(hAfRegions->rect, afRegions, hAfRegions->weight);
+    convertToRegions(hAfRegions->rect, afRegions, hAfRegions->weight);
     camMetadata.update(ANDROID_CONTROL_AF_REGIONS, afRegions, 5);
 
     uint8_t  *afState = (uint8_t *)POINTER_OF(CAM_INTF_META_AF_STATE, metadata);
@@ -1151,7 +1151,7 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
     cam_area_t  *hAwbRegions =
         (cam_area_t *)POINTER_OF(CAM_INTF_META_AWB_REGIONS, metadata);
     int32_t awbRegions[5];
-    convertRegions(hAwbRegions->rect, awbRegions, hAwbRegions->weight);
+    convertToRegions(hAwbRegions->rect, awbRegions, hAwbRegions->weight);
     camMetadata.update(ANDROID_CONTROL_AWB_REGIONS, awbRegions, 5);
 
     uint8_t  *whiteBalanceState =
@@ -1267,7 +1267,7 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
 }
 
 /*===========================================================================
- * FUNCTION   : convertRegions
+ * FUNCTION   : convertToRegions
  *
  * DESCRIPTION: helper method to convert from cam_rect_t into int32_t array
  *
@@ -1278,15 +1278,44 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
  *             else weight = -1
  *
  *==========================================================================*/
-void QCamera3HardwareInterface::convertRegions(cam_rect_t rect, int32_t* region, int weight){
+void QCamera3HardwareInterface::convertToRegions(cam_rect_t rect, int32_t* region, int weight){
     region[0] = rect.left;
     region[1] = rect.top;
-    region[2] = rect.width;
-    region[3] = rect.height;
+    region[2] = rect.left + rect.width;
+    region[3] = rect.top + rect.height;
     if (weight > -1) {
         region[4] = weight;
     }
 }
+
+/*===========================================================================
+ * FUNCTION   : convertFromRegions
+ *
+ * DESCRIPTION: helper method to convert from array to cam_rect_t
+ *
+ * PARAMETERS :
+ *   @rect   : cam_rect_t struct to convert
+ *   @region : int32_t destination array
+ *   @weight : if we are converting from cam_area_t, weight is valid
+ *             else weight = -1
+ *
+ *==========================================================================*/
+void QCamera3HardwareInterface::convertFromRegions(cam_area_t* roi,
+                                                   const camera_metadata_t *settings,
+                                                   uint32_t tag){
+    CameraMetadata frame_settings;
+    frame_settings = settings;
+    int32_t x_min = frame_settings.find(tag).data.i32[0];
+    int32_t y_min = frame_settings.find(tag).data.i32[1];
+    int32_t x_max = frame_settings.find(tag).data.i32[2];
+    int32_t y_max = frame_settings.find(tag).data.i32[3];
+    roi->weight = frame_settings.find(tag).data.i32[4];
+    roi->rect.left = x_min;
+    roi->rect.top = y_min;
+    roi->rect.width = x_max - x_min;
+    roi->rect.height = y_max - y_min;
+}
+
 /*===========================================================================
  * FUNCTION   : convertLandmarks
  *
@@ -2530,6 +2559,26 @@ int QCamera3HardwareInterface::translateMetadataToParameters
                 sizeof(captureIntent), &captureIntent);
     }
 
+    if (frame_settings.exists(ANDROID_CONTROL_AE_REGIONS)) {
+        cam_area_t roi;
+        convertFromRegions(&roi, settings, ANDROID_CONTROL_AE_REGIONS);
+        rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_AEC_ROI,
+                sizeof(roi), &roi);
+    }
+
+    if (frame_settings.exists(ANDROID_CONTROL_AF_REGIONS)) {
+        cam_area_t roi;
+        convertFromRegions(&roi, settings, ANDROID_CONTROL_AF_REGIONS);
+        rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_AF_ROI,
+                sizeof(roi), &roi);
+    }
+
+    if (frame_settings.exists(ANDROID_CONTROL_AWB_REGIONS)) {
+        cam_area_t roi;
+        convertFromRegions(&roi, settings, ANDROID_CONTROL_AWB_REGIONS);
+        rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_AWB_REGIONS,
+                sizeof(roi), &roi);
+    }
     return rc;
 }
 
