@@ -179,6 +179,9 @@ PRODUCT_PACKAGES += \
     charger \
     charger_res_images
 
+PRODUCT_PACKAGES += \
+    bdAddrLoader
+
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.opengles.version=196608
 
