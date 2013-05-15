@@ -223,6 +223,10 @@ PRODUCT_PROPERTY_OVERRIDES += \
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.radio.apm_sim_not_pwdn=1
 
+# LTE, CDMA, GSM/WCDMA
+PRODUCT_PROPERTY_OVERRIDES += \
+    ro.telephony.default_network=10
+
 # Audio Configuration
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.audio.handset.mic.type=digital \
