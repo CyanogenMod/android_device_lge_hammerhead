@@ -103,6 +103,7 @@ on post-fs-data
     mkdir /data/misc/audio 0770 audio audio
 
     # Create directory used by sensor subsystem
+    mkdir /data/system 0775 system system
     mkdir /data/system/sensors
     chmod 665 /data/system/sensors
     write /data/system/sensors/settings 1
