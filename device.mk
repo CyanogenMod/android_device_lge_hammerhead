@@ -134,7 +134,6 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     gralloc.msm8974 \
     libgenlock \
-    lights.msm8974 \
     hwcomposer.msm8974 \
     libqdutils \
     libqdMetaData
@@ -189,6 +188,9 @@ PRODUCT_PACKAGES += \
 
 PRODUCT_PACKAGES += \
     sensors.hammerhead
+
+PRODUCT_PACKAGES += \
+    lights.hammerhead
 
 PRODUCT_PACKAGES += \
     com.android.future.usb.accessory
