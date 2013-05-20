@@ -251,6 +251,7 @@
 
     <path name="voice-handset">
         <path name="handset" />
+        <ctl name="RX1 Digital Volume" value="100" />
     </path>
 
     <path name="voice-handset-tmus">
@@ -259,6 +260,7 @@
 
     <path name="voice-speaker">
         <path name="speaker" />
+        <ctl name="RX7 Digital Volume" value="100" />
     </path>
 
     <path name="voice-speaker-mic">
@@ -314,8 +316,8 @@
         <ctl name="DEC6 MUX" value="ADC1" />
         <ctl name="SLIM TX8 MUX" value="DEC4" />
         <ctl name="DEC4 MUX" value="ADC3" />
-        <ctl name="DEC6 Volume" value="90" />
-        <ctl name="DEC4 Volume" value="90" />
+        <ctl name="DEC6 Volume" value="100" />
+        <ctl name="DEC4 Volume" value="100" />
         <ctl name="SLIM_0_TX Channels" value="Two" />
     </path>
 
