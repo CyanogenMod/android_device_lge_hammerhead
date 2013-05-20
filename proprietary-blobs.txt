@@ -44,8 +44,6 @@
 /system/lib/egl/libGLESv2_adreno.so
 /system/lib/hw/camera.msm8974.so
 /system/lib/hw/gps.msm8974.so
-/system/lib/libacdbloader.so
-/system/lib/libacdbmapper.so
 /system/lib/libadreno_utils.so
 /system/lib/libadsprpc.so
 /system/lib/libaudcal.so
@@ -105,6 +103,8 @@
 /system/vendor/lib/libidl.so
 /system/vendor/lib/libjpegdhw.so
 /system/vendor/lib/libjpegehw.so
+/system/vendor/lib/libacdbloader.so
+/system/vendor/lib/libacdbmapper.so
 /system/vendor/lib/libmmcamera2_c2d_module.so
 /system/vendor/lib/libmmcamera2_cpp_module.so
 /system/vendor/lib/libmmcamera2_iface_modules.so
