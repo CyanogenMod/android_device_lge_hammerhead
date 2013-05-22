@@ -1121,13 +1121,8 @@ void QCamera3PicChannel::putStreamBufs()
  *==========================================================================*/
 bool QCamera3PicChannel::needOnlineRotation()
 {
-    //TBD_Later
-    //if ((gCamCapability[mCameraId]->qcom_supported_feature_mask & CAM_QCOM_FEATURE_ROTATION) > 0 &&
-    if (mJpegSettings->jpeg_orientation > 0) {
-        // current rotation is not zero, and pp has the capability to process rotation
-        ALOGD("%s: need do online rotation", __func__);
-        return true;
-    }
+    //TODO: For B Family chips, we need to do something different
+    // because JPEG encoder cannot do rotation.
     return false;
 }
 
