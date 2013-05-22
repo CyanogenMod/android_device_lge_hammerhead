@@ -95,6 +95,9 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.nfc.xml:system/etc/permissions/android.hardware.nfc.xml \
     device/lge/hammerhead/nfc/libnfc-brcm.conf:system/etc/libnfc-brcm.conf
 
+PRODUCT_COPY_FILES += \
+    device/lge/hammerhead/thermal-engine-hammerhead.conf:system/etc/thermal-engine.conf
+
 PRODUCT_TAGS += dalvik.gc.type-precise
 
 # This device is xhdpi.  However the platform doesn't
