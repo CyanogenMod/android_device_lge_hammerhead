@@ -994,6 +994,7 @@ typedef struct {
     int32_t left;
     int32_t top;
     int32_t width;
+    int32_t height;
 } cam_crop_region_t;
 
 typedef struct {
