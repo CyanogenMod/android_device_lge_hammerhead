@@ -332,7 +332,6 @@ typedef struct {
 } cam_hfr_info_t;
 
 typedef enum {
-    CAM_WB_MODE_OFF,
     CAM_WB_MODE_AUTO,
     CAM_WB_MODE_CUSTOM,
     CAM_WB_MODE_INCANDESCENT,
@@ -342,6 +341,7 @@ typedef enum {
     CAM_WB_MODE_CLOUDY_DAYLIGHT,
     CAM_WB_MODE_TWILIGHT,
     CAM_WB_MODE_SHADE,
+    CAM_WB_MODE_OFF,
     CAM_WB_MODE_MAX
 } cam_wb_mode_type;
 
@@ -368,7 +368,6 @@ typedef enum {
 } cam_iso_mode_type;
 
 typedef enum {
-    CAM_AEC_MODE_OFF,
     CAM_AEC_MODE_FRAME_AVERAGE,
     CAM_AEC_MODE_CENTER_WEIGHTED,
     CAM_AEC_MODE_SPOT_METERING,
@@ -382,14 +381,10 @@ typedef enum {
 typedef enum {
     CAM_AE_MODE_OFF,
     CAM_AE_MODE_ON,
-    CAM_AE_MODE_ON_AUTO_FLASH,
-    CAM_AE_MODE_ON_ALWAYS_FLASH,
-    CAM_AE_MODE_ON_AUTO_FLASH_REDEYE,
     CAM_AE_MODE_MAX
 } cam_ae_mode_type;
 
 typedef enum {
-    CAM_FOCUS_MODE_OFF,
     CAM_FOCUS_ALGO_AUTO,
     CAM_FOCUS_ALGO_SPOT,
     CAM_FOCUS_ALGO_CENTER_WEIGHTED,
@@ -902,6 +897,7 @@ typedef enum {
     CAM_INTF_META_TONEMAP_CURVE_RED,
     /* Tone map mode */
     CAM_INTF_META_TONEMAP_MODE,
+    CAM_INTF_META_FLASH_MODE,
     CAM_INTF_META_PRIVATE_DATA,
     CAM_INTF_PARM_MAX
 } cam_intf_parm_type_t;
@@ -981,6 +977,12 @@ typedef enum {
     FAST,
     QUALITY,
 } cam_quality_preference_t;
+
+typedef enum {
+    CAM_FLASH_CTRL_OFF,
+    CAM_FLASH_CTRL_SINGLE,
+    CAM_FLASH_CTRL_TORCH
+} cam_flash_ctrl_t;
 
 typedef struct {
     uint8_t ae_mode;
