@@ -333,3 +333,8 @@ service bugreport /system/bin/dumpstate -d -p -B \
     disabled
     oneshot
     keycodes 114 115 116
+
+service mpdecision /system/bin/mpdecision --no_sleep --avg_comp
+   class main
+   user root
+   group root
