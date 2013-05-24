@@ -152,6 +152,9 @@ PRODUCT_PACKAGES += \
     camera.msm8974 \
     mm-qcamera-app
 
+PRODUCT_PACKAGES += \
+    keystore.msm8974
+
 # GPS
 PRODUCT_PACKAGES += \
     libloc_adapter \
