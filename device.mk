@@ -93,7 +93,8 @@ PRODUCT_COPY_FILES += \
     $(NFCEE_ACCESS_PATH):system/etc/nfcee_access.xml \
     frameworks/native/data/etc/com.android.nfc_extras.xml:system/etc/permissions/com.android.nfc_extras.xml \
     frameworks/native/data/etc/android.hardware.nfc.xml:system/etc/permissions/android.hardware.nfc.xml \
-    device/lge/hammerhead/nfc/libnfc-brcm.conf:system/etc/libnfc-brcm.conf
+    device/lge/hammerhead/nfc/libnfc-brcm.conf:system/etc/libnfc-brcm.conf \
+    device/lge/hammerhead/nfc/libnfc-brcm-20791b05.conf:system/etc/libnfc-brcm-20791b05.conf
 
 PRODUCT_COPY_FILES += \
     device/lge/hammerhead/thermal-engine-hammerhead.conf:system/etc/thermal-engine.conf
