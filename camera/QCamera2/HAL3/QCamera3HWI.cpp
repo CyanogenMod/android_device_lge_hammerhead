@@ -123,6 +123,8 @@ const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::FLASH_MOD
     { ANDROID_FLASH_MODE_TORCH,  CAM_FLASH_MODE_TORCH}
 };
 
+const int32_t available_thumbnail_sizes[] = {512, 288, 480, 288, 256, 154, 432, 288,
+                                             320, 240, 176, 144, 0, 0};
 
 camera3_device_ops_t QCamera3HardwareInterface::mCameraOps = {
     initialize:                         QCamera3HardwareInterface::initialize,
@@ -1721,8 +1723,8 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                 (gCamCapability[cameraId]->picture_sizes_tbl_cnt * 2));
 
     staticInfo.update(ANDROID_JPEG_AVAILABLE_THUMBNAIL_SIZES,
-                      available_jpeg_sizes,
-                      (gCamCapability[cameraId]->picture_sizes_tbl_cnt * 2));
+                      available_thumbnail_sizes,
+                      sizeof(available_thumbnail_sizes)/sizeof(int32_t));
 
     int32_t max_jpeg_size = 0;
     int temp_width, temp_height;
@@ -2725,11 +2727,9 @@ int QCamera3HardwareInterface::getJpegSettings
             jpeg_settings.find(ANDROID_JPEG_THUMBNAIL_SIZE).data.i32[0];
         mJpegSettings->thumbnail_size.height =
             jpeg_settings.find(ANDROID_JPEG_THUMBNAIL_SIZE).data.i32[1];
-        mJpegSettings->thumbnail_size.width = 320;
-        mJpegSettings->thumbnail_size.height = 240;
     } else {
-        mJpegSettings->thumbnail_size.width = 640;
-        mJpegSettings->thumbnail_size.height = 480;
+        mJpegSettings->thumbnail_size.width = 0;
+        mJpegSettings->thumbnail_size.height = 0;
     }
     if (jpeg_settings.exists(ANDROID_JPEG_GPS_COORDINATES)) {
         for (int i = 0; i < 3; i++) {
