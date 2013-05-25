@@ -1391,7 +1391,7 @@ QCameraMemory *QCamera2HardwareInterface::allocateStreamBuf(cam_stream_type_t st
         break;
     case CAM_STREAM_TYPE_VIDEO:
         {
-            char value[32];
+            char value[PROPERTY_VALUE_MAX];
             property_get("persist.camera.mem.usecache", value, "1");
             if (atoi(value) == 0) {
                 bCachedMem = QCAMERA_ION_USE_NOCACHE;
