@@ -75,7 +75,6 @@ const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::WHITE_BAL
 };
 
 const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::SCENE_MODES_MAP[] = {
-    { ANDROID_CONTROL_SCENE_MODE_UNSUPPORTED,    CAM_SCENE_MODE_OFF },
     { ANDROID_CONTROL_SCENE_MODE_ACTION,         CAM_SCENE_MODE_ACTION },
     { ANDROID_CONTROL_SCENE_MODE_PORTRAIT,       CAM_SCENE_MODE_PORTRAIT },
     { ANDROID_CONTROL_SCENE_MODE_LANDSCAPE,      CAM_SCENE_MODE_LANDSCAPE },
@@ -1669,13 +1668,8 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       &gCamCapability[cameraId]->raw_min_duration,
                        1);
 
-    int32_t scalar_formats[CAM_FORMAT_MAX];
-    int scalar_formats_count = gCamCapability[cameraId]->supported_scalar_format_cnt;
-    for (int i = 0; i < scalar_formats_count; i++) {
-        scalar_formats[i] = getScalarFormat(gCamCapability[cameraId]->supported_scalar_fmts[i]);
-    }
-    scalar_formats[scalar_formats_count] = HAL_PIXEL_FORMAT_YCbCr_420_888;
-    scalar_formats_count++;
+    int32_t scalar_formats[] = {HAL_PIXEL_FORMAT_YCbCr_420_888};
+    int scalar_formats_count = 1;
     staticInfo.update(ANDROID_SCALER_AVAILABLE_FORMATS,
                       scalar_formats,
                       scalar_formats_count);
