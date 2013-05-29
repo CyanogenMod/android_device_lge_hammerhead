@@ -169,6 +169,7 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId)
     pthread_mutex_init(&mRequestLock, NULL);
     pthread_cond_init(&mRequestCond, NULL);
     mPendingRequest = 0;
+    mCurrentRequestId = -1;
 
     pthread_mutex_init(&mMutex, NULL);
     pthread_mutex_init(&mCaptureResultLock, NULL);
@@ -729,6 +730,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
                     camera3_capture_request_t *request)
 {
     int rc = NO_ERROR;
+    int32_t request_id;
     CameraMetadata meta;
 
     pthread_mutex_lock(&mMutex);
@@ -748,6 +750,21 @@ int QCamera3HardwareInterface::processCaptureRequest(
         pthread_mutex_unlock(&mMutex);
         return rc;
     }
+
+    meta = request->settings;
+    if (meta.exists(ANDROID_REQUEST_ID)) {
+        request_id = meta.find(ANDROID_REQUEST_ID).data.i32[0];
+        mCurrentRequestId = request_id;
+        ALOGD("%s: Received request with id: %d",__func__, request_id);
+    } else if (mFirstRequest || mCurrentRequestId == -1){
+        ALOGE("%s: Unable to find request id field, \
+                & no previous id available", __func__);
+        return NAME_NOT_FOUND;
+    } else {
+        ALOGD("%s: Re-using old request id", __func__);
+        request_id = mCurrentRequestId;
+    }
+
 
     ALOGV("%s: %d, num_output_buffers = %d", __func__, __LINE__,
                                     request->num_output_buffers);
@@ -779,6 +796,8 @@ int QCamera3HardwareInterface::processCaptureRequest(
     PendingRequestInfo pendingRequest;
     pendingRequest.frame_number = frameNumber;
     pendingRequest.num_buffers = request->num_output_buffers;
+    pendingRequest.request_id = request_id;
+
     for (size_t i = 0; i < request->num_output_buffers; i++) {
         RequestedBufferInfo requestedBuf;
         requestedBuf.stream = request->output_buffers[i].stream;
@@ -939,10 +958,12 @@ void QCamera3HardwareInterface::captureResultCb(mm_camera_super_buf_t *metadata_
                 CameraMetadata emptyMetadata(1, 0);
                 emptyMetadata.update(ANDROID_SENSOR_TIMESTAMP,
                         &current_capture_time, 1);
+                emptyMetadata.update(ANDROID_REQUEST_ID,
+                        &(i->request_id), 1);
                 result.result = emptyMetadata.release();
             } else {
                 result.result = translateCbMetadataToResultMetadata(metadata,
-                        current_capture_time);
+                        current_capture_time, i->request_id);
                 // Return metadata buffer
                 mMetadataChannel->bufDone(metadata_buf);
             }
@@ -1067,13 +1088,15 @@ done_metadata:
  *==========================================================================*/
 camera_metadata_t*
 QCamera3HardwareInterface::translateCbMetadataToResultMetadata
-                                (metadata_buffer_t *metadata, nsecs_t timestamp)
+                                (metadata_buffer_t *metadata, nsecs_t timestamp,
+                                 int32_t request_id)
 {
     CameraMetadata camMetadata;
     camera_metadata_t* resultMetadata;
 
 
     camMetadata.update(ANDROID_SENSOR_TIMESTAMP, &timestamp, 1);
+    camMetadata.update(ANDROID_REQUEST_ID, &request_id, 1);
 
     /*CAM_INTF_META_HISTOGRAM - TODO*/
     /*cam_hist_stats_t  *histogram =
