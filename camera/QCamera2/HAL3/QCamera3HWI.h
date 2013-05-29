@@ -119,7 +119,7 @@ public:
     int setFrameParameters(int frame_id, const camera_metadata_t *settings);
     int translateMetadataToParameters(const camera_metadata_t *settings);
     camera_metadata_t* translateCbMetadataToResultMetadata(metadata_buffer_t *metadata,
-                            nsecs_t timestamp);
+                            nsecs_t timestamp, int32_t request_id);
     int getJpegSettings(const camera_metadata_t *settings);
     int initParameters();
     void deinitParameters();
@@ -181,6 +181,7 @@ private:
     typedef struct {
         uint32_t frame_number;
         uint32_t num_buffers;
+        int32_t request_id;
         List<RequestedBufferInfo> buffers;
     } PendingRequestInfo;
     typedef KeyedVector<camera3_stream_t *, uint32_t> PendingBuffersMap;
@@ -190,6 +191,7 @@ private:
     pthread_mutex_t mRequestLock;
     pthread_cond_t mRequestCond;
     int mPendingRequest;
+    int32_t mCurrentRequestId;
 
     //mutex for serialized access to camera3_device_ops_t functions
     pthread_mutex_t mMutex;
