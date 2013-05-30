@@ -538,7 +538,7 @@ int QCamera3HardwareInterface::configureStreams(
                     ALOGE("%s: Failed to register the buffers of old stream,\
                             rc = %d", __func__, rc);
                 }
-                ALOGD("%s: channel %p has %d buffers",
+                ALOGV("%s: channel %p has %d buffers",
                         __func__, channel, (*it)->buffer_set.num_buffers);
             }
         }
@@ -824,7 +824,8 @@ int QCamera3HardwareInterface::processCaptureRequest(
         if (output.stream->format == HAL_PIXEL_FORMAT_BLOB) {
             rc = channel->request(output.buffer, frameNumber, mJpegSettings);
         } else {
-            ALOGI("%s: %d, request with buffer %p, frame_number %d", __func__, __LINE__, output.buffer, frameNumber);
+            ALOGV("%s: %d, request with buffer %p, frame_number %d", __func__,
+                __LINE__, output.buffer, frameNumber);
             rc = channel->request(output.buffer, frameNumber);
         }
         if (rc < 0)
@@ -918,11 +919,11 @@ void QCamera3HardwareInterface::captureResultCb(mm_camera_super_buf_t *metadata_
             tv->tv_usec * NSEC_PER_USEC;
 
         if (!frame_number_valid) {
-            ALOGD("%s: Not a valid frame number, used as SOF only", __func__);
+            ALOGV("%s: Not a valid frame number, used as SOF only", __func__);
             mMetadataChannel->bufDone(metadata_buf);
             goto done_metadata;
         }
-        ALOGD("%s: valid frame_number = %d, capture_time = %lld", __func__,
+        ALOGV("%s: valid frame_number = %d, capture_time = %lld", __func__,
                 frame_number, capture_time);
 
         // Go through the pending requests info and send shutter/results to frameworks
@@ -930,7 +931,7 @@ void QCamera3HardwareInterface::captureResultCb(mm_camera_super_buf_t *metadata_
                 i != mPendingRequestsList.end() && i->frame_number <= frame_number;) {
             camera3_capture_result_t result;
             camera3_notify_msg_t notify_msg;
-            ALOGD("%s: frame_number in the list is %d", __func__, i->frame_number);
+            ALOGV("%s: frame_number in the list is %d", __func__, i->frame_number);
 
             // Flush out all entries with less or equal frame numbers.
 
@@ -948,7 +949,7 @@ void QCamera3HardwareInterface::captureResultCb(mm_camera_super_buf_t *metadata_
             notify_msg.message.shutter.frame_number = i->frame_number;
             notify_msg.message.shutter.timestamp = current_capture_time;
             mCallbackOps->notify(mCallbackOps, &notify_msg);
-            ALOGD("%s: notify frame_number = %d, capture_time = %lld", __func__,
+            ALOGV("%s: notify frame_number = %d, capture_time = %lld", __func__,
                     i->frame_number, capture_time);
 
             // Send empty metadata with already filled buffers for dropped metadata
@@ -997,13 +998,13 @@ void QCamera3HardwareInterface::captureResultCb(mm_camera_super_buf_t *metadata_
                 result.output_buffers = result_buffers;
 
                 mCallbackOps->process_capture_result(mCallbackOps, &result);
-                ALOGD("%s: meta frame_number = %d, capture_time = %lld",
+                ALOGV("%s: meta frame_number = %d, capture_time = %lld",
                         __func__, result.frame_number, current_capture_time);
                 free_camera_metadata((camera_metadata_t *)result.result);
                 delete[] result_buffers;
             } else {
                 mCallbackOps->process_capture_result(mCallbackOps, &result);
-                ALOGD("%s: meta frame_number = %d, capture_time = %lld",
+                ALOGV("%s: meta frame_number = %d, capture_time = %lld",
                         __func__, result.frame_number, current_capture_time);
                 free_camera_metadata((camera_metadata_t *)result.result);
             }
@@ -1048,7 +1049,7 @@ done_metadata:
             result.frame_number = frame_number;
             result.num_output_buffers = 1;
             result.output_buffers = buffer;
-            ALOGD("%s: result frame_number = %d, buffer = %p",
+            ALOGV("%s: result frame_number = %d, buffer = %p",
                     __func__, frame_number, buffer);
             mPendingBuffersMap.editValueFor(buffer->stream)--;
             mCallbackOps->process_capture_result(mCallbackOps, &result);
@@ -1062,7 +1063,7 @@ done_metadata:
                         j->buffer = (camera3_stream_buffer_t *)malloc(
                                 sizeof(camera3_stream_buffer_t));
                         *(j->buffer) = *buffer;
-                        ALOGD("%s: cache buffer %p at result frame_number %d",
+                        ALOGV("%s: cache buffer %p at result frame_number %d",
                                 __func__, buffer, frame_number);
                     }
                 }

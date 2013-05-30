@@ -27,7 +27,6 @@
 *
 */
 
-#define LOG_NIDEBUG 0
 #define LOG_TAG "QCamera3Factory"
 
 #include <stdlib.h>
