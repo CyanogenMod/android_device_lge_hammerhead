@@ -53,6 +53,8 @@ namespace qcamera {
         int32_t sensor_sensitivity;
         float lens_focal_length;
         int32_t max_jpeg_size;
+        int exposure_compensation;
+        cam_rational_type_t exposure_comp_step;
     } jpeg_settings_t;
 
     typedef struct {

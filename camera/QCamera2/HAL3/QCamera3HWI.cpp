@@ -2344,9 +2344,12 @@ int QCamera3HardwareInterface::translateMetadataToParameters
                 sizeof(antibandingMode), &antibandingMode);
     }
 
-    /*int32_t expCompensation = frame_settings.find().data.i32[0];
-      rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_EXPOSURE_COMPENSATION,
-      sizeof(expCompensation), &expCompensation);*/
+    if (frame_settings.exists(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)) {
+        int32_t expCompensation = frame_settings.find(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION).data.i32[0];
+        rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_EXPOSURE_COMPENSATION,
+          sizeof(expCompensation), &expCompensation);
+    }
+
     if (frame_settings.exists(ANDROID_CONTROL_AE_LOCK)) {
         uint8_t aeLock = frame_settings.find(ANDROID_CONTROL_AE_LOCK).data.u8[0];
         rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_AEC_LOCK,
@@ -2771,6 +2774,11 @@ int QCamera3HardwareInterface::getJpegSettings
         mJpegSettings->lens_focal_length =
             jpeg_settings.find(ANDROID_LENS_FOCAL_LENGTH).data.f[0];
     }
+    if (jpeg_settings.exists(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)) {
+        mJpegSettings->exposure_compensation =
+            jpeg_settings.find(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION).data.i32[0];
+    }
+    mJpegSettings->exposure_comp_step = gCamCapability[mCameraId]->exp_compensation_step;
     mJpegSettings->max_jpeg_size = calcMaxJpegSize();
     return 0;
 }
