@@ -1449,6 +1449,14 @@ int32_t getExifGpsDateTimeStamp(char *gpsDateStamp,
         return BAD_VALUE;
     }
 }
+
+int32_t getExifExposureValue(srat_t* exposure_val, int32_t exposure_comp,
+                             cam_rational_type_t step)
+{
+    exposure_val->num = exposure_comp * step.numerator;
+    exposure_val->denom = step.denominator;
+    return 0;
+}
 /*===========================================================================
  * FUNCTION   : getExifData
  *
@@ -1578,6 +1586,18 @@ QCamera3Exif *QCamera3PicChannel::getExifData()
                        (void *)gpsTimeStamp);
     } else {
         ALOGE("%s: getExifGpsDataTimeStamp failed", __func__);
+    }
+
+    srat_t exposure_val;
+    rc = getExifExposureValue(&exposure_val, mJpegSettings->exposure_compensation,
+                              mJpegSettings->exposure_comp_step);
+    if(rc == NO_ERROR) {
+        exif->addEntry(EXIFTAGID_EXPOSURE_BIAS_VALUE,
+                       EXIF_SRATIONAL,
+                       1,
+                       (void *)(&exposure_val));
+    } else {
+        ALOGE("%s: getExifExposureValue failed ", __func__);
     }
 
     return exif;
