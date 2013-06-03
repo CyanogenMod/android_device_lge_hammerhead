@@ -957,12 +957,12 @@ void QCamera3HardwareInterface::captureResultCb(mm_camera_super_buf_t *metadata_
             // Send empty metadata with already filled buffers for dropped metadata
             // and send valid metadata with already filled buffers for current metadata
             if (i->frame_number < frame_number) {
-                CameraMetadata emptyMetadata(1, 0);
-                emptyMetadata.update(ANDROID_SENSOR_TIMESTAMP,
+                CameraMetadata dummyMetadata;
+                dummyMetadata.update(ANDROID_SENSOR_TIMESTAMP,
                         &current_capture_time, 1);
-                emptyMetadata.update(ANDROID_REQUEST_ID,
+                dummyMetadata.update(ANDROID_REQUEST_ID,
                         &(i->request_id), 1);
-                result.result = emptyMetadata.release();
+                result.result = dummyMetadata.release();
             } else {
                 result.result = translateCbMetadataToResultMetadata(metadata,
                         current_capture_time, i->request_id);
@@ -1123,17 +1123,14 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
         j+= 4;
         k+= 6;
     }
-    camMetadata.update(ANDROID_STATISTICS_FACE_IDS, faceIds, numFaces);
-    camMetadata.update(ANDROID_STATISTICS_FACE_SCORES, faceScores, numFaces);
-    camMetadata.update(ANDROID_STATISTICS_FACE_RECTANGLES,
+    if (numFaces > 0) {
+        camMetadata.update(ANDROID_STATISTICS_FACE_IDS, faceIds, numFaces);
+        camMetadata.update(ANDROID_STATISTICS_FACE_SCORES, faceScores, numFaces);
+        camMetadata.update(ANDROID_STATISTICS_FACE_RECTANGLES,
             faceRectangles, numFaces*4);
-    camMetadata.update(ANDROID_STATISTICS_FACE_LANDMARKS,
+        camMetadata.update(ANDROID_STATISTICS_FACE_LANDMARKS,
             faceLandmarks, numFaces*6);
-
-
-    /*autofocus - TODO*/
-    /*cam_auto_focus_data_t  *afData =(cam_auto_focus_data_t *)
-      POINTER_OF(CAM_INTF_META_AUTOFOCUS_DATA,metadata);*/
+    }
 
     uint8_t  *color_correct_mode =
         (uint8_t *)POINTER_OF(CAM_INTF_META_COLOR_CORRECT_MODE, metadata);
