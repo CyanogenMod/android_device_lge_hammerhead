@@ -754,13 +754,13 @@ int QCamera3HardwareInterface::processCaptureRequest(
     if (meta.exists(ANDROID_REQUEST_ID)) {
         request_id = meta.find(ANDROID_REQUEST_ID).data.i32[0];
         mCurrentRequestId = request_id;
-        ALOGD("%s: Received request with id: %d",__func__, request_id);
+        ALOGV("%s: Received request with id: %d",__func__, request_id);
     } else if (mFirstRequest || mCurrentRequestId == -1){
         ALOGE("%s: Unable to find request id field, \
                 & no previous id available", __func__);
         return NAME_NOT_FOUND;
     } else {
-        ALOGD("%s: Re-using old request id", __func__);
+        ALOGV("%s: Re-using old request id", __func__);
         request_id = mCurrentRequestId;
     }
 
