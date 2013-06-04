@@ -181,6 +181,9 @@ PRODUCT_PACKAGES += \
     libion
 
 PRODUCT_PACKAGES += \
+    sensors.hammerhead
+
+PRODUCT_PACKAGES += \
     com.android.future.usb.accessory
 
 # Filesystem management tools
