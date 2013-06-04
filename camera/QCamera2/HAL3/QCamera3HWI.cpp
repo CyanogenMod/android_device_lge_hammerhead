@@ -190,9 +190,11 @@ QCamera3HardwareInterface::~QCamera3HardwareInterface()
 {
     ALOGV("%s: E", __func__);
     /* Clean up all channels */
-    mMetadataChannel->stop();
-    delete mMetadataChannel;
-    mMetadataChannel = NULL;
+    if (mMetadataChannel) {
+        mMetadataChannel->stop();
+        delete mMetadataChannel;
+        mMetadataChannel = NULL;
+    }
     /* We need to stop all streams before deleting any stream */
     for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
         it != mStreamInfo.end(); it++) {
