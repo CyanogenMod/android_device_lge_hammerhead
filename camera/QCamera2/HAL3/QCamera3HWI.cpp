@@ -2366,12 +2366,25 @@ int QCamera3HardwareInterface::translateMetadataToParameters
                 sizeof(fps_range), &fps_range);
     }
 
+    float focalDistance = -1.0;
+    if (frame_settings.exists(ANDROID_LENS_FOCUS_DISTANCE)) {
+        focalDistance = frame_settings.find(ANDROID_LENS_FOCUS_DISTANCE).data.f[0];
+        rc = AddSetParmEntryToBatch(mParameters,
+                CAM_INTF_META_LENS_FOCUS_DISTANCE,
+                sizeof(focalDistance), &focalDistance);
+    }
+
     if (frame_settings.exists(ANDROID_CONTROL_AF_MODE)) {
         uint8_t fwk_focusMode =
             frame_settings.find(ANDROID_CONTROL_AF_MODE).data.u8[0];
-        uint8_t focusMode = lookupHalName(FOCUS_MODES_MAP,
-                                          sizeof(FOCUS_MODES_MAP),
-                                          fwk_focusMode);
+        uint8_t focusMode;
+        if (focalDistance == 0.0 && fwk_focusMode == ANDROID_CONTROL_AF_MODE_OFF) {
+            focusMode = CAM_FOCUS_MODE_INFINITY;
+        } else{
+         focusMode = lookupHalName(FOCUS_MODES_MAP,
+                                   sizeof(FOCUS_MODES_MAP),
+                                   fwk_focusMode);
+        }
         rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_FOCUS_MODE,
                 sizeof(focusMode), &focusMode);
     }
@@ -2557,14 +2570,6 @@ int QCamera3HardwareInterface::translateMetadataToParameters
         rc = AddSetParmEntryToBatch(mParameters,
                 CAM_INTF_META_LENS_FOCAL_LENGTH,
                 sizeof(focalLength), &focalLength);
-    }
-
-    if (frame_settings.exists(ANDROID_LENS_FOCUS_DISTANCE)) {
-        float focalDistance =
-            frame_settings.find(ANDROID_LENS_FOCUS_DISTANCE).data.f[0];
-        rc = AddSetParmEntryToBatch(mParameters,
-                CAM_INTF_META_LENS_FOCUS_DISTANCE,
-                sizeof(focalDistance), &focalDistance);
     }
 
     if (frame_settings.exists(ANDROID_LENS_OPTICAL_STABILIZATION_MODE)) {
