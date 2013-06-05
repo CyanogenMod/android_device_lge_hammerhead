@@ -694,6 +694,16 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
 
     ALOGD("%s: Need new session?:%d",__func__, needNewSess);
     if (needNewSess) {
+        //creating a new session, so we must destroy the old one
+        if ( 0 < mJpegSessionId ) {
+            ret = mJpegHandle.destroy_session(mJpegSessionId);
+            if (ret != NO_ERROR) {
+                ALOGE("%s: Error destroying an old jpeg encoding session, id = %d",
+                      __func__, mJpegSessionId);
+                return ret;
+            }
+            mJpegSessionId = 0;
+        }
         // create jpeg encoding session
         mm_jpeg_encode_params_t encodeParam;
         memset(&encodeParam, 0, sizeof(mm_jpeg_encode_params_t));
@@ -703,7 +713,7 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
                      encodeParam.num_src_bufs,encodeParam.num_tmb_bufs,encodeParam.num_dst_bufs);
         ret = mJpegHandle.create_session(mJpegClientHandle, &encodeParam, &mJpegSessionId);
         if (ret != NO_ERROR) {
-            ALOGE("%s: error creating a new jpeg encoding session", __func__);
+            ALOGE("%s: Error creating a new jpeg encoding session, ret = %d", __func__, ret);
             return ret;
         }
         needNewSess = FALSE;

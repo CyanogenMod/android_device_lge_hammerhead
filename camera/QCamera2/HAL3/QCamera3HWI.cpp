@@ -2352,10 +2352,8 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
                         gCamCapability[mCameraId]->filter_densities_count);
     }
 
-    if (gCamCapability[mCameraId]->focal_lengths_count) {
-        float default_focal_length = gCamCapability[mCameraId]->focal_length;
-        settings.update(ANDROID_LENS_FOCAL_LENGTH, &default_focal_length, 1);
-    }
+    float default_focal_length = gCamCapability[mCameraId]->focal_length;
+    settings.update(ANDROID_LENS_FOCAL_LENGTH, &default_focal_length, 1);
 
     mDefaultMetadata[type] = settings.release();
 
@@ -2841,6 +2839,16 @@ int QCamera3HardwareInterface::getJpegSettings
                                   (const camera_metadata_t *settings)
 {
     if (mJpegSettings) {
+        if (mJpegSettings->gps_timestamp) {
+            free(mJpegSettings->gps_timestamp);
+            mJpegSettings->gps_timestamp = NULL;
+        }
+        if (mJpegSettings->gps_coordinates) {
+            for (int i = 0; i < 3; i++) {
+                free(mJpegSettings->gps_coordinates[i]);
+                mJpegSettings->gps_coordinates[i] = NULL;
+            }
+        }
         free(mJpegSettings);
         mJpegSettings = NULL;
     }
@@ -2871,26 +2879,35 @@ int QCamera3HardwareInterface::getJpegSettings
     }
     if (jpeg_settings.exists(ANDROID_JPEG_GPS_COORDINATES)) {
         for (int i = 0; i < 3; i++) {
-            mJpegSettings->gps_coordinates[i] =
+            mJpegSettings->gps_coordinates[i] = (double*)malloc(sizeof(double*));
+            *(mJpegSettings->gps_coordinates[i]) =
                 jpeg_settings.find(ANDROID_JPEG_GPS_COORDINATES).data.d[i];
         }
     } else{
-        for (int i = 0; i < 3; i++) {
-            mJpegSettings->gps_coordinates[i] = 0;
+       for (int i = 0; i < 3; i++) {
+            mJpegSettings->gps_coordinates[i] = NULL;
         }
     }
+
     if (jpeg_settings.exists(ANDROID_JPEG_GPS_TIMESTAMP)) {
-        mJpegSettings->gps_timestamp =
+        mJpegSettings->gps_timestamp = (int64_t*)malloc(sizeof(int64_t*));
+        *(mJpegSettings->gps_timestamp) =
             jpeg_settings.find(ANDROID_JPEG_GPS_TIMESTAMP).data.i64[0];
-    } else{
-        mJpegSettings->gps_timestamp = 0;
+    } else {
+        mJpegSettings->gps_timestamp = NULL;
     }
 
     if (jpeg_settings.exists(ANDROID_JPEG_GPS_PROCESSING_METHOD)) {
-        mJpegSettings->gps_processing_method =
-            jpeg_settings.find(ANDROID_JPEG_GPS_PROCESSING_METHOD).data.u8[0];
-    } else{
-        mJpegSettings->gps_processing_method = 0;
+        int len = jpeg_settings.find(ANDROID_JPEG_GPS_PROCESSING_METHOD).count;
+        for (int i = 0; i < len; i++) {
+            mJpegSettings->gps_processing_method[i] =
+                jpeg_settings.find(ANDROID_JPEG_GPS_PROCESSING_METHOD).data.u8[i];
+        }
+        if (mJpegSettings->gps_processing_method[len-1] != '\0') {
+            mJpegSettings->gps_processing_method[len] = '\0';
+        }
+    } else {
+        mJpegSettings->gps_processing_method[0] = '\0';
     }
 
     if (jpeg_settings.exists(ANDROID_SENSOR_SENSITIVITY)) {
@@ -2899,6 +2916,7 @@ int QCamera3HardwareInterface::getJpegSettings
     } else {
         mJpegSettings->sensor_sensitivity = mMetadataResponse.iso_speed;
     }
+
     if (jpeg_settings.exists(ANDROID_LENS_FOCAL_LENGTH)) {
         mJpegSettings->lens_focal_length =
             jpeg_settings.find(ANDROID_LENS_FOCAL_LENGTH).data.f[0];
