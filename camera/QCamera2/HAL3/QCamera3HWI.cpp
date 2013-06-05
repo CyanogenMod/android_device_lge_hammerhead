@@ -212,6 +212,7 @@ QCamera3HardwareInterface::~QCamera3HardwareInterface()
         free(mJpegSettings);
         mJpegSettings = NULL;
     }
+
     deinitParameters();
     closeCamera();
 
@@ -1096,7 +1097,6 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
     CameraMetadata camMetadata;
     camera_metadata_t* resultMetadata;
 
-
     camMetadata.update(ANDROID_SENSOR_TIMESTAMP, &timestamp, 1);
     camMetadata.update(ANDROID_REQUEST_ID, &request_id, 1);
 
@@ -1263,6 +1263,7 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
 
     int32_t  *sensorSensitivity =
         (int32_t *)POINTER_OF(CAM_INTF_META_SENSOR_SENSITIVITY, metadata);
+    mMetadataResponse.iso_speed = *sensorSensitivity;
     camMetadata.update(ANDROID_SENSOR_SENSITIVITY, sensorSensitivity, 1);
 
     uint8_t  *shadingMode =
@@ -1924,6 +1925,18 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_CONTROL_AE_AVAILABLE_MODES,
                       avail_ae_modes,
                       size);
+    size = 0;
+    int32_t avail_sensitivities[CAM_ISO_MODE_MAX];
+    for (int i = 0; i < gCamCapability[cameraId]->supported_iso_modes_cnt; i++) {
+        int32_t sensitivity = getSensorSensitivity(gCamCapability[cameraId]->supported_iso_modes[i]);
+        if (sensitivity != -1) {
+            avail_sensitivities[size] = sensitivity;
+            size++;
+        }
+    }
+    staticInfo.update(ANDROID_SENSOR_INFO_AVAILABLE_SENSITIVITIES,
+                      avail_sensitivities,
+                      size);
 
     gStaticMetadata[cameraId] = staticInfo.release();
     return rc;
@@ -2029,6 +2042,44 @@ int32_t QCamera3HardwareInterface::getScalarFormat(int32_t format)
     }
     return halPixelFormat;
 }
+
+/*===========================================================================
+ * FUNCTION   : getSensorSensitivity
+ *
+ * DESCRIPTION: convert iso_mode to an integer value
+ *
+ * PARAMETERS : iso_mode : the iso_mode supported by sensor
+ *
+ ** RETURN    : sensitivity supported by sensor
+ *
+ *==========================================================================*/
+int32_t QCamera3HardwareInterface::getSensorSensitivity(int32_t iso_mode)
+{
+    int32_t sensitivity;
+
+    switch (iso_mode) {
+    case CAM_ISO_MODE_100:
+        sensitivity = 100;
+        break;
+    case CAM_ISO_MODE_200:
+        sensitivity = 200;
+        break;
+    case CAM_ISO_MODE_400:
+        sensitivity = 400;
+        break;
+    case CAM_ISO_MODE_800:
+        sensitivity = 800;
+        break;
+    case CAM_ISO_MODE_1600:
+        sensitivity = 1600;
+        break;
+    default:
+        sensitivity = -1;
+        break;
+    }
+    return sensitivity;
+}
+
 
 /*===========================================================================
  * FUNCTION   : AddSetParmEntryToBatch
@@ -2301,11 +2352,10 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
                         gCamCapability[mCameraId]->filter_densities_count);
     }
 
-    /* TODO: Enable focus lengths once supported*/
-    /*if (gCamCapability[mCameraId]->focal_lengths_count) {
-        float default_focal_length = gCamCapability[mCameraId]->focal_lengths[0];
+    if (gCamCapability[mCameraId]->focal_lengths_count) {
+        float default_focal_length = gCamCapability[mCameraId]->focal_length;
         settings.update(ANDROID_LENS_FOCAL_LENGTH, &default_focal_length, 1);
-    }*/
+    }
 
     mDefaultMetadata[type] = settings.release();
 
@@ -2824,19 +2874,30 @@ int QCamera3HardwareInterface::getJpegSettings
             mJpegSettings->gps_coordinates[i] =
                 jpeg_settings.find(ANDROID_JPEG_GPS_COORDINATES).data.d[i];
         }
+    } else{
+        for (int i = 0; i < 3; i++) {
+            mJpegSettings->gps_coordinates[i] = 0;
+        }
     }
     if (jpeg_settings.exists(ANDROID_JPEG_GPS_TIMESTAMP)) {
         mJpegSettings->gps_timestamp =
             jpeg_settings.find(ANDROID_JPEG_GPS_TIMESTAMP).data.i64[0];
+    } else{
+        mJpegSettings->gps_timestamp = 0;
     }
 
     if (jpeg_settings.exists(ANDROID_JPEG_GPS_PROCESSING_METHOD)) {
         mJpegSettings->gps_processing_method =
             jpeg_settings.find(ANDROID_JPEG_GPS_PROCESSING_METHOD).data.u8[0];
+    } else{
+        mJpegSettings->gps_processing_method = 0;
     }
+
     if (jpeg_settings.exists(ANDROID_SENSOR_SENSITIVITY)) {
         mJpegSettings->sensor_sensitivity =
             jpeg_settings.find(ANDROID_SENSOR_SENSITIVITY).data.i32[0];
+    } else {
+        mJpegSettings->sensor_sensitivity = mMetadataResponse.iso_speed;
     }
     if (jpeg_settings.exists(ANDROID_LENS_FOCAL_LENGTH)) {
         mJpegSettings->lens_focal_length =
