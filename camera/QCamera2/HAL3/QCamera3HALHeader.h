@@ -64,6 +64,10 @@ namespace qcamera {
         int registered;
     } stream_info_t;
 
+    typedef struct {
+        int32_t iso_speed;
+    } metadata_response_t;
+
 };//namespace qcamera
 
 #endif
