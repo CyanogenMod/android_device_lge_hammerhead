@@ -1246,11 +1246,12 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
 
     cam_crop_region_t  *hScalerCropRegion =(cam_crop_region_t *)
         POINTER_OF(CAM_INTF_META_SCALER_CROP_REGION, metadata);
-    int32_t scalerCropRegion[3];
+    int32_t scalerCropRegion[4];
     scalerCropRegion[0] = hScalerCropRegion->left;
     scalerCropRegion[1] = hScalerCropRegion->top;
     scalerCropRegion[2] = hScalerCropRegion->width;
-    camMetadata.update(ANDROID_SCALER_CROP_REGION, scalerCropRegion, 3);
+    scalerCropRegion[3] = hScalerCropRegion->height;
+    camMetadata.update(ANDROID_SCALER_CROP_REGION, scalerCropRegion, 4);
 
     int64_t  *sensorExpTime =
         (int64_t *)POINTER_OF(CAM_INTF_META_SENSOR_EXPOSURE_TIME, metadata);
@@ -1340,6 +1341,48 @@ void QCamera3HardwareInterface::convertFromRegions(cam_area_t* roi,
     roi->rect.top = y_min;
     roi->rect.width = x_max - x_min;
     roi->rect.height = y_max - y_min;
+}
+
+/*===========================================================================
+ * FUNCTION   : resetIfNeededROI
+ *
+ * DESCRIPTION: helper method to reset the roi if it is greater than scaler
+ *              crop region
+ *
+ * PARAMETERS :
+ *   @roi       : cam_area_t struct to resize
+ *   @scalerCropRegion : cam_crop_region_t region to compare against
+ *
+ *
+ *==========================================================================*/
+bool QCamera3HardwareInterface::resetIfNeededROI(cam_area_t* roi,
+                                                 const cam_crop_region_t* scalerCropRegion)
+{
+    int32_t roi_x_max = roi->rect.width + roi->rect.left;
+    int32_t roi_y_max = roi->rect.height + roi->rect.top;
+    int32_t crop_x_max = scalerCropRegion->width + scalerCropRegion->top;
+    int32_t crop_y_max = scalerCropRegion->height + scalerCropRegion->left;
+    if ((roi_x_max < scalerCropRegion->left) ||
+        (roi_y_max < scalerCropRegion->top)  ||
+        (roi->rect.left > crop_x_max) ||
+        (roi->rect.top > crop_y_max)){
+        return false;
+    }
+    if (roi->rect.left < scalerCropRegion->left) {
+        roi->rect.left = scalerCropRegion->left;
+    }
+    if (roi->rect.top < scalerCropRegion->top) {
+        roi->rect.top = scalerCropRegion->top;
+    }
+    if (roi_x_max > crop_x_max) {
+        roi_x_max = crop_x_max;
+    }
+    if (roi_y_max > crop_y_max) {
+        roi_y_max = crop_y_max;
+    }
+    roi->rect.width = roi_x_max - roi->rect.left;
+    roi->rect.height = roi_y_max - roi->rect.top;
+    return true;
 }
 
 /*===========================================================================
@@ -2596,8 +2639,9 @@ int QCamera3HardwareInterface::translateMetadataToParameters
                 sizeof(noiseRedStrength), &noiseRedStrength);
     }
 
+    cam_crop_region_t scalerCropRegion;
+    bool scalerCropSet = false;
     if (frame_settings.exists(ANDROID_SCALER_CROP_REGION)) {
-        cam_crop_region_t scalerCropRegion;
         scalerCropRegion.left =
             frame_settings.find(ANDROID_SCALER_CROP_REGION).data.i32[0];
         scalerCropRegion.top =
@@ -2609,6 +2653,7 @@ int QCamera3HardwareInterface::translateMetadataToParameters
         rc = AddSetParmEntryToBatch(mParameters,
                 CAM_INTF_META_SCALER_CROP_REGION,
                 sizeof(scalerCropRegion), &scalerCropRegion);
+        scalerCropSet = true;
     }
 
     if (frame_settings.exists(ANDROID_SENSOR_EXPOSURE_TIME)) {
@@ -2690,23 +2735,41 @@ int QCamera3HardwareInterface::translateMetadataToParameters
 
     if (frame_settings.exists(ANDROID_CONTROL_AE_REGIONS)) {
         cam_area_t roi;
+        bool reset = true;
         convertFromRegions(&roi, settings, ANDROID_CONTROL_AE_REGIONS);
-        rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_AEC_ROI,
-                sizeof(roi), &roi);
+        if (scalerCropSet) {
+            reset = resetIfNeededROI(&roi, &scalerCropRegion);
+        }
+        if (reset) {
+            rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_AEC_ROI,
+                    sizeof(roi), &roi);
+        }
     }
 
     if (frame_settings.exists(ANDROID_CONTROL_AF_REGIONS)) {
         cam_area_t roi;
+        bool reset = true;
         convertFromRegions(&roi, settings, ANDROID_CONTROL_AF_REGIONS);
-        rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_AF_ROI,
-                sizeof(roi), &roi);
+        if (scalerCropSet) {
+            reset = resetIfNeededROI(&roi, &scalerCropRegion);
+        }
+        if (reset) {
+            rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_AF_ROI,
+                    sizeof(roi), &roi);
+        }
     }
 
     if (frame_settings.exists(ANDROID_CONTROL_AWB_REGIONS)) {
         cam_area_t roi;
+        bool reset = true;
         convertFromRegions(&roi, settings, ANDROID_CONTROL_AWB_REGIONS);
-        rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_AWB_REGIONS,
-                sizeof(roi), &roi);
+        if (scalerCropSet) {
+            reset = resetIfNeededROI(&roi, &scalerCropRegion);
+        }
+        if (reset) {
+            rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_AWB_REGIONS,
+                    sizeof(roi), &roi);
+        }
     }
     return rc;
 }
