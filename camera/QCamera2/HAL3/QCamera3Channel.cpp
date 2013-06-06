@@ -1297,15 +1297,13 @@ int32_t getExifFocalLength(rat_t *focalLength, float value)
  *              none-zero failure code
  *==========================================================================*/
 int32_t getExifGpsProcessingMethod(char *gpsProcessingMethod,
-                                                      uint32_t &count, int value)
+                                   uint32_t &count, char* value)
 {
-    char str[30];
-    snprintf(str, sizeof(str), "%d", value);
-    if(str != NULL) {
+    if(value != NULL) {
         memcpy(gpsProcessingMethod, ExifAsciiPrefix, EXIF_ASCII_PREFIX_SIZE);
         count = EXIF_ASCII_PREFIX_SIZE;
-        strncpy(gpsProcessingMethod + EXIF_ASCII_PREFIX_SIZE, str, strlen(str));
-        count += strlen(str);
+        strncpy(gpsProcessingMethod + EXIF_ASCII_PREFIX_SIZE, value, strlen(value));
+        count += strlen(value);
         gpsProcessingMethod[count++] = '\0'; // increase 1 for the last NULL char
         return NO_ERROR;
     } else {
@@ -1508,83 +1506,94 @@ QCamera3Exif *QCamera3PicChannel::getExifData()
                    1,
                    (void *)&(isoSpeed));
 
-    char gpsProcessingMethod[EXIF_ASCII_PREFIX_SIZE + GPS_PROCESSING_METHOD_SIZE];
-    count = 0;
-    rc = getExifGpsProcessingMethod(gpsProcessingMethod, count, mJpegSettings->gps_processing_method);
-    if(rc == NO_ERROR) {
-        exif->addEntry(EXIFTAGID_GPS_PROCESSINGMETHOD,
-                       EXIF_ASCII,
-                       count,
-                       (void *)gpsProcessingMethod);
-    } else {
-        ALOGE("%s: getExifGpsProcessingMethod failed", __func__);
+
+    if (strlen(mJpegSettings->gps_processing_method) > 0) {
+        char gpsProcessingMethod[EXIF_ASCII_PREFIX_SIZE + GPS_PROCESSING_METHOD_SIZE];
+        count = 0;
+        rc = getExifGpsProcessingMethod(gpsProcessingMethod, count, mJpegSettings->gps_processing_method);
+        if(rc == NO_ERROR) {
+            exif->addEntry(EXIFTAGID_GPS_PROCESSINGMETHOD,
+                           EXIF_ASCII,
+                           count,
+                           (void *)gpsProcessingMethod);
+        } else {
+            ALOGE("%s: getExifGpsProcessingMethod failed", __func__);
+        }
     }
 
-    rat_t latitude[3];
-    char latRef[2];
-    rc = getExifLatitude(latitude, latRef, mJpegSettings->gps_coordinates[0]);
-    if(rc == NO_ERROR) {
-        exif->addEntry(EXIFTAGID_GPS_LATITUDE,
-                       EXIF_RATIONAL,
-                       3,
-                       (void *)latitude);
-        exif->addEntry(EXIFTAGID_GPS_LATITUDE_REF,
-                       EXIF_ASCII,
-                       2,
-                       (void *)latRef);
-    } else {
-        ALOGE("%s: getExifLatitude failed", __func__);
+    if (mJpegSettings->gps_coordinates[0]) {
+        rat_t latitude[3];
+        char latRef[2];
+        rc = getExifLatitude(latitude, latRef, *(mJpegSettings->gps_coordinates[0]));
+        if(rc == NO_ERROR) {
+            exif->addEntry(EXIFTAGID_GPS_LATITUDE,
+                           EXIF_RATIONAL,
+                           3,
+                           (void *)latitude);
+            exif->addEntry(EXIFTAGID_GPS_LATITUDE_REF,
+                           EXIF_ASCII,
+                           2,
+                           (void *)latRef);
+        } else {
+            ALOGE("%s: getExifLatitude failed", __func__);
+        }
     }
 
-    rat_t longitude[3];
-    char lonRef[2];
-    rc = getExifLongitude(longitude, lonRef, mJpegSettings->gps_coordinates[1]);
-    if(rc == NO_ERROR) {
-        exif->addEntry(EXIFTAGID_GPS_LONGITUDE,
-                       EXIF_RATIONAL,
-                       3,
-                       (void *)longitude);
+    if (mJpegSettings->gps_coordinates[1]) {
+        rat_t longitude[3];
+        char lonRef[2];
+        rc = getExifLongitude(longitude, lonRef, *(mJpegSettings->gps_coordinates[1]));
+        if(rc == NO_ERROR) {
+            exif->addEntry(EXIFTAGID_GPS_LONGITUDE,
+                           EXIF_RATIONAL,
+                           3,
+                           (void *)longitude);
 
-        exif->addEntry(EXIFTAGID_GPS_LONGITUDE_REF,
-                       EXIF_ASCII,
-                       2,
-                       (void *)lonRef);
-    } else {
-        ALOGE("%s: getExifLongitude failed", __func__);
+            exif->addEntry(EXIFTAGID_GPS_LONGITUDE_REF,
+                           EXIF_ASCII,
+                           2,
+                           (void *)lonRef);
+        } else {
+            ALOGE("%s: getExifLongitude failed", __func__);
+        }
     }
 
-    rat_t altitude;
-    char altRef;
-    rc = getExifAltitude(&altitude, &altRef, mJpegSettings->gps_coordinates[2]);
-    if(rc == NO_ERROR) {
-        exif->addEntry(EXIFTAGID_GPS_ALTITUDE,
-                       EXIF_RATIONAL,
-                       1,
-                       (void *)&(altitude));
+    if (mJpegSettings->gps_coordinates[2]) {
+        rat_t altitude;
+        char altRef;
+        rc = getExifAltitude(&altitude, &altRef, *(mJpegSettings->gps_coordinates[2]));
+        if(rc == NO_ERROR) {
+            exif->addEntry(EXIFTAGID_GPS_ALTITUDE,
+                           EXIF_RATIONAL,
+                           1,
+                           (void *)&(altitude));
 
-        exif->addEntry(EXIFTAGID_GPS_ALTITUDE_REF,
-                       EXIF_BYTE,
-                       1,
-                       (void *)&altRef);
-    } else {
-        ALOGE("%s: getExifAltitude failed", __func__);
+            exif->addEntry(EXIFTAGID_GPS_ALTITUDE_REF,
+                           EXIF_BYTE,
+                           1,
+                           (void *)&altRef);
+        } else {
+            ALOGE("%s: getExifAltitude failed", __func__);
+        }
     }
 
-    char gpsDateStamp[20];
-    rat_t gpsTimeStamp[3];
-    rc = getExifGpsDateTimeStamp(gpsDateStamp, 20, gpsTimeStamp, mJpegSettings->gps_timestamp);
-    if(rc == NO_ERROR) {
-        exif->addEntry(EXIFTAGID_GPS_DATESTAMP,
-                       EXIF_ASCII,
-                       strlen(gpsDateStamp) + 1,
-                       (void *)gpsDateStamp);
+    if (mJpegSettings->gps_timestamp) {
+        char gpsDateStamp[20];
+        rat_t gpsTimeStamp[3];
+        rc = getExifGpsDateTimeStamp(gpsDateStamp, 20, gpsTimeStamp, *(mJpegSettings->gps_timestamp));
+        if(rc == NO_ERROR) {
+            exif->addEntry(EXIFTAGID_GPS_DATESTAMP,
+                           EXIF_ASCII,
+                           strlen(gpsDateStamp) + 1,
+                           (void *)gpsDateStamp);
 
-        exif->addEntry(EXIFTAGID_GPS_TIMESTAMP,
-                       EXIF_RATIONAL,
-                       3,
-                       (void *)gpsTimeStamp);
-    } else {
-        ALOGE("%s: getExifGpsDataTimeStamp failed", __func__);
+            exif->addEntry(EXIFTAGID_GPS_TIMESTAMP,
+                           EXIF_RATIONAL,
+                           3,
+                           (void *)gpsTimeStamp);
+        } else {
+            ALOGE("%s: getExifGpsDataTimeStamp failed", __func__);
+        }
     }
 
     srat_t exposure_val;
