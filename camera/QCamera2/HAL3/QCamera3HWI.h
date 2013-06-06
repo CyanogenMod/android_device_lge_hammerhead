@@ -162,6 +162,7 @@ private:
     uint8_t            mCameraId;
     mm_camera_vtbl_t  *mCameraHandle;
     bool               mCameraOpened;
+    bool               mCameraInitialized;
     camera_metadata_t *mDefaultMetadata[CAMERA3_TEMPLATE_COUNT];
 
     const camera3_callback_ops_t *mCallbackOps;
@@ -211,6 +212,9 @@ private:
     static const QCameraMap ANTIBANDING_MODES_MAP[];
     static const QCameraMap AE_FLASH_MODE_MAP[];
     static const QCameraMap FLASH_MODES_MAP[];
+
+    static pthread_mutex_t mCameraSessionLock;
+    static unsigned int mCameraSessionActive;
 };
 
 }; // namespace qcamera
