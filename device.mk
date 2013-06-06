@@ -249,7 +249,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
     persist.audio.dualmic.config=endfire \
     persist.audio.fluence.voicecall=true \
     persist.audio.fluence.voicerec=false \
-    persist.audio.fluence.speaker=true \
+    persist.audio.fluence.speaker=false \
     af.resampler.quality=4
 
 # set default USB configuration
