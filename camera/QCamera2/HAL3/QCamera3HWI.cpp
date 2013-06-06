@@ -50,6 +50,10 @@ cam_capability_t *gCamCapability[MM_CAMERA_MAX_NUM_SENSORS];
 parm_buffer_t *prevSettings;
 const camera_metadata_t *gStaticMetadata[MM_CAMERA_MAX_NUM_SENSORS];
 
+pthread_mutex_t QCamera3HardwareInterface::mCameraSessionLock =
+    PTHREAD_MUTEX_INITIALIZER;
+unsigned int QCamera3HardwareInterface::mCameraSessionActive = 0;
+
 const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::EFFECT_MODES_MAP[] = {
     { ANDROID_CONTROL_EFFECT_MODE_OFF,       CAM_EFFECT_MODE_OFF },
     { ANDROID_CONTROL_EFFECT_MODE_MONO,       CAM_EFFECT_MODE_MONO },
@@ -150,6 +154,7 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId)
     : mCameraId(cameraId),
       mCameraHandle(NULL),
       mCameraOpened(false),
+      mCameraInitialized(false),
       mCallbackOps(NULL),
       mInputStream(NULL),
       mMetadataChannel(NULL),
@@ -190,11 +195,13 @@ QCamera3HardwareInterface::~QCamera3HardwareInterface()
 {
     ALOGV("%s: E", __func__);
     /* Clean up all channels */
-    if (mMetadataChannel) {
+    if (mCameraInitialized) {
         mMetadataChannel->stop();
         delete mMetadataChannel;
         mMetadataChannel = NULL;
+        deinitParameters();
     }
+
     /* We need to stop all streams before deleting any stream */
     for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
         it != mStreamInfo.end(); it++) {
@@ -212,9 +219,8 @@ QCamera3HardwareInterface::~QCamera3HardwareInterface()
         free(mJpegSettings);
         mJpegSettings = NULL;
     }
-
-    deinitParameters();
-    closeCamera();
+    if (mCameraOpened)
+        closeCamera();
 
     for (size_t i = 0; i < CAMERA3_TEMPLATE_COUNT; i++)
         if (mDefaultMetadata[i])
@@ -242,18 +248,27 @@ QCamera3HardwareInterface::~QCamera3HardwareInterface()
  *==========================================================================*/
 int QCamera3HardwareInterface::openCamera(struct hw_device_t **hw_device)
 {
-    //int rc = NO_ERROR;
     int rc = 0;
+    pthread_mutex_lock(&mCameraSessionLock);
+    if (mCameraSessionActive) {
+        ALOGE("%s: multiple simultaneous camera instance not supported", __func__);
+        pthread_mutex_unlock(&mCameraSessionLock);
+        return INVALID_OPERATION;
+    }
+
     if (mCameraOpened) {
         *hw_device = NULL;
         return PERMISSION_DENIED;
     }
 
     rc = openCamera();
-    if (rc == 0)
+    if (rc == 0) {
         *hw_device = &mCameraDevice.common;
-    else
+        mCameraSessionActive = 1;
+    } else
         *hw_device = NULL;
+
+    pthread_mutex_unlock(&mCameraSessionLock);
     return rc;
 }
 
@@ -348,6 +363,7 @@ int QCamera3HardwareInterface::initialize(
     mCallbackOps = callback_ops;
 
     pthread_mutex_unlock(&mMutex);
+    mCameraInitialized = true;
     return 0;
 
 err3:
@@ -3173,6 +3189,10 @@ int QCamera3HardwareInterface::close_camera_device(struct hw_device_t* device)
         return BAD_VALUE;
     }
     delete hw;
+
+    pthread_mutex_lock(&mCameraSessionLock);
+    mCameraSessionActive = 0;
+    pthread_mutex_unlock(&mCameraSessionLock);
     ALOGV("%s: X", __func__);
     return ret;
 }
