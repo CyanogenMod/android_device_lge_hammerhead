@@ -105,7 +105,7 @@ public:
     static bool resetIfNeededROI(cam_area_t* roi, const cam_crop_region_t* scalerCropRegion);
     static void convertLandmarks(cam_face_detection_info_t face, int32_t* landmarks);
     static int32_t getScalarFormat(int32_t format);
-
+    static int32_t getSensorSensitivity(int32_t iso_mode);
     static void captureResultCb(mm_camera_super_buf_t *metadata,
                 camera3_stream_buffer_t *buffer, uint32_t frame_number,
                 void *userdata);
@@ -201,6 +201,7 @@ private:
     pthread_mutex_t mCaptureResultLock;
 
     jpeg_settings_t* mJpegSettings;
+    metadata_response_t mMetadataResponse;
     List<stream_info_t*> mStreamInfo;
 
     static const QCameraMap EFFECT_MODES_MAP[];

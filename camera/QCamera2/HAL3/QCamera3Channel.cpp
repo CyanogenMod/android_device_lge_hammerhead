@@ -1502,13 +1502,12 @@ QCamera3Exif *QCamera3PicChannel::getExifData()
         ALOGE("%s: getExifFocalLength failed", __func__);
     }
 
-    //TBD_Later
-    /*uint16_t isoSpeed = mParameters.getExifIsoSpeed();
+    uint16_t isoSpeed = (uint16_t)mJpegSettings->sensor_sensitivity;
     exif->addEntry(EXIFTAGID_ISO_SPEED_RATING,
                    EXIF_SHORT,
                    1,
                    (void *)&(isoSpeed));
-    */
+
     char gpsProcessingMethod[EXIF_ASCII_PREFIX_SIZE + GPS_PROCESSING_METHOD_SIZE];
     count = 0;
     rc = getExifGpsProcessingMethod(gpsProcessingMethod, count, mJpegSettings->gps_processing_method);
