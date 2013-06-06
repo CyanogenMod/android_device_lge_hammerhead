@@ -194,6 +194,26 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId)
 QCamera3HardwareInterface::~QCamera3HardwareInterface()
 {
     ALOGV("%s: E", __func__);
+    /* We need to stop all streams before deleting any stream */
+    for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
+        it != mStreamInfo.end(); it++) {
+        QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
+        if (channel)
+            channel->stop();
+    }
+    for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
+        it != mStreamInfo.end(); it++) {
+        QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
+        if (channel)
+            delete channel;
+        free (*it);
+    }
+
+    if (mJpegSettings != NULL) {
+        free(mJpegSettings);
+        mJpegSettings = NULL;
+    }
+
     /* Clean up all channels */
     if (mCameraInitialized) {
         mMetadataChannel->stop();
@@ -202,23 +222,6 @@ QCamera3HardwareInterface::~QCamera3HardwareInterface()
         deinitParameters();
     }
 
-    /* We need to stop all streams before deleting any stream */
-    for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
-        it != mStreamInfo.end(); it++) {
-        QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
-        channel->stop();
-    }
-    for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
-        it != mStreamInfo.end(); it++) {
-        QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
-        delete channel;
-        free (*it);
-    }
-
-    if (mJpegSettings != NULL) {
-        free(mJpegSettings);
-        mJpegSettings = NULL;
-    }
     if (mCameraOpened)
         closeCamera();
 
