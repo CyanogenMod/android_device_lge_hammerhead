@@ -239,6 +239,11 @@ on post-fs-data
     write /sys/module/pm_8x60/modes/cpu1/standalone_power_collapse/idle_enabled 1
     write /sys/module/pm_8x60/modes/cpu2/standalone_power_collapse/idle_enabled 1
     write /sys/module/pm_8x60/modes/cpu3/standalone_power_collapse/idle_enabled 1
+    write /sys/module/pm_8x60/modes/cpu0/retention/idle_enabled 1
+    write /sys/module/pm_8x60/modes/cpu1/retention/idle_enabled 1
+    write /sys/module/pm_8x60/modes/cpu2/retention/idle_enabled 1
+    write /sys/module/pm_8x60/modes/cpu3/retention/idle_enabled 1
+    write /sys/module/msm_thermal/core_control/enabled 0
     write /sys/devices/system/cpu/cpu1/online 1
     write /sys/devices/system/cpu/cpu2/online 1
     write /sys/devices/system/cpu/cpu3/online 1
@@ -253,8 +258,8 @@ on post-fs-data
     write /sys/devices/system/cpu/cpufreq/ondemand/down_differential 10
     write /sys/devices/system/cpu/cpufreq/ondemand/up_threshold_multi_core 70
     write /sys/devices/system/cpu/cpufreq/ondemand/down_differential_multi_core 3
-    write /sys/devices/system/cpu/cpufreq/ondemand/optimal_freq 918000
-    write /sys/devices/system/cpu/cpufreq/ondemand/sync_freq 1026000
+    write /sys/devices/system/cpu/cpufreq/ondemand/optimal_freq 960000
+    write /sys/devices/system/cpu/cpufreq/ondemand/sync_freq 960000
     write /sys/devices/system/cpu/cpufreq/ondemand/up_threshold_any_cpu_load 80
     write /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq 300000
     write /sys/devices/system/cpu/cpu1/cpufreq/scaling_min_freq 300000
@@ -262,6 +267,7 @@ on post-fs-data
     write /sys/devices/system/cpu/cpu3/cpufreq/scaling_min_freq 300000
     chown system /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
     chown system /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq
+    write /sys/module/msm_thermal/core_control/enabled 1
     chown root.system /sys/devices/system/cpu/mfreq
     chmod 220 /sys/devices/system/cpu/mfreq
     chown root.system /sys/devices/system/cpu/cpu1/online
@@ -270,6 +276,7 @@ on post-fs-data
     chmod 664 /sys/devices/system/cpu/cpu1/online
     chmod 664 /sys/devices/system/cpu/cpu2/online
     chmod 664 /sys/devices/system/cpu/cpu3/online
+    write /dev/cpuctl/apps/cpu.notify_on_migrate 1
 
 on charger
     # Booting modem
