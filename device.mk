@@ -161,6 +161,9 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     keystore.msm8974
 
+PRODUCT_PACKAGES += \
+    power.msm8974
+
 # GPS
 PRODUCT_PACKAGES += \
     libloc_adapter \
