@@ -115,7 +115,8 @@
     <ctl name="DAC1 Switch" value="0" />
     <ctl name="SLIM_0_RX Channels" value="One" />
     <ctl name="SLIM_0_TX Channels" value="One" />
-    <ctl name="SLIM RX1 MUX" value="ZERO" />
+    <ctl name="SLIM RX1 MUX" value="AIF1_PB" />
+    <ctl name="SLIM RX2 MUX" value="ZERO" />
     <ctl name="SPK DRV Volume" value="6" />
     <ctl name="AIF1_CAP Mixer SLIM TX7" value="0" />
     <ctl name="AIF1_CAP Mixer SLIM TX8" value="0"/>
