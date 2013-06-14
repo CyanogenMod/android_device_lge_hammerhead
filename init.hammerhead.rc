@@ -199,6 +199,10 @@ on boot
 on post-fs-data
     mkdir /data/media 0770 media_rw media_rw
 
+    # NFC: create data/nfc for nv storage
+    mkdir /data/nfc 0770 nfc nfc
+    mkdir /data/nfc/param 0770 nfc nfc
+
     # wifi
     chown wifi system /persist/wifi
 
