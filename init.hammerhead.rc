@@ -196,6 +196,10 @@ on boot
     chown system system /sys/bus/iio/devices/iio:device0/dmp_firmware
     chown system system /sys/bus/iio/devices/iio:device0/pressure_enable
 
+    # Proximity and light sensor
+    chown system system /sys/bus/i2c/devices/i2c-3/3-0039/enable_als_sensor
+    chown system system /sys/bus/i2c/devices/i2c-3/3-0039/enable_ps_sensor
+
 on post-fs-data
     mkdir /data/media 0770 media_rw media_rw
 
