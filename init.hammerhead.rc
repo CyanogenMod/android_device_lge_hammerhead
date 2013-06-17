@@ -157,7 +157,6 @@ on boot
     chown system system /sys/bus/iio/devices/iio:device0/in_anglvel_z_dmp_bias
     chown system system /sys/bus/iio/devices/iio:device0/pedometer_int_on
     chown system system /sys/bus/iio/devices/iio:device0/pedometer_on
-    chown system system /sys/bus/iio/devices/iio:device0/accel_pedometer_step_on
     chown system system /sys/bus/iio/devices/iio:device0/pedometer_steps
     chown system system /sys/bus/iio/devices/iio:device0/pedometer_time
     chown system system /sys/bus/iio/devices/iio:device0/smd_enable
@@ -195,6 +194,17 @@ on boot
     chown system system /sys/bus/iio/devices/iio:device0/power/autosuspend_delay_ms
     chown system system /sys/bus/iio/devices/iio:device0/dmp_firmware
     chown system system /sys/bus/iio/devices/iio:device0/pressure_enable
+    chown system system /sys/bus/iio/devices/iio:device0/in_anglvel_self_test_scale
+    chown system system /sys/bus/iio/devices/iio:device0/gyro_rate
+    chown system system /sys/bus/iio/devices/iio:device0/in_accel_self_test_scale
+    chown system system /sys/bus/iio/devices/iio:device0/six_axes_q_rate
+    chown system system /sys/bus/iio/devices/iio:device0/ped_q_rate
+    chown system system /sys/bus/iio/devices/iio:device0/accel_rate
+    chown system system /sys/bus/iio/devices/iio:device0/compass_rate
+    chown system system /sys/bus/iio/devices/iio:device0/compass_sens
+    chown system system /sys/bus/iio/devices/iio:device0/pressure_rate
+    chown system system /sys/bus/iio/devices/iio:device0/step_indicator_on
+    chown system system /sys/bus/iio/devices/iio:device0/three_axes_q_rate
 
     # Proximity and light sensor
     chown system system /sys/bus/i2c/devices/i2c-3/3-0039/enable_als_sensor
