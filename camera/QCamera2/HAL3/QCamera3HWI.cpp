@@ -1764,7 +1764,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       availableVstabModes, sizeof(availableVstabModes));
 
     /*HAL 1 and HAL 3 common*/
-    float maxZoom = 10;
+    float maxZoom = 4;
     staticInfo.update(ANDROID_SCALER_AVAILABLE_MAX_DIGITAL_ZOOM,
             &maxZoom, 1);
 
@@ -1856,7 +1856,8 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     makeOverridesList(gCamCapability[cameraId]->scene_mode_overrides,
                       supported_scene_modes_cnt,
                       scene_mode_overrides,
-                      supported_indexes);
+                      supported_indexes,
+                      cameraId);
     staticInfo.update(ANDROID_CONTROL_SCENE_MODE_OVERRIDES,
                       scene_mode_overrides,
                       supported_scene_modes_cnt*3);
@@ -2011,17 +2012,35 @@ void QCamera3HardwareInterface::makeFPSTable(cam_fps_range_t* fpsTable, uint8_t 
  *==========================================================================*/
 void QCamera3HardwareInterface::makeOverridesList(cam_scene_mode_overrides_t* overridesTable,
                                                   uint8_t size, uint8_t* overridesList,
-                                                  uint8_t* supported_indexes)
+                                                  uint8_t* supported_indexes,
+                                                  int camera_id)
 {
     /*daemon will give a list of overrides for all scene modes.
       However we should send the fwk only the overrides for the scene modes
       supported by the framework*/
-    int j = 0, index = 0;
+    int j = 0, index = 0, supt = 0;
+    uint8_t focus_override;
     for (int i = 0; i < size; i++) {
+        supt = 0;
         index = supported_indexes[i];
-        overridesList[j] = (int32_t)overridesTable[index].ae_mode;
-        overridesList[j+1] = (int32_t)overridesTable[index].awb_mode;
-        overridesList[j+2] = (int32_t)overridesTable[index].af_mode;
+        overridesList[j] = (uint8_t)overridesTable[index].ae_mode;
+        overridesList[j+1] = (uint8_t)lookupFwkName(WHITE_BALANCE_MODES_MAP,
+                                 sizeof(WHITE_BALANCE_MODES_MAP)/sizeof(WHITE_BALANCE_MODES_MAP[0]),
+                                                    overridesTable[index].awb_mode);
+        focus_override = (uint8_t)overridesTable[index].af_mode;
+        for (int k = 0; k < gCamCapability[camera_id]->supported_focus_modes_cnt; k++) {
+           if (gCamCapability[camera_id]->supported_focus_modes[k] == focus_override) {
+              supt = 1;
+              break;
+           }
+        }
+        if (supt) {
+           overridesList[j+2] = (uint8_t)lookupFwkName(FOCUS_MODES_MAP,
+                                              sizeof(FOCUS_MODES_MAP)/sizeof(FOCUS_MODES_MAP[0]),
+                                              focus_override);
+        } else {
+           overridesList[j+2] = ANDROID_CONTROL_AF_MODE_OFF;
+        }
         j+=3;
     }
 }
@@ -2471,7 +2490,7 @@ int QCamera3HardwareInterface::translateMetadataToParameters
         fps_range.min_fps =
             frame_settings.find(ANDROID_CONTROL_AE_TARGET_FPS_RANGE).data.i32[0];
         fps_range.max_fps =
-            frame_settings.find(ANDROID_CONTROL_AE_TARGET_FPS_RANGE).data.i32[0];
+            frame_settings.find(ANDROID_CONTROL_AE_TARGET_FPS_RANGE).data.i32[1];
         rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_FPS_RANGE,
                 sizeof(fps_range), &fps_range);
     }
@@ -2595,6 +2614,14 @@ int QCamera3HardwareInterface::translateMetadataToParameters
         uint8_t metaMode = frame_settings.find(ANDROID_CONTROL_MODE).data.u8[0];
         rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_MODE,
                 sizeof(metaMode), &metaMode);
+        if (metaMode == ANDROID_CONTROL_MODE_USE_SCENE_MODE) {
+           uint8_t fwk_sceneMode = frame_settings.find(ANDROID_CONTROL_SCENE_MODE).data.u8[0];
+           uint8_t sceneMode = lookupHalName(SCENE_MODES_MAP,
+                                             sizeof(SCENE_MODES_MAP)/sizeof(SCENE_MODES_MAP[0]),
+                                             fwk_sceneMode);
+           rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_BESTSHOT_MODE,
+                sizeof(sceneMode), &sceneMode);
+        }
     }
 
     if (frame_settings.exists(ANDROID_DEMOSAIC_MODE)) {
