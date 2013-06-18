@@ -386,6 +386,7 @@
     <!-- TTY devices -->
 
     <path name="tty-headphones">
+        <ctl name="SLIM RX1 MUX" value="AIF1_PB" />
         <ctl name="SLIM_0_RX Channels" value="One" />
         <ctl name="RX1 MIX1 INP1" value="RX1" />
         <ctl name="CLASS_H_DSM MUX" value="DSM_HPHL_RX1" />
@@ -409,14 +410,17 @@
 
     <path name="voice-tty-full-headset-mic">
         <path name="adc2" />
+        <ctl name="DEC5 Volume" value="100" />
+        <ctl name="ADC2 Volume" value="100" />
     </path>
 
     <path name="voice-tty-hco-headset-mic">
-        <path name="adc2" />
+        <path name="voice-tty-full-headset-mic" />
     </path>
 
     <path name="voice-tty-vco-handset-mic">
         <path name="adc1" />
+        <ctl name="DEC6 Volume" value="100" />
     </path>
 
 </mixer>
