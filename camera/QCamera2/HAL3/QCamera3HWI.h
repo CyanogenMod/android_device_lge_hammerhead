@@ -38,6 +38,8 @@
 #include "QCamera3HALHeader.h"
 #include "QCamera3Channel.h"
 
+#include <hardware/power.h>
+
 extern "C" {
 #include <mm_camera_interface.h>
 #include <mm_jpeg_interface.h>
@@ -204,6 +206,8 @@ private:
     jpeg_settings_t* mJpegSettings;
     metadata_response_t mMetadataResponse;
     List<stream_info_t*> mStreamInfo;
+
+    power_module_t *m_pPowerModule;   // power module
 
     static const QCameraMap EFFECT_MODES_MAP[];
     static const QCameraMap WHITE_BALANCE_MODES_MAP[];
