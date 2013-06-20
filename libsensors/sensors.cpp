@@ -114,6 +114,9 @@ struct sensors_poll_context_t {
     int pollEvents(sensors_event_t* data, int count);
     int batch(int handle, int flags, int64_t period_ns, int64_t timeout);
 
+    // return true if the constructor is completed
+    bool isValid() { return mInitialized; };
+
 private:
     enum {
         mpl = 0,
@@ -133,6 +136,8 @@ private:
     int mWritePipeFd;
     SensorBase *mSensor[numSensorDrivers];
     CompassSensor *mCompassSensor;
+    // return true if the constructor is completed
+    bool mInitialized;
 
     int handleToDriver(int handle) const {
         switch (handle) {
@@ -168,6 +173,7 @@ sensors_poll_context_t::sensors_poll_context_t() {
     /* TODO: Handle external pressure sensor */
     mCompassSensor = new CompassSensor();
     MPLSensor *mplSensor = new MPLSensor(mCompassSensor);
+    mInitialized = false;
     // Must clean this up early or else the destructor will make a mess.
     memset(mSensor, 0, sizeof(mSensor));
 
@@ -214,6 +220,11 @@ sensors_poll_context_t::sensors_poll_context_t() {
     mPollFds[proximity].events = POLLIN;
     mPollFds[proximity].revents = 0;
 
+    if (mPollFds[light].fd < 0 || mPollFds[proximity].fd < 0) {
+        delete mCompassSensor;
+        return;
+    }
+
     /* Timer based sensor initialization */
     int wakeFds[2];
     int result = pipe(wakeFds);
@@ -225,6 +236,7 @@ sensors_poll_context_t::sensors_poll_context_t() {
     mPollFds[wake].fd = wakeFds[0];
     mPollFds[wake].events = POLLIN;
     mPollFds[wake].revents = 0;
+    mInitialized = true;
 }
 
 sensors_poll_context_t::~sensors_poll_context_t() {
@@ -234,9 +246,11 @@ sensors_poll_context_t::~sensors_poll_context_t() {
     delete mCompassSensor;
     close(mPollFds[wake].fd);
     close(mWritePipeFd);
+    mInitialized = false;
 }
 
 int sensors_poll_context_t::activate(int handle, int enabled) {
+    if (!mInitialized) return -EINVAL;
     int index = handleToDriver(handle);
     if (index < 0) return index;
     int err =  mSensor[index]->enable(handle, enabled);
@@ -408,6 +422,11 @@ static int open_sensors(const struct hw_module_t* module, const char* id,
 {
     int status = -EINVAL;
     sensors_poll_context_t *dev = new sensors_poll_context_t();
+
+    if (!dev->isValid()) {
+        ALOGE("Failed to open the sensors");
+        return status;
+    }
 
     memset(&dev->device, 0, sizeof(sensors_poll_device_1));
 
