@@ -135,6 +135,7 @@
 /system/vendor/lib/libmmcamera2_wnr_module.so
 /system/vendor/lib/libmmcamera_faceproc.so
 /system/vendor/lib/libmmcamera_imglib.so
+/system/vendor/lib/libmmcamera_imx179_eeprom.so
 /system/vendor/lib/libmmipl.so
 /system/vendor/lib/libmmjpeg.so
 /system/vendor/lib/libmmqjpeg_codec.so
