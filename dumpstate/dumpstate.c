@@ -20,4 +20,5 @@ void dumpstate_board()
 {
     dump_file("INTERRUPTS", "/proc/interrupts");
     dump_file("Power Management Stats", "/proc/msm_pm_stats");
+    run_command("SUBSYSTEM TOMBSTONES", 5, SU_PATH, "root", "ls", "-l", "/data/tombstones/ramdump", NULL);
 };
