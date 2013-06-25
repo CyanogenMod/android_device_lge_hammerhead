@@ -210,6 +210,19 @@ on boot
     chown system system /sys/bus/i2c/devices/i2c-3/3-0039/enable_als_sensor
     chown system system /sys/bus/i2c/devices/i2c-3/3-0039/enable_ps_sensor
 
+    # Subsytem Restart
+    #adsp
+    write /sys/bus/msm_subsys/devices/subsys0/restart_level "related"
+    #modem
+    write /sys/bus/msm_subsys/devices/subsys1/restart_level "related"
+    #venus
+    write /sys/bus/msm_subsys/devices/subsys2/restart_level "related"
+
+    # Subsytem Ramdump collection
+    mkdir /data/tombstones 0775 system system
+    mkdir /data/tombstones/ramdump 0775 system system
+    write /sys/module/subsystem_restart/parameters/enable_ramdumps 1
+
 on post-fs-data
     mkdir /data/media 0770 media_rw media_rw
 
@@ -356,6 +369,9 @@ service irsc_util /system/bin/logwrapper /system/bin/irsc_util "/etc/sec_config"
     class main
     user root
     oneshot
+
+service ssr_ramdump /system/bin/subsystem_ramdump 1
+    class main
 
 service p2p_supplicant /system/bin/logwrapper /system/bin/wpa_supplicant \
     -iwlan0 -Dnl80211 -c/data/misc/wifi/wpa_supplicant.conf \
