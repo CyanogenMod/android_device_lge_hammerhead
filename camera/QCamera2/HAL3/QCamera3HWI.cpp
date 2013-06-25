@@ -161,7 +161,8 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId)
       mFirstRequest(false),
       mParamHeap(NULL),
       mParameters(NULL),
-      mJpegSettings(NULL)
+      mJpegSettings(NULL),
+      m_pPowerModule(NULL)
 {
     mCameraDevice.common.tag = HARDWARE_DEVICE_TAG;
     mCameraDevice.common.version = CAMERA_DEVICE_API_VERSION_3_0;
@@ -180,6 +181,12 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId)
 
     for (size_t i = 0; i < CAMERA3_TEMPLATE_COUNT; i++)
         mDefaultMetadata[i] = NULL;
+
+#ifdef HAS_MULTIMEDIA_HINTS
+    if (hw_get_module(POWER_HARDWARE_MODULE_ID, (const hw_module_t **)&m_pPowerModule)) {
+        ALOGE("%s: %s module not found", __func__, POWER_HARDWARE_MODULE_ID);
+    }
+#endif
 }
 
 /*===========================================================================
@@ -271,6 +278,16 @@ int QCamera3HardwareInterface::openCamera(struct hw_device_t **hw_device)
     } else
         *hw_device = NULL;
 
+#ifdef HAS_MULTIMEDIA_HINTS
+    if (rc == 0) {
+        if (m_pPowerModule) {
+            if (m_pPowerModule->powerHint) {
+                m_pPowerModule->powerHint(m_pPowerModule, POWER_HINT_VIDEO_ENCODE,
+                        (void *)"state=1");
+            }
+        }
+    }
+#endif
     pthread_mutex_unlock(&mCameraSessionLock);
     return rc;
 }
@@ -321,6 +338,17 @@ int QCamera3HardwareInterface::closeCamera()
     rc = mCameraHandle->ops->close_camera(mCameraHandle->camera_handle);
     mCameraHandle = NULL;
     mCameraOpened = false;
+
+#ifdef HAS_MULTIMEDIA_HINTS
+    if (rc == NO_ERROR) {
+        if (m_pPowerModule) {
+            if (m_pPowerModule->powerHint) {
+                m_pPowerModule->powerHint(m_pPowerModule, POWER_HINT_VIDEO_ENCODE,
+                        (void *)"state=0");
+            }
+        }
+    }
+#endif
 
     return rc;
 }
