@@ -82,6 +82,14 @@
 /system/vendor/firmware/bcm2079x-b5_firmware.ncd
 /system/vendor/firmware/bcm4335a0.hcd
 /system/vendor/firmware/bcm4335c0.hcd
+/system/vendor/firmware/bu24205_LGIT_VER_2_CAL.bin
+/system/vendor/firmware/bu24205_LGIT_VER_2_DATA1.bin
+/system/vendor/firmware/bu24205_LGIT_VER_2_DATA2.bin
+/system/vendor/firmware/bu24205_LGIT_VER_2_DATA3.bin
+/system/vendor/firmware/bu24205_LGIT_VER_3_CAL.bin
+/system/vendor/firmware/bu24205_LGIT_VER_3_DATA1.bin
+/system/vendor/firmware/bu24205_LGIT_VER_3_DATA2.bin
+/system/vendor/firmware/bu24205_LGIT_VER_3_DATA3.bin
 /system/vendor/firmware/discretix/dxhdcp2.b00
 /system/vendor/firmware/discretix/dxhdcp2.b01
 /system/vendor/firmware/discretix/dxhdcp2.b02
@@ -97,6 +105,8 @@
 /system/vendor/firmware/venus.b02
 /system/vendor/firmware/venus.b03
 /system/vendor/firmware/venus.b04
+/system/vendor/firmware/venus.b05
+/system/vendor/firmware/venus.b06
 /system/vendor/firmware/venus.mdt
 /system/vendor/lib/egl/eglsubAndroid.so
 /system/vendor/lib/egl/libEGL_adreno.so
