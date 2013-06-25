@@ -502,3 +502,8 @@ service thermal-engine /system/bin/thermal-engine
    class main
    user root
    group root
+
+service vss_init /vendor/bin/vss_init
+    class late_start
+    user root
+    group root
