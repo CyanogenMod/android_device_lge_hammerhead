@@ -1631,5 +1631,5 @@ QCamera3Exif *QCamera3PicChannel::getExifData()
     return exif;
 }
 
-int QCamera3PicChannel::kMaxBuffers = 1;
+int QCamera3PicChannel::kMaxBuffers = 2;
 }; // namespace qcamera
