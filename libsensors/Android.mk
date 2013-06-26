@@ -13,6 +13,7 @@
 # limitations under the License.
 
 
+ifneq ($(TARGET_BUILD_PDK), true)
 LOCAL_PATH := $(call my-dir)
 
 # HAL module implemenation stored in
@@ -36,3 +37,4 @@ LOCAL_SRC_FILES := \
 LOCAL_SHARED_LIBRARIES := libinvensense_hal liblog libutils libdl
 
 include $(BUILD_SHARED_LIBRARY)
+endif
