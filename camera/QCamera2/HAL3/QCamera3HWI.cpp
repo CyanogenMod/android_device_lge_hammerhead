@@ -2649,6 +2649,14 @@ int QCamera3HardwareInterface::translateMetadataToParameters
                                              fwk_sceneMode);
            rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_BESTSHOT_MODE,
                 sizeof(sceneMode), &sceneMode);
+        } else if (metaMode == ANDROID_CONTROL_MODE_OFF) {
+           uint8_t sceneMode = 0;//CAMERA_BESTSHOT_OFF;
+           rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_BESTSHOT_MODE,
+                sizeof(sceneMode), &sceneMode);
+        } else if (metaMode == ANDROID_CONTROL_MODE_AUTO) {
+           uint8_t sceneMode = 0;//CAMERA_BESTSHOT_OFF;
+           rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_BESTSHOT_MODE,
+                sizeof(sceneMode), &sceneMode);
         }
     }
 
