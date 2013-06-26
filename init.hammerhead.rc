@@ -223,6 +223,10 @@ on boot
     mkdir /data/tombstones/ramdump 0775 system system
     write /sys/module/subsystem_restart/parameters/enable_ramdumps 1
 
+    # Modem logging collection
+    mkdir /data/diag_logs 0777 system system
+    chmod 666 /dev/diag
+
 on post-fs-data
     mkdir /data/media 0770 media_rw media_rw
 
