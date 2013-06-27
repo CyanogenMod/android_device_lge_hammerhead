@@ -87,6 +87,10 @@ PRODUCT_COPY_FILES += \
 PRODUCT_COPY_FILES += \
     device/lge/hammerhead/sec_config:system/etc/sec_config
 
+# GPS configuration
+PRODUCT_COPY_FILES += \
+    device/lge/hammerhead/gps.conf:system/etc/gps.conf
+
 # NFCEE access control
 ifeq ($(TARGET_BUILD_VARIANT),user)
     NFCEE_ACCESS_PATH := device/lge/hammerhead/nfc/nfcee_access.xml
@@ -170,8 +174,7 @@ PRODUCT_PACKAGES += \
     libloc_eng \
     libloc_api_v02 \
     libgps.utils \
-    gps.msm8974 \
-    gps.conf
+    gps.msm8974
 
 # NFC packages
 PRODUCT_PACKAGES += \
