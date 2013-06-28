@@ -1986,6 +1986,16 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       avail_sensitivities,
                       size);
 
+    staticInfo.update(ANDROID_SENSOR_MAX_ANALOG_SENSITIVITY,
+                      &gCamCapability[cameraId]->max_analog_sensitivity,
+                      sizeof(int32_t) );
+    staticInfo.update(ANDROID_SCALER_AVAILABLE_PROCESSED_MIN_DURATIONS,
+                      &gCamCapability[cameraId]->processed_min_duration,
+                      sizeof(int32_t));
+    staticInfo.update(ANDROID_SCALER_AVAILABLE_JPEG_MIN_DURATIONS,
+                      &gCamCapability[cameraId]->jpeg_min_duration,
+                      sizeof(int32_t));
+
     gStaticMetadata[cameraId] = staticInfo.release();
     return rc;
 }

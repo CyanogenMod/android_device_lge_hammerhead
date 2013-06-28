@@ -268,6 +268,9 @@ typedef struct{
     /*Autoexposure modes for camera 3 api*/
     uint8_t supported_ae_modes_cnt;
     cam_ae_mode_type supported_ae_modes[CAM_AE_MODE_MAX];
+    int32_t max_analog_sensitivity;
+    int32_t processed_min_duration;
+    int32_t jpeg_min_duration;
 
 } cam_capability_t;
 
