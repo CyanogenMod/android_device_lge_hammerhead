@@ -30,6 +30,7 @@
 /system/bin/radish
 /system/bin/rmt_storage
 /system/bin/sensors.qcom
+/system/bin/subsystem_ramdump
 /system/bin/thermal-engine
 /system/bin/usbhub
 /system/bin/usbhub_init
@@ -40,7 +41,6 @@
 /system/etc/firmware/cpp_firmware_v1_2_0.fw
 /system/etc/General_cal.acdb
 /system/etc/Global_cal.acdb
-/system/etc/gps.conf
 /system/etc/Handset_cal.acdb
 /system/etc/Hdmi_cal.acdb
 /system/etc/Headset_cal.acdb
