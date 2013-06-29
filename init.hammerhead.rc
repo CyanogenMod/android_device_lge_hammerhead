@@ -55,10 +55,12 @@ on boot
     chown bluetooth net_bt_stack /sys/class/rfkill/rfkill0/type
     chown bluetooth net_bt_stack /sys/class/rfkill/rfkill0/state
     chmod 0660 /sys/class/rfkill/rfkill0/state
-    chown bluetooth net_bt_stack /dev/ttyHS99
-    chmod 0660 /dev/ttyHS99
-    chown bluetooth net_bt_stack /proc/bluetooth/sleep/proto
-    chmod 0660 /proc/bluetooth/sleep/proto
+
+    # bluetooth LPM
+    chown bluetooth net_bt_stack /proc/bluetooth/sleep/lpm
+    chown bluetooth net_bt_stack /proc/bluetooth/sleep/btwrite
+
+    #bluetooth UART dev
     chown bluetooth net_bt_stack /sys/devices/platform/msm_serial_hs.0/clock
     chmod 0660 /sys/devices/platform/msm_serial_hs.0/clock
 
