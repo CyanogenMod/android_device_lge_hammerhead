@@ -77,6 +77,7 @@
 /system/lib/libril-qc-qmi-1.so
 /system/lib/libstagefright_hdcp.so
 /system/lib/libxml.so
+/system/vendor/bin/vss_init
 /system/vendor/firmware/a330_pfp.fw
 /system/vendor/firmware/a330_pm4.fw
 /system/vendor/firmware/bcm2079x-b5_firmware.ncd
@@ -167,3 +168,6 @@
 /system/vendor/lib/libsensor1.so
 /system/vendor/lib/libsensor_reg.so
 /system/vendor/lib/libsensor_user_cal.so
+/system/vendor/lib/libvss_common_core.so
+/system/vendor/lib/libvss_common_idl.so
+/system/vendor/lib/libvss_common_iface.so
