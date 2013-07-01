@@ -376,6 +376,7 @@ service irsc_util /system/bin/logwrapper /system/bin/irsc_util "/etc/sec_config"
 
 service ssr_ramdump /system/bin/subsystem_ramdump 1
     class main
+    disabled
 
 service p2p_supplicant /system/bin/logwrapper /system/bin/wpa_supplicant \
     -iwlan0 -Dnl80211 -c/data/misc/wifi/wpa_supplicant.conf \
