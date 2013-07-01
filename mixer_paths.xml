@@ -266,12 +266,11 @@
     <path name="voice-speaker">
         <path name="speaker" />
         <ctl name="SPK DRV Volume" value="8" />
-        <ctl name="RX7 Digital Volume" value="94" />
     </path>
 
     <path name="voice-speaker-mic">
         <path name="adc3" />
-        <ctl name="ADC3 Volume" value="18" />
+        <ctl name="ADC3 Volume" value="16" />
         <ctl name="DEC4 Volume" value="97" />
     </path>
 
