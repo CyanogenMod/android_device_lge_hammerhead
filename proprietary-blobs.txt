@@ -81,6 +81,7 @@
 /system/vendor/firmware/a330_pfp.fw
 /system/vendor/firmware/a330_pm4.fw
 /system/vendor/firmware/bcm2079x-b5_firmware.ncd
+/system/vendor/firmware/bcm2079x-b5_pre_firmware.ncd
 /system/vendor/firmware/bcm4335a0.hcd
 /system/vendor/firmware/bcm4335c0.hcd
 /system/vendor/firmware/bu24205_LGIT_VER_2_CAL.bin
