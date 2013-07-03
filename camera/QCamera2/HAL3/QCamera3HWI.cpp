@@ -126,6 +126,11 @@ const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::FLASH_MOD
     { ANDROID_FLASH_MODE_TORCH,  CAM_FLASH_MODE_TORCH }
 };
 
+const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::FACEDETECT_MODES_MAP[] = {
+    { ANDROID_STATISTICS_FACE_DETECT_MODE_OFF,    CAM_FACE_DETECT_MODE_OFF     },
+    { ANDROID_STATISTICS_FACE_DETECT_MODE_FULL,   CAM_FACE_DETECT_MODE_FULL    }
+};
+
 const int32_t available_thumbnail_sizes[] = {512, 288, 480, 288, 256, 154, 432, 288,
                                              320, 240, 176, 144, 0, 0};
 
@@ -1389,7 +1394,10 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
 
     uint8_t  *faceDetectMode =
         (uint8_t *)POINTER_OF(CAM_INTF_META_STATS_FACEDETECT_MODE, metadata);
-    camMetadata.update(ANDROID_STATISTICS_FACE_DETECT_MODE, faceDetectMode, 1);
+    uint8_t fwk_faceDetectMode = lookupFwkName(FACEDETECT_MODES_MAP,
+        sizeof(FACEDETECT_MODES_MAP)/sizeof(FACEDETECT_MODES_MAP[0]),
+        *faceDetectMode);
+    camMetadata.update(ANDROID_STATISTICS_FACE_DETECT_MODE, &fwk_faceDetectMode, 1);
 
     uint8_t  *histogramMode =
         (uint8_t *)POINTER_OF(CAM_INTF_META_STATS_HISTOGRAM_MODE, metadata);
@@ -1841,12 +1849,8 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_TONEMAP_MAX_CURVE_POINTS,
                       &gCamCapability[cameraId]->max_tone_map_curve_points, 1);
 
-    /*staticInfo.update(ANDROID_STATISTICS_INFO_MAX_FACE_COUNT,
-                      (int*)&gCamCapability[cameraId]->max_face_detection_count, 1);*/
-    /*hardcode 0 for now*/
-    int32_t max_face_count = 0;
     staticInfo.update(ANDROID_STATISTICS_INFO_MAX_FACE_COUNT,
-                      &max_face_count, 1);
+                      (int*)&gCamCapability[cameraId]->max_num_roi, 1);
 
     staticInfo.update(ANDROID_STATISTICS_INFO_HISTOGRAM_BUCKET_COUNT,
                       &gCamCapability[cameraId]->histogram_size, 1);
@@ -1915,7 +1919,8 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
             &max3aRegions, 1);
 
     uint8_t availableFaceDetectModes[] = {
-            ANDROID_STATISTICS_FACE_DETECT_MODE_OFF };
+            ANDROID_STATISTICS_FACE_DETECT_MODE_OFF,
+            ANDROID_STATISTICS_FACE_DETECT_MODE_FULL };
     staticInfo.update(ANDROID_STATISTICS_INFO_AVAILABLE_FACE_DETECT_MODES,
                       availableFaceDetectModes,
                       sizeof(availableFaceDetectModes));
@@ -3007,8 +3012,11 @@ int QCamera3HardwareInterface::translateMetadataToParameters
     }
 
     if (frame_settings.exists(ANDROID_STATISTICS_FACE_DETECT_MODE)) {
-        uint8_t facedetectMode =
+        uint8_t fwk_facedetectMode =
             frame_settings.find(ANDROID_STATISTICS_FACE_DETECT_MODE).data.u8[0];
+        uint8_t facedetectMode =
+            lookupHalName(FACEDETECT_MODES_MAP,
+                sizeof(FACEDETECT_MODES_MAP), fwk_facedetectMode);
         rc = AddSetParmEntryToBatch(mParameters,
                 CAM_INTF_META_STATS_FACEDETECT_MODE,
                 sizeof(facedetectMode), &facedetectMode);
