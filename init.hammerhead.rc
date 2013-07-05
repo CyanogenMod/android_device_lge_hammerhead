@@ -264,6 +264,9 @@ on post-fs-data
     mkdir /dev/socket/mpdecision 0770 system system
     chmod 2770 /dev/socket/mpdecision
 
+    # save rtc time offsets
+    mkdir /data/system/time/ 0700 system system
+
     setprop vold.post_fs_data_done 1
 
     # Enable Power modes and set the CPU Freq Sampling rates
@@ -514,3 +517,9 @@ service vss_init /vendor/bin/vss_init
     class late_start
     user root
     group root
+
+service time_daemon /system/bin/time_daemon
+    class late_start
+    user root
+    group root
+
