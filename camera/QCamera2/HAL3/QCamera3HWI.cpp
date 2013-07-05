@@ -2590,7 +2590,7 @@ int QCamera3HardwareInterface::translateMetadataToParameters
         }
         int32_t flashMode = (int32_t)lookupHalName(AE_FLASH_MODE_MAP,
                                           sizeof(AE_FLASH_MODE_MAP),
-                                          aeMode);
+                                          fwk_aeMode);
         rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_AEC_MODE,
                 sizeof(aeMode), &aeMode);
         rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_LED_MODE,
