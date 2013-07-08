@@ -160,6 +160,7 @@ PRODUCT_PACKAGES += \
     libmmcamera_interface \
     libmmjpeg_interface \
     camera.hammerhead \
+    mm-jpeg-interface-test \
     mm-qcamera-app
 
 PRODUCT_PACKAGES += \
