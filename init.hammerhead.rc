@@ -227,6 +227,12 @@ on boot
     mkdir /data/diag_logs 0777 system system
     chmod 666 /dev/diag
 
+    # leds
+    chown system system /sys/class/leds/red/on_off_ms
+    chown system system /sys/class/leds/green/on_off_ms
+    chown system system /sys/class/leds/blue/on_off_ms
+    chown system system /sys/class/leds/red/rgb_start
+
 on post-fs-data
     mkdir /data/media 0770 media_rw media_rw
 
