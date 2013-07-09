@@ -19,7 +19,6 @@
 /system/bin/diag_mdlog
 /system/bin/ds_fmc_appd
 /system/bin/irsc_util
-/system/bin/mm-jpeg-interface-test
 /system/bin/mm-qcamera-daemon
 /system/bin/mpdecision
 /system/bin/netmgrd
@@ -72,7 +71,6 @@
 /system/lib/libmmcamera_mt9m114b.so
 /system/lib/libmmcamera_wavelet_lib.so
 /system/lib/libmmQSM.so
-/system/lib/libOmxVdecHevc.so
 /system/lib/libQSEEComAPI.so
 /system/lib/libril-qc-qmi-1.so
 /system/lib/libstagefright_hdcp.so
