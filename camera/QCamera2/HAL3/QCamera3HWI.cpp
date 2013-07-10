@@ -1042,6 +1042,7 @@ void QCamera3HardwareInterface::captureResultCb(mm_camera_super_buf_t *metadata_
                     if (j->buffer) {
                         result_buffers[result_buffers_idx++] = *(j->buffer);
                         free(j->buffer);
+                        j->buffer = NULL;
                         mPendingBuffersMap.editValueFor(j->stream)--;
                     }
                 }
