@@ -880,7 +880,7 @@ int32_t QCamera3PicChannel::initialize()
     streamDim.width = mCamera3Stream->width;
     streamDim.height = mCamera3Stream->height;
 
-    int num_buffers = QCamera3PicChannel::kMaxBuffers + 1;
+    int num_buffers = 1;
 
     rc = QCamera3Channel::addStream(streamType, streamFormat, streamDim,
             num_buffers);
@@ -902,6 +902,7 @@ int32_t QCamera3PicChannel::request(buffer_handle_t *buffer, uint32_t frameNumbe
         //Stream on for main image. YUV buffer is queued to the kernel at the end of this call.
         rc = start();
     } else {
+        mStreams[0]->bufDone(0);
         ALOGD("%s: Request on an existing stream",__func__);
     }
 
@@ -1089,7 +1090,7 @@ QCamera3Memory* QCamera3PicChannel::getStreamBufs(uint32_t len)
     }
 
     //Queue YUV buffers in the beginning mQueueAll = true
-    rc = mYuvMemory->allocate(QCamera3PicChannel::kMaxBuffers + 1, len, true);
+    rc = mYuvMemory->allocate(1, len, true);
     if (rc < 0) {
         ALOGE("%s: unable to allocate metadata memory", __func__);
         delete mYuvMemory;
