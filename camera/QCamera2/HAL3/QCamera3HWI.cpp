@@ -1720,11 +1720,12 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_SENSOR_INFO_PIXEL_ARRAY_SIZE,
                       pixel_array_size, 2);
 
-    int32_t active_array_size[] = {gCamCapability[cameraId]->active_array_size.width,
+    int32_t active_array_size[] = {0, 0,
+                                                gCamCapability[cameraId]->active_array_size.width,
                                                 gCamCapability[cameraId]->active_array_size.height};
 
     staticInfo.update(ANDROID_SENSOR_INFO_ACTIVE_ARRAY_SIZE,
-                      active_array_size, 2);
+                      active_array_size, 4);
 
     staticInfo.update(ANDROID_SENSOR_INFO_WHITE_LEVEL,
             &gCamCapability[cameraId]->white_level, 1);
@@ -1765,8 +1766,9 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       &gCamCapability[cameraId]->raw_min_duration,
                        1);
 
-    int32_t scalar_formats[] = {HAL_PIXEL_FORMAT_YCbCr_420_888};
-    int scalar_formats_count = 1;
+    int32_t scalar_formats[] = {HAL_PIXEL_FORMAT_YCbCr_420_888,
+                                                HAL_PIXEL_FORMAT_BLOB};
+    int scalar_formats_count = sizeof(scalar_formats)/sizeof(int32_t);
     staticInfo.update(ANDROID_SCALER_AVAILABLE_FORMATS,
                       scalar_formats,
                       scalar_formats_count);
