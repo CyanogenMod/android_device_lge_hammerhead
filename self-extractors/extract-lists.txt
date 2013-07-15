@@ -114,6 +114,7 @@
             system/vendor/lib/hw/sensors.msm8974.so \
             system/vendor/lib/libC2D2.so \
             system/vendor/lib/libCommandSvc.so \
+            system/vendor/lib/libFuzzmmstillomxenc.so \
             system/vendor/lib/libacdbloader.so \
             system/vendor/lib/libacdbrtac.so \
             system/vendor/lib/libadiertac.so \
@@ -122,6 +123,7 @@
             system/vendor/lib/libc2d2_a3xx.so \
             system/vendor/lib/libconfigdb.so \
             system/vendor/lib/libdiag.so \
+            system/vendor/lib/libdrmdecrypt.so \
             system/vendor/lib/libdsi_netctrl.so \
             system/vendor/lib/libdsutils.so \
             system/vendor/lib/libgsl.so \

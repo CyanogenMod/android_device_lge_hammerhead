@@ -16,12 +16,13 @@
 
 # start klp-dev
 # 730924 = KRS02B
+# 741161 = KRS15
 # end klp-dev
 BRANCH=klp-dev
 if test $BRANCH = klp-dev
 then
-  ZIP=hammerhead-ota-730924
-  BUILD=krs02b
+  ZIP=hammerhead-ota-741161
+  BUILD=krs15
 fi # klp-dev
 ROOTDEVICE=hammerhead
 DEVICE=hammerhead
@@ -151,6 +152,7 @@ do
             system/vendor/lib/hw/sensors.msm8974.so \
             system/vendor/lib/libC2D2.so \
             system/vendor/lib/libCommandSvc.so \
+            system/vendor/lib/libFuzzmmstillomxenc.so \
             system/vendor/lib/libacdbloader.so \
             system/vendor/lib/libacdbrtac.so \
             system/vendor/lib/libadiertac.so \
@@ -159,6 +161,7 @@ do
             system/vendor/lib/libc2d2_a3xx.so \
             system/vendor/lib/libconfigdb.so \
             system/vendor/lib/libdiag.so \
+            system/vendor/lib/libdrmdecrypt.so \
             system/vendor/lib/libdsi_netctrl.so \
             system/vendor/lib/libdsutils.so \
             system/vendor/lib/libgsl.so \

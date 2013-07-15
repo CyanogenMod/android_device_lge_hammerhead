@@ -74,9 +74,9 @@ then
 echo $file has no known owner
 fi
 
-if test "$auto_owner" = "$target_owner"
+if test "$auto_owner" = "$target_owner" -a $file != system/app/shutdownlistener.apk -a $file != system/app/TimeService.apk
 then
-if test $file != ZZZsystem/lib/libacdbloader.so
+if test $file != ZZZ
 then
 echo "    vendor/$target_owner/hammerhead/proprietary/$(basename $file):$file:$target_owner \\" >> $target_owner/staging/device-partial.mk
 fi

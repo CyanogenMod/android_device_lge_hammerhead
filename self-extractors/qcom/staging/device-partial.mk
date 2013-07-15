@@ -84,6 +84,7 @@ PRODUCT_COPY_FILES := \
     vendor/qcom/hammerhead/proprietary/sensors.msm8974.so:system/vendor/lib/hw/sensors.msm8974.so:qcom \
     vendor/qcom/hammerhead/proprietary/libC2D2.so:system/vendor/lib/libC2D2.so:qcom \
     vendor/qcom/hammerhead/proprietary/libCommandSvc.so:system/vendor/lib/libCommandSvc.so:qcom \
+    vendor/qcom/hammerhead/proprietary/libFuzzmmstillomxenc.so:system/vendor/lib/libFuzzmmstillomxenc.so:qcom \
     vendor/qcom/hammerhead/proprietary/libacdbloader.so:system/vendor/lib/libacdbloader.so:qcom \
     vendor/qcom/hammerhead/proprietary/libacdbrtac.so:system/vendor/lib/libacdbrtac.so:qcom \
     vendor/qcom/hammerhead/proprietary/libadiertac.so:system/vendor/lib/libadiertac.so:qcom \
@@ -92,6 +93,7 @@ PRODUCT_COPY_FILES := \
     vendor/qcom/hammerhead/proprietary/libc2d2_a3xx.so:system/vendor/lib/libc2d2_a3xx.so:qcom \
     vendor/qcom/hammerhead/proprietary/libconfigdb.so:system/vendor/lib/libconfigdb.so:qcom \
     vendor/qcom/hammerhead/proprietary/libdiag.so:system/vendor/lib/libdiag.so:qcom \
+    vendor/qcom/hammerhead/proprietary/libdrmdecrypt.so:system/vendor/lib/libdrmdecrypt.so:qcom \
     vendor/qcom/hammerhead/proprietary/libdsi_netctrl.so:system/vendor/lib/libdsi_netctrl.so:qcom \
     vendor/qcom/hammerhead/proprietary/libdsutils.so:system/vendor/lib/libdsutils.so:qcom \
     vendor/qcom/hammerhead/proprietary/libgsl.so:system/vendor/lib/libgsl.so:qcom \

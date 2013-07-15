@@ -22,7 +22,9 @@ system/etc/Global_cal.acdb:lge
 system/etc/Handset_cal.acdb:lge
 system/etc/Hdmi_cal.acdb:lge
 system/etc/Headset_cal.acdb:lge
+system/app/QXDMLogger.apk:google
 system/etc/Speaker_cal.acdb:lge
+system/app/TimeService.apk:qcom
 system/vendor/firmware/bcm2079x-b5_firmware.ncd:broadcom
 system/vendor/firmware/bcm2079x-b5_pre_firmware.ncd:broadcom
 system/vendor/firmware/bcm4335a0.hcd:broadcom
@@ -48,8 +50,10 @@ system/vendor/firmware/keymaster/keymaster.b03:lge
 system/vendor/firmware/keymaster/keymaster.mdt:lge
 system/vendor/lib/libAKM8963.so:lge
 system/vendor/lib/libDxHdcp.so:lge
+system/vendor/lib/libFuzzmmstillomxenc.so:qcom
 system/lib/libI420colorconvert.so:qcom
 system/lib/libQSEEComAPI.so:qcom
+system/vendor/lib/libTimeService.so:qcom
 system/vendor/lib/libacdbloader.so:qcom
 system/lib/libadsprpc.so:qcom
 system/vendor/lib/libaudcal.so:qcom
@@ -63,6 +67,7 @@ system/lib/libchromatix_mt9m114b_preview.so:qcom
 system/lib/libchromatix_mt9m114b_snapshot.so:qcom
 system/vendor/lib/libconfigdb.so:qcom
 system/vendor/lib/libdiag.so:qcom
+system/vendor/lib/libdrmdecrypt.so:qcom
 system/lib/libdrmdiag.so:qcom
 system/lib/libdrmfs.so:qcom
 system/lib/libdrmtime.so:qcom
@@ -122,8 +127,10 @@ system/bin/radish:qcom
 system/bin/rmt_storage:qcom
 system/vendor/lib/hw/sensors.msm8974.so:qcom
 system/bin/sensors.qcom:qcom
+system/app/shutdownlistener.apk:qcom
 system/bin/subsystem_ramdump:qcom
 system/bin/thermal-engine:qcom
+system/bin/time_daemon:qcom
 system/bin/usbhub:qcom
 system/bin/usbhub_init:qcom
 system/vendor/bin/vss_init:lge
@@ -152,4 +159,5 @@ system/vendor/lib/libqcci_legacy.so:qcom
 system/vendor/lib/libqdp.so:qcom
 system/vendor/lib/libqmi_client_qmux.so:qcom
 system/vendor/lib/libsensor_reg.so:qcom
+system/vendor/lib/libtime_genoff.so:qcom
 system/vendor/lib/libqdi.so:qcom
