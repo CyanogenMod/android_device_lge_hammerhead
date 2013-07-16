@@ -434,16 +434,18 @@ typedef union {
     INCLUDE(CAM_INTF_META_FRAME_NUMBER,             uint32_t,                    1);
     INCLUDE(CAM_INTF_META_COLOR_CORRECT_MODE,       uint8_t,                     1);
     INCLUDE(CAM_INTF_META_COLOR_CORRECT_TRANSFORM,  cam_color_correct_matrix_t,  1);
+    INCLUDE(CAM_INTF_META_COLOR_CORRECT_GAINS,      cam_color_correct_gains_t,   1);
     INCLUDE(CAM_INTF_META_AEC_MODE,                 uint8_t,                     1);
     INCLUDE(CAM_INTF_META_AEC_ROI,                  cam_area_t,                  5);
     INCLUDE(CAM_INTF_META_AEC_PRECAPTURE_TRIGGER,   cam_trigger_t,               1);
     INCLUDE(CAM_INTF_META_AF_ROI,                   cam_area_t,                  5);
     INCLUDE(CAM_INTF_META_AF_TRIGGER,               cam_trigger_t,               1);
     INCLUDE(CAM_INTF_META_AWB_REGIONS,              cam_area_t,                  5);
+    INCLUDE(CAM_INTF_META_BLACK_LEVEL_LOCK,         uint8_t,                     1);
     INCLUDE(CAM_INTF_META_CAPTURE_INTENT,           uint8_t,                     1);
     INCLUDE(CAM_INTF_META_MODE,                     uint8_t,                     1);
     INCLUDE(CAM_INTF_META_DEMOSAIC,                 int32_t,                     1);
-    INCLUDE(CAM_INTF_META_EDGE,                     int32_t,                     1);
+    INCLUDE(CAM_INTF_META_EDGE_MODE,                int32_t,                     1);
     INCLUDE(CAM_INTF_META_SHARPNESS_STRENGTH,       int32_t,                     1);
     INCLUDE(CAM_INTF_META_FLASH_POWER,              uint8_t,                     1);
     INCLUDE(CAM_INTF_META_FLASH_FIRING_TIME,        int64_t,                     1);
@@ -455,6 +457,7 @@ typedef union {
     INCLUDE(CAM_INTF_META_LENS_FOCAL_LENGTH,        float,                       1);
     INCLUDE(CAM_INTF_META_LENS_FOCUS_DISTANCE,      float,                       1);
     INCLUDE(CAM_INTF_META_LENS_OPT_STAB_MODE,       uint8_t,                     1);
+    INCLUDE(CAM_INTF_META_LENS_SHADING_MAP_MODE,    uint8_t,                     1);
     INCLUDE(CAM_INTF_META_NOISE_REDUCTION_MODE,     uint8_t,                     1);
     INCLUDE(CAM_INTF_META_NOISE_REDUCTION_STRENGTH, int32_t,                     1);
     INCLUDE(CAM_INTF_META_SCALER_CROP_REGION,       cam_crop_region_t,           1);
@@ -476,59 +479,65 @@ typedef union {
 
 typedef union {
 /**************************************************************************************
- *  ID from (cam_intf_metadata_type_t)           DATATYPE                     COUNT
+ *  ID from (cam_intf_metadata_type_t)                DATATYPE                     COUNT
  **************************************************************************************/
     /* common between HAL1 and HAL3 */
-    INCLUDE(CAM_INTF_META_HISTOGRAM,                  cam_hist_stats_t,            1);
-    INCLUDE(CAM_INTF_META_FACE_DETECTION,             cam_face_detection_data_t,   1);
-    INCLUDE(CAM_INTF_META_AUTOFOCUS_DATA,             cam_auto_focus_data_t,       1);
+    INCLUDE(CAM_INTF_META_HISTOGRAM,                    cam_hist_stats_t,            1);
+    INCLUDE(CAM_INTF_META_FACE_DETECTION,               cam_face_detection_data_t,   1);
+    INCLUDE(CAM_INTF_META_AUTOFOCUS_DATA,               cam_auto_focus_data_t,       1);
 
     /* Specific to HAl1 */
-    INCLUDE(CAM_INTF_META_CROP_DATA,                  cam_crop_data_t,             1);
-    INCLUDE(CAM_INTF_META_PREP_SNAPSHOT_DONE,         int32_t,                     1);
-    INCLUDE(CAM_INTF_META_GOOD_FRAME_IDX_RANGE,       cam_frame_idx_range_t,       1);
+    INCLUDE(CAM_INTF_META_CROP_DATA,                    cam_crop_data_t,             1);
+    INCLUDE(CAM_INTF_META_PREP_SNAPSHOT_DONE,           int32_t,                     1);
+    INCLUDE(CAM_INTF_META_GOOD_FRAME_IDX_RANGE,         cam_frame_idx_range_t,       1);
     /* Specific to HAL3 */
-    INCLUDE(CAM_INTF_META_FRAME_NUMBER_VALID,         int32_t,                     1);
-    INCLUDE(CAM_INTF_META_PENDING_REQUESTS,           uint32_t,                    1);
-    INCLUDE(CAM_INTF_META_FRAME_NUMBER,               uint32_t,                    1);
-    INCLUDE(CAM_INTF_META_COLOR_CORRECT_MODE,         uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_AEC_PRECAPTURE_ID,          int32_t,                     1);
-    INCLUDE(CAM_INTF_META_AEC_ROI,                    cam_area_t,                  5);
-    INCLUDE(CAM_INTF_META_AEC_STATE,                  uint8_t,                     1);
-    INCLUDE(CAM_INTF_PARM_FOCUS_MODE,                 uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_AF_ROI,                     cam_area_t,                  5);
-    INCLUDE(CAM_INTF_META_AF_STATE,                   uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_AF_TRIGGER_ID,              int32_t,                     1);
-    INCLUDE(CAM_INTF_PARM_WHITE_BALANCE,              int32_t,                     1);
-    INCLUDE(CAM_INTF_META_AWB_REGIONS,                cam_area_t,                  5);
-    INCLUDE(CAM_INTF_META_AWB_STATE,                  uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_MODE,                       uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_EDGE,                       int32_t,                     1);
-    INCLUDE(CAM_INTF_META_FLASH_POWER,                uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_FLASH_FIRING_TIME,          int64_t,                     1);
-    INCLUDE(CAM_INTF_META_FLASH_MODE,                 uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_FLASH_STATE,                int32_t,                     1);
-    INCLUDE(CAM_INTF_META_HOTPIXEL_MODE,              uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_LENS_APERTURE,              float,                       1);
-    INCLUDE(CAM_INTF_META_LENS_FILTERDENSITY,         float,                       1);
-    INCLUDE(CAM_INTF_META_LENS_FOCAL_LENGTH,          float,                       1);
-    INCLUDE(CAM_INTF_META_LENS_FOCUS_DISTANCE,        float,                       1);
-    INCLUDE(CAM_INTF_META_LENS_FOCUS_RANGE,           float,                       2);
-    INCLUDE(CAM_INTF_META_LENS_OPT_STAB_MODE,         uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_LENS_FOCUS_STATE,           uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_NOISE_REDUCTION_MODE,       uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_SCALER_CROP_REGION,         cam_crop_region_t,           1);
-    INCLUDE(CAM_INTF_META_SENSOR_EXPOSURE_TIME,       int64_t,                     1);
-    INCLUDE(CAM_INTF_META_SENSOR_FRAME_DURATION,      int64_t,                     1);
-    INCLUDE(CAM_INTF_META_SENSOR_SENSITIVITY,         int32_t,                     1);
-    INCLUDE(CAM_INTF_META_SENSOR_TIMESTAMP,           struct timeval,              1);
-    INCLUDE(CAM_INTF_META_SHADING_MODE,               uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_STATS_FACEDETECT_MODE,      uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_STATS_HISTOGRAM_MODE,       uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_STATS_SHARPNESS_MAP_MODE,   uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_STATS_SHARPNESS_MAP,        cam_sharpness_map_t,         3);
-    INCLUDE(CAM_INTF_META_PRIVATE_DATA,               char,                        MAX_METADATA_PAYLOAD_SIZE);
-
+    INCLUDE(CAM_INTF_META_FRAME_NUMBER_VALID,           int32_t,                     1);
+    INCLUDE(CAM_INTF_META_PENDING_REQUESTS,             uint32_t,                    1);
+    INCLUDE(CAM_INTF_META_FRAME_NUMBER,                 uint32_t,                    1);
+    INCLUDE(CAM_INTF_META_COLOR_CORRECT_MODE,           uint8_t,                     1);
+    INCLUDE(CAM_INTF_META_COLOR_CORRECT_TRANSFORM,      cam_color_correct_matrix_t,  1);
+    INCLUDE(CAM_INTF_META_COLOR_CORRECT_GAINS,          cam_color_correct_gains_t,   1);
+    INCLUDE(CAM_INTF_META_PRED_COLOR_CORRECT_TRANSFORM, cam_color_correct_matrix_t,  1);
+    INCLUDE(CAM_INTF_META_PRED_COLOR_CORRECT_GAINS,     cam_color_correct_gains_t,   1);
+    INCLUDE(CAM_INTF_META_AEC_PRECAPTURE_ID,            int32_t,                     1);
+    INCLUDE(CAM_INTF_META_AEC_ROI,                      cam_area_t,                  5);
+    INCLUDE(CAM_INTF_META_AEC_STATE,                    uint8_t,                     1);
+    INCLUDE(CAM_INTF_PARM_FOCUS_MODE,                   uint8_t,                     1);
+    INCLUDE(CAM_INTF_META_AF_ROI,                       cam_area_t,                  5);
+    INCLUDE(CAM_INTF_META_AF_STATE,                     uint8_t,                     1);
+    INCLUDE(CAM_INTF_META_AF_TRIGGER_ID,                int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_WHITE_BALANCE,                int32_t,                     1);
+    INCLUDE(CAM_INTF_META_AWB_REGIONS,                  cam_area_t,                  5);
+    INCLUDE(CAM_INTF_META_AWB_STATE,                    uint8_t,                     1);
+    INCLUDE(CAM_INTF_META_BLACK_LEVEL_LOCK,             uint8_t,                     1);
+    INCLUDE(CAM_INTF_META_MODE,                         uint8_t,                     1);
+    INCLUDE(CAM_INTF_META_EDGE_MODE,                    int32_t,                     1);
+    INCLUDE(CAM_INTF_META_FLASH_POWER,                  uint8_t,                     1);
+    INCLUDE(CAM_INTF_META_FLASH_FIRING_TIME,            int64_t,                     1);
+    INCLUDE(CAM_INTF_META_FLASH_MODE,                   uint8_t,                     1);
+    INCLUDE(CAM_INTF_META_FLASH_STATE,                  int32_t,                     1);
+    INCLUDE(CAM_INTF_META_HOTPIXEL_MODE,                uint8_t,                     1);
+    INCLUDE(CAM_INTF_META_LENS_APERTURE,                float,                       1);
+    INCLUDE(CAM_INTF_META_LENS_FILTERDENSITY,           float,                       1);
+    INCLUDE(CAM_INTF_META_LENS_FOCAL_LENGTH,            float,                       1);
+    INCLUDE(CAM_INTF_META_LENS_FOCUS_DISTANCE,          float,                       1);
+    INCLUDE(CAM_INTF_META_LENS_FOCUS_RANGE,             float,                       2);
+    INCLUDE(CAM_INTF_META_LENS_OPT_STAB_MODE,           uint8_t,                     1);
+    INCLUDE(CAM_INTF_META_LENS_FOCUS_STATE,             uint8_t,                     1);
+    INCLUDE(CAM_INTF_META_NOISE_REDUCTION_MODE,         uint8_t,                     1);
+    INCLUDE(CAM_INTF_META_SCALER_CROP_REGION,           cam_crop_region_t,           1);
+    INCLUDE(CAM_INTF_META_SCENE_FLICKER,                uint8_t,                     1);
+    INCLUDE(CAM_INTF_META_SENSOR_EXPOSURE_TIME,         int64_t,                     1);
+    INCLUDE(CAM_INTF_META_SENSOR_FRAME_DURATION,        int64_t,                     1);
+    INCLUDE(CAM_INTF_META_SENSOR_SENSITIVITY,           int32_t,                     1);
+    INCLUDE(CAM_INTF_META_SENSOR_TIMESTAMP,             struct timeval,              1);
+    INCLUDE(CAM_INTF_META_SHADING_MODE,                 uint8_t,                     1);
+    INCLUDE(CAM_INTF_META_STATS_FACEDETECT_MODE,        uint8_t,                     1);
+    INCLUDE(CAM_INTF_META_STATS_HISTOGRAM_MODE,         uint8_t,                     1);
+    INCLUDE(CAM_INTF_META_STATS_SHARPNESS_MAP_MODE,     uint8_t,                     1);
+    INCLUDE(CAM_INTF_META_STATS_SHARPNESS_MAP,          cam_sharpness_map_t,         3);
+    INCLUDE(CAM_INTF_META_LENS_SHADING_MAP,             cam_lens_shading_map_t,      1);
+    INCLUDE(CAM_INTF_META_PRIVATE_DATA,                 char,                        MAX_METADATA_PAYLOAD_SIZE);
 } metadata_type_t;
 
 /****************************DO NOT MODIFY BELOW THIS LINE!!!!*********************/

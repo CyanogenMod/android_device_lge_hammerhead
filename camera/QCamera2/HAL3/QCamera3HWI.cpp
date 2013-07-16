@@ -1255,14 +1255,14 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
     int32_t aeRegions[5];
     convertToRegions(hAeRegions->rect, aeRegions, hAeRegions->weight);
     camMetadata.update(ANDROID_CONTROL_AE_REGIONS, aeRegions, 5);
-   if(mIsZslMode) {
+    if(mIsZslMode) {
         uint8_t ae_state = ANDROID_CONTROL_AE_STATE_CONVERGED;
         camMetadata.update(ANDROID_CONTROL_AE_STATE, &ae_state, 1);
     } else {
         uint8_t *ae_state =
             (uint8_t *)POINTER_OF(CAM_INTF_META_AEC_STATE, metadata);
         camMetadata.update(ANDROID_CONTROL_AE_STATE, ae_state, 1);
-   }
+    }
     uint8_t  *focusMode =
         (uint8_t *)POINTER_OF(CAM_INTF_PARM_FOCUS_MODE, metadata);
     camMetadata.update(ANDROID_CONTROL_AF_MODE, focusMode, 1);
@@ -1299,7 +1299,7 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
     uint8_t  *mode = (uint8_t *)POINTER_OF(CAM_INTF_META_MODE, metadata);
     camMetadata.update(ANDROID_CONTROL_MODE, mode, 1);
 
-    uint8_t  *edgeMode = (uint8_t *)POINTER_OF(CAM_INTF_META_EDGE, metadata);
+    uint8_t  *edgeMode = (uint8_t *)POINTER_OF(CAM_INTF_META_EDGE_MODE, metadata);
     camMetadata.update(ANDROID_EDGE_MODE, edgeMode, 1);
 
     uint8_t  *flashPower =
@@ -1401,6 +1401,42 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
     camMetadata.update(ANDROID_STATISTICS_SHARPNESS_MAP,
             (int32_t*)sharpnessMap->sharpness,
             CAM_MAX_MAP_WIDTH*CAM_MAX_MAP_HEIGHT);
+
+    cam_lens_shading_map_t *lensShadingMap = (cam_lens_shading_map_t *)
+        POINTER_OF(CAM_INTF_META_LENS_SHADING_MAP, metadata);
+    int map_height = gCamCapability[mCameraId]->lens_shading_map_size.height;
+    int map_width  = gCamCapability[mCameraId]->lens_shading_map_size.width;
+    camMetadata.update(ANDROID_STATISTICS_LENS_SHADING_MAP,
+                       (float*)lensShadingMap->lens_shading,
+                       4*map_width*map_height);
+
+    cam_color_correct_gains_t *colorCorrectionGains = (cam_color_correct_gains_t*)
+        POINTER_OF(CAM_INTF_META_COLOR_CORRECT_GAINS, metadata);
+    camMetadata.update(ANDROID_COLOR_CORRECTION_GAINS, colorCorrectionGains->gains, 4);
+
+    cam_color_correct_matrix_t *colorCorrectionMatrix = (cam_color_correct_matrix_t*)
+        POINTER_OF(CAM_INTF_META_COLOR_CORRECT_TRANSFORM, metadata);
+    camMetadata.update(ANDROID_COLOR_CORRECTION_TRANSFORM,
+                       (camera_metadata_rational_t*)colorCorrectionMatrix->transform_matrix, 3*3);
+
+    cam_color_correct_gains_t *predColorCorrectionGains = (cam_color_correct_gains_t*)
+        POINTER_OF(CAM_INTF_META_PRED_COLOR_CORRECT_GAINS, metadata);
+    camMetadata.update(ANDROID_STATISTICS_PREDICTED_COLOR_GAINS,
+                       predColorCorrectionGains->gains, 4);
+
+    cam_color_correct_matrix_t *predColorCorrectionMatrix = (cam_color_correct_matrix_t*)
+        POINTER_OF(CAM_INTF_META_PRED_COLOR_CORRECT_TRANSFORM, metadata);
+    camMetadata.update(ANDROID_STATISTICS_PREDICTED_COLOR_TRANSFORM,
+                       (camera_metadata_rational_t*)predColorCorrectionMatrix->transform_matrix, 3*3);
+
+    uint8_t *blackLevelLock = (uint8_t*)
+        POINTER_OF(CAM_INTF_META_BLACK_LEVEL_LOCK, metadata);
+    camMetadata.update(ANDROID_BLACK_LEVEL_LOCK, blackLevelLock, 1);
+
+    uint8_t *sceneFlicker = (uint8_t*)
+        POINTER_OF(CAM_INTF_META_SCENE_FLICKER, metadata);
+    camMetadata.update(ANDROID_STATISTICS_SCENE_FLICKER, sceneFlicker, 1);
+
 
     resultMetadata = camMetadata.release();
     return resultMetadata;
@@ -2697,6 +2733,37 @@ int QCamera3HardwareInterface::translateMetadataToParameters
             AddSetParmEntryToBatch(mParameters, CAM_INTF_META_COLOR_CORRECT_MODE,
                     sizeof(colorCorrectMode), &colorCorrectMode);
     }
+
+    if (frame_settings.exists(ANDROID_COLOR_CORRECTION_GAINS)) {
+        cam_color_correct_gains_t colorCorrectGains;
+        for (int i = 0; i < 4; i++) {
+            colorCorrectGains.gains[i] =
+                frame_settings.find(ANDROID_COLOR_CORRECTION_GAINS).data.f[i];
+        }
+        rc =
+            AddSetParmEntryToBatch(mParameters, CAM_INTF_META_COLOR_CORRECT_GAINS,
+                    sizeof(colorCorrectGains), &colorCorrectGains);
+    }
+
+    if (frame_settings.exists(ANDROID_COLOR_CORRECTION_TRANSFORM)) {
+        cam_color_correct_matrix_t colorCorrectTransform;
+        cam_rational_type_t transform_elem;
+        int num = 0;
+        for (int i = 0; i < 3; i++) {
+           for (int j = 0; j < 3; j++) {
+              transform_elem.numerator =
+                 frame_settings.find(ANDROID_COLOR_CORRECTION_TRANSFORM).data.r[num].numerator;
+              transform_elem.denominator =
+                 frame_settings.find(ANDROID_COLOR_CORRECTION_TRANSFORM).data.r[num].denominator;
+              colorCorrectTransform.transform_matrix[i][j] = transform_elem;
+              num++;
+           }
+        }
+        rc =
+            AddSetParmEntryToBatch(mParameters, CAM_INTF_META_COLOR_CORRECT_TRANSFORM,
+                    sizeof(colorCorrectTransform), &colorCorrectTransform);
+    }
+
     cam_trigger_t aecTrigger;
     aecTrigger.trigger = CAM_AEC_TRIGGER_IDLE;
     aecTrigger.trigger_id = -1;
@@ -2753,7 +2820,7 @@ int QCamera3HardwareInterface::translateMetadataToParameters
 
     if (frame_settings.exists(ANDROID_EDGE_MODE)) {
         uint8_t edgeMode = frame_settings.find(ANDROID_EDGE_MODE).data.u8[0];
-        rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_EDGE,
+        rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_EDGE_MODE,
                 sizeof(edgeMode), &edgeMode);
     }
 
@@ -2966,12 +3033,74 @@ int QCamera3HardwareInterface::translateMetadataToParameters
                 CAM_INTF_META_TONEMAP_MODE,
                 sizeof(tonemapMode), &tonemapMode);
     }
+    int point = 0;
+    if (frame_settings.exists(ANDROID_TONEMAP_CURVE_BLUE)) {
+        cam_tonemap_curve_t tonemapCurveBlue;
+        tonemapCurveBlue.tonemap_points_cnt =
+           gCamCapability[mCameraId]->max_tone_map_curve_points;
+        for (int i = 0; i < tonemapCurveBlue.tonemap_points_cnt; i++) {
+            for (int j = 0; j < 2; j++) {
+               tonemapCurveBlue.tonemap_points[i][j] =
+                  frame_settings.find(ANDROID_TONEMAP_CURVE_BLUE).data.f[point];
+               point++;
+            }
+        }
+        rc = AddSetParmEntryToBatch(mParameters,
+                CAM_INTF_META_TONEMAP_CURVE_BLUE,
+                sizeof(tonemapCurveBlue), &tonemapCurveBlue);
+    }
+    point = 0;
+    if (frame_settings.exists(ANDROID_TONEMAP_CURVE_GREEN)) {
+        cam_tonemap_curve_t tonemapCurveGreen;
+        tonemapCurveGreen.tonemap_points_cnt =
+           gCamCapability[mCameraId]->max_tone_map_curve_points;
+        for (int i = 0; i < tonemapCurveGreen.tonemap_points_cnt; i++) {
+            for (int j = 0; j < 2; j++) {
+               tonemapCurveGreen.tonemap_points[i][j] =
+                  frame_settings.find(ANDROID_TONEMAP_CURVE_GREEN).data.f[point];
+               point++;
+            }
+        }
+        rc = AddSetParmEntryToBatch(mParameters,
+                CAM_INTF_META_TONEMAP_CURVE_GREEN,
+                sizeof(tonemapCurveGreen), &tonemapCurveGreen);
+    }
+    point = 0;
+    if (frame_settings.exists(ANDROID_TONEMAP_CURVE_RED)) {
+        cam_tonemap_curve_t tonemapCurveRed;
+        tonemapCurveRed.tonemap_points_cnt =
+           gCamCapability[mCameraId]->max_tone_map_curve_points;
+        for (int i = 0; i < tonemapCurveRed.tonemap_points_cnt; i++) {
+            for (int j = 0; j < 2; j++) {
+               tonemapCurveRed.tonemap_points[i][j] =
+                  frame_settings.find(ANDROID_TONEMAP_CURVE_RED).data.f[point];
+               point++;
+            }
+        }
+        rc = AddSetParmEntryToBatch(mParameters,
+                CAM_INTF_META_TONEMAP_CURVE_RED,
+                sizeof(tonemapCurveRed), &tonemapCurveRed);
+    }
 
     if (frame_settings.exists(ANDROID_CONTROL_CAPTURE_INTENT)) {
         uint8_t captureIntent =
             frame_settings.find(ANDROID_CONTROL_CAPTURE_INTENT).data.u8[0];
         rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_CAPTURE_INTENT,
                 sizeof(captureIntent), &captureIntent);
+    }
+
+    if (frame_settings.exists(ANDROID_BLACK_LEVEL_LOCK)) {
+        uint8_t blackLevelLock =
+            frame_settings.find(ANDROID_BLACK_LEVEL_LOCK).data.u8[0];
+        rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_BLACK_LEVEL_LOCK,
+                sizeof(blackLevelLock), &blackLevelLock);
+    }
+
+    if (frame_settings.exists(ANDROID_STATISTICS_LENS_SHADING_MAP_MODE)) {
+        uint8_t lensShadingMapMode =
+            frame_settings.find(ANDROID_STATISTICS_LENS_SHADING_MAP_MODE).data.u8[0];
+        rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_LENS_SHADING_MAP_MODE,
+                sizeof(lensShadingMapMode), &lensShadingMapMode);
     }
 
     if (frame_settings.exists(ANDROID_CONTROL_AE_REGIONS)) {
