@@ -90,4 +90,13 @@ TARGET_RELEASETOOLS_EXTENSIONS := device/lge/hammerhead
 
 BOARD_LIB_DUMPSTATE := libdumpstate.hammerhead
 
+BOARD_SEPOLICY_DIRS := \
+       device/lge/hammerhead/sepolicy
+
+# The list below is order dependent
+BOARD_SEPOLICY_UNION := \
+       device.te \
+       app.te \
+       file_contexts
+
 -include vendor/lge/hammerhead/BoardConfigVendor.mk
