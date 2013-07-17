@@ -1689,9 +1689,6 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       lens_shading_map_size,
                       sizeof(lens_shading_map_size)/sizeof(int32_t));
 
-    staticInfo.update(ANDROID_LENS_INFO_SHADING_MAP, gCamCapability[cameraId]->lens_shading_map,
-            sizeof(gCamCapability[cameraId]->lens_shading_map)/ sizeof(float));
-
     int32_t geo_correction_map_size[] = {gCamCapability[cameraId]->geo_correction_map_size.width,
                                                       gCamCapability[cameraId]->geo_correction_map_size.height};
     staticInfo.update(ANDROID_LENS_INFO_GEOMETRIC_CORRECTION_MAP_SIZE,
@@ -1981,18 +1978,19 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_CONTROL_AE_AVAILABLE_MODES,
                       avail_ae_modes,
                       size);
-    size = 0;
-    int32_t avail_sensitivities[CAM_ISO_MODE_MAX];
+
+    int32_t min = INT_MAX, max = INT_MIN;
     for (int i = 0; i < gCamCapability[cameraId]->supported_iso_modes_cnt; i++) {
         int32_t sensitivity = getSensorSensitivity(gCamCapability[cameraId]->supported_iso_modes[i]);
         if (sensitivity != -1) {
-            avail_sensitivities[size] = sensitivity;
-            size++;
+            min = (sensitivity >= min) ? min : sensitivity;
+            max = (sensitivity <= max) ? max : sensitivity;
         }
     }
-    staticInfo.update(ANDROID_SENSOR_INFO_AVAILABLE_SENSITIVITIES,
-                      avail_sensitivities,
-                      size);
+    int32_t sensitivity_range[] = {min, max};
+    staticInfo.update(ANDROID_SENSOR_INFO_SENSITIVITY_RANGE,
+                      sensitivity_range,
+                      sizeof(sensitivity_range) / sizeof(int32_t));
 
     staticInfo.update(ANDROID_SENSOR_MAX_ANALOG_SENSITIVITY,
                       &gCamCapability[cameraId]->max_analog_sensitivity,
