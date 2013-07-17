@@ -204,7 +204,7 @@ void QCameraMemory::getBufDef(const cam_frame_len_offset_t &offset,
         return;
     }
     bufDef.fd = mMemInfo[index].fd;
-    bufDef.frame_len = mMemInfo[index].size;
+    bufDef.frame_len = offset.frame_len;
     bufDef.mem_info = (void *)this;
     bufDef.num_planes = offset.num_planes;
 	bufDef.buffer = getPtr(index);

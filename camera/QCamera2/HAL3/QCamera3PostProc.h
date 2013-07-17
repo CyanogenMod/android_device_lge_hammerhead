@@ -51,6 +51,8 @@ typedef struct {
     uint32_t client_hdl;             // handle of jpeg client (obtained when open jpeg)
     mm_camera_super_buf_t *src_frame;// source frame (need to be returned back to kernel after done)
     mm_camera_super_buf_t *src_reproc_frame; // original source frame for reproc if not NULL
+    mm_camera_super_buf_t *aux_frame;// source frame but from different stream
+    QCamera3Channel *aux_channel;
 } qcamera_jpeg_data_t;
 
 typedef struct {
@@ -100,6 +102,8 @@ public:
     int32_t processData(mm_camera_super_buf_t *frame);
     int32_t processRawData(mm_camera_super_buf_t *frame);
     int32_t processPPData(mm_camera_super_buf_t *frame);
+    int32_t processAuxiliaryData(mm_camera_buf_def_t *frame,
+        QCamera3Channel* pAuxiliaryChannel);
     int32_t processJpegEvt(qcamera_jpeg_evt_payload_t *evt);
     qcamera_jpeg_data_t *findJpegJobByJobId(uint32_t jobId);
     void releaseJpegJobData(qcamera_jpeg_data_t *job);

@@ -313,6 +313,56 @@ on_error:
 }
 
 /*===========================================================================
+ * FUNCTION   : processAuxiliaryData
+ *
+ * DESCRIPTION: Entry function to handle processing of data from streams other
+ *              than parent of the post processor.
+ *
+ * PARAMETERS :
+ *   @frame   : process frame from any stream.
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *
+ * NOTE       : depends on if offline reprocess is needed, received frame will
+ *              be sent to either input queue of postprocess or jpeg encoding
+ *==========================================================================*/
+int32_t QCamera3PostProcessor::processAuxiliaryData(mm_camera_buf_def_t *frame,
+        QCamera3Channel* pAuxiliaryChannel)
+{
+    ALOGD("%s: no need offline reprocess, sending to jpeg encoding", __func__);
+    mm_camera_super_buf_t *aux_frame = NULL;
+    qcamera_jpeg_data_t *jpeg_job =
+        (qcamera_jpeg_data_t *)malloc(sizeof(qcamera_jpeg_data_t));
+    if (jpeg_job == NULL) {
+        ALOGE("%s: No memory for jpeg job", __func__);
+        return NO_MEMORY;
+    }
+    memset(jpeg_job, 0, sizeof(qcamera_jpeg_data_t));
+
+    aux_frame = (mm_camera_super_buf_t *)malloc(sizeof(mm_camera_super_buf_t));
+    if (aux_frame == NULL) {
+        ALOGE("%s: No memory for src frame", __func__);
+        free(jpeg_job);
+        jpeg_job = NULL;
+        return NO_MEMORY;
+    }
+    memset(aux_frame, 0, sizeof(mm_camera_super_buf_t));
+    aux_frame->num_bufs = 1;
+    aux_frame->bufs[0] = frame;
+
+    jpeg_job->aux_frame = aux_frame;
+    jpeg_job->aux_channel = pAuxiliaryChannel;
+
+    // enqueu to jpeg input queue
+    m_inputJpegQ.enqueue((void *)jpeg_job);
+    m_dataProcTh.sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE, FALSE);
+    return NO_ERROR;
+}
+
+
+/*===========================================================================
  * FUNCTION   : processData
  *
  * DESCRIPTION: enqueue data into dataProc thread
@@ -549,6 +599,18 @@ void QCamera3PostProcessor::releaseJpegJobData(qcamera_jpeg_data_t *job)
             free(job->src_frame);
             job->src_frame = NULL;
         }
+
+        if (NULL != job->aux_frame) {
+            for(int i = 0; i < job->aux_frame->num_bufs; i++) {
+                memset(job->aux_frame->bufs[i], 0, sizeof(mm_camera_buf_def_t));
+                free(job->aux_frame->bufs[i]);
+                job->aux_frame->bufs[i] = NULL;
+            }
+            memset(job->aux_frame, 0, sizeof(mm_camera_super_buf_t));
+            free(job->aux_frame);
+            job->aux_frame = NULL;
+        }
+
         mJpegMem = NULL;
     }
     ALOGV("%s: X", __func__);
@@ -635,7 +697,12 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
     mm_camera_buf_def_t *main_frame = NULL;
     QCamera3Stream *thumb_stream = NULL;
     mm_camera_buf_def_t *thumb_frame = NULL;
-    mm_camera_super_buf_t *recvd_frame = jpeg_job_data->src_frame;
+    QCamera3Channel *srcChannel = NULL;
+    mm_camera_super_buf_t *recvd_frame = NULL;
+    if( jpeg_job_data-> aux_frame )
+        recvd_frame = jpeg_job_data->aux_frame;
+    else
+        recvd_frame = jpeg_job_data->src_frame;
 
     // find channel
     QCamera3Channel *pChannel = m_parent;
@@ -646,19 +713,26 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
         return BAD_VALUE;
     }
 
+    QCamera3Channel *auxChannel = jpeg_job_data->aux_channel;
+
+    if(auxChannel)
+        srcChannel = auxChannel;
+    else
+        srcChannel = pChannel;
+
     // find snapshot frame and thumnail frame
     //Note: In this version we will receive only snapshot frame.
     for (int i = 0; i < recvd_frame->num_bufs; i++) {
-        QCamera3Stream *pStream =
-            pChannel->getStreamByHandle(recvd_frame->bufs[i]->stream_id);
-        if (pStream != NULL) {
-            if (pStream->isTypeOf(CAM_STREAM_TYPE_SNAPSHOT) ||
-                pStream->isTypeOf(CAM_STREAM_TYPE_OFFLINE_PROC)) {
-                main_stream = pStream;
+        QCamera3Stream *srcStream =
+            srcChannel->getStreamByHandle(recvd_frame->bufs[i]->stream_id);
+        if (srcStream != NULL) {
+            if (srcStream->isTypeOf(CAM_STREAM_TYPE_SNAPSHOT) ||
+                srcStream->isTypeOf(CAM_STREAM_TYPE_OFFLINE_PROC)) {
+                main_stream = srcStream;
                 main_frame = recvd_frame->bufs[i];
-            } else if (pStream->isTypeOf(CAM_STREAM_TYPE_PREVIEW) ||
-                       pStream->isTypeOf(CAM_STREAM_TYPE_POSTVIEW)) {
-                thumb_stream = pStream;
+            } else if (srcStream->isTypeOf(CAM_STREAM_TYPE_PREVIEW) ||
+                       srcStream->isTypeOf(CAM_STREAM_TYPE_POSTVIEW)) {
+                thumb_stream = srcStream;
                 thumb_frame = recvd_frame->bufs[i];
             }
         }
@@ -734,9 +808,13 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
     memset(&src_dim, 0, sizeof(cam_dimension_t));
     main_stream->getFrameDimension(src_dim);
 
+    cam_dimension_t dst_dim;
+    memset(&dst_dim, 0, sizeof(cam_dimension_t));
+    pChannel->getStreamByIndex(0)->getFrameDimension(dst_dim);
+
     // main dim
     jpg_job.encode_job.main_dim.src_dim = src_dim;
-    jpg_job.encode_job.main_dim.dst_dim = src_dim;
+    jpg_job.encode_job.main_dim.dst_dim = dst_dim;
     jpg_job.encode_job.main_dim.crop = crop;
 
     // thumbnail dim
@@ -772,11 +850,13 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
     //as we don't support bundling of snapshot and metadata streams.
 
     mm_camera_buf_def_t *meta_frame = NULL;
-    for (int i = 0; i < jpeg_job_data->src_frame->num_bufs; i++) {
-        // look through input superbuf
-        if (jpeg_job_data->src_frame->bufs[i]->stream_type == CAM_STREAM_TYPE_METADATA) {
-            meta_frame = jpeg_job_data->src_frame->bufs[i];
-            break;
+    if(jpeg_job_data->src_frame) {
+        for (int i = 0; i < jpeg_job_data->src_frame->num_bufs; i++) {
+            // look through input superbuf
+            if (jpeg_job_data->src_frame->bufs[i]->stream_type == CAM_STREAM_TYPE_METADATA) {
+                meta_frame = jpeg_job_data->src_frame->bufs[i];
+                break;
+            }
         }
     }
     if (meta_frame == NULL && jpeg_job_data->src_reproc_frame != NULL) {

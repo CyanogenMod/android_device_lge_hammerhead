@@ -74,6 +74,7 @@ public:
     int32_t getFrameOffset(cam_frame_len_offset_t &offset);
     int32_t getFrameDimension(cam_dimension_t &dim);
     int32_t getFormat(cam_format_t &fmt);
+    mm_camera_buf_def_t* getInternalFormatBuffer(int index);
     QCamera3Memory *getStreamBufs() {return mStreamBufs;};
     uint32_t getMyServerID();
 
