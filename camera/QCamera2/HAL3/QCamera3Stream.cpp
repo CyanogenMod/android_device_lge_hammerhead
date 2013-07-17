@@ -281,17 +281,7 @@ int32_t QCamera3Stream::init(cam_stream_type_t streamType,
     stream_config.mem_vtbl = mMemVtbl;
     stream_config.padding_info = mPaddingInfo;
     stream_config.userdata = this;
-
-    switch(streamType) {
-        case CAM_STREAM_TYPE_SNAPSHOT:
-            stream_config.stream_cb = NULL;
-            ALOGI("%s: disabling stream_cb for snapshot", __func__);
-            break;
-        default:
-            stream_config.stream_cb = dataNotifyCB;
-            break;
-    }
-
+    stream_config.stream_cb = dataNotifyCB;
 
     rc = mCamOps->config_stream(mCamHandle,
             mChannelHandle, mHandle, &stream_config);
@@ -475,6 +465,35 @@ void *QCamera3Stream::dataProcRoutine(void *data)
     } while (running);
     ALOGV("%s: X", __func__);
     return NULL;
+}
+
+/*===========================================================================
+ * FUNCTION   : getInternalFormatBuffer
+ *
+ * DESCRIPTION: return buffer in the internal format structure
+ *
+ * PARAMETERS :
+ *   @index   : index of buffer to be returned
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+mm_camera_buf_def_t* QCamera3Stream::getInternalFormatBuffer(int index)
+{
+    mm_camera_buf_def_t *rc = NULL;
+    if (index >= mNumBufs || mBufDefs == NULL) {
+        ALOGE("%s:Index out of range/no internal buffers yet", __func__);
+        return NULL;
+    }
+
+    rc = (mm_camera_buf_def_t*)malloc(sizeof(mm_camera_buf_def_t));
+    if(rc) {
+        memcpy(rc, &mBufDefs[index], sizeof(mm_camera_buf_def_t));
+    } else {
+        ALOGE("%s: Failed to allocate memory",__func__);
+    }
+    return rc;
 }
 
 /*===========================================================================

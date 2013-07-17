@@ -175,7 +175,6 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId)
     pthread_cond_init(&mRequestCond, NULL);
     mPendingRequest = 0;
     mCurrentRequestId = -1;
-
     pthread_mutex_init(&mMutex, NULL);
     pthread_mutex_init(&mCaptureResultLock, NULL);
 
@@ -424,7 +423,6 @@ int QCamera3HardwareInterface::configureStreams(
 {
     int rc = 0;
     pthread_mutex_lock(&mMutex);
-
     // Sanity check stream_list
     if (streamList == NULL) {
         ALOGE("%s: NULL stream configuration", __func__);
@@ -446,6 +444,7 @@ int QCamera3HardwareInterface::configureStreams(
     }
 
     camera3_stream_t *inputStream = NULL;
+    camera3_stream_t *jpegStream = NULL;
     /* first invalidate all the steams in the mStreamList
      * if they appear again, they will be validated */
     for (List<stream_info_t*>::iterator it=mStreamInfo.begin();
@@ -457,8 +456,9 @@ int QCamera3HardwareInterface::configureStreams(
 
     for (size_t i = 0; i < streamList->num_streams; i++) {
         camera3_stream_t *newStream = streamList->streams[i];
-        ALOGV("%s: newStream type = %d, stream format = %d",
-                __func__, newStream->stream_type, newStream->format);
+        ALOGV("%s: newStream type = %d, stream format = %d stream size : %d x %d",
+                __func__, newStream->stream_type, newStream->format,
+                 newStream->width, newStream->height);
         //if the stream is in the mStreamList validate it
         bool stream_exists = false;
         for (List<stream_info_t*>::iterator it=mStreamInfo.begin();
@@ -483,13 +483,17 @@ int QCamera3HardwareInterface::configureStreams(
             stream_info->registered = 0;
             mStreamInfo.push_back(stream_info);
         }
-        if (newStream->stream_type == CAMERA3_STREAM_INPUT) {
+        if (newStream->stream_type == CAMERA3_STREAM_INPUT
+                || newStream->stream_type == CAMERA3_STREAM_BIDIRECTIONAL ) {
             if (inputStream != NULL) {
                 ALOGE("%s: Multiple input streams requested!", __func__);
                 pthread_mutex_unlock(&mMutex);
                 return BAD_VALUE;
             }
             inputStream = newStream;
+        }
+        if (newStream->format == HAL_PIXEL_FORMAT_BLOB) {
+            jpegStream = newStream;
         }
     }
     mInputStream = inputStream;
@@ -538,7 +542,16 @@ int QCamera3HardwareInterface::configureStreams(
                 case HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED:
                 case HAL_PIXEL_FORMAT_YCbCr_420_888:
                     newStream->max_buffers = QCamera3RegularChannel::kMaxBuffers;
-                    channel = new QCamera3RegularChannel(mCameraHandle->camera_handle,
+                    if (newStream->stream_type == CAMERA3_STREAM_BIDIRECTIONAL &&
+                        jpegStream) {
+                        uint32_t width = jpegStream->width;
+                        uint32_t height = jpegStream->height;
+                        channel = new QCamera3RegularChannel(mCameraHandle->camera_handle,
+                            mCameraHandle->ops, captureResultCb,
+                            &gCamCapability[mCameraId]->padding_info, this, newStream,
+                            width, height);
+                    } else
+                        channel = new QCamera3RegularChannel(mCameraHandle->camera_handle,
                             mCameraHandle->ops, captureResultCb,
                             &gCamCapability[mCameraId]->padding_info, this, newStream);
                     if (channel == NULL) {
@@ -649,9 +662,29 @@ int QCamera3HardwareInterface::validateCaptureRequest(
         return BAD_VALUE;
     }
     if (request->input_buffer != NULL) {
-        //TODO
-        ALOGE("%s: Not supporting input buffer yet", __func__);
-        return BAD_VALUE;
+        b = request->input_buffer;
+        QCamera3Channel *channel =
+            static_cast<QCamera3Channel*>(b->stream->priv);
+        if (channel == NULL) {
+            ALOGE("%s: Request %d: Buffer %d: Unconfigured stream!",
+                    __func__, frameNumber, idx);
+            return BAD_VALUE;
+        }
+        if (b->status != CAMERA3_BUFFER_STATUS_OK) {
+            ALOGE("%s: Request %d: Buffer %d: Status not OK!",
+                    __func__, frameNumber, idx);
+            return BAD_VALUE;
+        }
+        if (b->release_fence != -1) {
+            ALOGE("%s: Request %d: Buffer %d: Has a release fence!",
+                    __func__, frameNumber, idx);
+            return BAD_VALUE;
+        }
+        if (b->buffer == NULL) {
+            ALOGE("%s: Request %d: Buffer %d: NULL buffer handle!",
+                    __func__, frameNumber, idx);
+            return BAD_VALUE;
+        }
     }
 
     // Validate all buffers
@@ -747,12 +780,6 @@ int QCamera3HardwareInterface::registerStreamBuffers(
             (*it)->registered = 1;
         }
     }
-
-    if (stream->stream_type != CAMERA3_STREAM_OUTPUT) {
-        ALOGE("%s: not yet support non output type stream", __func__);
-        pthread_mutex_unlock(&mMutex);
-        return -EINVAL;
-    }
     rc = channel->registerBuffers(buffer_set->num_buffers, buffer_set->buffers);
     if (rc < 0) {
         ALOGE("%s: registerBUffers for stream %p failed", __func__, stream);
@@ -792,7 +819,6 @@ int QCamera3HardwareInterface::processCaptureRequest(
     }
 
     uint32_t frameNumber = request->frame_number;
-
     rc = setFrameParameters(request->frame_number, request->settings);
     if (rc < 0) {
         ALOGE("%s: fail to set frame parameters", __func__);
@@ -814,9 +840,11 @@ int QCamera3HardwareInterface::processCaptureRequest(
         request_id = mCurrentRequestId;
     }
 
-
-    ALOGV("%s: %d, num_output_buffers = %d", __func__, __LINE__,
-                                    request->num_output_buffers);
+    ALOGV("%s: %d, num_output_buffers = %d input_buffer = %p frame_number = %d",
+                                    __func__, __LINE__,
+                                    request->num_output_buffers,
+                                    request->input_buffer,
+                                    frameNumber);
     // Acquire all request buffers first
     for (size_t i = 0; i < request->num_output_buffers; i++) {
         const camera3_stream_buffer_t& output = request->output_buffers[i];
@@ -865,6 +893,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
     for (size_t i = 0; i < request->num_output_buffers; i++) {
         const camera3_stream_buffer_t& output = request->output_buffers[i];
         QCamera3Channel *channel = (QCamera3Channel *)output.stream->priv;
+        mm_camera_buf_def_t *pInputBuffer = NULL;
 
         if (channel == NULL) {
             ALOGE("%s: invalid channel pointer for stream", __func__);
@@ -872,7 +901,26 @@ int QCamera3HardwareInterface::processCaptureRequest(
         }
 
         if (output.stream->format == HAL_PIXEL_FORMAT_BLOB) {
-            rc = channel->request(output.buffer, frameNumber, mJpegSettings);
+            QCamera3RegularChannel* inputChannel = NULL;
+            if(request->input_buffer != NULL){
+
+                //Try to get the internal format
+                inputChannel = (QCamera3RegularChannel*)
+                    request->input_buffer->stream->priv;
+                if(inputChannel == NULL ){
+                    ALOGE("%s: failed to get input channel handle", __func__);
+                } else {
+                    pInputBuffer =
+                        inputChannel->getInternalFormatBuffer(
+                                request->input_buffer->buffer);
+                    ALOGD("%s: Input buffer dump",__func__);
+                    ALOGD("Stream id: %d", pInputBuffer->stream_id);
+                    ALOGD("streamtype:%d", pInputBuffer->stream_type);
+                    ALOGD("frame len:%d", pInputBuffer->frame_len);
+                }
+            }
+            rc = channel->request(output.buffer, frameNumber, mJpegSettings,
+                            pInputBuffer,(QCamera3Channel*)inputChannel);
         } else {
             ALOGV("%s: %d, request with buffer %p, frame_number %d", __func__,
                 __LINE__, output.buffer, frameNumber);
@@ -1084,8 +1132,9 @@ done_metadata:
         // directly send the buffer to the frameworks, and update pending buffers map
         // Otherwise, book-keep the buffer.
         List<PendingRequestInfo>::iterator i = mPendingRequestsList.begin();
-        while (i != mPendingRequestsList.end() && i->frame_number != frame_number)
+        while (i != mPendingRequestsList.end() && i->frame_number != frame_number){
             i++;
+        }
         if (i == mPendingRequestsList.end()) {
             // Verify all pending requests frame_numbers are greater
             for (List<PendingRequestInfo>::iterator j = mPendingRequestsList.begin();
@@ -1195,7 +1244,7 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
     convertToRegions(hAeRegions->rect, aeRegions, hAeRegions->weight);
     camMetadata.update(ANDROID_CONTROL_AE_REGIONS, aeRegions, 5);
 
-    uint8_t  *ae_state =
+    uint8_t *ae_state =
         (uint8_t *)POINTER_OF(CAM_INTF_META_AEC_STATE, metadata);
     camMetadata.update(ANDROID_CONTROL_AE_STATE, ae_state, 1);
 
@@ -1638,6 +1687,12 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
 {
     int rc = 0;
     CameraMetadata staticInfo;
+
+    /* android.info: hardware level */
+    uint8_t supportedHardwareLevel = ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL_FULL;
+    staticInfo.update(ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL,
+        &supportedHardwareLevel, 1);
+
     int facingBack = gCamCapability[cameraId]->position == CAM_POSITION_BACK;
     /*HAL 3 only*/
     /*staticInfo.update(ANDROID_LENS_INFO_MINIMUM_FOCUS_DISTANCE,
@@ -1718,7 +1773,6 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     int32_t active_array_size[] = {0, 0,
                                                 gCamCapability[cameraId]->active_array_size.width,
                                                 gCamCapability[cameraId]->active_array_size.height};
-
     staticInfo.update(ANDROID_SENSOR_INFO_ACTIVE_ARRAY_SIZE,
                       active_array_size, 4);
 
@@ -2525,7 +2579,6 @@ int QCamera3HardwareInterface::translateMetadataToParameters
         rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_AEC_LOCK,
                 sizeof(aeLock), &aeLock);
     }
-
     if (frame_settings.exists(ANDROID_CONTROL_AE_TARGET_FPS_RANGE)) {
         cam_fps_range_t fps_range;
         fps_range.min_fps =
