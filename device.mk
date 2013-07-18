@@ -60,8 +60,7 @@ PRODUCT_COPY_FILES += \
     device/lge/hammerhead/media_profiles.xml:system/etc/media_profiles.xml
 
 PRODUCT_COPY_FILES += \
-    device/lge/hammerhead/bcmdhd.cal_4335:system/etc/wifi/bcmdhd.cal_4335 \
-    device/lge/hammerhead/bcmdhd.cal_4339:system/etc/wifi/bcmdhd.cal_4339
+    device/lge/hammerhead/bcmdhd.cal:system/etc/wifi/bcmdhd.cal
 
 # These are the hardware-specific features
 PRODUCT_COPY_FILES += \
@@ -272,5 +271,4 @@ $(call inherit-product, frameworks/native/build/phone-xhdpi-2048-dalvik-heap.mk)
 
 $(call inherit-product-if-exists, hardware/qcom/msm8x74/msm8x74.mk)
 $(call inherit-product-if-exists, vendor/qcom/gpu/msm8x74/msm8x74-gpu-vendor.mk)
-#$(call inherit-product-if-exists, hardware/broadcom/wlan/bcmdhd/firmware/bcm4335/device-bcm.mk)
-$(call inherit-product-if-exists, device/lge/hammerhead/device-bcm.mk)
+$(call inherit-product-if-exists, hardware/broadcom/wlan/bcmdhd/firmware/bcm4339/device-bcm.mk)
