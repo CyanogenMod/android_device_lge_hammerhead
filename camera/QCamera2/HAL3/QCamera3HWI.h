@@ -192,16 +192,12 @@ private:
 
     List<PendingRequestInfo> mPendingRequestsList;
     PendingBuffersMap mPendingBuffersMap;
-    pthread_mutex_t mRequestLock;
     pthread_cond_t mRequestCond;
     int mPendingRequest;
     int32_t mCurrentRequestId;
 
     //mutex for serialized access to camera3_device_ops_t functions
     pthread_mutex_t mMutex;
-
-    //mutex to protect the critial section for processCaptureResult
-    pthread_mutex_t mCaptureResultLock;
 
     jpeg_settings_t* mJpegSettings;
     metadata_response_t mMetadataResponse;
