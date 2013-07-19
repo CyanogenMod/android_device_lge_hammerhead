@@ -395,10 +395,15 @@ int32_t mm_camera_poll_thread_del_poll_fd(mm_camera_poll_thread_t * poll_cb,
     return rc;
 }
 
+static pthread_mutex_t constr_destr_lock = PTHREAD_MUTEX_INITIALIZER;
+
 int32_t mm_camera_poll_thread_launch(mm_camera_poll_thread_t * poll_cb,
                                      mm_camera_poll_thread_type_t poll_type)
 {
     int32_t rc = 0;
+
+    pthread_mutex_lock(&constr_destr_lock);
+
     poll_cb->poll_type = poll_type;
 
     poll_cb->pfds[0] = 0;
@@ -406,6 +411,7 @@ int32_t mm_camera_poll_thread_launch(mm_camera_poll_thread_t * poll_cb,
     rc = pipe(poll_cb->pfds);
     if(rc < 0) {
         CDBG_ERROR("%s: pipe open rc=%d\n", __func__, rc);
+        pthread_mutex_unlock(&constr_destr_lock);
         return -1;
     }
 
@@ -427,15 +433,19 @@ int32_t mm_camera_poll_thread_launch(mm_camera_poll_thread_t * poll_cb,
     }
     pthread_mutex_unlock(&poll_cb->mutex);
     CDBG("%s: End",__func__);
+    pthread_mutex_unlock(&constr_destr_lock);
     return rc;
 }
 
 int32_t mm_camera_poll_thread_release(mm_camera_poll_thread_t *poll_cb)
 {
     int32_t rc = 0;
+
+    pthread_mutex_lock(&constr_destr_lock);
+
     if(MM_CAMERA_POLL_TASK_STATE_STOPPED == poll_cb->state) {
         CDBG_ERROR("%s: err, poll thread is not running.\n", __func__);
-        return rc;
+        goto done;
     }
 
     /* send exit signal to poll thread */
@@ -456,6 +466,8 @@ int32_t mm_camera_poll_thread_release(mm_camera_poll_thread_t *poll_cb)
     pthread_mutex_destroy(&poll_cb->mutex);
     pthread_cond_destroy(&poll_cb->cond_v);
     memset(poll_cb, 0, sizeof(mm_camera_poll_thread_t));
+done:
+    pthread_mutex_unlock(&constr_destr_lock);
     return rc;
 }
 
