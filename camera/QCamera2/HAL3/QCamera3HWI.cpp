@@ -172,12 +172,10 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId)
     mCameraDevice.priv = this;
     gCamCapability[cameraId]->version = CAM_HAL_V3;
 
-    pthread_mutex_init(&mRequestLock, NULL);
     pthread_cond_init(&mRequestCond, NULL);
     mPendingRequest = 0;
     mCurrentRequestId = -1;
     pthread_mutex_init(&mMutex, NULL);
-    pthread_mutex_init(&mCaptureResultLock, NULL);
 
     for (size_t i = 0; i < CAMERA3_TEMPLATE_COUNT; i++)
         mDefaultMetadata[i] = NULL;
@@ -236,11 +234,9 @@ QCamera3HardwareInterface::~QCamera3HardwareInterface()
         if (mDefaultMetadata[i])
             free_camera_metadata(mDefaultMetadata[i]);
 
-    pthread_mutex_destroy(&mRequestLock);
     pthread_cond_destroy(&mRequestCond);
 
     pthread_mutex_destroy(&mMutex);
-    pthread_mutex_destroy(&mCaptureResultLock);
     ALOGV("%s: X", __func__);
 }
 
@@ -871,7 +867,6 @@ int QCamera3HardwareInterface::processCaptureRequest(
     }
 
     /* Update pending request list and pending buffers map */
-    pthread_mutex_lock(&mRequestLock);
     PendingRequestInfo pendingRequest;
     pendingRequest.frame_number = frameNumber;
     pendingRequest.num_buffers = request->num_output_buffers;
@@ -886,7 +881,6 @@ int QCamera3HardwareInterface::processCaptureRequest(
         mPendingBuffersMap.editValueFor(requestedBuf.stream)++;
     }
     mPendingRequestsList.push_back(pendingRequest);
-    pthread_mutex_unlock(&mRequestLock);
 
     // Notify metadata channel we receive a request
     mMetadataChannel->request(NULL, frameNumber);
@@ -935,12 +929,10 @@ int QCamera3HardwareInterface::processCaptureRequest(
     mFirstRequest = false;
 
     //Block on conditional variable
-    pthread_mutex_lock(&mRequestLock);
     mPendingRequest = 1;
     while (mPendingRequest == 1) {
-        pthread_cond_wait(&mRequestCond, &mRequestLock);
+        pthread_cond_wait(&mRequestCond, &mMutex);
     }
-    pthread_mutex_unlock(&mRequestLock);
 
     pthread_mutex_unlock(&mMutex);
     return rc;
@@ -1005,7 +997,7 @@ void QCamera3HardwareInterface::dump(int /*fd*/)
 void QCamera3HardwareInterface::captureResultCb(mm_camera_super_buf_t *metadata_buf,
                 camera3_stream_buffer_t *buffer, uint32_t frame_number)
 {
-    pthread_mutex_lock(&mRequestLock);
+    pthread_mutex_lock(&mMutex);
 
     if (metadata_buf) {
         metadata_buffer_t *metadata = (metadata_buffer_t *)metadata_buf->bufs[0]->buffer;
@@ -1173,7 +1165,7 @@ done_metadata:
         }
     }
 
-    pthread_mutex_unlock(&mRequestLock);
+    pthread_mutex_unlock(&mMutex);
     return;
 }
 
