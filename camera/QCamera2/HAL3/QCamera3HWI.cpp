@@ -162,6 +162,7 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId)
       mParamHeap(NULL),
       mParameters(NULL),
       mJpegSettings(NULL),
+      mIsZslMode(false),
       m_pPowerModule(NULL)
 {
     mCameraDevice.common.tag = HARDWARE_DEVICE_TAG;
@@ -546,6 +547,7 @@ int QCamera3HardwareInterface::configureStreams(
                         jpegStream) {
                         uint32_t width = jpegStream->width;
                         uint32_t height = jpegStream->height;
+                        mIsZslMode = true;
                         channel = new QCamera3RegularChannel(mCameraHandle->camera_handle,
                             mCameraHandle->ops, captureResultCb,
                             &gCamCapability[mCameraId]->padding_info, this, newStream,
@@ -1243,11 +1245,14 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
     int32_t aeRegions[5];
     convertToRegions(hAeRegions->rect, aeRegions, hAeRegions->weight);
     camMetadata.update(ANDROID_CONTROL_AE_REGIONS, aeRegions, 5);
-
-    uint8_t *ae_state =
-        (uint8_t *)POINTER_OF(CAM_INTF_META_AEC_STATE, metadata);
-    camMetadata.update(ANDROID_CONTROL_AE_STATE, ae_state, 1);
-
+   if(mIsZslMode) {
+        uint8_t ae_state = ANDROID_CONTROL_AE_STATE_CONVERGED;
+        camMetadata.update(ANDROID_CONTROL_AE_STATE, &ae_state, 1);
+    } else {
+        uint8_t *ae_state =
+            (uint8_t *)POINTER_OF(CAM_INTF_META_AEC_STATE, metadata);
+        camMetadata.update(ANDROID_CONTROL_AE_STATE, ae_state, 1);
+   }
     uint8_t  *focusMode =
         (uint8_t *)POINTER_OF(CAM_INTF_PARM_FOCUS_MODE, metadata);
     camMetadata.update(ANDROID_CONTROL_AF_MODE, focusMode, 1);
@@ -2661,13 +2666,6 @@ int QCamera3HardwareInterface::translateMetadataToParameters
                 sizeof(flashMode), &flashMode);
         rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_REDEYE_REDUCTION,
                 sizeof(redeye), &redeye);
-    }
-
-    if (frame_settings.exists(ANDROID_REQUEST_FRAME_COUNT)) {
-        int32_t metaFrameNumber =
-            frame_settings.find(ANDROID_REQUEST_FRAME_COUNT).data.i32[0];
-        rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_FRAME_NUMBER,
-                sizeof(metaFrameNumber), &metaFrameNumber);
     }
 
     if (frame_settings.exists(ANDROID_COLOR_CORRECTION_MODE)) {
