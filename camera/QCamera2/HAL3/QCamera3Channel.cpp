@@ -130,9 +130,12 @@ QCamera3Channel::~QCamera3Channel()
             mStreams[i] = 0;
         }
     }
+    if (m_handle) {
+        m_camOps->delete_channel(m_camHandle, m_handle);
+        ALOGE("%s: deleting channel %d", __func__, m_handle);
+        m_handle = 0;
+    }
     m_numStreams = 0;
-    m_camOps->delete_channel(m_camHandle, m_handle);
-    m_handle = 0;
 }
 
 /*===========================================================================
