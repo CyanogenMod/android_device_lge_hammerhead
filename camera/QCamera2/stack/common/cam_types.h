@@ -769,6 +769,8 @@ typedef enum {
     /* specific to HAL3 */
     /* Whether the metadata maps to a valid frame number */
     CAM_INTF_META_FRAME_NUMBER_VALID,
+    /* Number of pending requests yet to be processed */
+    CAM_INTF_META_PENDING_REQUESTS,
     /* COLOR CORRECTION.*/
     CAM_INTF_META_COLOR_CORRECT_MODE,
     /* A transform matrix to chromatically adapt pixels in the CIE XYZ (1931)
