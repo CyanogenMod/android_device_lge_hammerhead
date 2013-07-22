@@ -473,6 +473,7 @@ typedef union {
     INCLUDE(CAM_INTF_META_GOOD_FRAME_IDX_RANGE,       cam_frame_idx_range_t,       1);
     /* Specific to HAL3 */
     INCLUDE(CAM_INTF_META_FRAME_NUMBER_VALID,         int32_t,                     1);
+    INCLUDE(CAM_INTF_META_PENDING_REQUESTS,           uint32_t,                    1);
     INCLUDE(CAM_INTF_META_FRAME_NUMBER,               uint32_t,                    1);
     INCLUDE(CAM_INTF_META_COLOR_CORRECT_MODE,         uint8_t,                     1);
     INCLUDE(CAM_INTF_META_AEC_PRECAPTURE_ID,          int32_t,                     1);

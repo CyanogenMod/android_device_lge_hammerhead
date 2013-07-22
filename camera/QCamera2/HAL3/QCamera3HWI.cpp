@@ -1003,6 +1003,8 @@ void QCamera3HardwareInterface::captureResultCb(mm_camera_super_buf_t *metadata_
         metadata_buffer_t *metadata = (metadata_buffer_t *)metadata_buf->bufs[0]->buffer;
         int32_t frame_number_valid = *(int32_t *)
             POINTER_OF(CAM_INTF_META_FRAME_NUMBER_VALID, metadata);
+        uint32_t pending_requests = *(uint32_t *)POINTER_OF(
+            CAM_INTF_META_PENDING_REQUESTS, metadata);
         uint32_t frame_number = *(uint32_t *)
             POINTER_OF(CAM_INTF_META_FRAME_NUMBER, metadata);
         const struct timeval *tv = (const struct timeval *)
@@ -1116,7 +1118,7 @@ done_metadata:
                 break;
             }
         }
-        if (!max_buffers_dequeued) {
+        if (!max_buffers_dequeued && !pending_requests) {
             // Unblock process_capture_request
             mPendingRequest = 0;
             pthread_cond_signal(&mRequestCond);
