@@ -315,6 +315,11 @@ typedef struct {
     float max_fps;
 } cam_fps_range_t;
 
+typedef struct {
+    int32_t min_sensitivity;
+    int32_t max_sensitivity;
+} cam_sensitivity_range_t;
+
 typedef enum {
     CAM_HFR_MODE_OFF,
     CAM_HFR_MODE_60FPS,
