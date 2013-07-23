@@ -108,6 +108,9 @@ typedef struct{
 
     uint8_t video_stablization_supported; /* flag id video stablization is supported */
 
+    uint8_t picture_sizes_tbl_cnt;                          /* picture sizes table size */
+    cam_dimension_t picture_sizes_tbl[MAX_SIZES_CNT];       /* picture sizes table */
+
     /* capabilities specific to HAL 1 */
 
     int modes_supported;                                    /* mask of modes supported: 2D, 3D */
@@ -123,8 +126,6 @@ typedef struct{
     uint8_t video_sizes_tbl_cnt;                            /* video sizes table size */
     cam_dimension_t video_sizes_tbl[MAX_SIZES_CNT];         /* video sizes table */
 
-    uint8_t picture_sizes_tbl_cnt;                          /* picture sizes table size */
-    cam_dimension_t picture_sizes_tbl[MAX_SIZES_CNT];       /* picture sizes table */
 
     uint8_t livesnapshot_sizes_tbl_cnt;                     /* livesnapshot sizes table size */
     cam_dimension_t livesnapshot_sizes_tbl[MAX_SIZES_CNT];  /* livesnapshot sizes table */
@@ -268,9 +269,11 @@ typedef struct{
     /*Autoexposure modes for camera 3 api*/
     uint8_t supported_ae_modes_cnt;
     cam_ae_mode_type supported_ae_modes[CAM_AE_MODE_MAX];
+
+    int64_t jpeg_min_duration[MAX_SIZES_CNT];
+
+    cam_sensitivity_range_t sensitivity_range;
     int32_t max_analog_sensitivity;
-    int32_t processed_min_duration;
-    int32_t jpeg_min_duration;
 
 } cam_capability_t;
 

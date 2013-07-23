@@ -1825,6 +1825,9 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_SCALER_AVAILABLE_PROCESSED_SIZES,
                 available_processed_sizes,
                 (gCamCapability[cameraId]->supported_sizes_tbl_cnt) * 2);
+    staticInfo.update(ANDROID_SCALER_AVAILABLE_PROCESSED_MIN_DURATIONS,
+                      &gCamCapability[cameraId]->min_duration[0],
+                      gCamCapability[cameraId]->supported_sizes_tbl_cnt);
 
     int32_t available_fps_ranges[MAX_SIZES_CNT * 2];
     makeFPSTable(gCamCapability[cameraId]->fps_ranges_tbl,
@@ -2027,15 +2030,9 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       avail_ae_modes,
                       size);
 
-    int32_t min = INT_MAX, max = INT_MIN;
-    for (int i = 0; i < gCamCapability[cameraId]->supported_iso_modes_cnt; i++) {
-        int32_t sensitivity = getSensorSensitivity(gCamCapability[cameraId]->supported_iso_modes[i]);
-        if (sensitivity != -1) {
-            min = (sensitivity >= min) ? min : sensitivity;
-            max = (sensitivity <= max) ? max : sensitivity;
-        }
-    }
-    int32_t sensitivity_range[] = {min, max};
+    int32_t sensitivity_range[2];
+    sensitivity_range[0] = gCamCapability[cameraId]->sensitivity_range.min_sensitivity;
+    sensitivity_range[1] = gCamCapability[cameraId]->sensitivity_range.max_sensitivity;
     staticInfo.update(ANDROID_SENSOR_INFO_SENSITIVITY_RANGE,
                       sensitivity_range,
                       sizeof(sensitivity_range) / sizeof(int32_t));
@@ -2043,12 +2040,9 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_SENSOR_MAX_ANALOG_SENSITIVITY,
                       &gCamCapability[cameraId]->max_analog_sensitivity,
                       sizeof(int32_t) );
-    staticInfo.update(ANDROID_SCALER_AVAILABLE_PROCESSED_MIN_DURATIONS,
-                      &gCamCapability[cameraId]->processed_min_duration,
-                      sizeof(int32_t));
     staticInfo.update(ANDROID_SCALER_AVAILABLE_JPEG_MIN_DURATIONS,
-                      &gCamCapability[cameraId]->jpeg_min_duration,
-                      sizeof(int32_t));
+                      &gCamCapability[cameraId]->jpeg_min_duration[0],
+                      gCamCapability[cameraId]->picture_sizes_tbl_cnt);
 
     gStaticMetadata[cameraId] = staticInfo.release();
     return rc;
@@ -2566,7 +2560,12 @@ int QCamera3HardwareInterface::translateMetadataToParameters
     }
 
     if (frame_settings.exists(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)) {
-        int32_t expCompensation = frame_settings.find(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION).data.i32[0];
+        int32_t expCompensation = frame_settings.find(
+            ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION).data.i32[0];
+        if (expCompensation < gCamCapability[mCameraId]->exposure_time_range[0])
+            expCompensation = gCamCapability[mCameraId]->exposure_time_range[0];
+        if (expCompensation > gCamCapability[mCameraId]->exposure_time_range[1])
+            expCompensation = gCamCapability[mCameraId]->exposure_time_range[1];
         rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_EXPOSURE_COMPENSATION,
           sizeof(expCompensation), &expCompensation);
     }
@@ -2853,6 +2852,8 @@ int QCamera3HardwareInterface::translateMetadataToParameters
     if (frame_settings.exists(ANDROID_SENSOR_FRAME_DURATION)) {
         int64_t sensorFrameDuration =
             frame_settings.find(ANDROID_SENSOR_FRAME_DURATION).data.i64[0];
+        if (sensorFrameDuration > gCamCapability[mCameraId]->max_frame_duration)
+            sensorFrameDuration = gCamCapability[mCameraId]->max_frame_duration;
         rc = AddSetParmEntryToBatch(mParameters,
                 CAM_INTF_META_SENSOR_FRAME_DURATION,
                 sizeof(sensorFrameDuration), &sensorFrameDuration);
@@ -2861,6 +2862,14 @@ int QCamera3HardwareInterface::translateMetadataToParameters
     if (frame_settings.exists(ANDROID_SENSOR_SENSITIVITY)) {
         int32_t sensorSensitivity =
             frame_settings.find(ANDROID_SENSOR_SENSITIVITY).data.i32[0];
+        if (sensorSensitivity <
+                gCamCapability[mCameraId]->sensitivity_range.min_sensitivity)
+            sensorSensitivity =
+                gCamCapability[mCameraId]->sensitivity_range.min_sensitivity;
+        if (sensorSensitivity >
+                gCamCapability[mCameraId]->sensitivity_range.max_sensitivity)
+            sensorSensitivity =
+                gCamCapability[mCameraId]->sensitivity_range.max_sensitivity;
         rc = AddSetParmEntryToBatch(mParameters,
                 CAM_INTF_META_SENSOR_SENSITIVITY,
                 sizeof(sensorSensitivity), &sensorSensitivity);
