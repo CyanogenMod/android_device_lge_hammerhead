@@ -456,6 +456,7 @@ typedef enum {
     CAM_FLASH_MODE_AUTO,
     CAM_FLASH_MODE_ON,
     CAM_FLASH_MODE_TORCH,
+    CAM_FLASH_MODE_SINGLE,
     CAM_FLASH_MODE_MAX
 } cam_flash_mode_t;
 
