@@ -122,8 +122,8 @@ const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::AE_FLASH_
 
 const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::FLASH_MODES_MAP[] = {
     { ANDROID_FLASH_MODE_OFF,    CAM_FLASH_MODE_OFF  },
-    { ANDROID_FLASH_MODE_SINGLE, CAM_FLASH_MODE_ON   },
-    { ANDROID_FLASH_MODE_TORCH,  CAM_FLASH_MODE_TORCH}
+    { ANDROID_FLASH_MODE_SINGLE, CAM_FLASH_MODE_SINGLE },
+    { ANDROID_FLASH_MODE_TORCH,  CAM_FLASH_MODE_TORCH }
 };
 
 const int32_t available_thumbnail_sizes[] = {512, 288, 480, 288, 256, 154, 432, 288,
@@ -2640,6 +2640,7 @@ int QCamera3HardwareInterface::translateMetadataToParameters
             frame_settings.find(ANDROID_CONTROL_AE_MODE).data.u8[0];
         uint8_t aeMode;
         int32_t redeye;
+
         if (fwk_aeMode == ANDROID_CONTROL_AE_MODE_OFF ) {
             aeMode = CAM_AE_MODE_OFF;
         } else {
@@ -2650,6 +2651,7 @@ int QCamera3HardwareInterface::translateMetadataToParameters
         } else {
             redeye = 0;
         }
+
         int32_t flashMode = (int32_t)lookupHalName(AE_FLASH_MODE_MAP,
                                           sizeof(AE_FLASH_MODE_MAP),
                                           fwk_aeMode);
@@ -2736,10 +2738,27 @@ int QCamera3HardwareInterface::translateMetadataToParameters
     }
 
     if (frame_settings.exists(ANDROID_FLASH_MODE)) {
-        uint8_t flashMode =
-            frame_settings.find(ANDROID_FLASH_MODE).data.u8[0];
-        rc = AddSetParmEntryToBatch(mParameters,
-                CAM_INTF_META_FLASH_MODE, sizeof(flashMode), &flashMode);
+        int32_t respectFlashMode = 1;
+        if (frame_settings.exists(ANDROID_CONTROL_AE_MODE)) {
+            uint8_t fwk_aeMode =
+                frame_settings.find(ANDROID_CONTROL_AE_MODE).data.u8[0];
+            if (fwk_aeMode > ANDROID_CONTROL_AE_MODE_ON) {
+                respectFlashMode = 0;
+                ALOGI("%s: AE Mode controls flash, ignore android.flash.mode",
+                    __func__);
+            }
+        }
+        if (respectFlashMode) {
+            uint8_t flashMode =
+                frame_settings.find(ANDROID_FLASH_MODE).data.u8[0];
+            flashMode = (int32_t)lookupHalName(FLASH_MODES_MAP,
+                                          sizeof(FLASH_MODES_MAP),
+                                          flashMode);
+            ALOGI("%s: flash mode after mapping %d", __func__, flashMode);
+            // To check: CAM_INTF_META_FLASH_MODE usage
+            rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_LED_MODE,
+                          sizeof(flashMode), &flashMode);
+        }
     }
 
     if (frame_settings.exists(ANDROID_FLASH_FIRING_POWER)) {
