@@ -178,6 +178,9 @@ PRODUCT_PACKAGES += \
     libion
 
 PRODUCT_PACKAGES += \
+    sensors.hammerhead
+
+PRODUCT_PACKAGES += \
     lights.hammerhead
 
 PRODUCT_PACKAGES += \
@@ -219,28 +222,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
 
 PRODUCT_PROPERTY_OVERRIDES += \
     drm.service.enabled=true
-
-# Set sensor streaming rate
-PRODUCT_PROPERTY_OVERRIDES += \
-    ro.qc.sensors.max_gyro_rate=200 \
-    ro.qc.sensors.max_accel_rate=120 \
-    ro.qc.sensors.max_grav=120 \
-    ro.qc.sensors.max_rotvec=120 \
-    ro.qc.sensors.max_ortn=120 \
-    ro.qc.sensors.max_linacc=120 \
-    ro.qc.sensors.max_gamerv_rate=120
-
-# Enable optional sensor types
-PRODUCT_PROPERTY_OVERRIDES += \
-    ro.qualcomm.sensors.smd=true \
-    ro.qualcomm.sensors.game_rv=true \
-    ro.qualcomm.sensors.georv=true
-
-# Enable some debug messages by default
-PRODUCT_PROPERTY_OVERRIDES += \
-    debug.qualcomm.sns.hal=w \
-    debug.qualcomm.sns.daemon=w \
-    debug.qualcomm.sns.libsensor1=w
 
 # Ril sends only one RIL_UNSOL_CALL_RING, so set call_ring.multiple to false
 PRODUCT_PROPERTY_OVERRIDES += \
