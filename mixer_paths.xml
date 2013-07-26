@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <mixer>
     <!-- These are the initial mixer settings -->
-    <ctl name="Voice Rx Device Mute" value="0" />
-    <ctl name="Voice Tx Mute" value="0" />
-    <ctl name="Voice Rx Volume" value="0" />
+    <ctl name="Voice Rx Device Mute" id="0" value="0" />
+    <ctl name="Voice Rx Device Mute" id="1" value="-1" />
+    <ctl name="Voice Rx Device Mute" id="2" value="20" />
+    <ctl name="Voice Tx Mute" id="0" value="0" />
+    <ctl name="Voice Tx Mute" id="1" value="-1" />
+    <ctl name="Voice Tx Mute" id="2" value="500" />
+    <ctl name="Voice Rx Gain" id="0" value="0" />
+    <ctl name="Voice Rx Gain" id="1" value="-1" />
+    <ctl name="Voice Rx Gain" id="2" value="20" />
     <ctl name="TTY Mode" value="Off" />
     <ctl name="LINEOUT1 Volume" value="12" />
     <ctl name="LINEOUT2 Volume" value="12" />
