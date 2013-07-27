@@ -46,6 +46,7 @@
 /system/etc/Handset_cal.acdb
 /system/etc/Hdmi_cal.acdb
 /system/etc/Headset_cal.acdb
+/system/etc/sensor_def_hh.conf
 /system/etc/Speaker_cal.acdb
 /system/lib/hw/gps.msm8974.so
 /system/lib/libadsprpc.so
