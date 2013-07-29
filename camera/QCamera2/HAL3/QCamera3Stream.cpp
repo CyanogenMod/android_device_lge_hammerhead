@@ -230,6 +230,7 @@ QCamera3Stream::~QCamera3Stream()
 int32_t QCamera3Stream::init(cam_stream_type_t streamType,
                             cam_format_t streamFormat,
                             cam_dimension_t streamDim,
+                            cam_stream_reproc_config_t* reprocess_config,
                             uint8_t minNumBuffers,
                             stream_cb_routine stream_cb,
                             void *userdata)
@@ -264,9 +265,19 @@ int32_t QCamera3Stream::init(cam_stream_type_t streamType,
     mStreamInfo->stream_type = streamType;
     mStreamInfo->fmt = streamFormat;
     mStreamInfo->dim = streamDim;
-    mStreamInfo->streaming_mode = CAM_STREAMING_MODE_CONTINUOUS;
+
+
 
     mNumBufs = minNumBuffers;
+    if (reprocess_config != NULL) {
+       mStreamInfo->reprocess_config = *reprocess_config;
+       mStreamInfo->streaming_mode = CAM_STREAMING_MODE_BURST;
+       //mStreamInfo->num_of_burst = reprocess_config->offline.num_of_bufs;
+       mStreamInfo->num_of_burst = 1;
+       ALOGE("%s: num_of_burst is %d", __func__, mStreamInfo->num_of_burst);
+    } else {
+       mStreamInfo->streaming_mode = CAM_STREAMING_MODE_CONTINUOUS;
+    }
 
     rc = mCamOps->map_stream_buf(mCamHandle,
             mChannelHandle, mHandle, CAM_MAPPING_BUF_TYPE_STREAM_INFO,
@@ -449,7 +460,6 @@ void *QCamera3Stream::dataProcRoutine(void *data)
                         // no data cb routine, return buf here
                         pme->bufDone(frame->bufs[0]->buf_idx);
                     }
-                    free(frame);
                 }
             }
             break;
@@ -772,6 +782,23 @@ uint32_t QCamera3Stream::getMyServerID() {
         return mStreamInfo->stream_svr_id;
     } else {
         return 0;
+    }
+}
+
+/*===========================================================================
+ * FUNCTION   : getMyType
+ *
+ * DESCRIPTION: query stream type
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : type of stream
+ *==========================================================================*/
+cam_stream_type_t QCamera3Stream::getMyType() {
+    if (mStreamInfo != NULL) {
+        return mStreamInfo->stream_type;
+    } else {
+        return CAM_STREAM_TYPE_MAX;
     }
 }
 

@@ -90,6 +90,10 @@ public:
 
     static void streamCbRoutine(mm_camera_super_buf_t *super_frame,
                 QCamera3Stream *stream, void *userdata);
+    void *mUserData;
+    cam_padding_info_t *mPaddingInfo;
+    QCamera3Stream *mStreams[MAX_STREAM_NUM_IN_BUNDLE];
+    uint8_t m_numStreams;
 protected:
 
    virtual int32_t init(mm_camera_channel_attr_t *attr,
@@ -101,14 +105,14 @@ protected:
     bool m_bIsActive;
 
     uint32_t m_handle;
-    uint8_t m_numStreams;
-    QCamera3Stream *mStreams[MAX_STREAM_NUM_IN_BUNDLE];
+
+
     mm_camera_buf_notify_t mDataCB;
-    void *mUserData;
+
 
     QCamera3HeapMemory *mStreamInfoBuf;
     channel_cb_routine mChannelCB;
-    cam_padding_info_t *mPaddingInfo;
+    //cam_padding_info_t *mPaddingInfo;
 };
 
 /* QCamera3RegularChannel is used to handle all streams that are directly
@@ -209,10 +213,13 @@ public:
 
     virtual QCamera3Memory *getStreamBufs(uint32_t le);
     virtual void putStreamBufs();
+    bool needReprocess();
+    bool isWNREnabled() {return m_bWNROn;};
     bool needOnlineRotation();
     void getThumbnailSize(cam_dimension_t &dim);
     int getJpegQuality();
     int getJpegRotation();
+    bool isRawSnapshot();
     QCamera3Exif *getExifData();
     static void jpegEvtHandle(jpeg_job_status_t status,
             uint32_t /*client_hdl*/,
@@ -221,20 +228,61 @@ public:
             void *userdata);
     static void dataNotifyCB(mm_camera_super_buf_t *recvd_frame,
             void *userdata);
+    void queueMetadata(mm_camera_super_buf_t *metadata_buf);
 
 public:
     static int kMaxBuffers;
+    QCamera3PostProcessor m_postprocessor; // post processor
 private:
     camera3_stream_t *mCamera3Stream;
     uint32_t mNumBufs;
     buffer_handle_t **mCamera3Buffers;
     jpeg_settings_t* mJpegSettings;
     int32_t mCurrentBufIndex;
+    bool m_bWNROn;
 
 
     QCamera3GrallocMemory *mMemory;
     QCamera3HeapMemory *mYuvMemory;
-    QCamera3PostProcessor m_postprocessor; // post processor
+};
+
+// reprocess channel class
+class QCamera3ReprocessChannel : public QCamera3Channel
+{
+public:
+    QCamera3ReprocessChannel(uint32_t cam_handle,
+                            mm_camera_ops_t *cam_ops,
+                            channel_cb_routine cb_routine,
+                            cam_padding_info_t *paddingInfo,
+                            void *userData, void *ch_hdl);
+    QCamera3ReprocessChannel();
+    virtual ~QCamera3ReprocessChannel();
+    // online reprocess
+    int32_t doReprocess(mm_camera_super_buf_t *frame,
+                        mm_camera_super_buf_t *meta_frame);
+    // offline reprocess
+    int32_t doReprocess(int buf_fd, uint32_t buf_length, int32_t &ret_val,
+                        mm_camera_super_buf_t *meta_buf);
+    virtual int32_t registerBuffers(uint32_t num_buffers, buffer_handle_t **buffers);
+    virtual QCamera3Memory *getStreamBufs(uint32_t len);
+    virtual void putStreamBufs();
+    virtual int32_t initialize();
+    virtual void streamCbRoutine(mm_camera_super_buf_t *super_frame,
+                            QCamera3Stream *stream);
+    static void dataNotifyCB(mm_camera_super_buf_t *recvd_frame,
+                                       void* userdata);
+    int32_t addReprocStreamsFromSource(cam_pp_feature_config_t &config,
+                                       QCamera3Channel *pSrcChannel,
+                                       QCamera3Channel *pMetaChannel);
+    QCamera3Stream *getStreamBySourceHandle(uint32_t srcHandle);
+public:
+    void *picChHandle;
+private:
+    uint32_t mSrcStreamHandles[MAX_STREAM_NUM_IN_BUNDLE];
+    QCamera3Channel *m_pSrcChannel; // ptr to source channel for reprocess
+    QCamera3Channel *m_pMetaChannel;
+    mm_camera_super_buf_t *m_metaFrame;
+    QCamera3HeapMemory *mMemory;
 };
 
 }; // namespace qcamera

@@ -53,6 +53,7 @@ QCamera3PostProcessor::QCamera3PostProcessor(QCamera3PicChannel* ch_ctrl)
     : m_parent(ch_ctrl),
       mJpegCB(NULL),
       mJpegUserData(NULL),
+      m_pReprocChannel(NULL),
       mJpegClientHandle(0),
       mJpegSessionId(0),
       m_pJpegExifObj(NULL),
@@ -64,6 +65,7 @@ QCamera3PostProcessor::QCamera3PostProcessor(QCamera3PicChannel* ch_ctrl)
       m_inputRawQ(releasePPInputData, this)
 {
     memset(&mJpegHandle, 0, sizeof(mJpegHandle));
+    pthread_mutex_init(&mReprocJobLock, NULL);
 }
 
 /*===========================================================================
@@ -81,6 +83,7 @@ QCamera3PostProcessor::~QCamera3PostProcessor()
         delete m_pJpegExifObj;
         m_pJpegExifObj = NULL;
     }
+    pthread_mutex_destroy(&mReprocJobLock);
 }
 
 /*===========================================================================
@@ -127,6 +130,12 @@ int32_t QCamera3PostProcessor::deinit()
 {
     m_dataProcTh.exit();
 
+    if (m_pReprocChannel != NULL) {
+        m_pReprocChannel->stop();
+        delete m_pReprocChannel;
+        m_pReprocChannel = NULL;
+    }
+
     if(mJpegClientHandle > 0) {
         int rc = mJpegHandle.close(mJpegClientHandle);
         ALOGD("%s: Jpeg closed, rc = %d, mJpegClientHandle = %x",
@@ -154,11 +163,33 @@ int32_t QCamera3PostProcessor::deinit()
  * NOTE       : if any reprocess is needed, a reprocess channel/stream
  *              will be started.
  *==========================================================================*/
-int32_t QCamera3PostProcessor::start(QCamera3Memory* mMemory, int index)
+int32_t QCamera3PostProcessor::start(QCamera3Memory* mMemory, int index, QCamera3PicChannel *pSrcChannel)
 {
     int32_t rc = NO_ERROR;
     mJpegMem = mMemory;
     mJpegMemIndex = index;
+   if (m_parent->needReprocess()) {
+        if (m_pReprocChannel != NULL) {
+            m_pReprocChannel->stop();
+            delete m_pReprocChannel;
+            m_pReprocChannel = NULL;
+        }
+        // if reprocess is needed, start reprocess channel
+        QCamera3HardwareInterface* hal_obj = (QCamera3HardwareInterface*)m_parent->mUserData;
+        m_pReprocChannel = hal_obj->addOnlineReprocChannel(pSrcChannel, m_parent);
+        if (m_pReprocChannel == NULL) {
+            ALOGE("%s: cannot add reprocess channel", __func__);
+            return UNKNOWN_ERROR;
+        }
+
+        rc = m_pReprocChannel->start();
+        if (rc != 0) {
+            ALOGE("%s: cannot start reprocess channel", __func__);
+            delete m_pReprocChannel;
+            m_pReprocChannel = NULL;
+            return rc;
+        }
+    }
     m_dataProcTh.sendCmd(CAMERA_CMD_TYPE_START_DATA_PROC, FALSE, FALSE);
 
     return rc;
@@ -379,21 +410,60 @@ int32_t QCamera3PostProcessor::processAuxiliaryData(mm_camera_buf_def_t *frame,
  *==========================================================================*/
 int32_t QCamera3PostProcessor::processData(mm_camera_super_buf_t *frame)
 {
-    ALOGD("%s: no need offline reprocess, sending to jpeg encoding", __func__);
-    qcamera_jpeg_data_t *jpeg_job =
-        (qcamera_jpeg_data_t *)malloc(sizeof(qcamera_jpeg_data_t));
-    if (jpeg_job == NULL) {
-        ALOGE("%s: No memory for jpeg job", __func__);
-        return NO_MEMORY;
+    if (m_parent->needReprocess()) {
+        pthread_mutex_lock(&mReprocJobLock);
+        // enqueu to post proc input queue
+        m_inputPPQ.enqueue((void *)frame);
+        if (!(m_inputMetaQ.isEmpty())) {
+           ALOGV("%s: meta queue is not empty, do next job", __func__);
+           m_dataProcTh.sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE, FALSE);
+        }
+        pthread_mutex_unlock(&mReprocJobLock);
+    } else if (m_parent->isRawSnapshot()) {
+        processRawData(frame);
+    } else {
+        ALOGD("%s: no need offline reprocess, sending to jpeg encoding", __func__);
+        qcamera_jpeg_data_t *jpeg_job =
+            (qcamera_jpeg_data_t *)malloc(sizeof(qcamera_jpeg_data_t));
+        if (jpeg_job == NULL) {
+            ALOGE("%s: No memory for jpeg job", __func__);
+            return NO_MEMORY;
+        }
+
+        memset(jpeg_job, 0, sizeof(qcamera_jpeg_data_t));
+        jpeg_job->src_frame = frame;
+
+        // enqueu to jpeg input queue
+        m_inputJpegQ.enqueue((void *)jpeg_job);
+        m_dataProcTh.sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE, FALSE);
     }
 
-    memset(jpeg_job, 0, sizeof(qcamera_jpeg_data_t));
-    jpeg_job->src_frame = frame;
+    return NO_ERROR;
+}
 
-    // enqueu to jpeg input queue
-    m_inputJpegQ.enqueue((void *)jpeg_job);
-    m_dataProcTh.sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE, FALSE);
-
+/*===========================================================================
+ * FUNCTION   : processPPMetadata
+ *
+ * DESCRIPTION: enqueue data into dataProc thread
+ *
+ * PARAMETERS :
+ *   @frame   : process metadata frame received from pic channel
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *
+ *==========================================================================*/
+int32_t QCamera3PostProcessor::processPPMetadata(mm_camera_super_buf_t *frame)
+{
+    pthread_mutex_lock(&mReprocJobLock);
+    // enqueue to metadata input queue
+    m_inputMetaQ.enqueue((void *)frame);
+    if (!(m_inputPPQ.isEmpty())) {
+       ALOGV("%s: pp queue is not empty, do next job", __func__);
+       m_dataProcTh.sendCmd(CAMERA_CMD_TYPE_DO_NEXT_JOB, FALSE, FALSE);
+    }
+    pthread_mutex_unlock(&mReprocJobLock);
     return NO_ERROR;
 }
 
@@ -590,7 +660,6 @@ void QCamera3PostProcessor::releaseJpegJobData(qcamera_jpeg_data_t *job)
     ALOGV("%s: E", __func__);
     if (NULL != job) {
         if (NULL != job->src_reproc_frame) {
-            releaseSuperBuf(job->src_reproc_frame);
             free(job->src_reproc_frame);
             job->src_reproc_frame = NULL;
         }
@@ -704,9 +773,20 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
     else
         recvd_frame = jpeg_job_data->src_frame;
 
-    // find channel
-    QCamera3Channel *pChannel = m_parent;
+
+    QCamera3Channel *pChannel = NULL;
+    // first check picture channel
+    if (m_parent != NULL &&
+        m_parent->getMyHandle() == recvd_frame->ch_id) {
+        pChannel = m_parent;
+    }
     // check reprocess channel if not found
+    if (pChannel == NULL) {
+        if (m_pReprocChannel != NULL &&
+            m_pReprocChannel->getMyHandle() == recvd_frame->ch_id) {
+            pChannel = m_pReprocChannel;
+        }
+    }
     if (pChannel == NULL) {
         ALOGE("%s: No corresponding channel (ch_id = %d) exist, return here",
               __func__, recvd_frame->ch_id);
@@ -837,11 +917,7 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
         jpg_job.encode_job.thumb_index = thumb_frame->buf_idx;
     }
 
-    // set rotation only when no online rotation or offline pp rotation is done before
-
-    if (!m_parent->needOnlineRotation()) {
-        jpg_job.encode_job.rotation = m_parent->getJpegRotation();
-    }
+    jpg_job.encode_job.rotation = m_parent->getJpegRotation();
     ALOGV("%s: jpeg rotation is set to %d", __func__, jpg_job.encode_job.rotation);
 
     // Find meta data frame. Meta data frame contains additional exif info
@@ -966,6 +1042,8 @@ void *QCamera3PostProcessor::dataProcessRoutine(void *data)
                 // flush input raw Queue
                 pme->m_inputRawQ.flush();
 
+                pme->m_inputMetaQ.flush();
+
                 // signal cmd is completed
                 cam_sem_post(&cmdThread->sync_sem);
             }
@@ -1000,10 +1078,30 @@ void *QCamera3PostProcessor::dataProcessRoutine(void *data)
                     mm_camera_super_buf_t *pp_frame =
                         (mm_camera_super_buf_t *)pme->m_inputPPQ.dequeue();
                     if (NULL != pp_frame) {
+                       mm_camera_super_buf_t *meta_frame = NULL;
+                       meta_frame =
+                               (mm_camera_super_buf_t *)pme->m_inputMetaQ.dequeue();
+                       if (meta_frame == NULL) {
+                           ALOGE("%s: did not get a corresponding metadata", __func__);
+                       }
+                        // meta_frame != NULL
                         qcamera_pp_data_t *pp_job =
                             (qcamera_pp_data_t *)malloc(sizeof(qcamera_pp_data_t));
                         if (pp_job != NULL) {
                             memset(pp_job, 0, sizeof(qcamera_pp_data_t));
+                            if (pme->m_pReprocChannel != NULL) {
+                                // add into ongoing PP job Q
+                                pp_job->src_frame = pp_frame;
+                                pme->m_ongoingPPQ.enqueue((void *)pp_job);
+                                ret = pme->m_pReprocChannel->doReprocess(pp_frame, meta_frame);
+                                if (NO_ERROR != ret) {
+                                    // remove from ongoing PP job Q
+                                    pme->m_ongoingPPQ.dequeue(false);
+                                }
+                            } else {
+                                ALOGE("%s: Reprocess channel is NULL", __func__);
+                                ret = -1;
+                            }
                         } else {
                             ALOGE("%s: no mem for qcamera_pp_data_t", __func__);
                             ret = -1;
@@ -1035,6 +1133,11 @@ void *QCamera3PostProcessor::dataProcessRoutine(void *data)
                         free(super_buf);
                     }
                     super_buf = (mm_camera_super_buf_t *)pme->m_inputPPQ.dequeue();
+                    if (NULL != super_buf) {
+                        pme->releaseSuperBuf(super_buf);
+                        free(super_buf);
+                    }
+                    super_buf = (mm_camera_super_buf_t *)pme->m_inputMetaQ.dequeue();
                     if (NULL != super_buf) {
                         pme->releaseSuperBuf(super_buf);
                         free(super_buf);

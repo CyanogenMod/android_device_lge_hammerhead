@@ -106,6 +106,8 @@ public:
                                    uint32_t tag);
     static bool resetIfNeededROI(cam_area_t* roi, const cam_crop_region_t* scalerCropRegion);
     static void convertLandmarks(cam_face_detection_info_t face, int32_t* landmarks);
+    static void postproc_channel_cb_routine(mm_camera_super_buf_t *recvd_frame,
+                                            void *userdata);
     static int32_t getScalarFormat(int32_t format);
     static int32_t getSensorSensitivity(int32_t iso_mode);
     static void captureResultCb(mm_camera_super_buf_t *metadata,
@@ -126,6 +128,12 @@ public:
     int getJpegSettings(const camera_metadata_t *settings);
     int initParameters();
     void deinitParameters();
+    int getMaxUnmatchedFramesInQueue();
+    bool needReprocess();
+    QCamera3ReprocessChannel *addOnlineReprocChannel(QCamera3Channel *pInputChannel, QCamera3PicChannel *picChHandle);
+    bool needRotationReprocess();
+    cam_denoise_process_type_t getWaveletDenoiseProcessPlate();
+    bool isWNREnabled() {return true;};
 
     void captureResultCb(mm_camera_super_buf_t *metadata,
                 camera3_stream_buffer_t *buffer, uint32_t frame_number);
@@ -155,10 +163,8 @@ public:
     bool needOnlineRotation();
     void getThumbnailSize(cam_dimension_t &dim);
     int getJpegQuality();
-    int getJpegRotation();
     int calcMaxJpegSize();
     QCamera3Exif *getExifData();
-
 private:
     camera3_device_t   mCameraDevice;
     uint8_t            mCameraId;
@@ -166,16 +172,19 @@ private:
     bool               mCameraOpened;
     bool               mCameraInitialized;
     camera_metadata_t *mDefaultMetadata[CAMERA3_TEMPLATE_COUNT];
+    int mBlobRequest;
 
     const camera3_callback_ops_t *mCallbackOps;
 
     camera3_stream_t *mInputStream;
     QCamera3MetadataChannel *mMetadataChannel;
+    QCamera3PicChannel *mPictureChannel;
 
      //First request yet to be processed after configureStreams
     bool mFirstRequest;
     QCamera3HeapMemory *mParamHeap;
     parm_buffer_t* mParameters;
+    bool m_bWNROn;
 
     /* Data structure to store pending request */
     typedef struct {
@@ -187,6 +196,7 @@ private:
         uint32_t num_buffers;
         int32_t request_id;
         List<RequestedBufferInfo> buffers;
+        int blob_request;
     } PendingRequestInfo;
     typedef KeyedVector<camera3_stream_t *, uint32_t> PendingBuffersMap;
 

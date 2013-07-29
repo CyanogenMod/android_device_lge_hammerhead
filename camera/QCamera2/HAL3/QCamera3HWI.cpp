@@ -158,6 +158,7 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId)
       mCallbackOps(NULL),
       mInputStream(NULL),
       mMetadataChannel(NULL),
+      mPictureChannel(NULL),
       mFirstRequest(false),
       mParamHeap(NULL),
       mParameters(NULL),
@@ -171,6 +172,9 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId)
     mCameraDevice.ops = &mCameraOps;
     mCameraDevice.priv = this;
     gCamCapability[cameraId]->version = CAM_HAL_V3;
+    // TODO: hardcode for now until mctl add support for min_num_pp_bufs
+    //TBD - To see if this hardcoding is needed. Check by printing if this is filled by mctl to 3
+    gCamCapability[cameraId]->min_num_pp_bufs = 3;
 
     pthread_cond_init(&mRequestCond, NULL);
     mPendingRequest = 0;
@@ -204,7 +208,7 @@ QCamera3HardwareInterface::~QCamera3HardwareInterface()
         it != mStreamInfo.end(); it++) {
         QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
         if (channel)
-            channel->stop();
+           channel->stop();
     }
     for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
         it != mStreamInfo.end(); it++) {
@@ -213,6 +217,8 @@ QCamera3HardwareInterface::~QCamera3HardwareInterface()
             delete channel;
         free (*it);
     }
+
+    mPictureChannel = NULL;
 
     if (mJpegSettings != NULL) {
         free(mJpegSettings);
@@ -562,15 +568,15 @@ int QCamera3HardwareInterface::configureStreams(
                     break;
                 case HAL_PIXEL_FORMAT_BLOB:
                     newStream->max_buffers = QCamera3PicChannel::kMaxBuffers;
-                    channel = new QCamera3PicChannel(mCameraHandle->camera_handle,
+                    mPictureChannel = new QCamera3PicChannel(mCameraHandle->camera_handle,
                             mCameraHandle->ops, captureResultCb,
                             &gCamCapability[mCameraId]->padding_info, this, newStream);
-                    if (channel == NULL) {
+                    if (mPictureChannel == NULL) {
                         ALOGE("%s: allocation of channel failed", __func__);
                         pthread_mutex_unlock(&mMutex);
                         return -ENOMEM;
                     }
-                    newStream->priv = channel;
+                    newStream->priv = (QCamera3Channel*)mPictureChannel;
                     break;
 
                 //TODO: Add support for app consumed format?
@@ -844,12 +850,14 @@ int QCamera3HardwareInterface::processCaptureRequest(
                                     request->input_buffer,
                                     frameNumber);
     // Acquire all request buffers first
+    int blob_request = 0;
     for (size_t i = 0; i < request->num_output_buffers; i++) {
         const camera3_stream_buffer_t& output = request->output_buffers[i];
         sp<Fence> acquireFence = new Fence(output.acquire_fence);
 
         if (output.stream->format == HAL_PIXEL_FORMAT_BLOB) {
         //Call function to store local copy of jpeg data for encode params.
+            blob_request = 1;
             rc = getJpegSettings(request->settings);
             if (rc < 0) {
                 ALOGE("%s: failed to get jpeg parameters", __func__);
@@ -871,6 +879,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
     pendingRequest.frame_number = frameNumber;
     pendingRequest.num_buffers = request->num_output_buffers;
     pendingRequest.request_id = request_id;
+    pendingRequest.blob_request = blob_request;
 
     for (size_t i = 0; i < request->num_output_buffers; i++) {
         RequestedBufferInfo requestedBuf;
@@ -981,6 +990,7 @@ void QCamera3HardwareInterface::dump(int /*fd*/)
     return;
 }
 
+
 /*===========================================================================
  * FUNCTION   : captureResultCb
  *
@@ -1058,8 +1068,15 @@ void QCamera3HardwareInterface::captureResultCb(mm_camera_super_buf_t *metadata_
             } else {
                 result.result = translateCbMetadataToResultMetadata(metadata,
                         current_capture_time, i->request_id);
-                // Return metadata buffer
-                mMetadataChannel->bufDone(metadata_buf);
+                if (i->blob_request) {
+                   //If it is a blob request then send the metadata to the picture channel
+                   mPictureChannel->queueMetadata(metadata_buf);
+
+                } else {
+                   // Return metadata buffer
+                   mMetadataChannel->bufDone(metadata_buf);
+                   free(metadata_buf);
+                }
             }
             if (!result.result) {
                 ALOGE("%s: metadata is NULL", __func__);
@@ -1166,7 +1183,6 @@ done_metadata:
             }
         }
     }
-
     pthread_mutex_unlock(&mMutex);
     return;
 }
@@ -3093,6 +3109,8 @@ int QCamera3HardwareInterface::getJpegSettings
     }
     mJpegSettings->exposure_comp_step = gCamCapability[mCameraId]->exp_compensation_step;
     mJpegSettings->max_jpeg_size = calcMaxJpegSize();
+    mJpegSettings->is_jpeg_format = true;
+    mJpegSettings->min_required_pp_mask = gCamCapability[mCameraId]->min_required_pp_mask;
     return 0;
 }
 
@@ -3121,6 +3139,7 @@ void QCamera3HardwareInterface::captureResultCb(mm_camera_super_buf_t *metadata,
     hw->captureResultCb(metadata, buffer, frame_number);
     return;
 }
+
 
 /*===========================================================================
  * FUNCTION   : initialize
@@ -3345,6 +3364,181 @@ int QCamera3HardwareInterface::close_camera_device(struct hw_device_t* device)
     pthread_mutex_unlock(&mCameraSessionLock);
     ALOGV("%s: X", __func__);
     return ret;
+}
+
+/*===========================================================================
+ * FUNCTION   : getWaveletDenoiseProcessPlate
+ *
+ * DESCRIPTION: query wavelet denoise process plate
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : WNR prcocess plate vlaue
+ *==========================================================================*/
+cam_denoise_process_type_t QCamera3HardwareInterface::getWaveletDenoiseProcessPlate()
+{
+    char prop[PROPERTY_VALUE_MAX];
+    memset(prop, 0, sizeof(prop));
+    property_get("persist.denoise.process.plates", prop, "0");
+    int processPlate = atoi(prop);
+    switch(processPlate) {
+    case 0:
+        return CAM_WAVELET_DENOISE_YCBCR_PLANE;
+    case 1:
+        return CAM_WAVELET_DENOISE_CBCR_ONLY;
+    case 2:
+        return CAM_WAVELET_DENOISE_STREAMLINE_YCBCR;
+    case 3:
+        return CAM_WAVELET_DENOISE_STREAMLINED_CBCR;
+    default:
+        return CAM_WAVELET_DENOISE_STREAMLINE_YCBCR;
+    }
+}
+
+/*===========================================================================
+ * FUNCTION   : needRotationReprocess
+ *
+ * DESCRIPTION: if rotation needs to be done by reprocess in pp
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : true: needed
+ *              false: no need
+ *==========================================================================*/
+bool QCamera3HardwareInterface::needRotationReprocess()
+{
+    // TODO: hack here to return false to avoid reprocess
+    // Need to be enabled after PP is enabled
+    return false;
+
+    if (!mJpegSettings->is_jpeg_format) {
+        // RAW image, no need to reprocess
+        return false;
+    }
+
+    if ((gCamCapability[mCameraId]->qcom_supported_feature_mask & CAM_QCOM_FEATURE_ROTATION) > 0 &&
+        mJpegSettings->jpeg_orientation > 0) {
+        // current rotation is not zero, and pp has the capability to process rotation
+        ALOGD("%s: need do reprocess for rotation", __func__);
+        return true;
+    }
+
+    return false;
+}
+
+/*===========================================================================
+ * FUNCTION   : addOnlineReprocChannel
+ *
+ * DESCRIPTION: add a online reprocess channel that will do reprocess on frames
+ *              coming from input channel
+ *
+ * PARAMETERS :
+ *   @pInputChannel : ptr to input channel whose frames will be post-processed
+ *
+ * RETURN     : Ptr to the newly created channel obj. NULL if failed.
+ *==========================================================================*/
+QCamera3ReprocessChannel *QCamera3HardwareInterface::addOnlineReprocChannel(
+                                                      QCamera3Channel *pInputChannel, QCamera3PicChannel *picChHandle)
+{
+    int32_t rc = NO_ERROR;
+    QCamera3ReprocessChannel *pChannel = NULL;
+    if (pInputChannel == NULL) {
+        ALOGE("%s: input channel obj is NULL", __func__);
+        return NULL;
+    }
+
+    pChannel = new QCamera3ReprocessChannel(mCameraHandle->camera_handle,
+            mCameraHandle->ops, NULL, pInputChannel->mPaddingInfo, this, picChHandle);
+    if (NULL == pChannel) {
+        ALOGE("%s: no mem for reprocess channel", __func__);
+        return NULL;
+    }
+
+    // Capture channel, only need snapshot and postview streams start together
+    mm_camera_channel_attr_t attr;
+    memset(&attr, 0, sizeof(mm_camera_channel_attr_t));
+    attr.notify_mode = MM_CAMERA_SUPER_BUF_NOTIFY_CONTINUOUS;
+    attr.max_unmatched_frames = getMaxUnmatchedFramesInQueue();
+    rc = pChannel->initialize();
+    if (rc != NO_ERROR) {
+        ALOGE("%s: init reprocess channel failed, ret = %d", __func__, rc);
+        delete pChannel;
+        return NULL;
+    }
+
+    // pp feature config
+    cam_pp_feature_config_t pp_config;
+    memset(&pp_config, 0, sizeof(cam_pp_feature_config_t));
+    if (gCamCapability[mCameraId]->min_required_pp_mask & CAM_QCOM_FEATURE_SHARPNESS) {
+        pp_config.feature_mask |= CAM_QCOM_FEATURE_SHARPNESS;
+        pp_config.sharpness = 10;
+    }
+
+    if (isWNREnabled()) {
+        pp_config.feature_mask |= CAM_QCOM_FEATURE_DENOISE2D;
+        pp_config.denoise2d.denoise_enable = 1;
+        pp_config.denoise2d.process_plates = getWaveletDenoiseProcessPlate();
+    }
+    if (needRotationReprocess()) {
+        pp_config.feature_mask |= CAM_QCOM_FEATURE_ROTATION;
+        int rotation = mJpegSettings->jpeg_orientation;
+        if (rotation == 0) {
+            pp_config.rotation = ROTATE_0;
+        } else if (rotation == 90) {
+            pp_config.rotation = ROTATE_90;
+        } else if (rotation == 180) {
+            pp_config.rotation = ROTATE_180;
+        } else if (rotation == 270) {
+            pp_config.rotation = ROTATE_270;
+        }
+    }
+
+   rc = pChannel->addReprocStreamsFromSource(pp_config,
+                                             pInputChannel,
+                                             mMetadataChannel);
+
+    if (rc != NO_ERROR) {
+        delete pChannel;
+        return NULL;
+    }
+    return pChannel;
+}
+
+/*===========================================================================
+ * FUNCTION   : needReprocess
+ *
+ * DESCRIPTION: if reprocess is needed
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : true: needed
+ *              false: no need
+ *==========================================================================*/
+bool QCamera3HardwareInterface::needReprocess()
+{
+    // TODO: hack here to return false to avoid reprocess
+    // Need to be enabled after PP is enabled
+    return false;
+
+    if (!mJpegSettings->is_jpeg_format) {
+        // RAW image, no need to reprocess
+        return false;
+    }
+
+    if (((gCamCapability[mCameraId]->min_required_pp_mask > 0) ||
+         isWNREnabled())) {
+        // TODO: add for ZSL HDR later
+        // pp module has min requirement for zsl reprocess, or WNR in ZSL mode
+        ALOGD("%s: need do reprocess for ZSL WNR or min PP reprocess", __func__);
+        return true;
+    }
+
+    return needRotationReprocess();
+}
+
+int QCamera3HardwareInterface::getMaxUnmatchedFramesInQueue()
+{
+    return gCamCapability[mCameraId]->min_num_pp_bufs;
 }
 
 }; //end namespace qcamera

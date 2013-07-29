@@ -210,7 +210,7 @@ int32_t QCamera3Channel::addStream(cam_stream_type_t streamType,
         return NO_MEMORY;
     }
 
-    rc = pStream->init(streamType, streamFormat, streamDim, minStreamBufNum,
+    rc = pStream->init(streamType, streamFormat, streamDim, NULL, minStreamBufNum,
                                                     streamCbRoutine, this);
     if (rc == 0) {
         mStreams[m_numStreams] = pStream;
@@ -366,9 +366,9 @@ QCamera3Stream *QCamera3Channel::getStreamByHandle(uint32_t streamHandle)
 }
 
 /*===========================================================================
- * FUNCTION   : getStreamByHandle
+ * FUNCTION   : getStreamByIndex
  *
- * DESCRIPTION: return stream object by stream handle
+ * DESCRIPTION: return stream object by index
  *
  * PARAMETERS :
  *   @streamHandle : stream handle
@@ -652,6 +652,7 @@ void QCamera3RegularChannel::streamCbRoutine(
     result.release_fence = -1;
 
     mChannelCB(NULL, &result, resultFrameNumber, mUserData);
+    free(super_frame);
     return;
 }
 
@@ -760,9 +761,6 @@ void QCamera3MetadataChannel::streamCbRoutine(
         return;
     }
     mChannelCB(super_frame, NULL, requestNumber, mUserData);
-
-    //Return the buffer
-    stream->bufDone(super_frame->bufs[0]->buf_idx);
 }
 
 QCamera3Memory* QCamera3MetadataChannel::getStreamBufs(uint32_t len)
@@ -948,7 +946,6 @@ int32_t QCamera3PicChannel::initialize()
     rc = QCamera3Channel::addStream(streamType, streamFormat, streamDim,
             num_buffers);
 
-
     return rc;
 }
 
@@ -1007,14 +1004,14 @@ int32_t QCamera3PicChannel::request(buffer_handle_t *buffer,
 
     //Start the postprocessor for jpeg encoding. Pass mMemory as destination buffer
     mCurrentBufIndex = index;
-    m_postprocessor.start(mMemory, index);
+
+    m_postprocessor.start(mMemory, index, this);
 
     ALOGD("%s: Post-process started", __func__);
     if(pInputBuffer) {
         ALOGD("%s: Issue call to reprocess", __func__);
         m_postprocessor.processAuxiliaryData(pInputBuffer,pInputChannel);
     }
-
     return rc;
 }
 
@@ -1142,6 +1139,7 @@ void QCamera3PicChannel::streamCbRoutine(mm_camera_super_buf_t *super_frame,
     *frame = *super_frame;
 
     m_postprocessor.processData(frame);
+    free(super_frame);
     return;
 }
 
@@ -1198,8 +1196,39 @@ void QCamera3PicChannel::putStreamBufs()
     mYuvMemory = NULL;
 }
 
+
 /*===========================================================================
- * FUNCTION   : needRotationReprocess
+ * FUNCTION   : needReprocess
+ *
+ * DESCRIPTION: if reprocess is needed
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : true: needed
+ *              false: no need
+ *==========================================================================*/
+bool QCamera3PicChannel::needReprocess()
+{
+    return true;
+
+    if (!mJpegSettings->is_jpeg_format) {
+        // RAW image, no need to reprocess
+        return false;
+    }
+
+    if ((mJpegSettings->min_required_pp_mask > 0) ||
+         isWNREnabled()) {
+        // TODO: add for ZSL HDR later
+        // pp module has min requirement for zsl reprocess, or WNR in ZSL mode
+        ALOGD("%s: need do reprocess for ZSL WNR or min PP reprocess", __func__);
+        return true;
+    }
+
+    //return needRotationReprocess();
+}
+
+/*===========================================================================
+ * FUNCTION   : needOnlineReprocess
  *
  * DESCRIPTION: if online rotation needs to be done by cpp
  *
@@ -1215,6 +1244,10 @@ bool QCamera3PicChannel::needOnlineRotation()
     return false;
 }
 
+bool QCamera3PicChannel::isRawSnapshot()
+{
+   return !(mJpegSettings->is_jpeg_format);
+}
 /*===========================================================================
  * FUNCTION   : getThumbnailSize
  *
@@ -1265,6 +1298,10 @@ int QCamera3PicChannel::getJpegRotation() {
     return rotation;
 }
 
+void QCamera3PicChannel::queueMetadata(mm_camera_super_buf_t *metadata_buf)
+{
+    m_postprocessor.processPPMetadata(metadata_buf);
+}
 /*===========================================================================
  * FUNCTION   : getRational
  *
@@ -1701,4 +1738,410 @@ QCamera3Exif *QCamera3PicChannel::getExifData()
 }
 
 int QCamera3PicChannel::kMaxBuffers = 2;
+
+/*===========================================================================
+ * FUNCTION   : QCamera3ReprocessChannel
+ *
+ * DESCRIPTION: constructor of QCamera3ReprocessChannel
+ *
+ * PARAMETERS :
+ *   @cam_handle : camera handle
+ *   @cam_ops    : ptr to camera ops table
+ *   @pp_mask    : post-proccess feature mask
+ *
+ * RETURN     : none
+ *==========================================================================*/
+QCamera3ReprocessChannel::QCamera3ReprocessChannel(uint32_t cam_handle,
+                                                 mm_camera_ops_t *cam_ops,
+                                                 channel_cb_routine cb_routine,
+                                                 cam_padding_info_t *paddingInfo,
+                                                 void *userData, void *ch_hdl) :
+    QCamera3Channel(cam_handle, cam_ops, cb_routine, paddingInfo, userData),
+    mMemory(NULL),
+    m_pSrcChannel(NULL),
+    m_pMetaChannel(NULL),
+    picChHandle(ch_hdl)
+{
+    memset(mSrcStreamHandles, 0, sizeof(mSrcStreamHandles));
+}
+
+
+/*===========================================================================
+ * FUNCTION   : QCamera3ReprocessChannel
+ *
+ * DESCRIPTION: constructor of QCamera3ReprocessChannel
+ *
+ * PARAMETERS :
+ *   @cam_handle : camera handle
+ *   @cam_ops    : ptr to camera ops table
+ *   @pp_mask    : post-proccess feature mask
+ *
+ * RETURN     : none
+ *==========================================================================*/
+int32_t QCamera3ReprocessChannel::initialize()
+{
+    int32_t rc = NO_ERROR;
+    mm_camera_channel_attr_t attr;
+
+    memset(&attr, 0, sizeof(mm_camera_channel_attr_t));
+    attr.notify_mode = MM_CAMERA_SUPER_BUF_NOTIFY_CONTINUOUS;
+    attr.max_unmatched_frames = 1;
+
+    rc = init(&attr, NULL);
+    if (rc < 0) {
+        ALOGE("%s: init failed", __func__);
+    }
+    return rc;
+}
+
+
+/*===========================================================================
+ * FUNCTION   : QCamera3ReprocessChannel
+ *
+ * DESCRIPTION: constructor of QCamera3ReprocessChannel
+ *
+ * PARAMETERS :
+ *   @cam_handle : camera handle
+ *   @cam_ops    : ptr to camera ops table
+ *   @pp_mask    : post-proccess feature mask
+ *
+ * RETURN     : none
+ *==========================================================================*/
+void QCamera3ReprocessChannel::streamCbRoutine(mm_camera_super_buf_t *super_frame,
+                                  QCamera3Stream *stream)
+{
+    //Got the pproc data callback. Now send to jpeg encoding
+    uint8_t frameIndex;
+    mm_camera_super_buf_t* frame = NULL;
+    QCamera3PicChannel *obj = (QCamera3PicChannel *)picChHandle;
+
+    if(!super_frame) {
+         ALOGE("%s: Invalid Super buffer",__func__);
+         return;
+    }
+
+    if(super_frame->num_bufs != 1) {
+         ALOGE("%s: Multiple streams are not supported",__func__);
+         return;
+    }
+    if(super_frame->bufs[0] == NULL ) {
+         ALOGE("%s: Error, Super buffer frame does not contain valid buffer",
+                  __func__);
+         return;
+    }
+
+    frameIndex = (uint8_t)super_frame->bufs[0]->buf_idx;
+    frame = (mm_camera_super_buf_t *)malloc(sizeof(mm_camera_super_buf_t));
+    if (frame == NULL) {
+       ALOGE("%s: Error allocating memory to save received_frame structure.",
+                                                                    __func__);
+       if(stream) {
+           stream->bufDone(frameIndex);
+       }
+       return;
+    }
+    *frame = *super_frame;
+    //queue back the metadata buffer
+    if (m_metaFrame != NULL) {
+       ((QCamera3MetadataChannel*)m_pMetaChannel)->bufDone(m_metaFrame);
+       free(m_metaFrame);
+       m_metaFrame = NULL;
+    } else {
+       ALOGE("%s: Meta frame was NULL", __func__);
+    }
+    obj->m_postprocessor.processPPData(frame);
+    return;
+}
+
+/*===========================================================================
+ * FUNCTION   : QCamera3ReprocessChannel
+ *
+ * DESCRIPTION: default constructor of QCamera3ReprocessChannel
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : none
+ *==========================================================================*/
+QCamera3ReprocessChannel::QCamera3ReprocessChannel() :
+    m_pSrcChannel(NULL),
+    m_pMetaChannel(NULL),
+    m_metaFrame(NULL)
+{
+}
+
+/*===========================================================================
+ * FUNCTION   : QCamera3ReprocessChannel
+ *
+ * DESCRIPTION: register the buffers of the reprocess channel
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : none
+ *==========================================================================*/
+int32_t QCamera3ReprocessChannel::registerBuffers(uint32_t num_buffers, buffer_handle_t **buffers)
+{
+   return 0;
+}
+
+/*===========================================================================
+ * FUNCTION   : getStreamBufs
+ *
+ * DESCRIPTION: register the buffers of the reprocess channel
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : QCamera3Memory *
+ *==========================================================================*/
+QCamera3Memory* QCamera3ReprocessChannel::getStreamBufs(uint32_t len)
+{
+   int rc = 0;
+
+    mMemory = new QCamera3HeapMemory();
+    if (!mMemory) {
+        ALOGE("%s: unable to create reproc memory", __func__);
+        return NULL;
+    }
+
+    //Queue YUV buffers in the beginning mQueueAll = true
+    rc = mMemory->allocate(2, len, true);
+    if (rc < 0) {
+        ALOGE("%s: unable to allocate reproc memory", __func__);
+        delete mMemory;
+        mMemory = NULL;
+        return NULL;
+    }
+    return mMemory;
+}
+
+/*===========================================================================
+ * FUNCTION   : getStreamBufs
+ *
+ * DESCRIPTION: register the buffers of the reprocess channel
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     :
+ *==========================================================================*/
+void QCamera3ReprocessChannel::putStreamBufs()
+{
+    mMemory->deallocate();
+    delete mMemory;
+    mMemory = NULL;
+}
+
+/*===========================================================================
+ * FUNCTION   : ~QCamera3ReprocessChannel
+ *
+ * DESCRIPTION: destructor of QCamera3ReprocessChannel
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : none
+ *==========================================================================*/
+QCamera3ReprocessChannel::~QCamera3ReprocessChannel()
+{
+}
+
+/*===========================================================================
+ * FUNCTION   : getStreamBySourceHandle
+ *
+ * DESCRIPTION: find reprocess stream by its source stream handle
+ *
+ * PARAMETERS :
+ *   @srcHandle : source stream handle
+ *
+ * RETURN     : ptr to reprocess stream if found. NULL if not found
+ *==========================================================================*/
+QCamera3Stream * QCamera3ReprocessChannel::getStreamBySourceHandle(uint32_t srcHandle)
+{
+    QCamera3Stream *pStream = NULL;
+
+    for (int i = 0; i < m_numStreams; i++) {
+        if (mSrcStreamHandles[i] == srcHandle) {
+            pStream = mStreams[i];
+            break;
+        }
+    }
+    return pStream;
+}
+
+/*===========================================================================
+ * FUNCTION   : doReprocess
+ *
+ * DESCRIPTION: request to do a reprocess on the frame
+ *
+ * PARAMETERS :
+ *   @frame   : frame to be performed a reprocess
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCamera3ReprocessChannel::doReprocess(mm_camera_super_buf_t *frame,
+                                              mm_camera_super_buf_t *meta_frame)
+{
+    int32_t rc = 0;
+    if (m_numStreams < 1) {
+        ALOGE("%s: No reprocess stream is created", __func__);
+        return -1;
+    }
+    if (m_pSrcChannel == NULL) {
+        ALOGE("%s: No source channel for reprocess", __func__);
+        return -1;
+    }
+    m_metaFrame = meta_frame;
+    for (int i = 0; i < frame->num_bufs; i++) {
+        QCamera3Stream *pStream = getStreamBySourceHandle(frame->bufs[i]->stream_id);
+        if (pStream != NULL) {
+            cam_stream_parm_buffer_t param;
+            memset(&param, 0, sizeof(cam_stream_parm_buffer_t));
+            param.type = CAM_STREAM_PARAM_TYPE_DO_REPROCESS;
+            param.reprocess.buf_index = frame->bufs[i]->buf_idx;
+            param.reprocess.frame_idx = frame->bufs[i]->frame_idx;
+            if (meta_frame != NULL) {
+               param.reprocess.meta_present = 1;
+               param.reprocess.meta_stream_handle = m_pMetaChannel->mStreams[0]->getMyServerID();
+               param.reprocess.meta_buf_index = meta_frame->bufs[0]->buf_idx;
+            }
+            rc = pStream->setParameter(param);
+            if (rc != NO_ERROR) {
+                ALOGE("%s: stream setParameter for reprocess failed", __func__);
+                break;
+            }
+        }
+    }
+    return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : doReprocess
+ *
+ * DESCRIPTION: request to do a reprocess on the frame
+ *
+ * PARAMETERS :
+ *   @buf_fd     : fd to the input buffer that needs reprocess
+ *   @buf_lenght : length of the input buffer
+ *   @ret_val    : result of reprocess.
+ *                 Example: Could be faceID in case of register face image.
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCamera3ReprocessChannel::doReprocess(int buf_fd,
+                                              uint32_t buf_length,
+                                              int32_t &ret_val,
+                                              mm_camera_super_buf_t *meta_frame)
+{
+    int32_t rc = 0;
+    if (m_numStreams < 1) {
+        ALOGE("%s: No reprocess stream is created", __func__);
+        return -1;
+    }
+    if (meta_frame == NULL) {
+        ALOGE("%s: Did not get corresponding metadata in time", __func__);
+        return -1;
+    }
+
+    uint32_t buf_idx = 0;
+    for (int i = 0; i < m_numStreams; i++) {
+        rc = mStreams[i]->mapBuf(CAM_MAPPING_BUF_TYPE_OFFLINE_INPUT_BUF,
+                                 buf_idx, -1,
+                                 buf_fd, buf_length);
+
+        if (rc == NO_ERROR) {
+            cam_stream_parm_buffer_t param;
+            memset(&param, 0, sizeof(cam_stream_parm_buffer_t));
+            param.type = CAM_STREAM_PARAM_TYPE_DO_REPROCESS;
+            param.reprocess.buf_index = buf_idx;
+            param.reprocess.meta_present = 1;
+            param.reprocess.meta_stream_handle = m_pMetaChannel->mStreams[0]->getMyServerID();
+            param.reprocess.meta_buf_index = meta_frame->bufs[0]->buf_idx;
+            rc = mStreams[i]->setParameter(param);
+            if (rc == NO_ERROR) {
+                ret_val = param.reprocess.ret_val;
+            }
+            mStreams[i]->unmapBuf(CAM_MAPPING_BUF_TYPE_OFFLINE_INPUT_BUF,
+                                  buf_idx, -1);
+        }
+    }
+    return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : addReprocStreamsFromSource
+ *
+ * DESCRIPTION: add reprocess streams from input source channel
+ *
+ * PARAMETERS :
+ *   @config         : pp feature configuration
+ *   @pSrcChannel    : ptr to input source channel that needs reprocess
+ *   @pMetaChannel   : ptr to metadata channel to get corresp. metadata
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCamera3ReprocessChannel::addReprocStreamsFromSource(cam_pp_feature_config_t &config,
+                                                             QCamera3Channel *pSrcChannel,
+                                                             QCamera3Channel *pMetaChannel)
+{
+    int32_t rc = 0;
+    QCamera3Stream *pSrcStream = pSrcChannel->getStreamByIndex(0);
+    if (pSrcStream == NULL) {
+       ALOGE("%s: source channel doesn't have a stream", __func__);
+       return BAD_VALUE;
+    }
+    cam_stream_reproc_config_t reprocess_config;
+    cam_dimension_t streamDim;
+    cam_stream_type_t streamType;
+    cam_format_t streamFormat;
+    cam_frame_len_offset_t frameOffset;
+    int num_buffers = 2;
+
+    streamType = CAM_STREAM_TYPE_OFFLINE_PROC;
+    pSrcStream->getFormat(streamFormat);
+    pSrcStream->getFrameDimension(streamDim);
+    pSrcStream->getFrameOffset(frameOffset);
+
+    reprocess_config.pp_type = CAM_ONLINE_REPROCESS_TYPE;
+    reprocess_config.online.input_stream_id = pSrcStream->getMyServerID();
+    reprocess_config.online.input_stream_type = pSrcStream->getMyType();
+    reprocess_config.pp_feature_config = config;
+
+    mSrcStreamHandles[m_numStreams] = pSrcStream->getMyHandle();
+
+    QCamera3Stream *pStream = new QCamera3Stream(m_camHandle,
+                                               m_handle,
+                                               m_camOps,
+                                               mPaddingInfo,
+                                               (QCamera3Channel*)this);
+    if (pStream == NULL) {
+        ALOGE("%s: No mem for Stream", __func__);
+        return NO_MEMORY;
+    }
+
+    rc = pStream->init(streamType, streamFormat, streamDim, &reprocess_config,
+                       num_buffers,QCamera3Channel::streamCbRoutine, this);
+
+
+    if (rc == 0) {
+        mStreams[m_numStreams] = pStream;
+        m_numStreams++;
+    } else {
+        ALOGE("%s: failed to create reprocess stream", __func__);
+        delete pStream;
+    }
+
+    if (rc == NO_ERROR) {
+        m_pSrcChannel = pSrcChannel;
+        m_pMetaChannel = pMetaChannel;
+    }
+    if(m_camOps->request_super_buf(m_camHandle,m_handle,1) < 0) {
+        ALOGE("%s: Request for super buffer failed",__func__);
+    }
+    return rc;
+}
+
+
 }; // namespace qcamera
