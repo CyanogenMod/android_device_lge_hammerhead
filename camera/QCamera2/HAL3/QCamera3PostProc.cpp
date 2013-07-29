@@ -812,6 +812,7 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
             srcChannel->getStreamByHandle(recvd_frame->bufs[i]->stream_id);
         if (srcStream != NULL) {
             if (srcStream->isTypeOf(CAM_STREAM_TYPE_SNAPSHOT) ||
+                srcStream->isTypeOf(CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT) ||
                 srcStream->isTypeOf(CAM_STREAM_TYPE_OFFLINE_PROC)) {
                 main_stream = srcStream;
                 main_frame = recvd_frame->bufs[i];

@@ -149,7 +149,8 @@ void QCamera2HardwareInterface::capture_channel_cb_routine(mm_camera_super_buf_t
             QCameraStream *pStream =
                 pChannel->getStreamByHandle(recvd_frame->bufs[i]->stream_id);
             if (pStream != NULL) {
-                if (pStream->isTypeOf(CAM_STREAM_TYPE_SNAPSHOT)) {
+                if (pStream->isTypeOf(CAM_STREAM_TYPE_SNAPSHOT) ||
+                    pStream->isTypeOf(CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT)) {
                     main_stream = pStream;
                     main_frame = recvd_frame->bufs[i];
                     break;
@@ -855,7 +856,10 @@ void QCamera2HardwareInterface::dumpFrameToFile(const void *data,
                         break;
                     case QCAMERA_DUMP_FRM_SNAPSHOT:
                         {
-                            mParameters.getStreamDimension(CAM_STREAM_TYPE_SNAPSHOT, dim);
+                            if (mParameters.isZSLMode())
+                                mParameters.getStreamDimension(CAM_STREAM_TYPE_SNAPSHOT, dim);
+                            else
+                                mParameters.getStreamDimension(CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT, dim);
                             snprintf(buf, sizeof(buf), "/data/%ds_%dx%d_%d.yuv",
                                      mDumpFrmCnt, dim.width, dim.height, index);
                         }
@@ -876,7 +880,10 @@ void QCamera2HardwareInterface::dumpFrameToFile(const void *data,
                         break;
                     case QCAMERA_DUMP_FRM_JPEG:
                         {
-                            mParameters.getStreamDimension(CAM_STREAM_TYPE_SNAPSHOT, dim);
+                            if (mParameters.isZSLMode())
+                                mParameters.getStreamDimension(CAM_STREAM_TYPE_SNAPSHOT, dim);
+                            else
+                                mParameters.getStreamDimension(CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT, dim);
                             snprintf(buf, sizeof(buf), "/data/%dj_%dx%d_%d.yuv",
                                      mDumpFrmCnt, dim.width, dim.height, index);
                         }

@@ -581,7 +581,7 @@ int32_t QCamera3RegularChannel::registerBuffers(uint32_t num_buffers, buffer_han
             streamFormat = CAM_FORMAT_YUV_420_NV21;
         }
     } else if(mCamera3Stream->format == HAL_PIXEL_FORMAT_YCbCr_420_888) {
-         streamType = CAM_STREAM_TYPE_PREVIEW;
+         streamType = CAM_STREAM_TYPE_CALLBACK;
          streamFormat = CAM_FORMAT_YUV_420_NV21;
     } else {
         //TODO: Fail for other types of streams for now
@@ -936,7 +936,7 @@ int32_t QCamera3PicChannel::initialize()
         return rc;
     }
 
-    streamType = CAM_STREAM_TYPE_SNAPSHOT;
+    streamType = CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT;
     streamFormat = CAM_FORMAT_YUV_420_NV21;
     streamDim.width = mCamera3Stream->width;
     streamDim.height = mCamera3Stream->height;
@@ -1072,7 +1072,7 @@ int32_t QCamera3PicChannel::registerBuffers(uint32_t num_buffers,
     }
 
     if (mCamera3Stream->format == HAL_PIXEL_FORMAT_BLOB) {
-        streamType = CAM_STREAM_TYPE_SNAPSHOT;
+        streamType = CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT;
         streamFormat = CAM_FORMAT_YUV_420_NV21;
     } else {
         //TODO: Fail for other types of streams for now
