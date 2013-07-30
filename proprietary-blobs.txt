@@ -46,7 +46,6 @@
 /system/etc/Handset_cal.acdb
 /system/etc/Hdmi_cal.acdb
 /system/etc/Headset_cal.acdb
-/system/etc/sensor_def_hh.conf
 /system/etc/Speaker_cal.acdb
 /system/lib/hw/gps.msm8974.so
 /system/lib/libadsprpc.so
@@ -109,8 +108,6 @@
 /system/vendor/firmware/venus.b02
 /system/vendor/firmware/venus.b03
 /system/vendor/firmware/venus.b04
-/system/vendor/firmware/venus.b05
-/system/vendor/firmware/venus.b06
 /system/vendor/firmware/venus.mdt
 /system/vendor/lib/egl/eglsubAndroid.so
 /system/vendor/lib/egl/libEGL_adreno.so
