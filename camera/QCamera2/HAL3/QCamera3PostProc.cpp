@@ -811,15 +811,19 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
         QCamera3Stream *srcStream =
             srcChannel->getStreamByHandle(recvd_frame->bufs[i]->stream_id);
         if (srcStream != NULL) {
-            if (srcStream->isTypeOf(CAM_STREAM_TYPE_SNAPSHOT) ||
-                srcStream->isTypeOf(CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT) ||
-                srcStream->isTypeOf(CAM_STREAM_TYPE_OFFLINE_PROC)) {
+            switch (srcStream->getMyType()) {
+            case CAM_STREAM_TYPE_SNAPSHOT:
+            case CAM_STREAM_TYPE_OFFLINE_PROC:
                 main_stream = srcStream;
                 main_frame = recvd_frame->bufs[i];
-            } else if (srcStream->isTypeOf(CAM_STREAM_TYPE_PREVIEW) ||
-                       srcStream->isTypeOf(CAM_STREAM_TYPE_POSTVIEW)) {
+                break;
+            case CAM_STREAM_TYPE_PREVIEW:
+            case CAM_STREAM_TYPE_POSTVIEW:
                 thumb_stream = srcStream;
                 thumb_frame = recvd_frame->bufs[i];
+                break;
+            default:
+                break;
             }
         }
     }

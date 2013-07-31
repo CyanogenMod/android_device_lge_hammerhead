@@ -984,6 +984,8 @@ typedef enum {
      * compensate for lens shading for this frame */
     CAM_INTF_META_LENS_SHADING_MAP,
     CAM_INTF_META_PRIVATE_DATA,
+    /* Indicates streams this request needs buffers on */
+    CAM_INTF_META_STREAM_TYPE_MASK,
     CAM_INTF_PARM_MAX
 } cam_intf_parm_type_t;
 

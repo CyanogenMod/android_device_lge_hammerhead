@@ -690,25 +690,6 @@ int32_t QCamera3Stream::cleanInvalidateBuf(int index)
 }
 
 /*===========================================================================
- * FUNCTION   : isTypeOf
- *
- * DESCRIPTION: helper function to determine if the stream is of the queried type
- *
- * PARAMETERS :
- *   @type    : stream type as of queried
- *
- * RETURN     : true/false
- *==========================================================================*/
-bool QCamera3Stream::isTypeOf(cam_stream_type_t type)
-{
-    if (mStreamInfo != NULL && (mStreamInfo->stream_type == type)) {
-        return true;
-    } else {
-        return false;
-    }
-}
-
-/*===========================================================================
  * FUNCTION   : getFrameOffset
  *
  * DESCRIPTION: query stream buffer frame offset info
@@ -794,7 +775,8 @@ uint32_t QCamera3Stream::getMyServerID() {
  *
  * RETURN     : type of stream
  *==========================================================================*/
-cam_stream_type_t QCamera3Stream::getMyType() {
+cam_stream_type_t QCamera3Stream::getMyType() const
+{
     if (mStreamInfo != NULL) {
         return mStreamInfo->stream_type;
     } else {

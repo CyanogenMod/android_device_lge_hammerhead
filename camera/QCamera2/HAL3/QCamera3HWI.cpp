@@ -823,12 +823,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
     }
 
     uint32_t frameNumber = request->frame_number;
-    rc = setFrameParameters(request->frame_number, request->settings);
-    if (rc < 0) {
-        ALOGE("%s: fail to set frame parameters", __func__);
-        pthread_mutex_unlock(&mMutex);
-        return rc;
-    }
+    uint32_t streamTypeMask = 0;
 
     meta = request->settings;
     if (meta.exists(ANDROID_REQUEST_ID)) {
@@ -853,6 +848,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
     int blob_request = 0;
     for (size_t i = 0; i < request->num_output_buffers; i++) {
         const camera3_stream_buffer_t& output = request->output_buffers[i];
+        QCamera3Channel *channel = (QCamera3Channel *)output.stream->priv;
         sp<Fence> acquireFence = new Fence(output.acquire_fence);
 
         if (output.stream->format == HAL_PIXEL_FORMAT_BLOB) {
@@ -872,6 +868,14 @@ int QCamera3HardwareInterface::processCaptureRequest(
             pthread_mutex_unlock(&mMutex);
             return rc;
         }
+        streamTypeMask |= channel->getStreamTypeMask();
+    }
+
+    rc = setFrameParameters(request->frame_number, request->settings, streamTypeMask);
+    if (rc < 0) {
+        ALOGE("%s: fail to set frame parameters", __func__);
+        pthread_mutex_unlock(&mMutex);
+        return rc;
     }
 
     /* Update pending request list and pending buffers map */
@@ -2555,14 +2559,15 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
  *              framework
  *
  * PARAMETERS :
+ *   @frame_id  : frame number for this particular request
  *   @settings  : frame settings information from framework
- *
+ *   @streamTypeMask : bit mask of stream types on which buffers are requested
  *
  * RETURN     : success: NO_ERROR
  *              failure:
  *==========================================================================*/
 int QCamera3HardwareInterface::setFrameParameters(int frame_id,
-                                                  const camera_metadata_t *settings)
+                    const camera_metadata_t *settings, uint32_t streamTypeMask)
 {
     /*translate from camera_metadata_t type to parm_type_t*/
     int rc = 0;
@@ -2583,6 +2588,14 @@ int QCamera3HardwareInterface::setFrameParameters(int frame_id,
                                 sizeof(frame_id), &frame_id);
     if (rc < 0) {
         ALOGE("%s: Failed to set the frame number in the parameters", __func__);
+        return BAD_VALUE;
+    }
+
+    /* Update stream id mask where buffers are requested */
+    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_STREAM_TYPE_MASK,
+                                sizeof(streamTypeMask), &streamTypeMask);
+    if (rc < 0) {
+        ALOGE("%s: Failed to set stream type mask in the parameters", __func__);
         return BAD_VALUE;
     }
 

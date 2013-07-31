@@ -322,6 +322,24 @@ int32_t QCamera3Channel::bufDone(mm_camera_super_buf_t *recvd_frame)
 }
 
 /*===========================================================================
+ * FUNCTION   : getStreamTypeMask
+ *
+ * DESCRIPTION: Get bit mask of all stream types in this channel
+ *
+ * PARAMETERS : None
+ *
+ * RETURN     : Bit mask of all stream types in this channel
+ *==========================================================================*/
+uint32_t QCamera3Channel::getStreamTypeMask()
+{
+    uint32_t mask = 0;
+    for (int i = 0; i < m_numStreams; i++) {
+       mask |= (0x1 << mStreams[i]->getMyType());
+    }
+    return mask;
+}
+
+/*===========================================================================
  * FUNCTION   : getInternalFormatBuffer
  *
  * DESCRIPTION: return buffer in the internal format structure

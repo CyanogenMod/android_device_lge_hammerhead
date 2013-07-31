@@ -475,6 +475,7 @@ typedef union {
     INCLUDE(CAM_INTF_META_TONEMAP_CURVE_RED,        cam_tonemap_curve_t,         1);
     INCLUDE(CAM_INTF_META_TONEMAP_MODE,             uint8_t,                     1);
     INCLUDE(CAM_INTF_META_FLASH_MODE,               uint8_t,                     1);
+    INCLUDE(CAM_INTF_META_STREAM_TYPE_MASK,         uint32_t,                    1);
 } parm_type_t;
 
 

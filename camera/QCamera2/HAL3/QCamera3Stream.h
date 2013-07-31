@@ -71,8 +71,7 @@ public:
     static void dataNotifyCB(mm_camera_super_buf_t *recvd_frame, void *userdata);
     static void *dataProcRoutine(void *data);
     uint32_t getMyHandle() const {return mHandle;}
-    cam_stream_type_t getMyType();
-    bool isTypeOf(cam_stream_type_t type);
+    cam_stream_type_t getMyType() const;
     int32_t getFrameOffset(cam_frame_len_offset_t &offset);
     int32_t getFrameDimension(cam_dimension_t &dim);
     int32_t getFormat(cam_format_t &fmt);

@@ -121,7 +121,7 @@ public:
     void getMetadataVendorTagOps(vendor_tag_query_ops_t* ops);
     void dump(int fd);
 
-    int setFrameParameters(int frame_id, const camera_metadata_t *settings);
+    int setFrameParameters(int frame_id, const camera_metadata_t *settings, uint32_t streamTypeMask);
     int translateMetadataToParameters(const camera_metadata_t *settings);
     camera_metadata_t* translateCbMetadataToResultMetadata(metadata_buffer_t *metadata,
                             nsecs_t timestamp, int32_t request_id);

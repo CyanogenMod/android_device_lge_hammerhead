@@ -67,6 +67,8 @@ public:
     int32_t stop();
     int32_t bufDone(mm_camera_super_buf_t *recvd_frame);
 
+    uint32_t getStreamTypeMask();
+
     virtual int32_t registerBuffers(uint32_t num_buffers,
                         buffer_handle_t **buffers) = 0;
     virtual int32_t initialize() = 0;
