@@ -2578,10 +2578,10 @@ int QCamera3HardwareInterface::translateMetadataToParameters
     if (frame_settings.exists(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)) {
         int32_t expCompensation = frame_settings.find(
             ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION).data.i32[0];
-        if (expCompensation < gCamCapability[mCameraId]->exposure_time_range[0])
-            expCompensation = gCamCapability[mCameraId]->exposure_time_range[0];
-        if (expCompensation > gCamCapability[mCameraId]->exposure_time_range[1])
-            expCompensation = gCamCapability[mCameraId]->exposure_time_range[1];
+        if (expCompensation < gCamCapability[mCameraId]->exposure_compensation_min)
+            expCompensation = gCamCapability[mCameraId]->exposure_compensation_min;
+        if (expCompensation > gCamCapability[mCameraId]->exposure_compensation_max)
+            expCompensation = gCamCapability[mCameraId]->exposure_compensation_max;
         rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_EXPOSURE_COMPENSATION,
           sizeof(expCompensation), &expCompensation);
     }
