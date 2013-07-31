@@ -239,10 +239,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.radio.apm_sim_not_pwdn=1
 
-# Report LTE as voice tech
-PRODUCT_PROPERTY_OVERRIDES += \
-    persist.radio.lte_vrat_report=1
-
 # LTE, CDMA, GSM/WCDMA
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.telephony.default_network=10
