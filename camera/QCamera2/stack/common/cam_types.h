@@ -461,6 +461,22 @@ typedef enum {
 } cam_flash_mode_t;
 
 typedef enum {
+    CAM_FLASH_FIRING_LEVEL_0,
+    CAM_FLASH_FIRING_LEVEL_1,
+    CAM_FLASH_FIRING_LEVEL_2,
+    CAM_FLASH_FIRING_LEVEL_3,
+    CAM_FLASH_FIRING_LEVEL_4,
+    CAM_FLASH_FIRING_LEVEL_5,
+    CAM_FLASH_FIRING_LEVEL_6,
+    CAM_FLASH_FIRING_LEVEL_7,
+    CAM_FLASH_FIRING_LEVEL_8,
+    CAM_FLASH_FIRING_LEVEL_9,
+    CAM_FLASH_FIRING_LEVEL_10,
+    CAM_FLASH_FIRING_LEVEL_MAX
+} cam_flash_firing_level_t;
+
+
+typedef enum {
     CAM_AEC_TRIGGER_IDLE,
     CAM_AEC_TRIGGER_START
 } cam_aec_trigger_type_t;
