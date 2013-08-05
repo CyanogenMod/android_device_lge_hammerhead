@@ -13,6 +13,8 @@
 # limitations under the License.
 
 
+# This is andorid hal for apds9930 proxi / light sensor when using native kernel driver.
+ifeq (0,1)
 ifneq ($(TARGET_BUILD_PDK), true)
 LOCAL_PATH := $(call my-dir)
 
@@ -37,4 +39,5 @@ LOCAL_SRC_FILES := \
 LOCAL_SHARED_LIBRARIES := libinvensense_hal liblog libutils libdl
 
 include $(BUILD_SHARED_LIBRARY)
+endif
 endif
