@@ -15,8 +15,8 @@
     <ctl name="LINEOUT2 Volume" value="12" />
     <ctl name="LINEOUT3 Volume" value="12" />
     <ctl name="LINEOUT4 Volume" value="12" />
-    <ctl name="HPHL Volume" value="17" />
-    <ctl name="HPHR Volume" value="17" />
+    <ctl name="HPHL Volume" value="16" />
+    <ctl name="HPHR Volume" value="16" />
     <ctl name="RX1 Digital Volume" value="84" />
     <ctl name="RX2 Digital Volume" value="84" />
     <ctl name="RX3 Digital Volume" value="84" />
@@ -223,7 +223,8 @@
         <ctl name="SLIM RX1 MUX" value="AIF1_PB" />
         <ctl name="SLIM_0_RX Channels" value="One" />
         <ctl name="RX7 MIX1 INP1" value="RX1" />
-        <ctl name="RX7 Digital Volume" value="88" />
+        <ctl name="RX7 Digital Volume" value="89" />
+        <ctl name="SPK DRV Volume" value="6" />
     </path>
 
     <path name="speaker-mic">
@@ -251,8 +252,8 @@
         <ctl name="RX2 MIX1 INP1" value="RX2" />
         <ctl name="CLASS_H_DSM MUX" value="DSM_HPHL_RX1" />
         <ctl name="HPHL DAC Switch" value="1" />
-        <ctl name="RX1 Digital Volume" value="79" />
-        <ctl name="RX2 Digital Volume" value="79" />
+        <ctl name="RX1 Digital Volume" value="82" />
+        <ctl name="RX2 Digital Volume" value="82" />
     </path>
 
     <path name="headset-mic">
@@ -310,6 +311,7 @@
     <path name="speaker-and-hdmi">
         <path name="speaker" />
         <path name="hdmi" />
+        <ctl name="SPK DRV Volume" value="7" />
     </path>
 
     <path name="voice-rec-mic">
