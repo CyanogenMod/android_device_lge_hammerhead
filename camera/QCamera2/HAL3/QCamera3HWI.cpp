@@ -2008,14 +2008,6 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       avail_awb_modes,
                       size);
 
-    uint8_t available_flash_levels[CAM_FLASH_FIRING_LEVEL_MAX];
-    for (int i = 0; i < gCamCapability[cameraId]->supported_flash_firing_level_cnt; i++)
-      available_flash_levels[i] = gCamCapability[cameraId]->supported_firing_levels[i];
-
-    staticInfo.update(ANDROID_FLASH_FIRING_POWER,
-            available_flash_levels,
-            gCamCapability[cameraId]->supported_flash_firing_level_cnt);
-
     uint8_t avail_flash_modes[CAM_FLASH_MODE_MAX];
     size = 0;
     for (int i = 0; i < gCamCapability[cameraId]->supported_flash_modes_cnt; i++) {
@@ -2489,9 +2481,6 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
     static const uint8_t flashMode = ANDROID_FLASH_MODE_OFF;
     settings.update(ANDROID_FLASH_MODE, &flashMode, 1);
 
-    static const uint8_t flashFiringLevel = CAM_FLASH_FIRING_LEVEL_4;
-    settings.update(ANDROID_FLASH_FIRING_POWER,
-            &flashFiringLevel, 1);
 
     /* lens */
     float default_aperture = gCamCapability[mCameraId]->apertures[0];
