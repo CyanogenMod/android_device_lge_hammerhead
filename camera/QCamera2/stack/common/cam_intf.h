@@ -231,19 +231,6 @@ typedef struct{
     /* Time taken before flash can fire again in nano secs */
     int64_t flash_charge_duration;
 
-    /* flash firing power */
-    uint8_t supported_flash_firing_level_cnt;
-    cam_format_t supported_firing_levels[CAM_FLASH_FIRING_LEVEL_MAX];
-
-    /* Flash Firing Time */
-    int64_t flash_firing_time;
-
-    /* Flash Ciolor Temperature */
-    uint8_t flash_color_temp;
-
-    /* Flash max Energy */
-    uint8_t flash_max_energy;
-
     /* Maximum number of supported points in the tonemap
        curve */
     int32_t max_tone_map_curve_points;
