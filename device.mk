@@ -280,7 +280,7 @@ PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
 
 # Camera configuration
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
-    camera.disable_zsl_mode=0
+    camera.disable_zsl_mode=1
 
 # setup dalvik vm configs.
 $(call inherit-product, frameworks/native/build/phone-xhdpi-2048-dalvik-heap.mk)
