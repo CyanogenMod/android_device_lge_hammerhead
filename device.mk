@@ -252,6 +252,10 @@ PRODUCT_PROPERTY_OVERRIDES += \
     persist.audio.fluence.speaker=false \
     af.resampler.quality=4
 
+# Setup custom emergency number list based on the MCC. This is needed by RIL
+PRODUCT_PROPERTY_OVERRIDES += \
+    persist.radio.custom_ecc=1
+
 # set default USB configuration
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
     persist.sys.usb.config=mtp
