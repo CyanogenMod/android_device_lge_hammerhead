@@ -116,8 +116,8 @@ on boot
     write /sys/bus/msm_subsys/devices/subsys2/restart_level "related"
 
     # Subsytem Ramdump collection
-    mkdir /data/tombstones 0775 system system
-    mkdir /data/tombstones/ramdump 0775 system system
+    mkdir /data/tombstones 0777 system system
+    mkdir /data/tombstones/ramdump 0777 system system
     write /sys/module/subsystem_restart/parameters/enable_ramdumps 1
 
     # Modem logging collection
@@ -297,10 +297,6 @@ service irsc_util /system/bin/logwrapper /system/bin/irsc_util "/etc/sec_config"
     user root
     oneshot
 
-service ssr_ramdump /system/bin/subsystem_ramdump 1
-    class main
-    disabled
-
 service p2p_supplicant /system/bin/logwrapper /system/bin/wpa_supplicant \
     -iwlan0 -Dnl80211 -c/data/misc/wifi/wpa_supplicant.conf \
     -I/system/etc/wifi/wpa_supplicant_overlay.conf \
@@ -421,6 +417,11 @@ service mpdecision /system/bin/mpdecision --no_sleep --avg_comp
    class main
    user root
    group root
+
+service ssr_ramdump /system/bin/subsystem_ramdump -m -t emmc
+    class main
+    user root
+    group root
 
 service thermal-engine /system/bin/thermal-engine
    class main
