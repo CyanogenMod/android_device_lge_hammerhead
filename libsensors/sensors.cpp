@@ -58,6 +58,8 @@ static struct sensor_t sSensorList[GLOBAL_SENSORS + LOCAL_SENSORS] = {
         .resolution = 1.0f,
         .power      = 0.5f,
         .minDelay   = 100000,
+        .fifoReservedEventCount = 0,
+        .fifoMaxEventCount = 0,
         .reserved   = {}
     },
     {
@@ -70,6 +72,8 @@ static struct sensor_t sSensorList[GLOBAL_SENSORS + LOCAL_SENSORS] = {
         .resolution = 1.0f,
         .power      = 0.5f,
         .minDelay   = 100000,
+        .fifoReservedEventCount = 0,
+        .fifoMaxEventCount = 0,
         .reserved   = {}
     },
 };
