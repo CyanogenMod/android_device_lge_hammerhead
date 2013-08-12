@@ -150,13 +150,6 @@ static int set_light_locked(struct light_state_t const* state, int type)
     green = (colorRGB >> 8) & 0xFF;
     blue = colorRGB & 0xFF;
 
-    // due to limitation of driver
-    if (onMS == 0) {
-        red = 0;
-        green = 0;
-        blue = 0;
-    }
-
     write_int(RGB_LOCKED_FILE, 0);
 
     write_int(RED_LED_FILE, red);
