@@ -107,6 +107,111 @@ on boot
     write /proc/sys/net/ipv6/conf/rmnet6/accept_ra 2
     write /proc/sys/net/ipv6/conf/rmnet7/accept_ra 2
 
+    # Invensense IIO settings
+    chown system system /dev/iio:device0
+    chown system system /sys/bus/iio/devices/iio:device0/uevent
+    chown system system /sys/bus/iio/devices/iio:device0/dev
+    chown system system /sys/bus/iio/devices/iio:device0/buffer/length
+    chown system system /sys/bus/iio/devices/iio:device0/buffer/enable
+    chown system system /sys/bus/iio/devices/iio:device0/scan_elements/in_timestamp_en
+    chown system system /sys/bus/iio/devices/iio:device0/scan_elements/in_timestamp_type
+    chown system system /sys/bus/iio/devices/iio:device0/scan_elements/in_timestamp_index
+    chown system system /sys/bus/iio/devices/iio:device0/sampling_frequency_available
+    chown system system /sys/bus/iio/devices/iio:device0/reg_dump
+    chown system system /sys/bus/iio/devices/iio:device0/temperature
+    chown system system /sys/bus/iio/devices/iio:device0/in_anglvel_scale
+    chown system system /sys/bus/iio/devices/iio:device0/in_anglvel_x_calibbias
+    chown system system /sys/bus/iio/devices/iio:device0/in_anglvel_y_calibbias
+    chown system system /sys/bus/iio/devices/iio:device0/in_anglvel_z_calibbias
+    chown system system /sys/bus/iio/devices/iio:device0/in_anglvel_x_offset
+    chown system system /sys/bus/iio/devices/iio:device0/in_anglvel_y_offset
+    chown system system /sys/bus/iio/devices/iio:device0/in_anglvel_z_offset
+    chown system system /sys/bus/iio/devices/iio:device0/self_test_samples
+    chown system system /sys/bus/iio/devices/iio:device0/self_test_threshold
+    chown system system /sys/bus/iio/devices/iio:device0/gyro_enable
+    chown system system /sys/bus/iio/devices/iio:device0/gyro_fifo_enable
+    chown system system /sys/bus/iio/devices/iio:device0/power_state
+    chown system system /sys/bus/iio/devices/iio:device0/sampling_frequency
+    chown system system /sys/bus/iio/devices/iio:device0/self_test
+    chown system system /sys/bus/iio/devices/iio:device0/gyro_matrix
+    chown system system /sys/bus/iio/devices/iio:device0/secondary_name
+    chown system system /sys/bus/iio/devices/iio:device0/reg_write
+    chown system system /sys/bus/iio/devices/iio:device0/debug_smd_enable_testp1
+    chown system system /sys/bus/iio/devices/iio:device0/debug_smd_enable_testp2
+    chown system system /sys/bus/iio/devices/iio:device0/debug_smd_exe_state
+    chown system system /sys/bus/iio/devices/iio:device0/debug_smd_delay_cntr
+    chown system system /sys/bus/iio/devices/iio:device0/event_display_orientation
+    chown system system /sys/bus/iio/devices/iio:device0/event_accel_motion
+    chown system system /sys/bus/iio/devices/iio:device0/event_smd
+    chown system system /sys/bus/iio/devices/iio:device0/event_pedometer
+    chown system system /sys/bus/iio/devices/iio:device0/in_accel_scale
+    chown system system /sys/bus/iio/devices/iio:device0/in_accel_x_calibbias
+    chown system system /sys/bus/iio/devices/iio:device0/in_accel_y_calibbias
+    chown system system /sys/bus/iio/devices/iio:device0/in_accel_z_calibbias
+    chown system system /sys/bus/iio/devices/iio:device0/in_accel_x_offset
+    chown system system /sys/bus/iio/devices/iio:device0/in_accel_y_offset
+    chown system system /sys/bus/iio/devices/iio:device0/in_accel_z_offset
+    chown system system /sys/bus/iio/devices/iio:device0/in_accel_x_dmp_bias
+    chown system system /sys/bus/iio/devices/iio:device0/in_accel_y_dmp_bias
+    chown system system /sys/bus/iio/devices/iio:device0/in_accel_z_dmp_bias
+    chown system system /sys/bus/iio/devices/iio:device0/in_anglvel_x_dmp_bias
+    chown system system /sys/bus/iio/devices/iio:device0/in_anglvel_y_dmp_bias
+    chown system system /sys/bus/iio/devices/iio:device0/in_anglvel_z_dmp_bias
+    chown system system /sys/bus/iio/devices/iio:device0/pedometer_int_on
+    chown system system /sys/bus/iio/devices/iio:device0/pedometer_on
+    chown system system /sys/bus/iio/devices/iio:device0/pedometer_steps
+    chown system system /sys/bus/iio/devices/iio:device0/pedometer_time
+    chown system system /sys/bus/iio/devices/iio:device0/smd_enable
+    chown system system /sys/bus/iio/devices/iio:device0/smd_threshold
+    chown system system /sys/bus/iio/devices/iio:device0/smd_delay_threshold
+    chown system system /sys/bus/iio/devices/iio:device0/smd_delay_threshold2
+    chown system system /sys/bus/iio/devices/iio:device0/display_orientation_on
+    chown system system /sys/bus/iio/devices/iio:device0/dmp_on
+    chown system system /sys/bus/iio/devices/iio:device0/dmp_int_on
+    chown system system /sys/bus/iio/devices/iio:device0/dmp_event_int_on
+    chown system system /sys/bus/iio/devices/iio:device0/dmp_output_rate
+    chown system system /sys/bus/iio/devices/iio:device0/batchmode_timeout
+    chown system system /sys/bus/iio/devices/iio:device0/batchmode_wake_fifo_full_on
+    chown system system /sys/bus/iio/devices/iio:device0/six_axes_q_on
+    chown system system /sys/bus/iio/devices/iio:device0/three_axes_q_on
+    chown system system /sys/bus/iio/devices/iio:device0/ped_q_on
+    chown system system /sys/bus/iio/devices/iio:device0/step_detector_on
+    chown system system /sys/bus/iio/devices/iio:device0/motion_lpa_on
+    chown system system /sys/bus/iio/devices/iio:device0/motion_lpa_freq
+    chown system system /sys/bus/iio/devices/iio:device0/motion_lpa_duration
+    chown system system /sys/bus/iio/devices/iio:device0/motion_lpa_threshold
+    chown system system /sys/bus/iio/devices/iio:device0/accel_enable
+    chown system system /sys/bus/iio/devices/iio:device0/accel_fifo_enable
+    chown system system /sys/bus/iio/devices/iio:device0/firmware_loaded
+    chown system system /sys/bus/iio/devices/iio:device0/accel_matrix
+    chown system system /sys/bus/iio/devices/iio:device0/in_magn_scale
+    chown system system /sys/bus/iio/devices/iio:device0/compass_enable
+    chown system system /sys/bus/iio/devices/iio:device0/compass_matrix
+    chown system system /sys/bus/iio/devices/iio:device0/name
+    chown system system /sys/bus/iio/devices/iio:device0/trigger/current_trigger
+    chown system system /sys/bus/iio/devices/iio:device0/power/runtime_status
+    chown system system /sys/bus/iio/devices/iio:device0/power/control
+    chown system system /sys/bus/iio/devices/iio:device0/power/runtime_suspended_time
+    chown system system /sys/bus/iio/devices/iio:device0/power/runtime_active_time
+    chown system system /sys/bus/iio/devices/iio:device0/power/autosuspend_delay_ms
+    chown system system /sys/bus/iio/devices/iio:device0/dmp_firmware
+    chown system system /sys/bus/iio/devices/iio:device0/pressure_enable
+    chown system system /sys/bus/iio/devices/iio:device0/in_anglvel_self_test_scale
+    chown system system /sys/bus/iio/devices/iio:device0/gyro_rate
+    chown system system /sys/bus/iio/devices/iio:device0/in_accel_self_test_scale
+    chown system system /sys/bus/iio/devices/iio:device0/six_axes_q_rate
+    chown system system /sys/bus/iio/devices/iio:device0/ped_q_rate
+    chown system system /sys/bus/iio/devices/iio:device0/accel_rate
+    chown system system /sys/bus/iio/devices/iio:device0/compass_rate
+    chown system system /sys/bus/iio/devices/iio:device0/compass_sens
+    chown system system /sys/bus/iio/devices/iio:device0/pressure_rate
+    chown system system /sys/bus/iio/devices/iio:device0/step_indicator_on
+    chown system system /sys/bus/iio/devices/iio:device0/three_axes_q_rate
+
+    # Proximity and light sensor
+    chown system system /sys/bus/i2c/devices/i2c-3/3-0039/enable_als_sensor
+    chown system system /sys/bus/i2c/devices/i2c-3/3-0039/enable_ps_sensor
+
     # Subsytem Restart
     #adsp
     write /sys/bus/msm_subsys/devices/subsys0/restart_level "related"
@@ -145,17 +250,6 @@ on post-fs-data
 
     # Create directory used by audio subsystem
     mkdir /data/misc/audio 0770 audio audio
-
-    # Create directory used by sensor subsystem
-    mkdir /data/system 0755 system system
-    mkdir /data/system/sensors
-    chmod 655 /data/system/sensors
-    write /data/system/sensors/settings 1
-    chmod 660 /data/system/sensors/settings
-
-    # AKM setting data
-    mkdir /data/misc/sensors
-    chmod 775 /data/misc/sensors
 
     # Sensor
     mkdir /persist/sensors
@@ -288,12 +382,6 @@ service qmuxd /system/bin/qmuxd
 
 service netmgrd /system/bin/netmgrd
     class main
-
-# QCOM sensor
-service sensors /system/bin/sensors.qcom
-    class main
-    user root
-    group root
 
 service irsc_util /system/bin/logwrapper /system/bin/irsc_util "/etc/sec_config"
     class main
