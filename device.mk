@@ -234,7 +234,10 @@ PRODUCT_PROPERTY_OVERRIDES += \
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.qualcomm.sensors.smd=true \
     ro.qualcomm.sensors.game_rv=true \
-    ro.qualcomm.sensors.georv=true
+    ro.qualcomm.sensors.georv=true \
+    ro.qc.sensors.smgr_mag_cal_en=true \
+    ro.qc.sensors.step_detector=true \
+    ro.qc.sensors.step_counter=true
 
 # Enable some debug messages by default
 PRODUCT_PROPERTY_OVERRIDES += \
