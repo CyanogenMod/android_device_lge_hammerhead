@@ -90,7 +90,7 @@ TARGET_RELEASETOOLS_EXTENSIONS := device/lge/hammerhead
 
 PDK_PLATFORM_ZIP_PRODUCT_BINARIES := device/lge/hammerhead-kernel/vmlinux
 
-BOARD_LIB_DUMPSTATE := libdumpstate.hammerhead
+BOARD_HAL_STATIC_LIBRARIES := libdumpstate.hammerhead
 
 BOARD_SEPOLICY_DIRS := \
        device/lge/hammerhead/sepolicy
