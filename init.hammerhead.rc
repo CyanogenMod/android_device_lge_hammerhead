@@ -269,6 +269,10 @@ on post-fs-data
     # save rtc time offsets
     mkdir /data/system/time/ 0700 system system
 
+    # Ecc_Handler qcril.db
+    mkdir /data/misc/radio 0770 radio radio
+    symlink /system/etc/qcril.db /data/misc/radio/qcril.db
+
     setprop vold.post_fs_data_done 1
 
     # Set the CPU Freq Sampling rates
