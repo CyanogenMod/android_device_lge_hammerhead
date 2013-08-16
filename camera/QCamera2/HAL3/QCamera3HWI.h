@@ -129,9 +129,9 @@ public:
     int initParameters();
     void deinitParameters();
     int getMaxUnmatchedFramesInQueue();
-    bool needReprocess();
     QCamera3ReprocessChannel *addOnlineReprocChannel(QCamera3Channel *pInputChannel, QCamera3PicChannel *picChHandle);
     bool needRotationReprocess();
+    bool needReprocess();
     cam_denoise_process_type_t getWaveletDenoiseProcessPlate();
     bool isWNREnabled() {return true;};
 

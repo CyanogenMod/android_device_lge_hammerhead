@@ -53,11 +53,11 @@ QCamera3PostProcessor::QCamera3PostProcessor(QCamera3PicChannel* ch_ctrl)
     : m_parent(ch_ctrl),
       mJpegCB(NULL),
       mJpegUserData(NULL),
-      m_pReprocChannel(NULL),
       mJpegClientHandle(0),
       mJpegSessionId(0),
       m_pJpegExifObj(NULL),
       m_bThumbnailNeeded(TRUE),
+      m_pReprocChannel(NULL),
       m_inputPPQ(releasePPInputData, this),
       m_ongoingPPQ(releaseOngoingPPData, this),
       m_inputJpegQ(releaseJpegData, this),
@@ -168,7 +168,9 @@ int32_t QCamera3PostProcessor::start(QCamera3Memory* mMemory, int index, QCamera
     int32_t rc = NO_ERROR;
     mJpegMem = mMemory;
     mJpegMemIndex = index;
-   if (m_parent->needReprocess()) {
+    QCamera3HardwareInterface* hal_obj = (QCamera3HardwareInterface*)m_parent->mUserData;
+
+    if (hal_obj->needReprocess()) {
         if (m_pReprocChannel != NULL) {
             m_pReprocChannel->stop();
             delete m_pReprocChannel;
@@ -410,7 +412,8 @@ int32_t QCamera3PostProcessor::processAuxiliaryData(mm_camera_buf_def_t *frame,
  *==========================================================================*/
 int32_t QCamera3PostProcessor::processData(mm_camera_super_buf_t *frame)
 {
-    if (m_parent->needReprocess()) {
+    QCamera3HardwareInterface* hal_obj = (QCamera3HardwareInterface*)m_parent->mUserData;
+    if (hal_obj->needReprocess()) {
         pthread_mutex_lock(&mReprocJobLock);
         // enqueu to post proc input queue
         m_inputPPQ.enqueue((void *)frame);
@@ -768,6 +771,8 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
     mm_camera_buf_def_t *thumb_frame = NULL;
     QCamera3Channel *srcChannel = NULL;
     mm_camera_super_buf_t *recvd_frame = NULL;
+    QCamera3HardwareInterface* hal_obj = (QCamera3HardwareInterface*)m_parent->mUserData;
+
     if( jpeg_job_data-> aux_frame )
         recvd_frame = jpeg_job_data->aux_frame;
     else
@@ -890,7 +895,7 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
 
     cam_dimension_t dst_dim;
     memset(&dst_dim, 0, sizeof(cam_dimension_t));
-    pChannel->getStreamByIndex(0)->getFrameDimension(dst_dim);
+    srcChannel->getStreamByIndex(0)->getFrameDimension(dst_dim);
 
     // main dim
     jpg_job.encode_job.main_dim.src_dim = src_dim;
@@ -916,9 +921,10 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
         jpg_job.encode_job.thumb_dim.crop = crop;
         jpg_job.encode_job.thumb_index = thumb_frame->buf_idx;
     }
-
-    jpg_job.encode_job.rotation = m_parent->getJpegRotation();
-    ALOGV("%s: jpeg rotation is set to %d", __func__, jpg_job.encode_job.rotation);
+    if (!hal_obj->needRotationReprocess()) {
+       jpg_job.encode_job.rotation = m_parent->getJpegRotation();
+       ALOGD("%s: jpeg rotation is set to %d", __func__, jpg_job.encode_job.rotation);
+    }
 
     // Find meta data frame. Meta data frame contains additional exif info
     // which will be extracted and filled in by encoder.
