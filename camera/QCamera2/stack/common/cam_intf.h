@@ -58,7 +58,8 @@ typedef struct{
     cam_hal_version_t version;
 
     cam_position_t position;                                /* sensor position: front, back */
-
+    
+    uint16_t isWnrSupported;
     /* supported iso modes */
     uint8_t supported_iso_modes_cnt;
     cam_iso_mode_type supported_iso_modes[CAM_ISO_MODE_MAX];

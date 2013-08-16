@@ -132,8 +132,8 @@ public:
     QCamera3ReprocessChannel *addOnlineReprocChannel(QCamera3Channel *pInputChannel, QCamera3PicChannel *picChHandle);
     bool needRotationReprocess();
     bool needReprocess();
+    bool isWNREnabled();
     cam_denoise_process_type_t getWaveletDenoiseProcessPlate();
-    bool isWNREnabled() {return true;};
 
     void captureResultCb(mm_camera_super_buf_t *metadata,
                 camera3_stream_buffer_t *buffer, uint32_t frame_number);
