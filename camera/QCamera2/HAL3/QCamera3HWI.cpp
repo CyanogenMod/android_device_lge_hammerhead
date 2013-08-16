@@ -3587,7 +3587,6 @@ bool QCamera3HardwareInterface::needReprocess()
         ALOGD("%s: need do reprocess for ZSL WNR or min PP reprocess", __func__);
         return true;
     }
-
     return needRotationReprocess();
 }
 
@@ -3672,6 +3671,10 @@ QCamera3ReprocessChannel *QCamera3HardwareInterface::addOnlineReprocChannel(
 int QCamera3HardwareInterface::getMaxUnmatchedFramesInQueue()
 {
     return gCamCapability[mCameraId]->min_num_pp_bufs;
+}
+
+bool QCamera3HardwareInterface::isWNREnabled() {
+    return gCamCapability[mCameraId]->isWnrSupported;
 }
 
 }; //end namespace qcamera
