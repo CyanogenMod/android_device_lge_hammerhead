@@ -889,14 +889,14 @@ QCamera3PicChannel::QCamera3PicChannel(uint32_t cam_handle,
                     camera3_stream_t *stream) :
                         QCamera3Channel(cam_handle, cam_ops, cb_routine,
                         paddingInfo, userData),
+                        m_postprocessor(this),
                         mCamera3Stream(stream),
                         mNumBufs(0),
                         mCamera3Buffers(NULL),
                         mJpegSettings(NULL),
                         mCurrentBufIndex(-1),
                         mMemory(NULL),
-                        mYuvMemory(NULL),
-                        m_postprocessor(this)
+                        mYuvMemory(NULL)
 {
     int32_t rc = m_postprocessor.init(jpegEvtHandle, this);
     if (rc != 0) {
@@ -1194,54 +1194,6 @@ void QCamera3PicChannel::putStreamBufs()
     mYuvMemory->deallocate();
     delete mYuvMemory;
     mYuvMemory = NULL;
-}
-
-
-/*===========================================================================
- * FUNCTION   : needReprocess
- *
- * DESCRIPTION: if reprocess is needed
- *
- * PARAMETERS : none
- *
- * RETURN     : true: needed
- *              false: no need
- *==========================================================================*/
-bool QCamera3PicChannel::needReprocess()
-{
-    return true;
-
-    if (!mJpegSettings->is_jpeg_format) {
-        // RAW image, no need to reprocess
-        return false;
-    }
-
-    if ((mJpegSettings->min_required_pp_mask > 0) ||
-         isWNREnabled()) {
-        // TODO: add for ZSL HDR later
-        // pp module has min requirement for zsl reprocess, or WNR in ZSL mode
-        ALOGD("%s: need do reprocess for ZSL WNR or min PP reprocess", __func__);
-        return true;
-    }
-
-    //return needRotationReprocess();
-}
-
-/*===========================================================================
- * FUNCTION   : needOnlineReprocess
- *
- * DESCRIPTION: if online rotation needs to be done by cpp
- *
- * PARAMETERS : none
- *
- * RETURN     : true: needed
- *              false: no need
- *==========================================================================*/
-bool QCamera3PicChannel::needOnlineRotation()
-{
-    //TODO: For B Family chips, we need to do something different
-    // because JPEG encoder cannot do rotation.
-    return false;
 }
 
 bool QCamera3PicChannel::isRawSnapshot()
@@ -1757,10 +1709,11 @@ QCamera3ReprocessChannel::QCamera3ReprocessChannel(uint32_t cam_handle,
                                                  cam_padding_info_t *paddingInfo,
                                                  void *userData, void *ch_hdl) :
     QCamera3Channel(cam_handle, cam_ops, cb_routine, paddingInfo, userData),
-    mMemory(NULL),
+    picChHandle(ch_hdl),
     m_pSrcChannel(NULL),
     m_pMetaChannel(NULL),
-    picChHandle(ch_hdl)
+    m_metaFrame(NULL),
+    mMemory(NULL)
 {
     memset(mSrcStreamHandles, 0, sizeof(mSrcStreamHandles));
 }
@@ -2110,6 +2063,16 @@ int32_t QCamera3ReprocessChannel::addReprocStreamsFromSource(cam_pp_feature_conf
     reprocess_config.pp_feature_config = config;
 
     mSrcStreamHandles[m_numStreams] = pSrcStream->getMyHandle();
+
+    if (reprocess_config.pp_feature_config.feature_mask & CAM_QCOM_FEATURE_ROTATION) {
+        if (reprocess_config.pp_feature_config.rotation == ROTATE_90 ||
+            reprocess_config.pp_feature_config.rotation == ROTATE_270) {
+            // rotated by 90 or 270, need to switch width and height
+            int32_t temp = streamDim.height;
+            streamDim.height = streamDim.width;
+            streamDim.width = temp;
+        }
+    }
 
     QCamera3Stream *pStream = new QCamera3Stream(m_camHandle,
                                                m_handle,

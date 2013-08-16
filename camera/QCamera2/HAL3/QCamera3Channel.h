@@ -213,7 +213,6 @@ public:
 
     virtual QCamera3Memory *getStreamBufs(uint32_t le);
     virtual void putStreamBufs();
-    bool needReprocess();
     bool isWNREnabled() {return m_bWNROn;};
     bool needOnlineRotation();
     void getThumbnailSize(cam_dimension_t &dim);
