@@ -60,9 +60,9 @@
          This must be overridden in platform specific overlays -->
     <integer-array name="config_autoBrightnessLcdBacklightValues">
         <item>11</item>   <!-- 0-10 -->
-        <item>11</item>   <!-- 10-50 -->
-        <item>27</item>   <!-- 50-100 -->
-        <item>29</item>   <!-- 100-200 -->
+        <item>22</item>   <!-- 10-50 -->
+        <item>32</item>   <!-- 50-100 -->
+        <item>40</item>   <!-- 100-200 -->
         <item>55</item>   <!-- 200-400 -->
         <item>80</item>   <!-- 400-500 -->
         <item>85</item>   <!-- 500-800 -->
