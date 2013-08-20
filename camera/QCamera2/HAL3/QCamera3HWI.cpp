@@ -1875,15 +1875,16 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       scalar_formats_count);
 
     int32_t available_processed_sizes[CAM_FORMAT_MAX * 2];
-    makeTable(gCamCapability[cameraId]->supported_sizes_tbl,
-              gCamCapability[cameraId]->supported_sizes_tbl_cnt,
+    makeTable(gCamCapability[cameraId]->picture_sizes_tbl,
+              gCamCapability[cameraId]->picture_sizes_tbl_cnt,
               available_processed_sizes);
     staticInfo.update(ANDROID_SCALER_AVAILABLE_PROCESSED_SIZES,
                 available_processed_sizes,
-                (gCamCapability[cameraId]->supported_sizes_tbl_cnt) * 2);
+                (gCamCapability[cameraId]->picture_sizes_tbl_cnt) * 2);
+
     staticInfo.update(ANDROID_SCALER_AVAILABLE_PROCESSED_MIN_DURATIONS,
-                      &gCamCapability[cameraId]->min_duration[0],
-                      gCamCapability[cameraId]->supported_sizes_tbl_cnt);
+                      &gCamCapability[cameraId]->jpeg_min_duration[0],
+                      gCamCapability[cameraId]->picture_sizes_tbl_cnt);
 
     int32_t available_fps_ranges[MAX_SIZES_CNT * 2];
     makeFPSTable(gCamCapability[cameraId]->fps_ranges_tbl,
@@ -1934,12 +1935,8 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
             ANDROID_LENS_FACING_BACK : ANDROID_LENS_FACING_FRONT;
     staticInfo.update(ANDROID_LENS_FACING, &lensFacing, 1);
 
-    int32_t available_jpeg_sizes[MAX_SIZES_CNT * 2];
-    makeTable(gCamCapability[cameraId]->picture_sizes_tbl,
-              gCamCapability[cameraId]->picture_sizes_tbl_cnt,
-              available_jpeg_sizes);
     staticInfo.update(ANDROID_SCALER_AVAILABLE_JPEG_SIZES,
-                available_jpeg_sizes,
+                available_processed_sizes,
                 (gCamCapability[cameraId]->picture_sizes_tbl_cnt * 2));
 
     staticInfo.update(ANDROID_JPEG_AVAILABLE_THUMBNAIL_SIZES,
@@ -2056,26 +2053,8 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
             available_flash_levels,
             gCamCapability[cameraId]->supported_flash_firing_level_cnt);
 
-    uint8_t avail_flash_modes[CAM_FLASH_MODE_MAX];
-    size = 0;
-    for (int i = 0; i < gCamCapability[cameraId]->supported_flash_modes_cnt; i++) {
-        int val = lookupFwkName(FLASH_MODES_MAP,
-                                sizeof(FLASH_MODES_MAP)/sizeof(FLASH_MODES_MAP[0]),
-                                gCamCapability[cameraId]->supported_flash_modes[i]);
-        if (val != NAME_NOT_FOUND) {
-            avail_flash_modes[size] = (uint8_t)val;
-            size++;
-        }
-    }
-    static uint8_t flashAvailable = 0;
-    if (size > 1) {
-        //flash is supported
-        flashAvailable = 1;
-    }
-    staticInfo.update(ANDROID_FLASH_MODE,
-                      avail_flash_modes,
-                      size);
 
+    uint8_t flashAvailable = gCamCapability[cameraId]->flash_available;
     staticInfo.update(ANDROID_FLASH_INFO_AVAILABLE,
             &flashAvailable, 1);
 
@@ -2103,10 +2082,21 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
 
     staticInfo.update(ANDROID_SENSOR_MAX_ANALOG_SENSITIVITY,
                       &gCamCapability[cameraId]->max_analog_sensitivity,
-                      sizeof(int32_t) );
+                      1);
+
     staticInfo.update(ANDROID_SCALER_AVAILABLE_JPEG_MIN_DURATIONS,
                       &gCamCapability[cameraId]->jpeg_min_duration[0],
                       gCamCapability[cameraId]->picture_sizes_tbl_cnt);
+
+    int32_t sensor_orientation = (int32_t)gCamCapability[cameraId]->sensor_mount_angle;
+    staticInfo.update(ANDROID_SENSOR_ORIENTATION,
+                      &sensor_orientation,
+                      1);
+
+    int32_t max_output_streams[3] = {1, 3, 1};
+    staticInfo.update(ANDROID_REQUEST_MAX_NUM_OUTPUT_STREAMS,
+                      max_output_streams,
+                      3);
 
     gStaticMetadata[cameraId] = staticInfo.release();
     return rc;

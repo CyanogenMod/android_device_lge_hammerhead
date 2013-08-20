@@ -289,6 +289,7 @@ typedef struct{
     cam_sensitivity_range_t sensitivity_range;
     int32_t max_analog_sensitivity;
 
+    uint8_t flash_available;
 } cam_capability_t;
 
 typedef enum {
