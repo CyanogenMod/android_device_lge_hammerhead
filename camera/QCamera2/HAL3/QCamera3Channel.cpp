@@ -1380,6 +1380,29 @@ int32_t getExifFocalLength(rat_t *focalLength, float value)
 }
 
 /*===========================================================================
+  * FUNCTION   : getExifExpTimeInfo
+  *
+  * DESCRIPTION: get exif exposure time information
+  *
+  * PARAMETERS :
+  *   @expoTimeInfo     : expousure time value
+  * RETURN     : nt32_t type of status
+  *              NO_ERROR  -- success
+  *              none-zero failure code
+  *==========================================================================*/
+int32_t getExifExpTimeInfo(rat_t *expoTimeInfo, int64_t value)
+{
+
+    int cal_exposureTime;
+    if (value != 0)
+        cal_exposureTime = value;
+    else
+        cal_exposureTime = 60;
+
+    return getRational(expoTimeInfo, 1, cal_exposureTime);
+}
+
+/*===========================================================================
  * FUNCTION   : getExifGpsProcessingMethod
  *
  * DESCRIPTION: get GPS processing method
@@ -1602,6 +1625,16 @@ QCamera3Exif *QCamera3PicChannel::getExifData()
                    1,
                    (void *)&(isoSpeed));
 
+    rat_t sensorExpTime ;
+    rc = getExifExpTimeInfo(&sensorExpTime, (int64_t)mJpegSettings->sensor_exposure_time);
+    if (rc == NO_ERROR){
+        exif->addEntry(EXIFTAGID_EXPOSURE_TIME,
+                       EXIF_RATIONAL,
+                       1,
+                       (void *)&(sensorExpTime));
+    } else {
+        ALOGE("now addEntry for EXIFTAGID_EXPOSURE_TIME is %d", sensorExpTime);
+    }
 
     if (strlen(mJpegSettings->gps_processing_method) > 0) {
         char gpsProcessingMethod[EXIF_ASCII_PREFIX_SIZE + GPS_PROCESSING_METHOD_SIZE];
