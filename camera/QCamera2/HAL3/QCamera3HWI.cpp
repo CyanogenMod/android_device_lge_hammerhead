@@ -1072,7 +1072,7 @@ void QCamera3HardwareInterface::captureResultCb(mm_camera_super_buf_t *metadata_
             } else {
                 result.result = translateCbMetadataToResultMetadata(metadata,
                         current_capture_time, i->request_id);
-                if (i->blob_request) {
+                if (i->blob_request && needReprocess()) {
                    //If it is a blob request then send the metadata to the picture channel
                    mPictureChannel->queueMetadata(metadata_buf);
 
