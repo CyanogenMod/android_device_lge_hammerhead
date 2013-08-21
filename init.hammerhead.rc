@@ -523,7 +523,7 @@ service ssr_ramdump /system/bin/subsystem_ramdump -m -t emmc
     user root
     group root
 
-service thermal-engine /system/bin/thermal-engine
+service thermal-engine /system/bin/thermal-engine-hh
    class main
    user root
    group root
