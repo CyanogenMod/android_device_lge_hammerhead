@@ -101,4 +101,7 @@ BOARD_SEPOLICY_UNION := \
        app.te \
        file_contexts
 
+
+OVERRIDE_RS_DRIVER:= libRSDriver_adreno.so
+
 -include vendor/lge/hammerhead/BoardConfigVendor.mk
