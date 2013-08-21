@@ -116,6 +116,7 @@ struct sensors_poll_context_t {
 
     // return true if the constructor is completed
     bool isValid() { return mInitialized; };
+    int flush(int handle);
 
 private:
     enum {
@@ -375,6 +376,13 @@ int sensors_poll_context_t::batch(int handle, int flags, int64_t period_ns, int6
     if (index < 0) return index;
     return mSensor[index]->batch(handle, flags, period_ns, timeout);
 }
+
+int sensors_poll_context_t::flush(int handle)
+{
+    int index = handleToDriver(handle);
+    if (index < 0) return index;
+    return mSensor[index]->flush(handle);
+}
 /******************************************************************************/
 
 static int poll__close(struct hw_device_t *dev)
@@ -414,6 +422,13 @@ static int poll__batch(struct sensors_poll_device_1 *dev,
     sensors_poll_context_t *ctx = (sensors_poll_context_t *)dev;
     return ctx->batch(handle, flags, period_ns, timeout);
 }
+
+static int poll__flush(struct sensors_poll_device_1 *dev,
+                      int handle)
+{
+    sensors_poll_context_t *ctx = (sensors_poll_context_t *)dev;
+    return ctx->flush(handle);
+}
 /******************************************************************************/
 
 /** Open a new instance of a sensor device using name */
@@ -440,6 +455,7 @@ static int open_sensors(const struct hw_module_t* module, const char* id,
 
     /* Batch processing */
     dev->device.batch           = poll__batch;
+    dev->device.flush           = poll__flush;
 
     *device = &dev->device.common;
     status = 0;
