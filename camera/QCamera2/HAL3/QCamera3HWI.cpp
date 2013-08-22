@@ -1371,6 +1371,7 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
 
     int64_t  *sensorExpTime =
         (int64_t *)POINTER_OF(CAM_INTF_META_SENSOR_EXPOSURE_TIME, metadata);
+    mMetadataResponse.exposure_time = *sensorExpTime;
     camMetadata.update(ANDROID_SENSOR_EXPOSURE_TIME , sensorExpTime, 1);
 
     int64_t  *sensorFameDuration =
@@ -3241,6 +3242,8 @@ int QCamera3HardwareInterface::getJpegSettings
     } else {
         mJpegSettings->sensor_sensitivity = mMetadataResponse.iso_speed;
     }
+
+    mJpegSettings->sensor_exposure_time = mMetadataResponse.exposure_time;
 
     if (jpeg_settings.exists(ANDROID_LENS_FOCAL_LENGTH)) {
         mJpegSettings->lens_focal_length =
