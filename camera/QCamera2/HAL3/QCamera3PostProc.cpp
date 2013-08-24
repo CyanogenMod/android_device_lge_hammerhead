@@ -920,18 +920,22 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
         memset(&crop, 0, sizeof(cam_rect_t));
         //TBD_later - Zoom event removed in stream
         //thumb_stream->getCropInfo(crop);
-        memset(&src_dim, 0, sizeof(cam_dimension_t));
-        thumb_stream->getFrameDimension(src_dim);
-        jpg_job.encode_job.thumb_dim.src_dim = src_dim;
         m_parent->getThumbnailSize(jpg_job.encode_job.thumb_dim.dst_dim);
+        if (!hal_obj->needRotationReprocess()) {
+           memset(&src_dim, 0, sizeof(cam_dimension_t));
+           thumb_stream->getFrameDimension(src_dim);
+           jpg_job.encode_job.rotation = m_parent->getJpegRotation();
+           ALOGD("%s: jpeg rotation is set to %d", __func__, jpg_job.encode_job.rotation);
+        } else {
+           //swap the thumbnail destination width and height if it has already been rotated
+           int temp = jpg_job.encode_job.thumb_dim.dst_dim.width;
+           jpg_job.encode_job.thumb_dim.dst_dim.width = jpg_job.encode_job.thumb_dim.dst_dim.height;
+           jpg_job.encode_job.thumb_dim.dst_dim.height = temp;
+        }
+        jpg_job.encode_job.thumb_dim.src_dim = src_dim;
         jpg_job.encode_job.thumb_dim.crop = crop;
         jpg_job.encode_job.thumb_index = thumb_frame->buf_idx;
     }
-    if (!hal_obj->needRotationReprocess()) {
-       jpg_job.encode_job.rotation = m_parent->getJpegRotation();
-       ALOGD("%s: jpeg rotation is set to %d", __func__, jpg_job.encode_job.rotation);
-    }
-
     // Find meta data frame. Meta data frame contains additional exif info
     // which will be extracted and filled in by encoder.
     //Note: In this version meta data will be null
