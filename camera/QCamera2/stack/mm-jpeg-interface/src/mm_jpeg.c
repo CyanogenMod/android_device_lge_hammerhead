@@ -724,28 +724,30 @@ OMX_ERRORTYPE mm_jpeg_session_config_ports(mm_jpeg_job_session_t* p_session)
     return ret;
   }
 
-  p_session->inputTmbPort.format.image.nFrameWidth =
-    p_jobparams->thumb_dim.src_dim.width;
-  p_session->inputTmbPort.format.image.nFrameHeight =
-    p_jobparams->thumb_dim.src_dim.height;
-  p_session->inputTmbPort.format.image.nStride =
-    p_session->inputTmbPort.format.image.nFrameWidth;
-  p_session->inputTmbPort.format.image.nSliceHeight =
-    p_session->inputTmbPort.format.image.nFrameHeight;
-  p_session->inputTmbPort.format.image.eColorFormat =
-    map_jpeg_format(p_params->color_format);
-  p_session->inputTmbPort.nBufferSize =
-    p_params->src_thumb_buf[p_jobparams->thumb_index].buf_size;
-  p_session->inputTmbPort.nBufferCountActual = p_params->num_tmb_bufs;
-  ret = OMX_SetParameter(p_session->omx_handle, OMX_IndexParamPortDefinition,
-    &p_session->inputTmbPort);
-
-  if (ret) {
-    CDBG_ERROR("%s:%d] failed", __func__, __LINE__);
-    return ret;
-  }
-
   if (p_session->params.encode_thumbnail) {
+    mm_jpeg_buf_t *p_tmb_buf =
+      &p_params->src_thumb_buf[p_jobparams->thumb_index];
+    p_session->inputTmbPort.format.image.nFrameWidth =
+      p_jobparams->thumb_dim.src_dim.width;
+    p_session->inputTmbPort.format.image.nFrameHeight =
+      p_jobparams->thumb_dim.src_dim.height;
+    p_session->inputTmbPort.format.image.nStride =
+      p_tmb_buf->offset.mp[0].stride;
+    p_session->inputTmbPort.format.image.nSliceHeight =
+      p_tmb_buf->offset.mp[0].scanline;
+    p_session->inputTmbPort.format.image.eColorFormat =
+      map_jpeg_format(p_params->color_format);
+    p_session->inputTmbPort.nBufferSize =
+      p_params->src_thumb_buf[p_jobparams->thumb_index].buf_size;
+    p_session->inputTmbPort.nBufferCountActual = p_params->num_tmb_bufs;
+    ret = OMX_SetParameter(p_session->omx_handle, OMX_IndexParamPortDefinition,
+      &p_session->inputTmbPort);
+
+    if (ret) {
+      CDBG_ERROR("%s:%d] failed", __func__, __LINE__);
+      return ret;
+    }
+
     // Enable thumbnail port
     ret = OMX_SendCommand(p_session->omx_handle, OMX_CommandPortEnable,
         p_session->inputTmbPort.nPortIndex, NULL);
