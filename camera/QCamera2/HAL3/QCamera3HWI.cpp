@@ -2169,7 +2169,7 @@ void QCamera3HardwareInterface::makeOverridesList(cam_scene_mode_overrides_t* ov
     for (int i = 0; i < size; i++) {
         supt = 0;
         index = supported_indexes[i];
-        overridesList[j] = (uint8_t)overridesTable[index].ae_mode;
+        overridesList[j] = gCamCapability[camera_id]->flash_available ? ANDROID_CONTROL_AE_MODE_ON_AUTO_FLASH:ANDROID_CONTROL_AE_MODE_ON;
         overridesList[j+1] = (uint8_t)lookupFwkName(WHITE_BALANCE_MODES_MAP,
                                  sizeof(WHITE_BALANCE_MODES_MAP)/sizeof(WHITE_BALANCE_MODES_MAP[0]),
                                                     overridesTable[index].awb_mode);
