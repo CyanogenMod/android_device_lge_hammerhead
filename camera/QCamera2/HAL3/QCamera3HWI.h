@@ -121,8 +121,8 @@ public:
     void getMetadataVendorTagOps(vendor_tag_query_ops_t* ops);
     void dump(int fd);
 
-    int setFrameParameters(int frame_id, const camera_metadata_t *settings, uint32_t streamTypeMask);
-    int translateMetadataToParameters(const camera_metadata_t *settings);
+    int setFrameParameters(camera3_capture_request_t *request, uint32_t streamTypeMask);
+    int translateMetadataToParameters(const camera3_capture_request_t *request);
     camera_metadata_t* translateCbMetadataToResultMetadata(metadata_buffer_t *metadata,
                             nsecs_t timestamp, int32_t request_id);
     int getJpegSettings(const camera_metadata_t *settings);
@@ -158,6 +158,8 @@ private:
 
     int validateCaptureRequest(camera3_capture_request_t *request);
 
+    void deriveMinFrameDuration();
+    int64_t getMinFrameDuration(const camera3_capture_request_t *request);
 public:
 
     bool needOnlineRotation();
@@ -213,6 +215,10 @@ private:
     metadata_response_t mMetadataResponse;
     List<stream_info_t*> mStreamInfo;
     bool mIsZslMode;
+
+    int64_t mMinProcessedFrameDuration;
+    int64_t mMinJpegFrameDuration;
+    int64_t mMinRawFrameDuration;
 
     power_module_t *m_pPowerModule;   // power module
 

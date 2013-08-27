@@ -45,6 +45,9 @@
 using namespace android;
 
 namespace qcamera {
+
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+
 #define DATA_PTR(MEM_OBJ,INDEX) MEM_OBJ->getPtr( INDEX )
 cam_capability_t *gCamCapability[MM_CAMERA_MAX_NUM_SENSORS];
 parm_buffer_t *prevSettings;
@@ -169,6 +172,9 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId)
       mParameters(NULL),
       mJpegSettings(NULL),
       mIsZslMode(false),
+      mMinProcessedFrameDuration(0),
+      mMinJpegFrameDuration(0),
+      mMinRawFrameDuration(0),
       m_pPowerModule(NULL)
 {
     mCameraDevice.common.tag = HARDWARE_DEVICE_TAG;
@@ -630,6 +636,9 @@ int QCamera3HardwareInterface::configureStreams(
     memset(mParameters, 0, sizeof(parm_buffer_t));
     mFirstRequest = true;
 
+    //Get min frame duration for this streams configuration
+    deriveMinFrameDuration();
+
     pthread_mutex_unlock(&mMutex);
     return rc;
 }
@@ -726,6 +735,85 @@ int QCamera3HardwareInterface::validateCaptureRequest(
     } while (idx < (ssize_t)request->num_output_buffers);
 
     return NO_ERROR;
+}
+
+/*===========================================================================
+ * FUNCTION   : deriveMinFrameDuration
+ *
+ * DESCRIPTION: derive mininum processed, jpeg, and raw frame durations based
+ *              on currently configured streams.
+ *
+ * PARAMETERS : NONE
+ *
+ * RETURN     : NONE
+ *
+ *==========================================================================*/
+void QCamera3HardwareInterface::deriveMinFrameDuration()
+{
+    int32_t maxJpegDimension, maxProcessedDimension;
+
+    maxJpegDimension = 0;
+    maxProcessedDimension = 0;
+
+    // Figure out maximum jpeg, processed, and raw dimensions
+    for (List<stream_info_t*>::iterator it = mStreamInfo.begin();
+        it != mStreamInfo.end(); it++) {
+
+        // Input stream doesn't have valid stream_type
+        if ((*it)->stream->stream_type == CAMERA3_STREAM_INPUT)
+            continue;
+
+        int32_t dimension = (*it)->stream->width * (*it)->stream->height;
+        if ((*it)->stream->format == HAL_PIXEL_FORMAT_BLOB) {
+            if (dimension > maxJpegDimension)
+                maxJpegDimension = dimension;
+        } else if ((*it)->stream->format != HAL_PIXEL_FORMAT_RAW_SENSOR) {
+            if (dimension > maxProcessedDimension)
+                maxProcessedDimension = dimension;
+        }
+    }
+
+    //Assume all jpeg dimensions are in processed dimensions.
+    if (maxJpegDimension > maxProcessedDimension)
+        maxProcessedDimension = maxJpegDimension;
+
+    //Find minimum durations for processed, jpeg, and raw
+    mMinRawFrameDuration = gCamCapability[mCameraId]->raw_min_duration;
+    for (int i = 0; i < gCamCapability[mCameraId]->picture_sizes_tbl_cnt; i++) {
+        if (maxProcessedDimension ==
+            gCamCapability[mCameraId]->picture_sizes_tbl[i].width *
+            gCamCapability[mCameraId]->picture_sizes_tbl[i].height) {
+            mMinProcessedFrameDuration = gCamCapability[mCameraId]->jpeg_min_duration[i];
+            mMinJpegFrameDuration = gCamCapability[mCameraId]->jpeg_min_duration[i];
+            break;
+        }
+    }
+}
+
+/*===========================================================================
+ * FUNCTION   : getMinFrameDuration
+ *
+ * DESCRIPTION: get minimum frame draution based on the current maximum frame durations
+ *              and current request configuration.
+ *
+ * PARAMETERS : @request: requset sent by the frameworks
+ *
+ * RETURN     : min farme duration for a particular request
+ *
+ *==========================================================================*/
+int64_t QCamera3HardwareInterface::getMinFrameDuration(const camera3_capture_request_t *request)
+{
+    bool hasJpegStream = false;
+    for (uint32_t i = 0; i < request->num_output_buffers; i ++) {
+        const camera3_stream_t *stream = request->output_buffers[i].stream;
+        if (stream->format == HAL_PIXEL_FORMAT_BLOB)
+            hasJpegStream = true;
+    }
+
+    if (!hasJpegStream)
+        return MAX(mMinRawFrameDuration, mMinProcessedFrameDuration);
+    else
+        return MAX(MAX(mMinRawFrameDuration, mMinProcessedFrameDuration), mMinJpegFrameDuration);
 }
 
 /*===========================================================================
@@ -876,7 +964,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
         streamTypeMask |= channel->getStreamTypeMask();
     }
 
-    rc = setFrameParameters(request->frame_number, request->settings, streamTypeMask);
+    rc = setFrameParameters(request, streamTypeMask);
     if (rc < 0) {
         ALOGE("%s: fail to set frame parameters", __func__);
         pthread_mutex_unlock(&mMutex);
@@ -1377,14 +1465,17 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
     int64_t  *sensorExpTime =
         (int64_t *)POINTER_OF(CAM_INTF_META_SENSOR_EXPOSURE_TIME, metadata);
     mMetadataResponse.exposure_time = *sensorExpTime;
+    ALOGV("%s: sensorExpTime = %lld", __func__, *sensorExpTime);
     camMetadata.update(ANDROID_SENSOR_EXPOSURE_TIME , sensorExpTime, 1);
 
     int64_t  *sensorFameDuration =
         (int64_t *)POINTER_OF(CAM_INTF_META_SENSOR_FRAME_DURATION, metadata);
+    ALOGV("%s: sensorFameDuration = %lld", __func__, *sensorFameDuration);
     camMetadata.update(ANDROID_SENSOR_FRAME_DURATION, sensorFameDuration, 1);
 
     int32_t  *sensorSensitivity =
         (int32_t *)POINTER_OF(CAM_INTF_META_SENSOR_SENSITIVITY, metadata);
+    ALOGV("%s: sensorSensitivity = %d", __func__, *sensorSensitivity);
     mMetadataResponse.iso_speed = *sensorSensitivity;
     camMetadata.update(ANDROID_SENSOR_SENSITIVITY, sensorSensitivity, 1);
 
@@ -2542,6 +2633,14 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
     float default_focal_length = gCamCapability[mCameraId]->focal_length;
     settings.update(ANDROID_LENS_FOCAL_LENGTH, &default_focal_length, 1);
 
+    /* frame duration */
+    int64_t default_frame_duration = NSEC_PER_33MSEC;
+    settings.update(ANDROID_SENSOR_FRAME_DURATION, &default_frame_duration, 1);
+
+    /* sensitivity */
+    int32_t default_sensitivity = 100;
+    settings.update(ANDROID_SENSOR_SENSITIVITY, &default_sensitivity, 1);
+
     mDefaultMetadata[type] = settings.release();
 
     pthread_mutex_unlock(&mMutex);
@@ -2555,19 +2654,18 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
  *              framework
  *
  * PARAMETERS :
- *   @frame_id  : frame number for this particular request
- *   @settings  : frame settings information from framework
+ *   @request   : request that needs to be serviced
  *   @streamTypeMask : bit mask of stream types on which buffers are requested
  *
  * RETURN     : success: NO_ERROR
  *              failure:
  *==========================================================================*/
-int QCamera3HardwareInterface::setFrameParameters(int frame_id,
-                    const camera_metadata_t *settings, uint32_t streamTypeMask)
+int QCamera3HardwareInterface::setFrameParameters(camera3_capture_request_t *request,
+                    uint32_t streamTypeMask)
 {
     /*translate from camera_metadata_t type to parm_type_t*/
     int rc = 0;
-    if (settings == NULL && mFirstRequest) {
+    if (request->settings == NULL && mFirstRequest) {
         /*settings cannot be null for the first request*/
         return BAD_VALUE;
     }
@@ -2576,12 +2674,16 @@ int QCamera3HardwareInterface::setFrameParameters(int frame_id,
 
     memset(mParameters, 0, sizeof(parm_buffer_t));
     mParameters->first_flagged_entry = CAM_INTF_PARM_MAX;
-    AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_HAL_VERSION,
+    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_HAL_VERSION,
                 sizeof(hal_version), &hal_version);
+    if (rc < 0) {
+        ALOGE("%s: Failed to set hal version in the parameters", __func__);
+        return BAD_VALUE;
+    }
 
     /*we need to update the frame number in the parameters*/
     rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_FRAME_NUMBER,
-                                sizeof(frame_id), &frame_id);
+                                sizeof(request->frame_number), &(request->frame_number));
     if (rc < 0) {
         ALOGE("%s: Failed to set the frame number in the parameters", __func__);
         return BAD_VALUE;
@@ -2595,8 +2697,8 @@ int QCamera3HardwareInterface::setFrameParameters(int frame_id,
         return BAD_VALUE;
     }
 
-    if(settings != NULL){
-        rc = translateMetadataToParameters(settings);
+    if(request->settings != NULL){
+        rc = translateMetadataToParameters(request);
     }
     /*set the parameters to backend*/
     mCameraHandle->ops->set_parms(mCameraHandle->camera_handle, mParameters);
@@ -2610,19 +2712,18 @@ int QCamera3HardwareInterface::setFrameParameters(int frame_id,
  *
  *
  * PARAMETERS :
- *   @settings  : frame settings information from framework
+ *   @request  : request sent from framework
  *
  *
  * RETURN     : success: NO_ERROR
  *              failure:
  *==========================================================================*/
 int QCamera3HardwareInterface::translateMetadataToParameters
-                                  (const camera_metadata_t *settings)
+                                  (const camera3_capture_request_t *request)
 {
     int rc = 0;
     CameraMetadata frame_settings;
-    frame_settings = settings;
-
+    frame_settings = request->settings;
 
     if (frame_settings.exists(ANDROID_CONTROL_AE_ANTIBANDING_MODE)) {
         int32_t antibandingMode =
@@ -2966,6 +3067,7 @@ int QCamera3HardwareInterface::translateMetadataToParameters
     if (frame_settings.exists(ANDROID_SENSOR_EXPOSURE_TIME)) {
         int64_t sensorExpTime =
             frame_settings.find(ANDROID_SENSOR_EXPOSURE_TIME).data.i64[0];
+        ALOGV("%s: setting sensorExpTime %lld", __func__, sensorExpTime);
         rc = AddSetParmEntryToBatch(mParameters,
                 CAM_INTF_META_SENSOR_EXPOSURE_TIME,
                 sizeof(sensorExpTime), &sensorExpTime);
@@ -2974,8 +3076,11 @@ int QCamera3HardwareInterface::translateMetadataToParameters
     if (frame_settings.exists(ANDROID_SENSOR_FRAME_DURATION)) {
         int64_t sensorFrameDuration =
             frame_settings.find(ANDROID_SENSOR_FRAME_DURATION).data.i64[0];
+        int64_t minFrameDuration = getMinFrameDuration(request);
+        sensorFrameDuration = MAX(sensorFrameDuration, minFrameDuration);
         if (sensorFrameDuration > gCamCapability[mCameraId]->max_frame_duration)
             sensorFrameDuration = gCamCapability[mCameraId]->max_frame_duration;
+        ALOGV("%s: clamp sensorFrameDuration to %lld", __func__, sensorFrameDuration);
         rc = AddSetParmEntryToBatch(mParameters,
                 CAM_INTF_META_SENSOR_FRAME_DURATION,
                 sizeof(sensorFrameDuration), &sensorFrameDuration);
@@ -2992,6 +3097,7 @@ int QCamera3HardwareInterface::translateMetadataToParameters
                 gCamCapability[mCameraId]->sensitivity_range.max_sensitivity)
             sensorSensitivity =
                 gCamCapability[mCameraId]->sensitivity_range.max_sensitivity;
+        ALOGV("%s: clamp sensorSensitivity to %d", __func__, sensorSensitivity);
         rc = AddSetParmEntryToBatch(mParameters,
                 CAM_INTF_META_SENSOR_SENSITIVITY,
                 sizeof(sensorSensitivity), &sensorSensitivity);
@@ -3118,7 +3224,7 @@ int QCamera3HardwareInterface::translateMetadataToParameters
     if (frame_settings.exists(ANDROID_CONTROL_AE_REGIONS)) {
         cam_area_t roi;
         bool reset = true;
-        convertFromRegions(&roi, settings, ANDROID_CONTROL_AE_REGIONS);
+        convertFromRegions(&roi, request->settings, ANDROID_CONTROL_AE_REGIONS);
         if (scalerCropSet) {
             reset = resetIfNeededROI(&roi, &scalerCropRegion);
         }
@@ -3131,7 +3237,7 @@ int QCamera3HardwareInterface::translateMetadataToParameters
     if (frame_settings.exists(ANDROID_CONTROL_AF_REGIONS)) {
         cam_area_t roi;
         bool reset = true;
-        convertFromRegions(&roi, settings, ANDROID_CONTROL_AF_REGIONS);
+        convertFromRegions(&roi, request->settings, ANDROID_CONTROL_AF_REGIONS);
         if (scalerCropSet) {
             reset = resetIfNeededROI(&roi, &scalerCropRegion);
         }
@@ -3144,7 +3250,7 @@ int QCamera3HardwareInterface::translateMetadataToParameters
     if (frame_settings.exists(ANDROID_CONTROL_AWB_REGIONS)) {
         cam_area_t roi;
         bool reset = true;
-        convertFromRegions(&roi, settings, ANDROID_CONTROL_AWB_REGIONS);
+        convertFromRegions(&roi, request->settings, ANDROID_CONTROL_AWB_REGIONS);
         if (scalerCropSet) {
             reset = resetIfNeededROI(&roi, &scalerCropRegion);
         }
