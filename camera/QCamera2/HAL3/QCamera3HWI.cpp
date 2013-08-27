@@ -908,6 +908,15 @@ int QCamera3HardwareInterface::processCaptureRequest(
 
     pthread_mutex_lock(&mMutex);
 
+    // For first capture request, stream on all streams
+    if (mFirstRequest) {
+        for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
+            it != mStreamInfo.end(); it++) {
+            QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
+            channel->start();
+        }
+    }
+
     rc = validateCaptureRequest(request);
     if (rc != NO_ERROR) {
         ALOGE("%s: incoming request is not valid", __func__);
