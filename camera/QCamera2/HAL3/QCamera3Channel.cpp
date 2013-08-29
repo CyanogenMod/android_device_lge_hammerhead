@@ -1731,7 +1731,7 @@ QCamera3Exif *QCamera3PicChannel::getExifData()
     return exif;
 }
 
-int QCamera3PicChannel::kMaxBuffers = 2;
+int QCamera3PicChannel::kMaxBuffers = 1;
 
 /*===========================================================================
  * FUNCTION   : QCamera3ReprocessChannel
