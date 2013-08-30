@@ -976,23 +976,14 @@ int32_t QCamera3PicChannel::request(buffer_handle_t *buffer,
     int32_t rc = NO_ERROR;
     int index;
     mJpegSettings = jpegSettings;
-    if(!m_bIsActive) {
-        ALOGD("%s: First request on this channel starting stream",__func__);
-        //Stream on for main image. YUV buffer is queued to the kernel at the end of this call.
-        if(!pInputBuffer)
-            rc = start();
-        else
-            ALOGD("%s: Current request has input buffer no need to start h/w stream", __func__);
-    } else {
+    // Picture stream has already been started before any request comes in
+    if (!m_bIsActive) {
+        ALOGE("%s: Picture stream should have been started before any request",
+            __func__);
+        return -EINVAL;
+    }
+    if (pInputBuffer == NULL)
         mStreams[0]->bufDone(0);
-        ALOGD("%s: Request on an existing stream",__func__);
-    }
-
-    if(rc != NO_ERROR) {
-        ALOGE("%s: Failed to start the stream on the request",__func__);
-        return rc;
-    }
-
 
     if(!mMemory) {
         if(pInputBuffer) {
@@ -1193,7 +1184,7 @@ QCamera3Memory* QCamera3PicChannel::getStreamBufs(uint32_t len)
     }
 
     //Queue YUV buffers in the beginning mQueueAll = true
-    rc = mYuvMemory->allocate(1, len, true);
+    rc = mYuvMemory->allocate(1, len, false);
     if (rc < 0) {
         ALOGE("%s: unable to allocate metadata memory", __func__);
         delete mYuvMemory;
