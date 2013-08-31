@@ -199,6 +199,7 @@ private:
         int32_t request_id;
         List<RequestedBufferInfo> buffers;
         int blob_request;
+        int input_buffer_present;
     } PendingRequestInfo;
     typedef KeyedVector<camera3_stream_t *, uint32_t> PendingBuffersMap;
     /*Data structure to store metadata information*/
