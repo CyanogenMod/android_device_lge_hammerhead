@@ -98,7 +98,8 @@ public:
 
     int32_t init(jpeg_encode_callback_t jpeg_cb, void *user_data);
     int32_t deinit();
-    int32_t start(QCamera3Memory *mMemory, int index, QCamera3PicChannel *pSrcChannel);
+    int32_t start(QCamera3Memory *mMemory, int index,
+                  QCamera3Channel *pInputChannel);
     int32_t stop();
     int32_t processData(mm_camera_super_buf_t *frame);
     int32_t processRawData(mm_camera_super_buf_t *frame);

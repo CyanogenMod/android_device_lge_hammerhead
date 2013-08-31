@@ -276,6 +276,7 @@ public:
                                        QCamera3Channel *pSrcChannel,
                                        QCamera3Channel *pMetaChannel);
     QCamera3Stream *getStreamBySourceHandle(uint32_t srcHandle);
+    int32_t metadataBufDone(mm_camera_super_buf_t *recvd_frame);
 public:
     void *picChHandle;
 private:

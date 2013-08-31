@@ -42,7 +42,7 @@
 
 using namespace android;
 
-#define MIN_STREAMING_BUFFER_NUM 7
+#define MIN_STREAMING_BUFFER_NUM 7+11
 
 namespace qcamera {
 static const char ExifAsciiPrefix[] =
@@ -1014,12 +1014,13 @@ int32_t QCamera3PicChannel::request(buffer_handle_t *buffer,
     //Start the postprocessor for jpeg encoding. Pass mMemory as destination buffer
     mCurrentBufIndex = index;
 
-    m_postprocessor.start(mMemory, index, this);
-
-    ALOGD("%s: Post-process started", __func__);
     if(pInputBuffer) {
+        m_postprocessor.start(mMemory, index, pInputChannel);
+        ALOGD("%s: Post-process started", __func__);
         ALOGD("%s: Issue call to reprocess", __func__);
         m_postprocessor.processAuxiliaryData(pInputBuffer,pInputChannel);
+    } else {
+        m_postprocessor.start(mMemory, index, this);
     }
     return rc;
 }
@@ -1838,9 +1839,7 @@ void QCamera3ReprocessChannel::streamCbRoutine(mm_camera_super_buf_t *super_fram
     *frame = *super_frame;
     //queue back the metadata buffer
     if (m_metaFrame != NULL) {
-       ((QCamera3MetadataChannel*)m_pMetaChannel)->bufDone(m_metaFrame);
-       free(m_metaFrame);
-       m_metaFrame = NULL;
+       metadataBufDone(m_metaFrame);
     } else {
        ALOGE("%s: Meta frame was NULL", __func__);
     }
@@ -1958,6 +1957,25 @@ QCamera3Stream * QCamera3ReprocessChannel::getStreamBySourceHandle(uint32_t srcH
         }
     }
     return pStream;
+}
+
+/*===========================================================================
+ * FUNCTION   : metadataBufDone
+ *
+ * DESCRIPTION: buf done method for a metadata buffer
+ *
+ * PARAMETERS :
+ *   @recvd_frame : received metadata frame
+ *
+ * RETURN     :
+ *==========================================================================*/
+int32_t QCamera3ReprocessChannel::metadataBufDone(mm_camera_super_buf_t *recvd_frame)
+{
+   int32_t rc;
+   rc = ((QCamera3MetadataChannel*)m_pMetaChannel)->bufDone(recvd_frame);
+   free(recvd_frame);
+   recvd_frame = NULL;
+   return rc;
 }
 
 /*===========================================================================

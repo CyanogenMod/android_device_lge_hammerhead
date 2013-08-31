@@ -201,7 +201,14 @@ private:
         int blob_request;
     } PendingRequestInfo;
     typedef KeyedVector<camera3_stream_t *, uint32_t> PendingBuffersMap;
+    /*Data structure to store metadata information*/
+    typedef struct {
+       mm_camera_super_buf_t* meta_buf;
+       buffer_handle_t*       zsl_buf_hdl;
+       uint32_t               frame_number;
+    }MetadataBufferInfo;
 
+    List<MetadataBufferInfo> mStoredMetadataList;
     List<PendingRequestInfo> mPendingRequestsList;
     PendingBuffersMap mPendingBuffersMap;
     pthread_cond_t mRequestCond;
