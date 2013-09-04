@@ -229,7 +229,9 @@ public:
             void *userdata);
     static void dataNotifyCB(mm_camera_super_buf_t *recvd_frame,
             void *userdata);
-    void queueMetadata(mm_camera_super_buf_t *metadata_buf);
+    void queueMetadata(mm_camera_super_buf_t *metadata_buf,
+                                       QCamera3Channel *pMetaChannel,
+                                       bool relinquish);
 
 public:
     static int kMaxBuffers;
@@ -245,6 +247,8 @@ private:
 
     QCamera3GrallocMemory *mMemory;
     QCamera3HeapMemory *mYuvMemory;
+    QCamera3Channel *m_pMetaChannel;
+    mm_camera_super_buf_t *mMetaFrame;
 };
 
 // reprocess channel class
@@ -283,7 +287,6 @@ private:
     uint32_t mSrcStreamHandles[MAX_STREAM_NUM_IN_BUNDLE];
     QCamera3Channel *m_pSrcChannel; // ptr to source channel for reprocess
     QCamera3Channel *m_pMetaChannel;
-    mm_camera_super_buf_t *m_metaFrame;
     QCamera3HeapMemory *mMemory;
 };
 

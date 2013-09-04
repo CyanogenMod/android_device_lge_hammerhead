@@ -1078,12 +1078,12 @@ int QCamera3HardwareInterface::processCaptureRequest(
                     ALOGD("Stream id: %d", pInputBuffer->stream_id);
                     ALOGD("streamtype:%d", pInputBuffer->stream_type);
                     ALOGD("frame len:%d", pInputBuffer->frame_len);
+                    ALOGD("Handle:%p", request->input_buffer->buffer);
                     //TODO: need to get corresponding metadata and send it to pproc
                     for (List<MetadataBufferInfo>::iterator m = mStoredMetadataList.begin();
                          m != mStoredMetadataList.end(); m++) {
                         if (m->zsl_buf_hdl == request->input_buffer->buffer) {
                             reproc_meta.meta_buf = m->meta_buf;
-                            m = mStoredMetadataList.erase(m);
                             queueMetadata = 1;
                             break;
                         }
@@ -1093,7 +1093,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
             rc = channel->request(output.buffer, frameNumber, mJpegSettings,
                             pInputBuffer,(QCamera3Channel*)inputChannel);
             if (queueMetadata) {
-                mPictureChannel->queueMetadata(reproc_meta.meta_buf);
+                mPictureChannel->queueMetadata(reproc_meta.meta_buf,mMetadataChannel,false);
             }
         } else {
             ALOGE("%s: %d, request with buffer %p, frame_number %d", __func__,
@@ -1301,7 +1301,7 @@ void QCamera3HardwareInterface::captureResultCb(mm_camera_super_buf_t *metadata_
                                 j != i->buffers.end(); j++){
                               if (j->stream->stream_type == CAMERA3_STREAM_OUTPUT &&
                                   j->stream->format == HAL_PIXEL_FORMAT_BLOB) {
-                                 mPictureChannel->queueMetadata(metadata_buf);
+                                 mPictureChannel->queueMetadata(metadata_buf,mMetadataChannel,true);
                                  break;
                               }
                          }
@@ -1313,7 +1313,7 @@ void QCamera3HardwareInterface::captureResultCb(mm_camera_super_buf_t *metadata_
                    }
                } else if (!mIsZslMode && i->blob_request) {
                    //If it is a blob request then send the metadata to the picture channel
-                   mPictureChannel->queueMetadata(metadata_buf);
+                   mPictureChannel->queueMetadata(metadata_buf,mMetadataChannel,true);
                } else {
                    // Return metadata buffer
                    mMetadataChannel->bufDone(metadata_buf);

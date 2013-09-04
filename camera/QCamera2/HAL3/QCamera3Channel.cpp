@@ -843,6 +843,15 @@ void QCamera3PicChannel::jpegEvtHandle(jpeg_job_status_t status,
     int maxJpegSize;
     QCamera3PicChannel *obj = (QCamera3PicChannel *)userdata;
     if (obj) {
+
+        //Release any cached metabuffer information
+        if (obj->mMetaFrame != NULL && obj->m_pMetaChannel != NULL) {
+            ((QCamera3MetadataChannel*)(obj->m_pMetaChannel))->bufDone(obj->mMetaFrame);
+            obj->mMetaFrame = NULL;
+            obj->m_pMetaChannel = NULL;
+        } else {
+            ALOGE("%s: Meta frame was NULL", __func__);
+        }
         //Construct payload for process_capture_result. Call mChannelCb
 
         qcamera_jpeg_data_t *job = obj->m_postprocessor.findJpegJobByJobId(jobId);
@@ -914,7 +923,8 @@ QCamera3PicChannel::QCamera3PicChannel(uint32_t cam_handle,
                         mJpegSettings(NULL),
                         mCurrentBufIndex(-1),
                         mMemory(NULL),
-                        mYuvMemory(NULL)
+                        mYuvMemory(NULL),
+                        mMetaFrame(NULL)
 {
     int32_t rc = m_postprocessor.init(jpegEvtHandle, this);
     if (rc != 0) {
@@ -1260,8 +1270,13 @@ int QCamera3PicChannel::getJpegRotation() {
     return rotation;
 }
 
-void QCamera3PicChannel::queueMetadata(mm_camera_super_buf_t *metadata_buf)
+void QCamera3PicChannel::queueMetadata(mm_camera_super_buf_t *metadata_buf,
+                                       QCamera3Channel *pMetaChannel,
+                                       bool relinquish)
 {
+    if(relinquish)
+        mMetaFrame = metadata_buf;
+    m_pMetaChannel = pMetaChannel;
     m_postprocessor.processPPMetadata(metadata_buf);
 }
 /*===========================================================================
@@ -1755,7 +1770,6 @@ QCamera3ReprocessChannel::QCamera3ReprocessChannel(uint32_t cam_handle,
     picChHandle(ch_hdl),
     m_pSrcChannel(NULL),
     m_pMetaChannel(NULL),
-    m_metaFrame(NULL),
     mMemory(NULL)
 {
     memset(mSrcStreamHandles, 0, sizeof(mSrcStreamHandles));
@@ -1837,12 +1851,6 @@ void QCamera3ReprocessChannel::streamCbRoutine(mm_camera_super_buf_t *super_fram
        return;
     }
     *frame = *super_frame;
-    //queue back the metadata buffer
-    if (m_metaFrame != NULL) {
-       metadataBufDone(m_metaFrame);
-    } else {
-       ALOGE("%s: Meta frame was NULL", __func__);
-    }
     obj->m_postprocessor.processPPData(frame);
     return;
 }
@@ -1858,8 +1866,7 @@ void QCamera3ReprocessChannel::streamCbRoutine(mm_camera_super_buf_t *super_fram
  *==========================================================================*/
 QCamera3ReprocessChannel::QCamera3ReprocessChannel() :
     m_pSrcChannel(NULL),
-    m_pMetaChannel(NULL),
-    m_metaFrame(NULL)
+    m_pMetaChannel(NULL)
 {
 }
 
@@ -2003,7 +2010,6 @@ int32_t QCamera3ReprocessChannel::doReprocess(mm_camera_super_buf_t *frame,
         ALOGE("%s: No source channel for reprocess", __func__);
         return -1;
     }
-    m_metaFrame = meta_frame;
     for (int i = 0; i < frame->num_bufs; i++) {
         QCamera3Stream *pStream = getStreamBySourceHandle(frame->bufs[i]->stream_id);
         if (pStream != NULL) {
