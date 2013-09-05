@@ -85,6 +85,7 @@ public:
     static void get_metadata_vendor_tag_ops(const struct camera3_device *,
                                                vendor_tag_query_ops_t* ops);
     static void dump(const struct camera3_device *, int fd);
+    static int flush(const struct camera3_device *);
     static int close_camera_device(struct hw_device_t* device);
 public:
     QCamera3HardwareInterface(int cameraId);
@@ -120,6 +121,7 @@ public:
     int processCaptureRequest(camera3_capture_request_t *request);
     void getMetadataVendorTagOps(vendor_tag_query_ops_t* ops);
     void dump(int fd);
+    int flush();
 
     int setFrameParameters(camera3_capture_request_t *request, uint32_t streamTypeMask);
     int translateMetadataToParameters(const camera3_capture_request_t *request);

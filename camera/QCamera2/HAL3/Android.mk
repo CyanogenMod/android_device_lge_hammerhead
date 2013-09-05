@@ -13,7 +13,7 @@ LOCAL_SRC_FILES := \
         ../util/QCameraCmdThread.cpp \
         ../util/QCameraQueue.cpp
 
-LOCAL_CFLAGS := -Wall
+LOCAL_CFLAGS := -Wall -Werror
 LOCAL_CFLAGS += -DHAS_MULTIMEDIA_HINTS
 
 LOCAL_C_INCLUDES := \
