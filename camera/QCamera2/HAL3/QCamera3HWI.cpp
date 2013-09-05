@@ -930,15 +930,6 @@ int QCamera3HardwareInterface::processCaptureRequest(
 
     pthread_mutex_lock(&mMutex);
 
-    // For first capture request, stream on all streams
-    if (mFirstRequest) {
-        for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
-            it != mStreamInfo.end(); it++) {
-            QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
-            channel->start();
-        }
-    }
-
     rc = validateCaptureRequest(request);
     if (rc != NO_ERROR) {
         ALOGE("%s: incoming request is not valid", __func__);
@@ -946,10 +937,37 @@ int QCamera3HardwareInterface::processCaptureRequest(
         return rc;
     }
 
+    meta = request->settings;
+
+    // For first capture request, send capture intent, and
+    // stream on all streams
+    if (mFirstRequest) {
+
+        if (meta.exists(ANDROID_CONTROL_CAPTURE_INTENT)) {
+            int32_t hal_version = CAM_HAL_V3;
+            uint8_t captureIntent =
+                meta.find(ANDROID_CONTROL_CAPTURE_INTENT).data.u8[0];
+
+            memset(mParameters, 0, sizeof(parm_buffer_t));
+            mParameters->first_flagged_entry = CAM_INTF_PARM_MAX;
+            AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_HAL_VERSION,
+                sizeof(hal_version), &hal_version);
+            AddSetParmEntryToBatch(mParameters, CAM_INTF_META_CAPTURE_INTENT,
+                sizeof(captureIntent), &captureIntent);
+            mCameraHandle->ops->set_parms(mCameraHandle->camera_handle,
+                mParameters);
+        }
+
+        for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
+            it != mStreamInfo.end(); it++) {
+            QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
+            channel->start();
+        }
+    }
+
     uint32_t frameNumber = request->frame_number;
     uint32_t streamTypeMask = 0;
 
-    meta = request->settings;
     if (meta.exists(ANDROID_REQUEST_ID)) {
         request_id = meta.find(ANDROID_REQUEST_ID).data.i32[0];
         mCurrentRequestId = request_id;
