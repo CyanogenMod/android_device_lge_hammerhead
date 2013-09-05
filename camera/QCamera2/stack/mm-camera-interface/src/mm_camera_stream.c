@@ -262,6 +262,7 @@ static void mm_stream_dispatch_app_data(mm_camera_cmdcb_t *cmd_cb,
     mm_stream_t * my_obj = (mm_stream_t *)user_data;
     mm_camera_buf_info_t* buf_info = NULL;
     mm_camera_super_buf_t super_buf;
+    mm_camera_cmd_thread_name("mm_cam_stream");
 
     if (NULL == my_obj) {
         return;

@@ -1016,6 +1016,7 @@ void *QCamera3PostProcessor::dataProcessRoutine(void *data)
     ALOGV("%s: E", __func__);
     QCamera3PostProcessor *pme = (QCamera3PostProcessor *)data;
     QCameraCmdThread *cmdThread = &pme->m_dataProcTh;
+    cmdThread->setName("cam_data_proc");
 
     do {
         do {

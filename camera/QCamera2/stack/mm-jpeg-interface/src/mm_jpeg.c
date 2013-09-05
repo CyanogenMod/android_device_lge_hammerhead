@@ -32,6 +32,7 @@
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/prctl.h>
 #include <fcntl.h>
 #include <poll.h>
 
@@ -1526,6 +1527,7 @@ static void *mm_jpeg_jobmgr_thread(void *data)
   mm_jpeg_obj *my_obj = (mm_jpeg_obj*)data;
   mm_jpeg_job_cmd_thread_t *cmd_thread = &my_obj->job_mgr;
   mm_jpeg_job_q_node_t* node = NULL;
+  prctl(PR_SET_NAME, (unsigned long)"mm_jpeg_thread", 0, 0, 0);
 
   do {
     do {

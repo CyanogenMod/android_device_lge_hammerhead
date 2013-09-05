@@ -119,6 +119,7 @@ uint8_t mm_camera_util_chip_is_a_family(void)
 static void mm_camera_dispatch_app_event(mm_camera_cmdcb_t *cmd_cb,
                                          void* user_data)
 {
+    mm_camera_cmd_thread_name("mm_cam_event");
     int i;
     mm_camera_event_t *event = &cmd_cb->u.evt;
     mm_camera_obj_t * my_obj = (mm_camera_obj_t *)user_data;

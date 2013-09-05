@@ -58,6 +58,7 @@ public:
     ~QCameraCmdThread();
 
     int32_t launch(void *(*start_routine)(void *), void* user_data);
+    int32_t setName(const char* name);
     int32_t exit();
     int32_t sendCmd(camera_cmd_type_t cmd, uint8_t sync_cmd, uint8_t priority);
     camera_cmd_type_t getCmd();

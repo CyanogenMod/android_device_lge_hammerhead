@@ -32,6 +32,7 @@
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/prctl.h>
 #include <fcntl.h>
 #include <poll.h>
 #include <cam_semaphore.h>
@@ -279,6 +280,7 @@ static void *mm_camera_poll_fn(mm_camera_poll_thread_t *poll_cb)
  *==========================================================================*/
 static void *mm_camera_poll_thread(void *data)
 {
+    prctl(PR_SET_NAME, (unsigned long)"mm_cam_poll_th", 0, 0, 0);
     mm_camera_poll_thread_t *poll_cb = (mm_camera_poll_thread_t *)data;
 
     /* add pipe read fd into poll first */
@@ -533,6 +535,15 @@ int32_t mm_camera_cmd_thread_launch(mm_camera_cmd_thread_t * cmd_thread,
                    (void *)cmd_thread);
     return rc;
 }
+
+int32_t mm_camera_cmd_thread_name(const char* name)
+{
+    int32_t rc = 0;
+    /* name the thread */
+    prctl(PR_SET_NAME, (unsigned long)name, 0, 0, 0);
+    return rc;
+}
+
 
 int32_t mm_camera_cmd_thread_stop(mm_camera_cmd_thread_t * cmd_thread)
 {
