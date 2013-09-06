@@ -155,6 +155,10 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     power.msm8974
 
+# GPS configuration
+PRODUCT_COPY_FILES += \
+    device/lge/hammerhead/gps.conf:system/etc/gps.conf
+
 # GPS
 PRODUCT_PACKAGES += \
     libloc_adapter \
@@ -165,7 +169,6 @@ PRODUCT_PACKAGES += \
     libizat_core \
     libgeofence \
     libgps.utils \
-    gps.conf \
     gps.msm8974 \
     flp.msm8974
 
