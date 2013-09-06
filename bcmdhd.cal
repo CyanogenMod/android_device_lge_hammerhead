@@ -1,12 +1,23 @@
-#HAMMERHEAD for 4339 iPA/eLNA / AARDVARK_6_30_271
+#Hammerhead for 4339 iPA/eLNA / AARDVARK_6_30_271
 #2G CCK Filter / 5G EVM SW Ctrl / Targer power / 130605
+#Boardflags3 / 5G cal / RSSI cal
 
 sromrev=11
 boardrev=0x1106
 boardtype=0x06b6
-boardflags=0x10081001
+
+#boardflags=0x10081001
+#boardflags2=0x00000000
+#boardflags3=0x08002180
+
+boardflags=0x10081401
 boardflags2=0x00000000
-boardflags3=0x08002180
+boardflags3=0x08001188
+#Option : define BFL3_PTW70_WAR 0x010000 /acphy, support PTW70 equipment
+#Option : define BFL3_ACPHY_LPMODE_2 0x0100000 / for lpmode_2g choice /
+#boardflags3=0x08111188
+
+
 #boardnum=57410
 macaddr=00:90:4c:c5:12:38
 ccode=XV
@@ -30,18 +41,33 @@ extpagain2g=2
 pdetrange2g=2
 extpagain5g=2
 pdetrange5g=2
-rxgains2gelnagaina0=3
-rxgains2gtrisoa0=5
+
+rxgains2gelnagaina0=4
+#rxgains2gelnagaina0=3
+
+rxgains2gtrisoa0=6
+#rxgains2gtrisoa0=5
+
 rxgains2gtrelnabypa0=1
 rxgains5gelnagaina0=5
-rxgains5gtrisoa0=11
+
+rxgains5gtrisoa0=9
+#rxgains5gtrisoa0=11
+
 rxgains5gtrelnabypa0=1
 rxchain=1
 txchain=1
 aa2g=1
 aa5g=1
-ag0=0
-ag0=0
+
+#ag0=0
+#ag0=0
+
+## Antenna gain for 2.4G
+agbg0=0
+## Antenna gain for 5G
+aga0=0
+
 tssipos5g=0
 tssipos2g=0
 
@@ -132,9 +158,15 @@ dot11agduphrpo=0x0
 dot11agduplrpo=0x0
 phycal_tempdelta=25
 cckdigfilttype=1
+
 swctrlmap_5g=0x00080008,0x00040000,0x00000008,0x800301,0x00c
 swctrlmap_2g=0x00000000,0x00030001,0x00010000,0x800301,0x0ff
 swctrlmapext_5g=0x00000000,0x00000000,0x00000000,0x000000,0x000
 swctrlmapext_2g=0x00000001,0x00000000,0x00000000,0x000000,0x001
-rssicorrnorm_c0=-3,-2
-rssicorrnorm5g_c0=-1,0,-3,-1,0,-3,-3,-2,-4,-3,-2,-4
+
+
+##2G RSSI compensation 20/40
+rssicorrnorm_c0=2,2
+##5G RSSI compenation Low(36-48):20/40/80, Mid(54-64):20/40/80, High(100-140):20/40/80, X1(149-165):20/40/80
+rssicorrnorm5g_c0=-1,0,0,-2,0,0,0,1,1,1,2,2
+#rssicorrnorm5g_c0=3,3,3,2,2,2,2,2,2,2,2,2
