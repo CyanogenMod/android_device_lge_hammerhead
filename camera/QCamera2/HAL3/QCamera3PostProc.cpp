@@ -28,6 +28,7 @@
 */
 
 #define LOG_TAG "QCamera3PostProc"
+//#define LOG_NDEBUG 0
 
 #include <stdlib.h>
 #include <utils/Errors.h>

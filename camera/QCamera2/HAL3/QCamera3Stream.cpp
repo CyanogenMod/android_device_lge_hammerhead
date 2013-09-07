@@ -28,6 +28,7 @@
 */
 
 #define LOG_TAG "QCamera3Stream"
+//#define LOG_NDEBUG 0
 
 #include <utils/Log.h>
 #include <utils/Errors.h>

@@ -28,6 +28,7 @@
 */
 
 #define LOG_TAG "QCamera3HWI"
+//#define LOG_NDEBUG 0
 
 #include <cutils/properties.h>
 #include <hardware/camera3.h>
