@@ -58,7 +58,7 @@ typedef struct{
     cam_hal_version_t version;
 
     cam_position_t position;                                /* sensor position: front, back */
-    
+
     uint16_t isWnrSupported;
     /* supported iso modes */
     uint8_t supported_iso_modes_cnt;
@@ -471,9 +471,7 @@ typedef union {
     INCLUDE(CAM_INTF_META_STATS_FACEDETECT_MODE,    uint8_t,                     1);
     INCLUDE(CAM_INTF_META_STATS_HISTOGRAM_MODE,     uint8_t,                     1);
     INCLUDE(CAM_INTF_META_STATS_SHARPNESS_MAP_MODE, uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_TONEMAP_CURVE_BLUE,       cam_tonemap_curve_t,         1);
-    INCLUDE(CAM_INTF_META_TONEMAP_CURVE_GREEN,      cam_tonemap_curve_t,         1);
-    INCLUDE(CAM_INTF_META_TONEMAP_CURVE_RED,        cam_tonemap_curve_t,         1);
+    INCLUDE(CAM_INTF_META_TONEMAP_CURVES,           cam_rgb_tonemap_curves,      1);
     INCLUDE(CAM_INTF_META_TONEMAP_MODE,             uint8_t,                     1);
     INCLUDE(CAM_INTF_META_FLASH_MODE,               uint8_t,                     1);
     INCLUDE(CAM_INTF_META_STREAM_TYPE_MASK,         uint32_t,                    1);

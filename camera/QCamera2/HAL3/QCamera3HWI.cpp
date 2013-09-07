@@ -3311,53 +3311,53 @@ int QCamera3HardwareInterface::translateMetadataToParameters
                 CAM_INTF_META_TONEMAP_MODE,
                 sizeof(tonemapMode), &tonemapMode);
     }
-    int point = 0;
-    if (frame_settings.exists(ANDROID_TONEMAP_CURVE_BLUE)) {
-        cam_tonemap_curve_t tonemapCurveBlue;
-        tonemapCurveBlue.tonemap_points_cnt =
-           gCamCapability[mCameraId]->max_tone_map_curve_points;
-        for (int i = 0; i < tonemapCurveBlue.tonemap_points_cnt; i++) {
-            for (int j = 0; j < 2; j++) {
-               tonemapCurveBlue.tonemap_points[i][j] =
-                  frame_settings.find(ANDROID_TONEMAP_CURVE_BLUE).data.f[point];
-               point++;
-            }
-        }
-        rc = AddSetParmEntryToBatch(mParameters,
-                CAM_INTF_META_TONEMAP_CURVE_BLUE,
-                sizeof(tonemapCurveBlue), &tonemapCurveBlue);
-    }
-    point = 0;
-    if (frame_settings.exists(ANDROID_TONEMAP_CURVE_GREEN)) {
+    /* Tonemap curve channels ch0 = G, ch 1 = B, ch 2 = R */
+    /*All tonemap channels will have the same number of points*/
+    if (frame_settings.exists(ANDROID_TONEMAP_CURVE_GREEN) &&
+        frame_settings.exists(ANDROID_TONEMAP_CURVE_BLUE) &&
+        frame_settings.exists(ANDROID_TONEMAP_CURVE_RED)) {
+        cam_rgb_tonemap_curves tonemapCurves;
+        tonemapCurves.tonemap_points_cnt = frame_settings.find(ANDROID_TONEMAP_CURVE_GREEN).count/2;
+
+        /* ch0 = G*/
+        int point = 0;
         cam_tonemap_curve_t tonemapCurveGreen;
-        tonemapCurveGreen.tonemap_points_cnt =
-           gCamCapability[mCameraId]->max_tone_map_curve_points;
-        for (int i = 0; i < tonemapCurveGreen.tonemap_points_cnt; i++) {
+        for (int i = 0; i < tonemapCurves.tonemap_points_cnt ; i++) {
             for (int j = 0; j < 2; j++) {
                tonemapCurveGreen.tonemap_points[i][j] =
                   frame_settings.find(ANDROID_TONEMAP_CURVE_GREEN).data.f[point];
                point++;
             }
         }
-        rc = AddSetParmEntryToBatch(mParameters,
-                CAM_INTF_META_TONEMAP_CURVE_GREEN,
-                sizeof(tonemapCurveGreen), &tonemapCurveGreen);
-    }
-    point = 0;
-    if (frame_settings.exists(ANDROID_TONEMAP_CURVE_RED)) {
+        tonemapCurves.curves[0] = tonemapCurveGreen;
+
+        /* ch 1 = B */
+        point = 0;
+        cam_tonemap_curve_t tonemapCurveBlue;
+        for (int i = 0; i < tonemapCurves.tonemap_points_cnt; i++) {
+            for (int j = 0; j < 2; j++) {
+               tonemapCurveBlue.tonemap_points[i][j] =
+                  frame_settings.find(ANDROID_TONEMAP_CURVE_BLUE).data.f[point];
+               point++;
+            }
+        }
+        tonemapCurves.curves[1] = tonemapCurveBlue;
+
+        /* ch 2 = R */
+        point = 0;
         cam_tonemap_curve_t tonemapCurveRed;
-        tonemapCurveRed.tonemap_points_cnt =
-           gCamCapability[mCameraId]->max_tone_map_curve_points;
-        for (int i = 0; i < tonemapCurveRed.tonemap_points_cnt; i++) {
+        for (int i = 0; i < tonemapCurves.tonemap_points_cnt; i++) {
             for (int j = 0; j < 2; j++) {
                tonemapCurveRed.tonemap_points[i][j] =
                   frame_settings.find(ANDROID_TONEMAP_CURVE_RED).data.f[point];
                point++;
             }
         }
+        tonemapCurves.curves[2] = tonemapCurveRed;
+
         rc = AddSetParmEntryToBatch(mParameters,
-                CAM_INTF_META_TONEMAP_CURVE_RED,
-                sizeof(tonemapCurveRed), &tonemapCurveRed);
+                CAM_INTF_META_TONEMAP_CURVES,
+                sizeof(tonemapCurves), &tonemapCurves);
     }
 
     if (frame_settings.exists(ANDROID_CONTROL_CAPTURE_INTENT)) {

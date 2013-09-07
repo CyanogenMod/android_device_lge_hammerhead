@@ -989,14 +989,11 @@ typedef enum {
     CAM_INTF_META_STATS_SHARPNESS_MAP,
 
     /* TONEMAP */
-    /* Table mapping blue input values to output values */
-    CAM_INTF_META_TONEMAP_CURVE_BLUE,
-    /* Table mapping green input values to output values */
-    CAM_INTF_META_TONEMAP_CURVE_GREEN,
-    /* Table mapping red input values to output values */
-    CAM_INTF_META_TONEMAP_CURVE_RED,
+    /* Table mapping RGB input values to output values */
+    CAM_INTF_META_TONEMAP_CURVES,
     /* Tone map mode */
     CAM_INTF_META_TONEMAP_MODE,
+
     CAM_INTF_META_FLASH_MODE,
     /* 2D array of gain factors for each color channel that was used to
      * compensate for lens shading for this frame */
@@ -1066,8 +1063,6 @@ typedef struct {
 #define CAM_MAX_TONEMAP_CURVE_SIZE    128
 
 typedef struct {
-    int tonemap_points_cnt;
-
     /* A 1D array of pairs of floats.
      * Mapping a 0-1 input range to a 0-1 output range.
      * The input range must be monotonically increasing with N,
@@ -1077,6 +1072,11 @@ typedef struct {
      * 0 -> 0, 0.15 -> 0.25, 0.3 -> 0.5, 0.5 -> 0.64 */
     float tonemap_points[CAM_MAX_TONEMAP_CURVE_SIZE][2];
 } cam_tonemap_curve_t;
+
+typedef struct {
+   int tonemap_points_cnt;
+   cam_tonemap_curve_t curves[3];
+} cam_rgb_tonemap_curves;
 
 typedef enum {
     OFF,
