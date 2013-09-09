@@ -525,6 +525,11 @@ typedef enum {
     CAM_EDGE_MODE_HIGH_QUALITY,
 } cam_edge_mode_t;
 
+typedef struct {
+   uint8_t edge_mode;
+   int sharpness;
+} cam_edge_application_t;
+
 typedef enum {
     CAM_BLACK_LEVEL_LOCK_OFF,
     CAM_BLACK_LEVEL_LOCK_ON,

@@ -2841,12 +2841,28 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
     settings.update(ANDROID_LENS_FOCAL_LENGTH, &default_focal_length, 1);
 
     /* frame duration */
-    int64_t default_frame_duration = NSEC_PER_33MSEC;
+    static const int64_t default_frame_duration = NSEC_PER_33MSEC;
     settings.update(ANDROID_SENSOR_FRAME_DURATION, &default_frame_duration, 1);
 
     /* sensitivity */
-    int32_t default_sensitivity = 100;
+    static const int32_t default_sensitivity = 100;
     settings.update(ANDROID_SENSOR_SENSITIVITY, &default_sensitivity, 1);
+
+    /*edge mode*/
+    static const uint8_t edge_mode = ANDROID_EDGE_MODE_HIGH_QUALITY;
+    settings.update(ANDROID_EDGE_MODE, &edge_mode, 1);
+
+    /*noise reduction mode*/
+    static const uint8_t noise_red_mode = ANDROID_NOISE_REDUCTION_MODE_HIGH_QUALITY;
+    settings.update(ANDROID_NOISE_REDUCTION_MODE, &noise_red_mode, 1);
+
+    /*color correction mode*/
+    static const uint8_t color_correct_mode = ANDROID_COLOR_CORRECTION_MODE_HIGH_QUALITY;
+    settings.update(ANDROID_COLOR_CORRECTION_MODE, &color_correct_mode, 1);
+
+    /*transform matrix mode*/
+    static const uint8_t tonemap_mode = ANDROID_TONEMAP_MODE_HIGH_QUALITY;
+    settings.update(ANDROID_TONEMAP_MODE, &tonemap_mode, 1);
 
     mDefaultMetadata[type] = settings.release();
 
@@ -3136,9 +3152,15 @@ int QCamera3HardwareInterface::translateMetadataToParameters
     }
 
     if (frame_settings.exists(ANDROID_EDGE_MODE)) {
-        uint8_t edgeMode = frame_settings.find(ANDROID_EDGE_MODE).data.u8[0];
+        cam_edge_application_t edge_application;
+        edge_application.edge_mode = frame_settings.find(ANDROID_EDGE_MODE).data.u8[0];
+        if (edge_application.edge_mode == CAM_EDGE_MODE_OFF) {
+            edge_application.sharpness = 0;
+        } else {
+            edge_application.sharpness = 10;
+        }
         rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_EDGE_MODE,
-                sizeof(edgeMode), &edgeMode);
+                sizeof(edge_application), &edge_application);
     }
 
     if (frame_settings.exists(ANDROID_EDGE_STRENGTH)) {
@@ -3574,6 +3596,13 @@ int QCamera3HardwareInterface::getJpegSettings
         mJpegSettings->exposure_compensation =
             jpeg_settings.find(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION).data.i32[0];
     }
+    mJpegSettings->sharpness = 10; //default value
+    if (jpeg_settings.exists(ANDROID_EDGE_MODE)) {
+        uint8_t edgeMode = jpeg_settings.find(ANDROID_EDGE_MODE).data.u8[0];
+        if (edgeMode == ANDROID_EDGE_MODE_OFF) {
+            mJpegSettings->sharpness = 0;
+        }
+    }
     mJpegSettings->exposure_comp_step = gCamCapability[mCameraId]->exp_compensation_step;
     mJpegSettings->max_jpeg_size = calcMaxJpegSize();
     mJpegSettings->is_jpeg_format = true;
@@ -3990,7 +4019,7 @@ QCamera3ReprocessChannel *QCamera3HardwareInterface::addOnlineReprocChannel(
     memset(&pp_config, 0, sizeof(cam_pp_feature_config_t));
     if (gCamCapability[mCameraId]->min_required_pp_mask & CAM_QCOM_FEATURE_SHARPNESS) {
         pp_config.feature_mask |= CAM_QCOM_FEATURE_SHARPNESS;
-        pp_config.sharpness = 10;
+        pp_config.sharpness = mJpegSettings->sharpness;
     }
 
     if (isWNREnabled()) {
