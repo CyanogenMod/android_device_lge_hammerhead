@@ -546,6 +546,7 @@ int QCamera3HardwareInterface::configureStreams(
     /* Allocate channel objects for the requested streams */
     for (size_t i = 0; i < streamList->num_streams; i++) {
         camera3_stream_t *newStream = streamList->streams[i];
+        uint32_t stream_usage = newStream->usage;
         stream_config_info.stream_sizes[i].width = newStream->width;
         stream_config_info.stream_sizes[i].height = newStream->height;
         if (newStream->stream_type == CAMERA3_STREAM_BIDIRECTIONAL &&
@@ -553,6 +554,29 @@ int QCamera3HardwareInterface::configureStreams(
             //for zsl stream the size is jpeg size
             stream_config_info.stream_sizes[i].width = jpegStream->width;
             stream_config_info.stream_sizes[i].height = jpegStream->height;
+            stream_config_info.type[i] = CAM_STREAM_TYPE_SNAPSHOT;
+        } else {
+           //for non zsl streams find out the format
+           switch (newStream->format) {
+           case HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED :
+              {
+                 if (stream_usage & private_handle_t::PRIV_FLAGS_VIDEO_ENCODER) {
+                    stream_config_info.type[i] = CAM_STREAM_TYPE_VIDEO;
+                 } else {
+                    stream_config_info.type[i] = CAM_STREAM_TYPE_PREVIEW;
+                 }
+              }
+              break;
+           case HAL_PIXEL_FORMAT_YCbCr_420_888:
+              stream_config_info.type[i] = CAM_STREAM_TYPE_CALLBACK;
+              break;
+           case HAL_PIXEL_FORMAT_BLOB:
+              stream_config_info.type[i] = CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT;
+              break;
+           default:
+              stream_config_info.type[i] = CAM_STREAM_TYPE_DEFAULT;
+              break;
+           }
         }
         if (newStream->priv == NULL) {
             //New stream, construct channel

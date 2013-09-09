@@ -762,6 +762,7 @@ typedef struct {
 typedef struct {
     cam_dimension_t stream_sizes[MAX_NUM_STREAMS];
     uint32_t num_streams;
+    uint32_t type[MAX_NUM_STREAMS];
 } cam_stream_size_info_t;
 
 typedef  struct {
