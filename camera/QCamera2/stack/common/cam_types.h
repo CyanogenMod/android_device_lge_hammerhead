@@ -759,6 +759,11 @@ typedef struct {
     uint32_t max_frame_idx;
 } cam_frame_idx_range_t;
 
+typedef struct {
+    cam_dimension_t stream_sizes[MAX_NUM_STREAMS];
+    uint32_t num_streams;
+} cam_stream_size_info_t;
+
 typedef  struct {
     uint8_t is_stats_valid;               /* if histgram data is valid */
     cam_hist_stats_t stats_data;          /* histogram data */
@@ -872,6 +877,8 @@ typedef enum {
     /* A frame counter set by the framework. Must be maintained unchanged in
      * output frame. */
     CAM_INTF_META_FRAME_NUMBER,
+    /*Number of streams and size of streams in current configuration*/
+    CAM_INTF_META_STREAM_INFO,
     /* Whether AE is currently updating the sensor exposure and sensitivity
      * fields */
     CAM_INTF_META_AEC_MODE,

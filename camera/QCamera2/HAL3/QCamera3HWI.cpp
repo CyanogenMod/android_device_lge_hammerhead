@@ -472,6 +472,8 @@ int QCamera3HardwareInterface::configureStreams(
 
     camera3_stream_t *inputStream = NULL;
     camera3_stream_t *jpegStream = NULL;
+    cam_stream_size_info_t stream_config_info;
+
     /* first invalidate all the steams in the mStreamList
      * if they appear again, they will be validated */
     for (List<stream_info_t*>::iterator it=mStreamInfo.begin();
@@ -544,6 +546,14 @@ int QCamera3HardwareInterface::configureStreams(
     /* Allocate channel objects for the requested streams */
     for (size_t i = 0; i < streamList->num_streams; i++) {
         camera3_stream_t *newStream = streamList->streams[i];
+        stream_config_info.stream_sizes[i].width = newStream->width;
+        stream_config_info.stream_sizes[i].height = newStream->height;
+        if (newStream->stream_type == CAMERA3_STREAM_BIDIRECTIONAL &&
+            newStream->format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED && jpegStream){
+            //for zsl stream the size is jpeg size
+            stream_config_info.stream_sizes[i].width = jpegStream->width;
+            stream_config_info.stream_sizes[i].height = jpegStream->height;
+        }
         if (newStream->priv == NULL) {
             //New stream, construct channel
             switch (newStream->stream_type) {
@@ -662,9 +672,21 @@ int QCamera3HardwareInterface::configureStreams(
             m = mStoredMetadataList.erase(m);
         }
     }
+    int32_t hal_version = CAM_HAL_V3;
+    stream_config_info.num_streams = streamList->num_streams;
 
     //settings/parameters don't carry over for new configureStreams
     memset(mParameters, 0, sizeof(parm_buffer_t));
+
+    mParameters->first_flagged_entry = CAM_INTF_PARM_MAX;
+    AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_HAL_VERSION,
+                sizeof(hal_version), &hal_version);
+
+    AddSetParmEntryToBatch(mParameters, CAM_INTF_META_STREAM_INFO,
+                sizeof(stream_config_info), &stream_config_info);
+
+    mCameraHandle->ops->set_parms(mCameraHandle->camera_handle, mParameters);
+
     mFirstRequest = true;
 
     //Get min frame duration for this streams configuration

@@ -434,6 +434,7 @@ typedef union {
 
     /* HAL3 sepcific */
     INCLUDE(CAM_INTF_META_FRAME_NUMBER,             uint32_t,                    1);
+    INCLUDE(CAM_INTF_META_STREAM_INFO,              cam_stream_size_info_t,      1);
     INCLUDE(CAM_INTF_META_COLOR_CORRECT_MODE,       uint8_t,                     1);
     INCLUDE(CAM_INTF_META_COLOR_CORRECT_TRANSFORM,  cam_color_correct_matrix_t,  1);
     INCLUDE(CAM_INTF_META_COLOR_CORRECT_GAINS,      cam_color_correct_gains_t,   1);
