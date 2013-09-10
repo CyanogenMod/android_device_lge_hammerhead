@@ -1724,6 +1724,22 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
                        (float*)lensShadingMap->lens_shading,
                        4*map_width*map_height);
 
+    //Populate CAM_INTF_META_TONEMAP_CURVES
+    /* ch0 = G, ch 1 = B, ch 2 = R*/
+    cam_rgb_tonemap_curves *tonemap = (cam_rgb_tonemap_curves *)
+        POINTER_OF(CAM_INTF_META_TONEMAP_CURVES, metadata);
+    camMetadata.update(ANDROID_TONEMAP_CURVE_GREEN,
+                       (float*)tonemap->curves[0].tonemap_points,
+                       tonemap->tonemap_points_cnt * 2);
+
+    camMetadata.update(ANDROID_TONEMAP_CURVE_BLUE,
+                       (float*)tonemap->curves[1].tonemap_points,
+                       tonemap->tonemap_points_cnt * 2);
+
+    camMetadata.update(ANDROID_TONEMAP_CURVE_RED,
+                       (float*)tonemap->curves[2].tonemap_points,
+                       tonemap->tonemap_points_cnt * 2);
+
     cam_color_correct_gains_t *colorCorrectionGains = (cam_color_correct_gains_t*)
         POINTER_OF(CAM_INTF_META_COLOR_CORRECT_GAINS, metadata);
     camMetadata.update(ANDROID_COLOR_CORRECTION_GAINS, colorCorrectionGains->gains, 4);
