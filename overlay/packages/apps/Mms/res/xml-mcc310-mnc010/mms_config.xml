@@ -14,14 +14,9 @@
      limitations under the License.
 -->
 
-<mms_config version="2">
+<mms_config version="4">
     <!-- Maximum message size in bytes for a MMS message -->
     <int name="maxMessageSize">1048576</int>
-
-    <!-- Maximum number of SMS message segments in a long text message before converting
-         tximum number of SMS message segments in a long text message before converting
-         the SMS message to an MMS message. -->
-    <int name="smsToMmsTextThreshold">2</int>
 
     <!-- If true, The text message over 160 characters will be sent in multi part.
          If false, The text message over 160 characters will be sent
@@ -32,10 +27,6 @@
          If false, The mms does not support slide duration and we have to
          set duration value. -->
     <bool name="enableSlideDuration">false</bool>
-
-    <!-- Maximum length for message text. Use a value of -1
-         to indicate default value -->
-    <int name="maxMessageTextSize">160</int>
 
     <bool name="enableMMSReadReports">false</bool>
 
