@@ -23,4 +23,6 @@
     <bool name="send_mic_mute_to_AudioManager">true</bool>
     <!-- Flag indicating if the tty is enabled -->
     <bool name="tty_enabled">true</bool>
+    <!-- CDMA activation goes through HFA [DO NOT TRANSLATE] -->
+    <bool name="config_use_hfa_for_provisioning" translatable="false">true</bool>
 </resources>
