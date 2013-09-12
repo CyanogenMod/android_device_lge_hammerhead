@@ -2912,6 +2912,9 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
     static const uint8_t tonemap_mode = ANDROID_TONEMAP_MODE_HIGH_QUALITY;
     settings.update(ANDROID_TONEMAP_MODE, &tonemap_mode, 1);
 
+    int32_t edge_strength = gCamCapability[mCameraId]->sharpness_ctrl.def_value;
+    settings.update(ANDROID_EDGE_STRENGTH, &edge_strength, 1);
+
     mDefaultMetadata[type] = settings.release();
 
     pthread_mutex_unlock(&mMutex);
@@ -3205,17 +3208,16 @@ int QCamera3HardwareInterface::translateMetadataToParameters
         if (edge_application.edge_mode == CAM_EDGE_MODE_OFF) {
             edge_application.sharpness = 0;
         } else {
-            edge_application.sharpness = 10;
+            if (frame_settings.exists(ANDROID_EDGE_STRENGTH)) {
+                int32_t edgeStrength =
+                    frame_settings.find(ANDROID_EDGE_STRENGTH).data.i32[0];
+                edge_application.sharpness = edgeStrength;
+            } else {
+                edge_application.sharpness = gCamCapability[mCameraId]->sharpness_ctrl.def_value; //default
+            }
         }
         rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_EDGE_MODE,
                 sizeof(edge_application), &edge_application);
-    }
-
-    if (frame_settings.exists(ANDROID_EDGE_STRENGTH)) {
-        int32_t edgeStrength =
-            frame_settings.find(ANDROID_EDGE_STRENGTH).data.i32[0];
-        rc = AddSetParmEntryToBatch(mParameters,
-                CAM_INTF_META_SHARPNESS_STRENGTH, sizeof(edgeStrength), &edgeStrength);
     }
 
     if (frame_settings.exists(ANDROID_FLASH_MODE)) {
