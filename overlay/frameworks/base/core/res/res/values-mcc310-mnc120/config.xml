@@ -59,4 +59,6 @@
          For sprint we will use RIL_RADIO_TECHNOLOGY_1xRTT:6 -->
     <integer name="config_volte_replacement_rat">6</integer>
 
+    <!-- Sometimes, PDU has garbages. So, need to use valid index -->
+    <integer name="config_valid_wappush_index">4</integer>
 </resources>
