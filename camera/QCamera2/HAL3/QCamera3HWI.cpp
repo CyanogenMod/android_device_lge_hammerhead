@@ -1168,11 +1168,35 @@ int QCamera3HardwareInterface::processCaptureRequest(
     }
 
     mFirstRequest = false;
-
+    // Added a timed condition wait
+    struct timespec ts;
+    uint8_t isValidTimeout = 1;
+    rc = clock_gettime(CLOCK_REALTIME, &ts);
+    if (rc < 0) {
+        isValidTimeout = 0;
+        ALOGE("%s: Error reading the real time clock!!", __func__);
+    }
+    else {
+        // Make timeout as 5 sec for request to be honored
+        ts.tv_sec += 5;
+    }
     //Block on conditional variable
     mPendingRequest = 1;
     while (mPendingRequest == 1) {
-        pthread_cond_wait(&mRequestCond, &mMutex);
+        if (!isValidTimeout) {
+            ALOGV("%s: Blocking on conditional wait", __func__);
+            pthread_cond_wait(&mRequestCond, &mMutex);
+        }
+        else {
+            ALOGV("%s: Blocking on timed conditional wait", __func__);
+            rc = pthread_cond_timedwait(&mRequestCond, &mMutex, &ts);
+            if (rc == ETIMEDOUT) {
+                rc = -ENODEV;
+                ALOGE("%s: Unblocked on timeout!!!!", __func__);
+                break;
+            }
+        }
+        ALOGV("%s: Unblocked", __func__);
     }
 
     pthread_mutex_unlock(&mMutex);
