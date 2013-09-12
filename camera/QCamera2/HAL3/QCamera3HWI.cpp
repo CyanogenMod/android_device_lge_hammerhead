@@ -2999,6 +2999,98 @@ int QCamera3HardwareInterface::translateMetadataToParameters
     CameraMetadata frame_settings;
     frame_settings = request->settings;
 
+    /* Do not change the order of the following list unless you know what you are
+     * doing.
+     * The order is laid out in such a way that parameters in the front of the table
+     * may be used to override the parameters later in the table. Examples are:
+     * 1. META_MODE should precede AEC/AWB/AF MODE
+     * 2. AEC MODE should preced EXPOSURE_TIME/SENSITIVITY/FRAME_DURATION
+     * 3. AWB_MODE should precede COLOR_CORRECTION_MODE
+     * 4. Any mode should precede it's corresponding settings
+     */
+    if (frame_settings.exists(ANDROID_CONTROL_MODE)) {
+        uint8_t metaMode = frame_settings.find(ANDROID_CONTROL_MODE).data.u8[0];
+        rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_MODE,
+                sizeof(metaMode), &metaMode);
+        if (metaMode == ANDROID_CONTROL_MODE_USE_SCENE_MODE) {
+           uint8_t fwk_sceneMode = frame_settings.find(ANDROID_CONTROL_SCENE_MODE).data.u8[0];
+           uint8_t sceneMode = lookupHalName(SCENE_MODES_MAP,
+                                             sizeof(SCENE_MODES_MAP)/sizeof(SCENE_MODES_MAP[0]),
+                                             fwk_sceneMode);
+           rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_BESTSHOT_MODE,
+                sizeof(sceneMode), &sceneMode);
+        } else if (metaMode == ANDROID_CONTROL_MODE_OFF) {
+           uint8_t sceneMode = 0;//CAMERA_BESTSHOT_OFF;
+           rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_BESTSHOT_MODE,
+                sizeof(sceneMode), &sceneMode);
+        } else if (metaMode == ANDROID_CONTROL_MODE_AUTO) {
+           uint8_t sceneMode = 0;//CAMERA_BESTSHOT_OFF;
+           rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_BESTSHOT_MODE,
+                sizeof(sceneMode), &sceneMode);
+        }
+    }
+
+    if (frame_settings.exists(ANDROID_CONTROL_AE_MODE)) {
+        uint8_t fwk_aeMode =
+            frame_settings.find(ANDROID_CONTROL_AE_MODE).data.u8[0];
+        uint8_t aeMode;
+        int32_t redeye;
+
+        if (fwk_aeMode == ANDROID_CONTROL_AE_MODE_OFF ) {
+            aeMode = CAM_AE_MODE_OFF;
+        } else {
+            aeMode = CAM_AE_MODE_ON;
+        }
+        if (fwk_aeMode == ANDROID_CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE) {
+            redeye = 1;
+        } else {
+            redeye = 0;
+        }
+
+        int32_t flashMode = (int32_t)lookupHalName(AE_FLASH_MODE_MAP,
+                                          sizeof(AE_FLASH_MODE_MAP),
+                                          fwk_aeMode);
+        rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_AEC_MODE,
+                sizeof(aeMode), &aeMode);
+        rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_LED_MODE,
+                sizeof(flashMode), &flashMode);
+        rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_REDEYE_REDUCTION,
+                sizeof(redeye), &redeye);
+    }
+
+    if (frame_settings.exists(ANDROID_CONTROL_AWB_MODE)) {
+        uint8_t fwk_whiteLevel =
+            frame_settings.find(ANDROID_CONTROL_AWB_MODE).data.u8[0];
+        uint8_t whiteLevel = lookupHalName(WHITE_BALANCE_MODES_MAP,
+                sizeof(WHITE_BALANCE_MODES_MAP),
+                fwk_whiteLevel);
+        rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_WHITE_BALANCE,
+                sizeof(whiteLevel), &whiteLevel);
+    }
+
+    float focalDistance = -1.0;
+    if (frame_settings.exists(ANDROID_LENS_FOCUS_DISTANCE)) {
+        focalDistance = frame_settings.find(ANDROID_LENS_FOCUS_DISTANCE).data.f[0];
+        rc = AddSetParmEntryToBatch(mParameters,
+                CAM_INTF_META_LENS_FOCUS_DISTANCE,
+                sizeof(focalDistance), &focalDistance);
+    }
+
+    if (frame_settings.exists(ANDROID_CONTROL_AF_MODE)) {
+        uint8_t fwk_focusMode =
+            frame_settings.find(ANDROID_CONTROL_AF_MODE).data.u8[0];
+        uint8_t focusMode;
+        if (focalDistance == 0.0 && fwk_focusMode == ANDROID_CONTROL_AF_MODE_OFF) {
+            focusMode = CAM_FOCUS_MODE_INFINITY;
+        } else{
+         focusMode = lookupHalName(FOCUS_MODES_MAP,
+                                   sizeof(FOCUS_MODES_MAP),
+                                   fwk_focusMode);
+        }
+        rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_FOCUS_MODE,
+                sizeof(focusMode), &focusMode);
+    }
+
     if (frame_settings.exists(ANDROID_CONTROL_AE_ANTIBANDING_MODE)) {
         int32_t antibandingMode =
             frame_settings.find(ANDROID_CONTROL_AE_ANTIBANDING_MODE).data.i32[0];
@@ -3032,44 +3124,11 @@ int QCamera3HardwareInterface::translateMetadataToParameters
                 sizeof(fps_range), &fps_range);
     }
 
-    float focalDistance = -1.0;
-    if (frame_settings.exists(ANDROID_LENS_FOCUS_DISTANCE)) {
-        focalDistance = frame_settings.find(ANDROID_LENS_FOCUS_DISTANCE).data.f[0];
-        rc = AddSetParmEntryToBatch(mParameters,
-                CAM_INTF_META_LENS_FOCUS_DISTANCE,
-                sizeof(focalDistance), &focalDistance);
-    }
-
-    if (frame_settings.exists(ANDROID_CONTROL_AF_MODE)) {
-        uint8_t fwk_focusMode =
-            frame_settings.find(ANDROID_CONTROL_AF_MODE).data.u8[0];
-        uint8_t focusMode;
-        if (focalDistance == 0.0 && fwk_focusMode == ANDROID_CONTROL_AF_MODE_OFF) {
-            focusMode = CAM_FOCUS_MODE_INFINITY;
-        } else{
-         focusMode = lookupHalName(FOCUS_MODES_MAP,
-                                   sizeof(FOCUS_MODES_MAP),
-                                   fwk_focusMode);
-        }
-        rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_FOCUS_MODE,
-                sizeof(focusMode), &focusMode);
-    }
-
     if (frame_settings.exists(ANDROID_CONTROL_AWB_LOCK)) {
         uint8_t awbLock =
             frame_settings.find(ANDROID_CONTROL_AWB_LOCK).data.u8[0];
         rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_AWB_LOCK,
                 sizeof(awbLock), &awbLock);
-    }
-
-    if (frame_settings.exists(ANDROID_CONTROL_AWB_MODE)) {
-        uint8_t fwk_whiteLevel =
-            frame_settings.find(ANDROID_CONTROL_AWB_MODE).data.u8[0];
-        uint8_t whiteLevel = lookupHalName(WHITE_BALANCE_MODES_MAP,
-                sizeof(WHITE_BALANCE_MODES_MAP),
-                fwk_whiteLevel);
-        rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_WHITE_BALANCE,
-                sizeof(whiteLevel), &whiteLevel);
     }
 
     if (frame_settings.exists(ANDROID_CONTROL_EFFECT_MODE)) {
@@ -3080,34 +3139,6 @@ int QCamera3HardwareInterface::translateMetadataToParameters
                 fwk_effectMode);
         rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_EFFECT,
                 sizeof(effectMode), &effectMode);
-    }
-
-    if (frame_settings.exists(ANDROID_CONTROL_AE_MODE)) {
-        uint8_t fwk_aeMode =
-            frame_settings.find(ANDROID_CONTROL_AE_MODE).data.u8[0];
-        uint8_t aeMode;
-        int32_t redeye;
-
-        if (fwk_aeMode == ANDROID_CONTROL_AE_MODE_OFF ) {
-            aeMode = CAM_AE_MODE_OFF;
-        } else {
-            aeMode = CAM_AE_MODE_ON;
-        }
-        if (fwk_aeMode == ANDROID_CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE) {
-            redeye = 1;
-        } else {
-            redeye = 0;
-        }
-
-        int32_t flashMode = (int32_t)lookupHalName(AE_FLASH_MODE_MAP,
-                                          sizeof(AE_FLASH_MODE_MAP),
-                                          fwk_aeMode);
-        rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_AEC_MODE,
-                sizeof(aeMode), &aeMode);
-        rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_LED_MODE,
-                sizeof(flashMode), &flashMode);
-        rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_REDEYE_REDUCTION,
-                sizeof(redeye), &redeye);
     }
 
     if (frame_settings.exists(ANDROID_COLOR_CORRECTION_MODE)) {
@@ -3171,28 +3202,6 @@ int QCamera3HardwareInterface::translateMetadataToParameters
             frame_settings.find(ANDROID_CONTROL_AF_TRIGGER_ID).data.i32[0];
         rc = AddSetParmEntryToBatch(mParameters,
                 CAM_INTF_META_AF_TRIGGER, sizeof(af_trigger), &af_trigger);
-    }
-
-    if (frame_settings.exists(ANDROID_CONTROL_MODE)) {
-        uint8_t metaMode = frame_settings.find(ANDROID_CONTROL_MODE).data.u8[0];
-        rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_MODE,
-                sizeof(metaMode), &metaMode);
-        if (metaMode == ANDROID_CONTROL_MODE_USE_SCENE_MODE) {
-           uint8_t fwk_sceneMode = frame_settings.find(ANDROID_CONTROL_SCENE_MODE).data.u8[0];
-           uint8_t sceneMode = lookupHalName(SCENE_MODES_MAP,
-                                             sizeof(SCENE_MODES_MAP)/sizeof(SCENE_MODES_MAP[0]),
-                                             fwk_sceneMode);
-           rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_BESTSHOT_MODE,
-                sizeof(sceneMode), &sceneMode);
-        } else if (metaMode == ANDROID_CONTROL_MODE_OFF) {
-           uint8_t sceneMode = 0;//CAMERA_BESTSHOT_OFF;
-           rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_BESTSHOT_MODE,
-                sizeof(sceneMode), &sceneMode);
-        } else if (metaMode == ANDROID_CONTROL_MODE_AUTO) {
-           uint8_t sceneMode = 0;//CAMERA_BESTSHOT_OFF;
-           rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_BESTSHOT_MODE,
-                sizeof(sceneMode), &sceneMode);
-        }
     }
 
     if (frame_settings.exists(ANDROID_DEMOSAIC_MODE)) {
