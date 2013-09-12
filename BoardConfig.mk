@@ -101,6 +101,7 @@ BOARD_SEPOLICY_UNION := \
        app.te \
        file_contexts
 
+HAVE_ADRENO_SOURCE:= false
 
 OVERRIDE_RS_DRIVER:= libRSDriver_adreno.so
 
