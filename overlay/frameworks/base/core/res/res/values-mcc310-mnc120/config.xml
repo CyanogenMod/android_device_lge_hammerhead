@@ -52,4 +52,11 @@
          If false, not supported. -->
     <bool name="config_duplicate_port_omadm_wappush">true</bool>
 
+    <!-- If Voice Radio Technology is RIL_RADIO_TECHNOLOGY_LTE:14 this is the value
+         that should be used instead. A value of RIL_RADIO_TECHNOLOGY_UNKNOWN:0 means
+         there is no replacement value and VoLTE is assumed to be supported
+
+         For sprint we will use RIL_RADIO_TECHNOLOGY_1xRTT:6 -->
+    <integer name="config_volte_replacement_rat">6</integer>
+
 </resources>
