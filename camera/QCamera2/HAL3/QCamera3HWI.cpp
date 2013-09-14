@@ -250,9 +250,11 @@ QCamera3HardwareInterface::~QCamera3HardwareInterface()
 
     /* Clean up all channels */
     if (mCameraInitialized) {
-        mMetadataChannel->stop();
-        delete mMetadataChannel;
-        mMetadataChannel = NULL;
+        if (mMetadataChannel) {
+            mMetadataChannel->stop();
+            delete mMetadataChannel;
+            mMetadataChannel = NULL;
+        }
         deinitParameters();
     }
 
