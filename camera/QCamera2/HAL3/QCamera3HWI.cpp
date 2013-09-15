@@ -2249,6 +2249,11 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_SENSOR_INFO_MAX_FRAME_DURATION,
             &gCamCapability[cameraId]->max_frame_duration, 1);
 
+    camera_metadata_rational baseGainFactor = {
+            gCamCapability[cameraId]->base_gain_factor.numerator,
+            gCamCapability[cameraId]->base_gain_factor.denominator};
+    staticInfo.update(ANDROID_SENSOR_BASE_GAIN_FACTOR,
+                      &baseGainFactor, 1);
 
     staticInfo.update(ANDROID_SENSOR_INFO_COLOR_FILTER_ARRANGEMENT,
                      (uint8_t*)&gCamCapability[cameraId]->color_arrangement, 1);
