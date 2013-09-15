@@ -290,6 +290,8 @@ typedef struct{
     int32_t max_analog_sensitivity;
 
     uint8_t flash_available;
+
+    cam_rational_type_t base_gain_factor;    /* sensor base gain factor */
 } cam_capability_t;
 
 typedef enum {
