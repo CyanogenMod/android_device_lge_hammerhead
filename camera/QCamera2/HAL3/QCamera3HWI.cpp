@@ -1607,7 +1607,9 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
           case CAM_INTF_PARM_FOCUS_MODE:{
              uint8_t  *focusMode =
                   (uint8_t *)POINTER_OF(CAM_INTF_PARM_FOCUS_MODE, metadata);
-             camMetadata.update(ANDROID_CONTROL_AF_MODE, focusMode, 1);
+             uint8_t fwkAfMode = lookupFwkName(FOCUS_MODES_MAP,
+                 sizeof(FOCUS_MODES_MAP)/sizeof(FOCUS_MODES_MAP[0]), *focusMode);
+             camMetadata.update(ANDROID_CONTROL_AF_MODE, &fwkAfMode, 1);
              break;
           }
           case CAM_INTF_META_AF_ROI:{
@@ -1633,7 +1635,10 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
           case CAM_INTF_PARM_WHITE_BALANCE: {
                uint8_t  *whiteBalance =
                   (uint8_t *)POINTER_OF(CAM_INTF_PARM_WHITE_BALANCE, metadata);
-               camMetadata.update(ANDROID_CONTROL_AWB_MODE, whiteBalance, 1);
+               uint8_t fwkWhiteBalanceMode = lookupFwkName(WHITE_BALANCE_MODES_MAP,
+                   sizeof(WHITE_BALANCE_MODES_MAP)/sizeof(WHITE_BALANCE_MODES_MAP[0]),
+                   *whiteBalance);
+               camMetadata.update(ANDROID_CONTROL_AWB_MODE, &fwkWhiteBalanceMode, 1);
                break;
           }
           case CAM_INTF_META_AWB_REGIONS: {
