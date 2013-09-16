@@ -42,6 +42,6 @@
     <string name="userAgent">Nexus5</string>
 
      <!-- UAProf URL -->
-    <string name="uaProfUrl">http://www.google.com/oha/rdf/ua-profile-kila.xml</string>
+    <string name="uaProfUrl">http://gsm.lge.com/html/gsm/20130914.xml</string>
 </mms_config>
 
