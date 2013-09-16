@@ -1043,7 +1043,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
         request_id = mCurrentRequestId;
     }
 
-    ALOGE("%s: %d, num_output_buffers = %d input_buffer = %p frame_number = %d",
+    ALOGV("%s: %d, num_output_buffers = %d input_buffer = %p frame_number = %d",
                                     __func__, __LINE__,
                                     request->num_output_buffers,
                                     request->input_buffer,
@@ -1148,7 +1148,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
                 mPictureChannel->queueMetadata(reproc_meta.meta_buf,mMetadataChannel,false);
             }
         } else {
-            ALOGE("%s: %d, request with buffer %p, frame_number %d", __func__,
+            ALOGV("%s: %d, request with buffer %p, frame_number %d", __func__,
                 __LINE__, output.buffer, frameNumber);
             if (mIsZslMode && output.stream->stream_type == CAMERA3_STREAM_BIDIRECTIONAL) {
                 for (List<MetadataBufferInfo>::iterator m = mStoredMetadataList.begin();
@@ -1435,7 +1435,7 @@ void QCamera3HardwareInterface::captureResultCb(mm_camera_super_buf_t *metadata_
                 delete[] result_buffers;
             } else {
                 mCallbackOps->process_capture_result(mCallbackOps, &result);
-                ALOGE("%s: meta frame_number = %d, capture_time = %lld",
+                ALOGV("%s: meta frame_number = %d, capture_time = %lld",
                         __func__, result.frame_number, current_capture_time);
                 free_camera_metadata((camera_metadata_t *)result.result);
             }
