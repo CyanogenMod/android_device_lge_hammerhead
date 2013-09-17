@@ -409,9 +409,10 @@ service sdcard /system/bin/sdcard -u 1023 -g 1023 -l /data/media /mnt/shell/emul
          wait /mnt/shell/emulated/0
          mount none /mnt/shell/emulated/0 /storage/emulated/legacy bind
 
-service charger /charger
+service charger /sbin/healthd -c
     class charger
-
+    critical
+    seclabel u:r:healthd:s0
 
 service qcamerasvr /system/bin/mm-qcamera-daemon
     class late_start
