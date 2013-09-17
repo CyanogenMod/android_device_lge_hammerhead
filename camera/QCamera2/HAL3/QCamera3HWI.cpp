@@ -1717,7 +1717,7 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
           case CAM_INTF_META_LENS_FOCUS_RANGE: {
              float  *focusRange =
                 (float *)POINTER_OF(CAM_INTF_META_LENS_FOCUS_RANGE, metadata);
-             camMetadata.update(ANDROID_LENS_FOCUS_RANGE , focusRange, 1);
+             camMetadata.update(ANDROID_LENS_FOCUS_RANGE , focusRange, 2);
           }
           case CAM_INTF_META_LENS_OPT_STAB_MODE: {
              uint8_t  *opticalStab =
