@@ -1435,7 +1435,8 @@ int32_t mm_camera_evt_sub(mm_camera_obj_t * my_obj,
         }
         /* remove evt fd from the polling thraed when unreg the last event */
         rc = mm_camera_poll_thread_del_poll_fd(&my_obj->evt_poll_thread,
-                                               my_obj->my_hdl);
+                                               my_obj->my_hdl,
+                                               mm_camera_sync_call);
     } else {
         rc = ioctl(my_obj->ctrl_fd, VIDIOC_SUBSCRIBE_EVENT, &sub);
         if (rc < 0) {
