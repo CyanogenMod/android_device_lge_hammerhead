@@ -2893,6 +2893,8 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
     //translate from cam_capability_t to camera_metadata_tag_t
     static const uint8_t requestType = ANDROID_REQUEST_TYPE_CAPTURE;
     settings.update(ANDROID_REQUEST_TYPE, &requestType, 1);
+    int32_t defaultRequestID = 0;
+    settings.update(ANDROID_REQUEST_ID, &defaultRequestID, 1);
 
     /*control*/
 
