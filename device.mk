@@ -142,7 +142,11 @@ PRODUCT_PACKAGES += \
     libaudio-resampler
 
 # Audio effects
-PRODUCT_PACKAGES += libqcomvisualizer
+PRODUCT_PACKAGES += \
+    libqcomvisualizer \
+    libqcomvoiceprocessing \
+    libqcomvoiceprocessingdescriptors
+
 PRODUCT_COPY_FILES += \
     device/lge/hammerhead/audio_effects.conf:system/vendor/etc/audio_effects.conf
 
