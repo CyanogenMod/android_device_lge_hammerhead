@@ -141,6 +141,11 @@ PRODUCT_PACKAGES += \
     audio.r_submix.default \
     libaudio-resampler
 
+# Audio effects
+PRODUCT_PACKAGES += libqcomvisualizer
+PRODUCT_COPY_FILES += \
+    device/lge/hammerhead/audio_effects.conf:system/vendor/etc/audio_effects.conf
+
 PRODUCT_PACKAGES += \
     libqomx_core \
     libmmcamera_interface \
