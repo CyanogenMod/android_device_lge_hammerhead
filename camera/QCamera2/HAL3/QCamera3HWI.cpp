@@ -2361,12 +2361,6 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       availableFaceDetectModes,
                       sizeof(availableFaceDetectModes));
 
-    int32_t raw_size[] = {gCamCapability[cameraId]->raw_dim.width,
-                                       gCamCapability[cameraId]->raw_dim.height};
-    staticInfo.update(ANDROID_SCALER_AVAILABLE_RAW_SIZES,
-                      raw_size,
-                      sizeof(raw_size)/sizeof(uint32_t));
-
     int32_t exposureCompensationRange[] = {gCamCapability[cameraId]->exposure_compensation_min,
                                                         gCamCapability[cameraId]->exposure_compensation_max};
     staticInfo.update(ANDROID_CONTROL_AE_COMPENSATION_RANGE,
