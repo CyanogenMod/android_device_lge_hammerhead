@@ -236,6 +236,9 @@ QCamera3HardwareInterface::~QCamera3HardwareInterface()
     for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
         it != mStreamInfo.end(); it++) {
         QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
+        if ((*it)->registered && (*it)->buffer_set.buffers) {
+             delete[] (buffer_handle_t*)(*it)->buffer_set.buffers;
+        }
         if (channel)
             delete channel;
         free (*it);
@@ -1303,6 +1306,7 @@ void QCamera3HardwareInterface::captureResultCb(mm_camera_super_buf_t *metadata_
         if (!frame_number_valid) {
             ALOGV("%s: Not a valid frame number, used as SOF only", __func__);
             mMetadataChannel->bufDone(metadata_buf);
+            free(metadata_buf);
             goto done_metadata;
         }
         ALOGV("%s: valid frame_number = %d, capture_time = %lld", __func__,
