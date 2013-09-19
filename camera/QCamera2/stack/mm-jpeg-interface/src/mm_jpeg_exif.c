@@ -30,11 +30,13 @@
 #include "mm_jpeg_dbg.h"
 #include "mm_jpeg.h"
 #include <errno.h>
+#include <math.h>
 
 
 #define LOWER(a)               ((a) & 0xFFFF)
 #define UPPER(a)               (((a)>>16) & 0xFFFF)
 #define CHANGE_ENDIAN_16(a)  ((0x00FF & ((a)>>8)) | (0xFF00 & ((a)<<8)))
+#define ROUND(a)((a >= 0) ? (long)(a + 0.5) : (long)(a - 0.5))
 
 
 /** addExifEntry:
@@ -192,77 +194,238 @@ int32_t addExifEntry(QOMX_EXIF_INFO *p_exif_info, exif_tag_id_t tagid,
     return rc;
 }
 
-
-int32_t releaseExifEntry(QOMX_EXIF_INFO *p_exif_info)
+/** releaseExifEntry
+ *
+ *  Arguments:
+ *   @p_exif_data : Exif info struct
+ *
+ *  Retrun     : int32_t type of status
+ *               0  -- success
+ *              none-zero failure code
+ *
+ *  Description:
+ *       Function to release an entry from exif data
+ *
+ **/
+int32_t releaseExifEntry(QEXIF_INFO_DATA *p_exif_data)
 {
-  uint32_t i = 0;
-  for (i = 0; i < p_exif_info->numOfEntries; i++) {
-  switch (p_exif_info->exif_data[i].tag_entry.type) {
+ switch (p_exif_data->tag_entry.type) {
   case EXIF_BYTE: {
-    if (p_exif_info->exif_data[i].tag_entry.count > 1 &&
-      p_exif_info->exif_data[i].tag_entry.data._bytes != NULL) {
-      free(p_exif_info->exif_data[i].tag_entry.data._bytes);
-      p_exif_info->exif_data[i].tag_entry.data._bytes = NULL;
+    if (p_exif_data->tag_entry.count > 1 &&
+      p_exif_data->tag_entry.data._bytes != NULL) {
+      free(p_exif_data->tag_entry.data._bytes);
+      p_exif_data->tag_entry.data._bytes = NULL;
     }
   }
   break;
   case EXIF_ASCII: {
-    if (p_exif_info->exif_data[i].tag_entry.data._ascii != NULL) {
-      free(p_exif_info->exif_data[i].tag_entry.data._ascii);
-      p_exif_info->exif_data[i].tag_entry.data._ascii = NULL;
+    if (p_exif_data->tag_entry.data._ascii != NULL) {
+      free(p_exif_data->tag_entry.data._ascii);
+      p_exif_data->tag_entry.data._ascii = NULL;
     }
   }
   break;
   case EXIF_SHORT: {
-    if (p_exif_info->exif_data[i].tag_entry.count > 1 &&
-      p_exif_info->exif_data[i].tag_entry.data._shorts != NULL) {
-      free(p_exif_info->exif_data[i].tag_entry.data._shorts);
-      p_exif_info->exif_data[i].tag_entry.data._shorts = NULL;
+    if (p_exif_data->tag_entry.count > 1 &&
+      p_exif_data->tag_entry.data._shorts != NULL) {
+      free(p_exif_data->tag_entry.data._shorts);
+      p_exif_data->tag_entry.data._shorts = NULL;
     }
   }
   break;
   case EXIF_LONG: {
-    if (p_exif_info->exif_data[i].tag_entry.count > 1 &&
-      p_exif_info->exif_data[i].tag_entry.data._longs != NULL) {
-      free(p_exif_info->exif_data[i].tag_entry.data._longs);
-      p_exif_info->exif_data[i].tag_entry.data._longs = NULL;
+    if (p_exif_data->tag_entry.count > 1 &&
+      p_exif_data->tag_entry.data._longs != NULL) {
+      free(p_exif_data->tag_entry.data._longs);
+      p_exif_data->tag_entry.data._longs = NULL;
     }
   }
   break;
   case EXIF_RATIONAL: {
-    if (p_exif_info->exif_data[i].tag_entry.count > 1 &&
-      p_exif_info->exif_data[i].tag_entry.data._rats != NULL) {
-      free(p_exif_info->exif_data[i].tag_entry.data._rats);
-      p_exif_info->exif_data[i].tag_entry.data._rats = NULL;
+    if (p_exif_data->tag_entry.count > 1 &&
+      p_exif_data->tag_entry.data._rats != NULL) {
+      free(p_exif_data->tag_entry.data._rats);
+      p_exif_data->tag_entry.data._rats = NULL;
     }
   }
   break;
   case EXIF_UNDEFINED: {
-    if (p_exif_info->exif_data[i].tag_entry.data._undefined != NULL) {
-      free(p_exif_info->exif_data[i].tag_entry.data._undefined);
-      p_exif_info->exif_data[i].tag_entry.data._undefined = NULL;
+    if (p_exif_data->tag_entry.data._undefined != NULL) {
+      free(p_exif_data->tag_entry.data._undefined);
+      p_exif_data->tag_entry.data._undefined = NULL;
     }
   }
   break;
   case EXIF_SLONG: {
-    if (p_exif_info->exif_data[i].tag_entry.count > 1 &&
-      p_exif_info->exif_data[i].tag_entry.data._slongs != NULL) {
-      free(p_exif_info->exif_data[i].tag_entry.data._slongs);
-      p_exif_info->exif_data[i].tag_entry.data._slongs = NULL;
+    if (p_exif_data->tag_entry.count > 1 &&
+      p_exif_data->tag_entry.data._slongs != NULL) {
+      free(p_exif_data->tag_entry.data._slongs);
+      p_exif_data->tag_entry.data._slongs = NULL;
     }
   }
   break;
   case EXIF_SRATIONAL: {
-    if (p_exif_info->exif_data[i].tag_entry.count > 1 &&
-      p_exif_info->exif_data[i].tag_entry.data._srats != NULL) {
-      free(p_exif_info->exif_data[i].tag_entry.data._srats);
-      p_exif_info->exif_data[i].tag_entry.data._srats = NULL;
+    if (p_exif_data->tag_entry.count > 1 &&
+      p_exif_data->tag_entry.data._srats != NULL) {
+      free(p_exif_data->tag_entry.data._srats);
+      p_exif_data->tag_entry.data._srats = NULL;
     }
   }
   break;
+  } /*end of switch*/
+  return 0;
+}
+/** process_sensor_data:
+ *
+ *  Arguments:
+ *   @p_sensor_params : ptr to sensor data
+ *
+ *  Return     : int32_t type of status
+ *               NO_ERROR  -- success
+ *              none-zero failure code
+ *
+ *  Description:
+ *       process sensor data
+ *
+ *  Notes: this needs to be filled for the metadata
+ **/
+int process_sensor_data(cam_sensor_params_t *p_sensor_params,
+  QOMX_EXIF_INFO *exif_info)
+{
+  int rc = 0;
+  rat_t val_rat;
+
+  if (NULL == p_sensor_params) {
+    ALOGE("%s %d: Sensor params are null", __func__, __LINE__);
+    return 0;
   }
 
-  } /*end of switch*/
+  ALOGD("%s:%d] From metadata aperture = %f ", __func__, __LINE__,
+    p_sensor_params->aperture_value );
 
-  return 0;
+  val_rat.num = (uint32_t)(p_sensor_params->aperture_value * 100);
+  val_rat.denom = 100;
+  rc = addExifEntry(exif_info, EXIFTAGID_APERTURE, EXIF_RATIONAL, 1, &val_rat);
+  if (rc) {
+    ALOGE("%s:%d]: Error adding Exif Entry", __func__, __LINE__);
+  }
+
+  return rc;
+}
+/** process_3a_data:
+ *
+ *  Arguments:
+ *   @p_ae_params : ptr to aec data
+ *
+ *  Return     : int32_t type of status
+ *               NO_ERROR  -- success
+ *              none-zero failure code
+ *
+ *  Description:
+ *       process 3a data
+ *
+ *  Notes: this needs to be filled for the metadata
+ **/
+int process_3a_data(cam_ae_params_t *p_ae_params, QOMX_EXIF_INFO *exif_info)
+{
+  int rc = 0;
+  srat_t val_srat;
+  rat_t val_rat;
+  double shutter_speed_value;
+
+  if (NULL == p_ae_params) {
+    ALOGE("%s %d: 3A params are null", __func__, __LINE__);
+    return 0;
+  }
+
+  ALOGD("%s:%d] exp_time %f, iso_value %d", __func__, __LINE__,
+    p_ae_params->exp_time, p_ae_params->iso_value);
+
+  /*Exposure time*/
+  if (p_ae_params->exp_time == 0) {
+      val_rat.num = 0;
+      val_rat.denom = 0;
+  } else {
+      val_rat.num = 1;
+      val_rat.denom = ROUND((double)p_ae_params->exp_time * 1000);
+  }
+  ALOGE("%s: numer %d denom %d", __func__, val_rat.num, val_rat.denom );
+
+  rc = addExifEntry(exif_info, EXIFTAGID_EXPOSURE_TIME, EXIF_RATIONAL,
+    (sizeof(val_rat)/(8)), &val_rat);
+  if (rc) {
+    ALOGE("%s:%d]: Error adding Exif Entry Exposure time",
+      __func__, __LINE__);
+  }
+
+  /* Shutter Speed*/
+  if (p_ae_params->exp_time > 0) {
+    shutter_speed_value = log10(1/p_ae_params->exp_time)/log10(2);
+    val_srat.num = shutter_speed_value * 1000;
+    val_srat.denom = 1000;
+  } else {
+    val_srat.num = 0;
+    val_srat.denom = 0;
+  }
+  rc = addExifEntry(exif_info, EXIFTAGID_SHUTTER_SPEED, EXIF_SRATIONAL,
+    (sizeof(val_srat)/(8)), &val_srat);
+  if (rc) {
+    ALOGE("%s:%d]: Error adding Exif Entry", __func__, __LINE__);
+  }
+
+  /*ISO*/
+  short val_short;
+  val_short = p_ae_params->iso_value;
+  rc = addExifEntry(exif_info, EXIFTAGID_ISO_SPEED_RATING, EXIF_SHORT,
+    sizeof(val_short)/2, &val_short);
+  if (rc) {
+    ALOGE("%s:%d]: Error adding Exif Entry", __func__, __LINE__);
+  }
+
+ return rc;
+
+}
+/** processMetaData:
+ *
+ *  Arguments:
+ *   @p_meta : ptr to metadata
+ *   @exif_info: Exif info struct
+ *
+ *  Return     : int32_t type of status
+ *               NO_ERROR  -- success
+ *              none-zero failure code
+ *
+ *  Description:
+ *       process awb debug info
+ *
+ *  Notes: this needs to be filled for the metadata
+ **/
+int process_meta_data(cam_metadata_info_t *p_meta, QOMX_EXIF_INFO *exif_info,
+  mm_jpeg_exif_params_t *p_cam_exif_params)
+{
+  int rc = 0;
+
+  if (!p_meta) {
+    ALOGE("%s %d:Meta data is NULL", __func__, __LINE__);
+    return 0;
+  }
+  cam_ae_params_t *p_ae_params = p_meta->is_ae_params_valid ?
+    &p_meta->ae_params : &p_cam_exif_params->ae_params;
+
+  if (NULL != p_ae_params) {
+    rc = process_3a_data(p_ae_params, exif_info);
+    if (rc) {
+      ALOGE("%s %d: Failed to extract 3a params", __func__, __LINE__);
+    }
+  }
+  cam_sensor_params_t *p_sensor_params = p_meta->is_sensor_params_valid ?
+    &p_meta->sensor_params : &p_cam_exif_params->sensor_params;
+
+  if (NULL != p_sensor_params) {
+    rc = process_sensor_data(p_sensor_params, exif_info);
+    if (rc) {
+      ALOGE("%s %d: Failed to extract sensor params", __func__, __LINE__);
+    }
+  }
+  return rc;
 }
