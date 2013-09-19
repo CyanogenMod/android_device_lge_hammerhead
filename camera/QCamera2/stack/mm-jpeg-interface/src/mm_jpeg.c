@@ -1079,7 +1079,7 @@ OMX_ERRORTYPE mm_jpeg_session_config_common(mm_jpeg_job_session_t *p_session)
     CDBG_ERROR("%s:%d] Error %d", __func__, __LINE__, rc);
     return rc;
   }
-  CDBG("%s:%d] Num of exif entries passed from HAL: %d", __func__, __LINE__,
+  CDBG_ERROR("%s:%d] Num of exif entries passed from HAL: %d", __func__, __LINE__,
       (int)p_jobparams->exif_info.numOfEntries);
   if (p_jobparams->exif_info.numOfEntries > 0) {
      rc = OMX_SetConfig(p_session->omx_handle, exif_idx,
@@ -1089,11 +1089,19 @@ OMX_ERRORTYPE mm_jpeg_session_config_common(mm_jpeg_job_session_t *p_session)
       return rc;
     }
   }
-  /*parse aditional exif data from the metadata*/
-  if (NULL != p_jobparams->p_metadata) {
+  /*parse aditional exif data from the metadata if present*/
+  if ((NULL != p_jobparams->p_metadata_v3) ||
+    (NULL != p_jobparams->p_metadata_v1)) {
     exif_info.numOfEntries = 0;
     exif_info.exif_data = &p_session->exif_info_local[0];
-  process_meta_data(p_jobparams->p_metadata, &exif_info, &p_jobparams->cam_exif_params);
+
+    if (NULL != p_jobparams->p_metadata_v3) {
+      process_meta_data_v3(p_jobparams->p_metadata_v3,
+          &exif_info, &p_jobparams->cam_exif_params);
+    } else {
+      process_meta_data_v1(p_jobparams->p_metadata_v1,
+        &exif_info, &p_jobparams->cam_exif_params);
+    }
     /* After Parse metadata */
     p_session->exif_count_local = exif_info.numOfEntries;
 
@@ -1108,6 +1116,8 @@ OMX_ERRORTYPE mm_jpeg_session_config_common(mm_jpeg_job_session_t *p_session)
       return rc;
       }
     }
+  } else {
+    CDBG_ERROR("%s:%d] Metadata is null", __func__, __LINE__, rc);
   }
 
   return rc;

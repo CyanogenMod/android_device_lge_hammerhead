@@ -1025,6 +1025,8 @@ typedef enum {
     CAM_INTF_META_PRIVATE_DATA,
     /* Indicates streams this request needs buffers on */
     CAM_INTF_META_STREAM_TYPE_MASK,
+    /*AEC info for Exif*/
+    CAM_INTF_META_AEC_INFO,
     CAM_INTF_PARM_MAX
 } cam_intf_parm_type_t;
 

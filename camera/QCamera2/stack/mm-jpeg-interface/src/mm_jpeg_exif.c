@@ -29,6 +29,7 @@
 
 #include "mm_jpeg_dbg.h"
 #include "mm_jpeg.h"
+
 #include <errno.h>
 #include <math.h>
 
@@ -310,6 +311,20 @@ int process_sensor_data(cam_sensor_params_t *p_sensor_params,
     ALOGE("%s:%d]: Error adding Exif Entry", __func__, __LINE__);
   }
 
+  /*Flash*/
+  short val_short;
+  if (p_sensor_params->flash_state == CAM_FLASH_STATE_FIRED) {
+    val_short = 1;
+  } else {
+    val_short = 0;
+  }
+  //val_short =  (p_sensor_params->flash_mode << 3) | val_short;
+  ALOGE("%s: Flash value %d flash mode %d flash state %d", __func__, val_short,
+    p_sensor_params->flash_mode, p_sensor_params->flash_state);
+  rc = addExifEntry(exif_info, EXIFTAGID_FLASH, EXIF_SHORT, 1, &val_short);
+  if (rc) {
+    ALOGE("%s %d]: Error adding flash exif entry", __func__, __LINE__);
+  }
   return rc;
 }
 /** process_3a_data:
@@ -347,9 +362,9 @@ int process_3a_data(cam_ae_params_t *p_ae_params, QOMX_EXIF_INFO *exif_info)
       val_rat.denom = 0;
   } else {
       val_rat.num = 1;
-      val_rat.denom = ROUND((double)p_ae_params->exp_time * 1000);
+      val_rat.denom = ROUND(1.0/p_ae_params->exp_time);
   }
-  ALOGE("%s: numer %d denom %d", __func__, val_rat.num, val_rat.denom );
+  ALOGD("%s: numer %d denom %d", __func__, val_rat.num, val_rat.denom );
 
   rc = addExifEntry(exif_info, EXIFTAGID_EXPOSURE_TIME, EXIF_RATIONAL,
     (sizeof(val_rat)/(8)), &val_rat);
@@ -382,10 +397,12 @@ int process_3a_data(cam_ae_params_t *p_ae_params, QOMX_EXIF_INFO *exif_info)
     ALOGE("%s:%d]: Error adding Exif Entry", __func__, __LINE__);
   }
 
+
  return rc;
 
 }
-/** processMetaData:
+
+/** process_meta_data_v1:
  *
  *  Arguments:
  *   @p_meta : ptr to metadata
@@ -398,9 +415,8 @@ int process_3a_data(cam_ae_params_t *p_ae_params, QOMX_EXIF_INFO *exif_info)
  *  Description:
  *       process awb debug info
  *
- *  Notes: this needs to be filled for the metadata
  **/
-int process_meta_data(cam_metadata_info_t *p_meta, QOMX_EXIF_INFO *exif_info,
+int process_meta_data_v1(cam_metadata_info_t *p_meta, QOMX_EXIF_INFO *exif_info,
   mm_jpeg_exif_params_t *p_cam_exif_params)
 {
   int rc = 0;
@@ -410,7 +426,7 @@ int process_meta_data(cam_metadata_info_t *p_meta, QOMX_EXIF_INFO *exif_info,
     return 0;
   }
   cam_ae_params_t *p_ae_params = p_meta->is_ae_params_valid ?
-    &p_meta->ae_params : &p_cam_exif_params->ae_params;
+    &p_meta->ae_params : NULL;
 
   if (NULL != p_ae_params) {
     rc = process_3a_data(p_ae_params, exif_info);
@@ -419,7 +435,7 @@ int process_meta_data(cam_metadata_info_t *p_meta, QOMX_EXIF_INFO *exif_info,
     }
   }
   cam_sensor_params_t *p_sensor_params = p_meta->is_sensor_params_valid ?
-    &p_meta->sensor_params : &p_cam_exif_params->sensor_params;
+    &p_meta->sensor_params : NULL;
 
   if (NULL != p_sensor_params) {
     rc = process_sensor_data(p_sensor_params, exif_info);
@@ -427,5 +443,87 @@ int process_meta_data(cam_metadata_info_t *p_meta, QOMX_EXIF_INFO *exif_info,
       ALOGE("%s %d: Failed to extract sensor params", __func__, __LINE__);
     }
   }
+  return rc;
+}
+
+/** process_meta_data_v3:
+ *
+ *  Arguments:
+ *   @p_meta : ptr to metadata
+ *   @exif_info: Exif info struct
+ *
+ *  Return     : int32_t type of status
+ *               NO_ERROR  -- success
+ *              none-zero failure code
+ *
+ *  Description:
+ *       Extract exif data from the metadata
+ **/
+int process_meta_data_v3(metadata_buffer_t *p_meta, QOMX_EXIF_INFO *exif_info,
+  mm_jpeg_exif_params_t *p_cam_exif_params)
+{
+  int rc = 0;
+  cam_sensor_params_t p_sensor_params;
+  cam_ae_params_t p_ae_params;
+
+  if (!p_meta) {
+    ALOGE("%s %d:Meta data is NULL", __func__, __LINE__);
+    return 0;
+  }
+  int32_t *iso =
+    (int32_t *)POINTER_OF(CAM_INTF_META_SENSOR_SENSITIVITY, p_meta);
+
+  int64_t *sensor_exposure_time =
+    (int64_t *)POINTER_OF(CAM_INTF_META_SENSOR_EXPOSURE_TIME, p_meta);
+
+  memset(&p_ae_params,  0,  sizeof(cam_ae_params_t));
+  if (NULL != iso) {
+    p_ae_params.iso_value= *iso;
+  } else {
+    ALOGE("%s: Cannot extract Iso value", __func__);
+  }
+
+  if (NULL != sensor_exposure_time) {
+    p_ae_params.exp_time = (double)(*sensor_exposure_time / 1000000000.0);
+  } else {
+    ALOGE("%s: Cannot extract Exp time value", __func__);
+  }
+
+  rc = process_3a_data(&p_ae_params, exif_info);
+  if (rc) {
+    ALOGE("%s %d: Failed to add 3a exif params", __func__, __LINE__);
+  }
+
+  float *aperture = (float *)POINTER_OF(CAM_INTF_META_LENS_APERTURE, p_meta);
+
+  uint8_t *flash_mode = (uint8_t *) POINTER_OF(CAM_INTF_META_FLASH_MODE, p_meta);
+  uint8_t *flash_state =
+    (uint8_t *) POINTER_OF(CAM_INTF_META_FLASH_STATE, p_meta);
+
+  memset(&p_sensor_params, 0, sizeof(cam_sensor_params_t));
+
+  if (NULL != aperture) {
+     p_sensor_params.aperture_value = *aperture;
+  } else {
+    ALOGE("%s: Cannot extract Aperture value", __func__);
+  }
+
+  if (NULL != flash_mode) {
+     p_sensor_params.flash_mode = *flash_mode;
+  } else {
+    ALOGE("%s: Cannot extract flash mode value", __func__);
+  }
+
+  if (NULL != flash_state) {
+    p_sensor_params.flash_state = *flash_state;
+  } else {
+    ALOGE("%s: Cannot extract flash state value", __func__);
+  }
+
+  rc = process_sensor_data(&p_sensor_params, exif_info);
+  if (rc) {
+      ALOGE("%s %d: Failed to extract sensor params", __func__, __LINE__);
+  }
+
   return rc;
 }

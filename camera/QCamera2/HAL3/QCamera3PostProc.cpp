@@ -764,7 +764,7 @@ mm_jpeg_format_t QCamera3PostProcessor::getJpegImgTypeFromImgFmt(cam_format_t im
  *              none-zero failure code
  *==========================================================================*/
 int32_t QCamera3PostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
-                                         uint8_t &needNewSess)
+                          uint8_t &needNewSess, mm_camera_super_buf_t *p_metaFrame)
 {
     ALOGV("%s : E", __func__);
     int32_t ret = NO_ERROR;
@@ -979,9 +979,14 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
     }
     if (meta_frame != NULL) {
         // fill in meta data frame ptr
-        jpg_job.encode_job.p_metadata = (cam_metadata_info_t *)meta_frame->buffer;
+        jpg_job.encode_job.p_metadata_v1 = (cam_metadata_info_t *)meta_frame->buffer;
+    } else if (p_metaFrame != NULL) {
+       //Fill in the metadata passed as parameter
+       jpg_job.encode_job.p_metadata_v3 = (metadata_buffer_t *)p_metaFrame->bufs[0]->buffer;;
+    } else {
+       ALOGE("%s: Metadata is null", __func__);
     }
-
+    //Not required here
     //jpg_job.encode_job.cam_exif_params = m_parent->mExifParams;
     //Start jpeg encoding
     ret = mJpegHandle.start_job(&jpg_job, &jobId);
@@ -1012,6 +1017,8 @@ void *QCamera3PostProcessor::dataProcessRoutine(void *data)
     int ret;
     uint8_t is_active = FALSE;
     uint8_t needNewSess = TRUE;
+    mm_camera_super_buf_t *pp_frame = NULL;
+    mm_camera_super_buf_t *meta_frame = NULL;
     ALOGV("%s: E", __func__);
     QCamera3PostProcessor *pme = (QCamera3PostProcessor *)data;
     QCameraCmdThread *cmdThread = &pme->m_dataProcTh;
@@ -1100,7 +1107,7 @@ void *QCamera3PostProcessor::dataProcessRoutine(void *data)
 
                             // add into ongoing jpeg job Q
                             pme->m_ongoingJpegQ.enqueue((void *)jpeg_job);
-                            ret = pme->encodeData(jpeg_job, needNewSess);
+                            ret = pme->encodeData(jpeg_job, needNewSess, meta_frame);
                             if (NO_ERROR != ret) {
                                 // dequeue the last one
                                 pme->m_ongoingJpegQ.dequeue(false);
@@ -1111,10 +1118,9 @@ void *QCamera3PostProcessor::dataProcessRoutine(void *data)
                         }
                     }
                     ALOGE("%s: dequeuing pp frame", __func__);
-                    mm_camera_super_buf_t *pp_frame =
+                    pp_frame =
                         (mm_camera_super_buf_t *)pme->m_inputPPQ.dequeue();
                     if (NULL != pp_frame) {
-                       mm_camera_super_buf_t *meta_frame = NULL;
                        meta_frame =
                                (mm_camera_super_buf_t *)pme->m_inputMetaQ.dequeue();
                        if (meta_frame == NULL) {
