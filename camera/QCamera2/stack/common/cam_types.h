@@ -764,6 +764,19 @@ typedef struct {
     uint32_t max_frame_idx;
 } cam_frame_idx_range_t;
 
+
+typedef  struct {
+   float aperture_value;
+   /* Store current LED flash state */
+   cam_flash_mode_t         flash_mode;
+   cam_flash_state_t        flash_state;
+} cam_sensor_params_t;
+
+typedef struct {
+    float exp_time;
+    int iso_value;
+} cam_ae_params_t;
+
 typedef struct {
     cam_dimension_t stream_sizes[MAX_NUM_STREAMS];
     uint32_t num_streams;
@@ -795,15 +808,13 @@ typedef  struct {
 
     char private_metadata[MAX_METADATA_PAYLOAD_SIZE];
 
+    /* AE parameters */
+    uint8_t is_ae_params_valid;
+    cam_ae_params_t ae_params;
+    /* sensor parameters */
+    uint8_t is_sensor_params_valid;
+    cam_sensor_params_t sensor_params;
 } cam_metadata_info_t;
-
-typedef  struct {
-    float aperture_value;
-   /* Store current LED flash state */
-   cam_flash_mode_t         flash_mode;
-   cam_flash_state_t        flash_state;
-} cam_sensor_params_t;
-
 
 typedef enum {
     CAM_INTF_PARM_HAL_VERSION,
