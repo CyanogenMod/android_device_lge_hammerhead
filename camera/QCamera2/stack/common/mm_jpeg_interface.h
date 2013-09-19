@@ -150,8 +150,11 @@ typedef struct {
   /*session id*/
   uint32_t session_id;
 
-  /*Metadata stream*/
-  cam_metadata_info_t *p_metadata;
+  /*Metadata from HAl version 1 */
+  cam_metadata_info_t *p_metadata_v1;
+
+  /*Metadata stream from HAL version 3*/
+  metadata_buffer_t *p_metadata_v3;
 
   /* buf to exif entries, caller needs to
    * take care of the memory manage with insider ptr */

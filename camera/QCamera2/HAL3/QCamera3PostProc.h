@@ -119,7 +119,7 @@ private:
                                   QCamera3Stream *main_stream,
                                   QCamera3Stream *thumb_stream);
     int32_t encodeData(qcamera_jpeg_data_t *jpeg_job_data,
-                       uint8_t &needNewSess);
+                       uint8_t &needNewSess, mm_camera_super_buf_t *p_metaFrame);
     void releaseSuperBuf(mm_camera_super_buf_t *super_buf);
     static void releaseNotifyData(void *user_data, void *cookie);
     int32_t processRawImageImpl(mm_camera_super_buf_t *recvd_frame);

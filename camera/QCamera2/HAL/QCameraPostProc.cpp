@@ -1105,7 +1105,7 @@ int32_t QCameraPostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
     }
     if (meta_frame != NULL) {
         // fill in meta data frame ptr
-        jpg_job.encode_job.p_metadata = (cam_metadata_info_t *)meta_frame->buffer;
+        jpg_job.encode_job.p_metadata_v1 = (cam_metadata_info_t *)meta_frame->buffer;
     }
 
     ALOGD("[KPI Perf] %s : call jpeg start_job", __func__);
