@@ -297,6 +297,12 @@ PRODUCT_PROPERTY_OVERRIDES += \
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
     persist.sys.usb.config=mtp
 
+# Request modem to send PLMN name always irrespective
+# of display condition in EFSPN.
+# RIL uses this property.
+PRODUCT_PROPERTY_OVERRIDES += \
+    persist.radio.always_send_plmn=true
+
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
     rild.libpath=/system/lib/libril-qc-qmi-1.so
 
