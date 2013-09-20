@@ -434,6 +434,7 @@ void *QCamera3Stream::dataProcRoutine(void *data)
     int ret;
     QCamera3Stream *pme = (QCamera3Stream *)data;
     QCameraCmdThread *cmdThread = &pme->mProcTh;
+    cmdThread->setName("cam_stream_proc");
 
     ALOGV("%s: E", __func__);
     do {
