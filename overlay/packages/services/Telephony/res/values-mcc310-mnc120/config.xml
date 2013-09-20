@@ -23,6 +23,10 @@
     <bool name="send_mic_mute_to_AudioManager">true</bool>
     <!-- Flag indicating if the tty is enabled -->
     <bool name="tty_enabled">true</bool>
+    <!-- Configure certain GsmUmtsOptions to be available or not. The
+         default values are in Phone/res/values/config.xml and maybe overridden
+         in operator specific resource directories or device specific overlays. -->
+    <bool name="config_apn_expand" translatable="false">false</bool>
     <!-- CDMA activation goes through HFA [DO NOT TRANSLATE] -->
     <bool name="config_use_hfa_for_provisioning" translatable="false">true</bool>
 </resources>
