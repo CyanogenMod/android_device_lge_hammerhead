@@ -818,13 +818,23 @@ typedef  struct {
 
 typedef enum {
     CAM_INTF_PARM_HAL_VERSION,
+
+    /* Overall mode of 3A control routines. We need to have this parameter
+     * because not all android.control.* have an OFF option, for example,
+     * AE_FPS_Range, aePrecaptureTrigger */
+    CAM_INTF_META_MODE,
+    /* Whether AE is currently updating the sensor exposure and sensitivity
+     * fields */
+    CAM_INTF_META_AEC_MODE,
+    CAM_INTF_PARM_WHITE_BALANCE,
+    CAM_INTF_PARM_FOCUS_MODE,
+
     /* common between HAL1 and HAL3 */
     CAM_INTF_PARM_ANTIBANDING,
     CAM_INTF_PARM_EXPOSURE_COMPENSATION,
     CAM_INTF_PARM_AEC_LOCK,
     CAM_INTF_PARM_FPS_RANGE,
     CAM_INTF_PARM_AWB_LOCK,
-    CAM_INTF_PARM_WHITE_BALANCE,
     CAM_INTF_PARM_EFFECT,
     CAM_INTF_PARM_BESTSHOT_MODE,
     CAM_INTF_PARM_DIS_ENABLE,
@@ -848,7 +858,6 @@ typedef enum {
     CAM_INTF_PARM_FOCUS_ALGO_TYPE,  /* focus algorithm */
     CAM_INTF_PARM_AEC_ROI,
     CAM_INTF_PARM_AF_ROI,
-    CAM_INTF_PARM_FOCUS_MODE,
     CAM_INTF_PARM_SCE_FACTOR,
     CAM_INTF_PARM_FD,
     CAM_INTF_PARM_MCE, /* 30 */
@@ -896,9 +905,6 @@ typedef enum {
     CAM_INTF_META_FRAME_NUMBER,
     /*Number of streams and size of streams in current configuration*/
     CAM_INTF_META_STREAM_INFO,
-    /* Whether AE is currently updating the sensor exposure and sensitivity
-     * fields */
-    CAM_INTF_META_AEC_MODE,
     /* List of areas to use for metering */
     CAM_INTF_META_AEC_ROI,
     /* Whether the HAL must trigger precapture metering.*/
@@ -924,10 +930,6 @@ typedef enum {
     /* Information to 3A routines about the purpose of this capture, to help
      * decide optimal 3A strategy */
     CAM_INTF_META_CAPTURE_INTENT,
-    /* Overall mode of 3A control routines. We need to have this parameter
-     * because not all android.control.* have an OFF option, for example,
-     * AE_FPS_Range, aePrecaptureTrigger */
-    CAM_INTF_META_MODE,
     /* DEMOSAIC */
     /* Controls the quality of the demosaicing processing */
     CAM_INTF_META_DEMOSAIC,
@@ -1013,10 +1015,10 @@ typedef enum {
     CAM_INTF_META_STATS_SHARPNESS_MAP,
 
     /* TONEMAP */
-    /* Table mapping RGB input values to output values */
-    CAM_INTF_META_TONEMAP_CURVES,
     /* Tone map mode */
     CAM_INTF_META_TONEMAP_MODE,
+    /* Table mapping RGB input values to output values */
+    CAM_INTF_META_TONEMAP_CURVES,
 
     CAM_INTF_META_FLASH_MODE,
     /* 2D array of gain factors for each color channel that was used to
