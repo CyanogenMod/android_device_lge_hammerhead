@@ -663,6 +663,22 @@ int QCamera3HardwareInterface::configureStreams(
             // Do nothing for now
         }
     }
+
+    int32_t hal_version = CAM_HAL_V3;
+    stream_config_info.num_streams = streamList->num_streams;
+
+    // settings/parameters don't carry over for new configureStreams
+    memset(mParameters, 0, sizeof(parm_buffer_t));
+
+    mParameters->first_flagged_entry = CAM_INTF_PARM_MAX;
+    AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_HAL_VERSION,
+                sizeof(hal_version), &hal_version);
+
+    AddSetParmEntryToBatch(mParameters, CAM_INTF_META_STREAM_INFO,
+                sizeof(stream_config_info), &stream_config_info);
+
+    mCameraHandle->ops->set_parms(mCameraHandle->camera_handle, mParameters);
+
     /*For the streams to be reconfigured we need to register the buffers
       since the framework wont*/
     for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
@@ -703,20 +719,6 @@ int QCamera3HardwareInterface::configureStreams(
             m = mStoredMetadataList.erase(m);
         }
     }
-    int32_t hal_version = CAM_HAL_V3;
-    stream_config_info.num_streams = streamList->num_streams;
-
-    //settings/parameters don't carry over for new configureStreams
-    memset(mParameters, 0, sizeof(parm_buffer_t));
-
-    mParameters->first_flagged_entry = CAM_INTF_PARM_MAX;
-    AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_HAL_VERSION,
-                sizeof(hal_version), &hal_version);
-
-    AddSetParmEntryToBatch(mParameters, CAM_INTF_META_STREAM_INFO,
-                sizeof(stream_config_info), &stream_config_info);
-
-    mCameraHandle->ops->set_parms(mCameraHandle->camera_handle, mParameters);
 
     mFirstRequest = true;
 
