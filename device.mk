@@ -296,12 +296,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
     persist.sys.usb.config=mtp
 
-# Prefer SPN over PLMN name in nw scan response.
-# This avoids different names to be displayed to the user for same PLMN.
-# RIL uses this property.
-PRODUCT_PROPERTY_OVERRIDES += \
-    persist.radio.prefer_spn=2
-
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
     rild.libpath=/system/lib/libril-qc-qmi-1.so
 
