@@ -1688,6 +1688,12 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
              camMetadata.update(ANDROID_FLASH_STATE, flashState, 1);
              break;
           }
+          case CAM_INTF_META_FLASH_MODE:{
+             uint8_t *flashMode = (uint8_t*)
+                 POINTER_OF(CAM_INTF_META_FLASH_MODE, metadata);
+             camMetadata.update(ANDROID_FLASH_MODE, flashMode, 1);
+             break;
+          }
           case CAM_INTF_META_HOTPIXEL_MODE: {
               uint8_t  *hotPixelMode =
                  (uint8_t *)POINTER_OF(CAM_INTF_META_HOTPIXEL_MODE, metadata);
