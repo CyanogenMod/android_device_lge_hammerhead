@@ -249,7 +249,7 @@ int32_t QCamera3PostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& en
     cam_dimension_t thumbnailSize;
     memset(&thumbnailSize, 0, sizeof(cam_dimension_t));
     m_parent->getThumbnailSize(thumbnailSize);
-    if (thumbnailSize.width == 0 && thumbnailSize.height == 0) {
+    if (thumbnailSize.width == 0 || thumbnailSize.height == 0) {
         // (0,0) means no thumbnail
         m_bThumbnailNeeded = FALSE;
     }
@@ -264,17 +264,6 @@ int32_t QCamera3PostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& en
     encode_parm.quality = m_parent->getJpegQuality();
     if (encode_parm.quality <= 0) {
         encode_parm.quality = 85;
-    }
-
-    // get exif data
-    if (m_pJpegExifObj != NULL) {
-        delete m_pJpegExifObj;
-        m_pJpegExifObj = NULL;
-    }
-    m_pJpegExifObj = m_parent->getExifData();
-    if (m_pJpegExifObj != NULL) {
-        encode_parm.exif_info.exif_data = m_pJpegExifObj->getEntries();
-        encode_parm.exif_info.numOfEntries = m_pJpegExifObj->getNumOfEntries();
     }
 
     cam_frame_len_offset_t main_offset;
@@ -343,10 +332,7 @@ int32_t QCamera3PostProcessor::getJpegEncodingConfig(mm_jpeg_encode_params_t& en
     return NO_ERROR;
 
 on_error:
-    if (m_pJpegExifObj != NULL) {
-        delete m_pJpegExifObj;
-        m_pJpegExifObj = NULL;
-    }
+
     ALOGV("%s : X with error %d", __func__, ret);
     return ret;
 }
@@ -928,6 +914,17 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
     jpg_job.encode_job.main_dim.dst_dim = dst_dim;
     jpg_job.encode_job.main_dim.crop = crop;
 
+    // get exif data
+    if (m_pJpegExifObj != NULL) {
+        delete m_pJpegExifObj;
+        m_pJpegExifObj = NULL;
+    }
+    m_pJpegExifObj = m_parent->getExifData();
+    if (m_pJpegExifObj != NULL) {
+        jpg_job.encode_job.exif_info.exif_data = m_pJpegExifObj->getEntries();
+        jpg_job.encode_job.exif_info.numOfEntries =
+          m_pJpegExifObj->getNumOfEntries();
+    }
     // thumbnail dim
     ALOGD("%s: Thumbnail needed:%d",__func__, m_bThumbnailNeeded);
     if (m_bThumbnailNeeded == TRUE) {
@@ -985,6 +982,7 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
         jpg_job.encode_job.p_metadata = (cam_metadata_info_t *)meta_frame->buffer;
     }
 
+    //jpg_job.encode_job.cam_exif_params = m_parent->mExifParams;
     //Start jpeg encoding
     ret = mJpegHandle.start_job(&jpg_job, &jobId);
     if (ret == NO_ERROR) {
