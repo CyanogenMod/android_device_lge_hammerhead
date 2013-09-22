@@ -224,6 +224,8 @@ typedef struct mm_stream {
     uint8_t is_bundled; /* flag if stream is bundled */
 
     mm_camera_stream_mem_vtbl_t mem_vtbl; /* mem ops tbl */
+
+    int8_t queued_buffer_count;
 } mm_stream_t;
 
 /* mm_channel */
@@ -387,6 +389,11 @@ typedef struct {
     char video_dev_name[MM_CAMERA_MAX_NUM_SENSORS][MM_CAMERA_DEV_NAME_LEN];
     mm_camera_obj_t *cam_obj[MM_CAMERA_MAX_NUM_SENSORS];
 } mm_camera_ctrl_t;
+
+typedef enum {
+    mm_camera_async_call,
+    mm_camera_sync_call
+} mm_camera_call_type_t;
 
 /**********************************************************************************
 * external function declare
@@ -557,7 +564,8 @@ extern int32_t mm_camera_poll_thread_add_poll_fd(
                                 void *userdata);
 extern int32_t mm_camera_poll_thread_del_poll_fd(
                                 mm_camera_poll_thread_t * poll_cb,
-                                uint32_t handler);
+                                uint32_t handler,
+                                mm_camera_call_type_t);
 extern int32_t mm_camera_cmd_thread_launch(
                                 mm_camera_cmd_thread_t * cmd_thread,
                                 mm_camera_cmd_cb_t cb,
