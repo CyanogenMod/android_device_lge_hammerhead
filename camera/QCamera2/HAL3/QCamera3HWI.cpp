@@ -1997,8 +1997,8 @@ bool QCamera3HardwareInterface::resetIfNeededROI(cam_area_t* roi,
 {
     int32_t roi_x_max = roi->rect.width + roi->rect.left;
     int32_t roi_y_max = roi->rect.height + roi->rect.top;
-    int32_t crop_x_max = scalerCropRegion->width + scalerCropRegion->top;
-    int32_t crop_y_max = scalerCropRegion->height + scalerCropRegion->left;
+    int32_t crop_x_max = scalerCropRegion->width + scalerCropRegion->left;
+    int32_t crop_y_max = scalerCropRegion->height + scalerCropRegion->top;
     if ((roi_x_max < scalerCropRegion->left) ||
         (roi_y_max < scalerCropRegion->top)  ||
         (roi->rect.left > crop_x_max) ||
