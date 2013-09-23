@@ -1093,6 +1093,8 @@ int QCamera3HardwareInterface::processCaptureRequest(
     pendingRequest.num_buffers = request->num_output_buffers;
     pendingRequest.request_id = request_id;
     pendingRequest.blob_request = blob_request;
+    if (blob_request)
+        pendingRequest.input_jpeg_settings = *mJpegSettings;
     pendingRequest.input_buffer_present = (request->input_buffer != NULL)? 1 : 0;
 
     for (size_t i = 0; i < request->num_output_buffers; i++) {
@@ -1351,7 +1353,8 @@ void QCamera3HardwareInterface::captureResultCb(mm_camera_super_buf_t *metadata_
                 result.result = dummyMetadata.release();
             } else {
                 result.result = translateCbMetadataToResultMetadata(metadata,
-                        current_capture_time, i->request_id);
+                        current_capture_time, i->request_id, i->blob_request,
+                        &(i->input_jpeg_settings));
                 if (mIsZslMode) {
                    int found_metadata = 0;
                    //for ZSL case store the metadata buffer and corresp. ZSL handle ptr
@@ -1543,7 +1546,8 @@ done_metadata:
 camera_metadata_t*
 QCamera3HardwareInterface::translateCbMetadataToResultMetadata
                                 (metadata_buffer_t *metadata, nsecs_t timestamp,
-                                 int32_t request_id)
+                                 int32_t request_id, int32_t BlobRequest,
+                                 jpeg_settings_t* inputjpegsettings)
 {
     CameraMetadata camMetadata;
     camera_metadata_t* resultMetadata;
@@ -1551,6 +1555,38 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
     camMetadata.update(ANDROID_SENSOR_TIMESTAMP, &timestamp, 1);
     camMetadata.update(ANDROID_REQUEST_ID, &request_id, 1);
 
+    // Update the JPEG related info
+    if (BlobRequest) {
+        camMetadata.update(ANDROID_JPEG_ORIENTATION, &(inputjpegsettings->jpeg_orientation), 1);
+        camMetadata.update(ANDROID_JPEG_QUALITY, &(inputjpegsettings->jpeg_quality), 1);
+
+        int32_t thumbnailSizeTable[2];
+        thumbnailSizeTable[0] = inputjpegsettings->thumbnail_size.width;
+        thumbnailSizeTable[1] = inputjpegsettings->thumbnail_size.height;
+        camMetadata.update(ANDROID_JPEG_THUMBNAIL_SIZE, thumbnailSizeTable, 2);
+        ALOGV("%s: Orien=%d, quality=%d wid=%d, height=%d", __func__, inputjpegsettings->jpeg_orientation,
+               inputjpegsettings->jpeg_quality,thumbnailSizeTable[0], thumbnailSizeTable[1]);
+
+        if (inputjpegsettings->gps_coordinates[0]) {
+            double gpsCoordinates[3];
+            gpsCoordinates[0]=*(inputjpegsettings->gps_coordinates[0]);
+            gpsCoordinates[1]=*(inputjpegsettings->gps_coordinates[1]);
+            gpsCoordinates[2]=*(inputjpegsettings->gps_coordinates[2]);
+            camMetadata.update(ANDROID_JPEG_GPS_COORDINATES, gpsCoordinates, 3);
+            ALOGV("%s: gpsCoordinates[0]=%f, 1=%f 2=%f", __func__, gpsCoordinates[0],
+                 gpsCoordinates[1],gpsCoordinates[2]);
+        }
+
+        if (inputjpegsettings->gps_timestamp) {
+            camMetadata.update(ANDROID_JPEG_GPS_TIMESTAMP, inputjpegsettings->gps_timestamp, 1);
+            ALOGV("%s: gps_timestamp=%lld", __func__, *(inputjpegsettings->gps_timestamp));
+        }
+
+        String8 str(inputjpegsettings->gps_processing_method);
+        if (strlen(mJpegSettings->gps_processing_method) > 0) {
+            camMetadata.update(ANDROID_JPEG_GPS_PROCESSING_METHOD, str);
+        }
+    }
     uint8_t curr_entry = GET_FIRST_PARAM_ID(metadata);
     uint8_t next_entry;
     while (curr_entry != CAM_INTF_PARM_MAX) {
