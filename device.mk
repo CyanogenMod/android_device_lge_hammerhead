@@ -235,13 +235,14 @@ PRODUCT_PROPERTY_OVERRIDES += \
 
 # Set sensor streaming rate
 PRODUCT_PROPERTY_OVERRIDES += \
+    ro.qc.sensors.max_geomag_rotvec=60 \
     ro.qc.sensors.max_gyro_rate=200 \
-    ro.qc.sensors.max_accel_rate=120 \
-    ro.qc.sensors.max_grav=120 \
-    ro.qc.sensors.max_rotvec=120 \
-    ro.qc.sensors.max_ortn=120 \
-    ro.qc.sensors.max_linacc=120 \
-    ro.qc.sensors.max_gamerv_rate=120
+    ro.qc.sensors.max_accel_rate=200 \
+    ro.qc.sensors.max_grav=200 \
+    ro.qc.sensors.max_rotvec=200 \
+    ro.qc.sensors.max_ortn=200 \
+    ro.qc.sensors.max_linacc=200 \
+    ro.qc.sensors.max_gamerv_rate=200
 
 # Enable optional sensor types
 PRODUCT_PROPERTY_OVERRIDES += \
