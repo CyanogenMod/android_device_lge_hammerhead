@@ -227,15 +227,20 @@ QCamera3HardwareInterface::~QCamera3HardwareInterface()
             m = mStoredMetadataList.erase(m);
         }
     }
+
+    // NOTE: 'camera3_stream_t *' objects are already freed at
+    //        this stage by the framework
     for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
         it != mStreamInfo.end(); it++) {
-        QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
-        if (channel)
-           channel->stop();
+        QCamera3Channel *channel = (*it)->channel;
+        if (channel) {
+            channel->stop();
+        }
     }
+
     for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
         it != mStreamInfo.end(); it++) {
-        QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
+        QCamera3Channel *channel = (*it)->channel;
         if ((*it)->registered && (*it)->buffer_set.buffers) {
              delete[] (buffer_handle_t*)(*it)->buffer_set.buffers;
         }
@@ -488,6 +493,7 @@ int QCamera3HardwareInterface::configureStreams(
                   we need to reconfigure*/
                 delete channel;
                 (*it)->stream->priv = NULL;
+                (*it)->channel = NULL;
             }
         }
         if (!stream_exists) {
@@ -497,6 +503,7 @@ int QCamera3HardwareInterface::configureStreams(
             stream_info->stream = newStream;
             stream_info->status = VALID;
             stream_info->registered = 0;
+            stream_info->channel = NULL;
             mStreamInfo.push_back(stream_info);
         }
         if (newStream->stream_type == CAMERA3_STREAM_INPUT
@@ -655,6 +662,14 @@ int QCamera3HardwareInterface::configureStreams(
                 //TODO: Add support for app consumed format?
                 default:
                     ALOGE("%s: not a supported format 0x%x", __func__, newStream->format);
+                    break;
+                }
+            }
+
+            for (List<stream_info_t*>::iterator it=mStreamInfo.begin();
+                    it != mStreamInfo.end(); it++) {
+                if ((*it)->stream == newStream) {
+                    (*it)->channel = (QCamera3Channel*) newStream->priv;
                     break;
                 }
             }
@@ -1093,6 +1108,8 @@ int QCamera3HardwareInterface::processCaptureRequest(
     pendingRequest.num_buffers = request->num_output_buffers;
     pendingRequest.request_id = request_id;
     pendingRequest.blob_request = blob_request;
+    if (blob_request)
+        pendingRequest.input_jpeg_settings = *mJpegSettings;
     pendingRequest.input_buffer_present = (request->input_buffer != NULL)? 1 : 0;
 
     for (size_t i = 0; i < request->num_output_buffers; i++) {
@@ -1207,6 +1224,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
     }
 
     pthread_mutex_unlock(&mMutex);
+
     return rc;
 }
 
@@ -1351,7 +1369,8 @@ void QCamera3HardwareInterface::captureResultCb(mm_camera_super_buf_t *metadata_
                 result.result = dummyMetadata.release();
             } else {
                 result.result = translateCbMetadataToResultMetadata(metadata,
-                        current_capture_time, i->request_id);
+                        current_capture_time, i->request_id, i->blob_request,
+                        &(i->input_jpeg_settings));
                 if (mIsZslMode) {
                    int found_metadata = 0;
                    //for ZSL case store the metadata buffer and corresp. ZSL handle ptr
@@ -1543,7 +1562,8 @@ done_metadata:
 camera_metadata_t*
 QCamera3HardwareInterface::translateCbMetadataToResultMetadata
                                 (metadata_buffer_t *metadata, nsecs_t timestamp,
-                                 int32_t request_id)
+                                 int32_t request_id, int32_t BlobRequest,
+                                 jpeg_settings_t* inputjpegsettings)
 {
     CameraMetadata camMetadata;
     camera_metadata_t* resultMetadata;
@@ -1551,6 +1571,38 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
     camMetadata.update(ANDROID_SENSOR_TIMESTAMP, &timestamp, 1);
     camMetadata.update(ANDROID_REQUEST_ID, &request_id, 1);
 
+    // Update the JPEG related info
+    if (BlobRequest) {
+        camMetadata.update(ANDROID_JPEG_ORIENTATION, &(inputjpegsettings->jpeg_orientation), 1);
+        camMetadata.update(ANDROID_JPEG_QUALITY, &(inputjpegsettings->jpeg_quality), 1);
+
+        int32_t thumbnailSizeTable[2];
+        thumbnailSizeTable[0] = inputjpegsettings->thumbnail_size.width;
+        thumbnailSizeTable[1] = inputjpegsettings->thumbnail_size.height;
+        camMetadata.update(ANDROID_JPEG_THUMBNAIL_SIZE, thumbnailSizeTable, 2);
+        ALOGV("%s: Orien=%d, quality=%d wid=%d, height=%d", __func__, inputjpegsettings->jpeg_orientation,
+               inputjpegsettings->jpeg_quality,thumbnailSizeTable[0], thumbnailSizeTable[1]);
+
+        if (inputjpegsettings->gps_coordinates[0]) {
+            double gpsCoordinates[3];
+            gpsCoordinates[0]=*(inputjpegsettings->gps_coordinates[0]);
+            gpsCoordinates[1]=*(inputjpegsettings->gps_coordinates[1]);
+            gpsCoordinates[2]=*(inputjpegsettings->gps_coordinates[2]);
+            camMetadata.update(ANDROID_JPEG_GPS_COORDINATES, gpsCoordinates, 3);
+            ALOGV("%s: gpsCoordinates[0]=%f, 1=%f 2=%f", __func__, gpsCoordinates[0],
+                 gpsCoordinates[1],gpsCoordinates[2]);
+        }
+
+        if (inputjpegsettings->gps_timestamp) {
+            camMetadata.update(ANDROID_JPEG_GPS_TIMESTAMP, inputjpegsettings->gps_timestamp, 1);
+            ALOGV("%s: gps_timestamp=%lld", __func__, *(inputjpegsettings->gps_timestamp));
+        }
+
+        String8 str(inputjpegsettings->gps_processing_method);
+        if (strlen(mJpegSettings->gps_processing_method) > 0) {
+            camMetadata.update(ANDROID_JPEG_GPS_PROCESSING_METHOD, str);
+        }
+    }
     uint8_t curr_entry = GET_FIRST_PARAM_ID(metadata);
     uint8_t next_entry;
     while (curr_entry != CAM_INTF_PARM_MAX) {
@@ -1961,8 +2013,8 @@ bool QCamera3HardwareInterface::resetIfNeededROI(cam_area_t* roi,
 {
     int32_t roi_x_max = roi->rect.width + roi->rect.left;
     int32_t roi_y_max = roi->rect.height + roi->rect.top;
-    int32_t crop_x_max = scalerCropRegion->width + scalerCropRegion->top;
-    int32_t crop_y_max = scalerCropRegion->height + scalerCropRegion->left;
+    int32_t crop_x_max = scalerCropRegion->width + scalerCropRegion->left;
+    int32_t crop_y_max = scalerCropRegion->height + scalerCropRegion->top;
     if ((roi_x_max < scalerCropRegion->left) ||
         (roi_y_max < scalerCropRegion->top)  ||
         (roi->rect.left > crop_x_max) ||
