@@ -227,15 +227,20 @@ QCamera3HardwareInterface::~QCamera3HardwareInterface()
             m = mStoredMetadataList.erase(m);
         }
     }
+
+    // NOTE: 'camera3_stream_t *' objects are already freed at
+    //        this stage by the framework
     for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
         it != mStreamInfo.end(); it++) {
-        QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
-        if (channel)
-           channel->stop();
+        QCamera3Channel *channel = (*it)->channel;
+        if (channel) {
+            channel->stop();
+        }
     }
+
     for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
         it != mStreamInfo.end(); it++) {
-        QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
+        QCamera3Channel *channel = (*it)->channel;
         if ((*it)->registered && (*it)->buffer_set.buffers) {
              delete[] (buffer_handle_t*)(*it)->buffer_set.buffers;
         }
@@ -488,6 +493,7 @@ int QCamera3HardwareInterface::configureStreams(
                   we need to reconfigure*/
                 delete channel;
                 (*it)->stream->priv = NULL;
+                (*it)->channel = NULL;
             }
         }
         if (!stream_exists) {
@@ -497,6 +503,7 @@ int QCamera3HardwareInterface::configureStreams(
             stream_info->stream = newStream;
             stream_info->status = VALID;
             stream_info->registered = 0;
+            stream_info->channel = NULL;
             mStreamInfo.push_back(stream_info);
         }
         if (newStream->stream_type == CAMERA3_STREAM_INPUT
@@ -655,6 +662,14 @@ int QCamera3HardwareInterface::configureStreams(
                 //TODO: Add support for app consumed format?
                 default:
                     ALOGE("%s: not a supported format 0x%x", __func__, newStream->format);
+                    break;
+                }
+            }
+
+            for (List<stream_info_t*>::iterator it=mStreamInfo.begin();
+                    it != mStreamInfo.end(); it++) {
+                if ((*it)->stream == newStream) {
+                    (*it)->channel = (QCamera3Channel*) newStream->priv;
                     break;
                 }
             }
@@ -1209,6 +1224,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
     }
 
     pthread_mutex_unlock(&mMutex);
+
     return rc;
 }
 
