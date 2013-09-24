@@ -126,7 +126,8 @@ public:
     int setFrameParameters(camera3_capture_request_t *request, uint32_t streamTypeMask);
     int translateMetadataToParameters(const camera3_capture_request_t *request);
     camera_metadata_t* translateCbMetadataToResultMetadata(metadata_buffer_t *metadata,
-                            nsecs_t timestamp, int32_t request_id);
+                            nsecs_t timestamp, int32_t request_id, int32_t BlobRequest,
+                            jpeg_settings_t* InputJpegSettings);
     int getJpegSettings(const camera_metadata_t *settings);
     int initParameters();
     void deinitParameters();
@@ -201,6 +202,7 @@ private:
         int32_t request_id;
         List<RequestedBufferInfo> buffers;
         int blob_request;
+        jpeg_settings_t input_jpeg_settings;
         int input_buffer_present;
     } PendingRequestInfo;
     typedef KeyedVector<camera3_stream_t *, uint32_t> PendingBuffersMap;
