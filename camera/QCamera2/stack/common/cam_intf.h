@@ -526,6 +526,7 @@ typedef union {
     INCLUDE(CAM_INTF_META_LENS_FOCAL_LENGTH,            float,                       1);
     INCLUDE(CAM_INTF_META_LENS_FOCUS_DISTANCE,          float,                       1);
     INCLUDE(CAM_INTF_META_LENS_FOCUS_RANGE,             float,                       2);
+    INCLUDE(CAM_INTF_META_LENS_STATE,                   uint8_t,                     1);
     INCLUDE(CAM_INTF_META_LENS_OPT_STAB_MODE,           uint8_t,                     1);
     INCLUDE(CAM_INTF_META_LENS_FOCUS_STATE,             uint8_t,                     1);
     INCLUDE(CAM_INTF_META_NOISE_REDUCTION_MODE,         uint8_t,                     1);

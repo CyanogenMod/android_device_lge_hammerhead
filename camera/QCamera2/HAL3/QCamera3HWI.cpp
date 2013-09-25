@@ -1782,11 +1782,18 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
              float  *focusRange =
                 (float *)POINTER_OF(CAM_INTF_META_LENS_FOCUS_RANGE, metadata);
              camMetadata.update(ANDROID_LENS_FOCUS_RANGE , focusRange, 2);
+             break;
+          }
+          case CAM_INTF_META_LENS_STATE: {
+             uint8_t *lensState = (uint8_t *)POINTER_OF(CAM_INTF_META_LENS_STATE, metadata);
+             camMetadata.update(ANDROID_LENS_STATE , lensState, 1);
+             break;
           }
           case CAM_INTF_META_LENS_OPT_STAB_MODE: {
              uint8_t  *opticalStab =
                 (uint8_t *)POINTER_OF(CAM_INTF_META_LENS_OPT_STAB_MODE, metadata);
              camMetadata.update(ANDROID_LENS_OPTICAL_STABILIZATION_MODE ,opticalStab, 1);
+             break;
           }
           case CAM_INTF_META_NOISE_REDUCTION_MODE: {
              uint8_t  *noiseRedMode =
