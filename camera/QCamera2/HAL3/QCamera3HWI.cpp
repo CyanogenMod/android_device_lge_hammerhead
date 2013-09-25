@@ -3065,6 +3065,24 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
     int32_t edge_strength = gCamCapability[mCameraId]->sharpness_ctrl.def_value;
     settings.update(ANDROID_EDGE_STRENGTH, &edge_strength, 1);
 
+    int32_t scaler_crop_region[4];
+    scaler_crop_region[0] = 0;
+    scaler_crop_region[1] = 0;
+    scaler_crop_region[2] = gCamCapability[mCameraId]->active_array_size.width;
+    scaler_crop_region[3] = gCamCapability[mCameraId]->active_array_size.height;
+    settings.update(ANDROID_SCALER_CROP_REGION, scaler_crop_region, 4);
+
+    static const uint8_t antibanding_mode = ANDROID_CONTROL_AE_ANTIBANDING_MODE_60HZ;
+    settings.update(ANDROID_CONTROL_AE_ANTIBANDING_MODE, &antibanding_mode, 1);
+
+    static const uint8_t vs_mode = ANDROID_CONTROL_VIDEO_STABILIZATION_MODE_OFF;
+    settings.update(ANDROID_CONTROL_VIDEO_STABILIZATION_MODE, &vs_mode, 1);
+
+    uint8_t opt_stab_mode = (gCamCapability[mCameraId]->optical_stab_modes_count == 2)?
+                             ANDROID_LENS_OPTICAL_STABILIZATION_MODE_ON :
+                             ANDROID_LENS_OPTICAL_STABILIZATION_MODE_OFF;
+    settings.update(ANDROID_LENS_OPTICAL_STABILIZATION_MODE, &opt_stab_mode, 1);
+
     mDefaultMetadata[type] = settings.release();
 
     pthread_mutex_unlock(&mMutex);
