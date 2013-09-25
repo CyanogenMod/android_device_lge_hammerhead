@@ -2053,7 +2053,7 @@ void QCamera3HardwareInterface::convertLandmarks(cam_face_detection_info_t face,
 {
     landmarks[0] = face.left_eye_center.x;
     landmarks[1] = face.left_eye_center.y;
-    landmarks[2] = face.right_eye_center.y;
+    landmarks[2] = face.right_eye_center.x;
     landmarks[3] = face.right_eye_center.y;
     landmarks[4] = face.mouth_center.x;
     landmarks[5] = face.mouth_center.y;
