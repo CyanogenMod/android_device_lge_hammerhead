@@ -1276,6 +1276,11 @@ typedef enum {
 } cam_af_state_t;
 
 typedef enum {
+  CAM_AF_LENS_STATE_STATIONARY,
+  CAM_AF_LENS_STATE_MOVING,
+} cam_af_lens_state_t;
+
+typedef enum {
     CAM_AWB_STATE_INACTIVE,
     CAM_AWB_STATE_SEARCHING,
     CAM_AWB_STATE_CONVERGED,
