@@ -885,6 +885,8 @@ typedef enum {
     /* specific to HAL3 */
     /* Whether the metadata maps to a valid frame number */
     CAM_INTF_META_FRAME_NUMBER_VALID,
+    /* Whether the stream buffer corresponding this frame is dropped or not */
+    CAM_INTF_META_FRAME_DROPPED,
     /* Number of pending requests yet to be processed */
     CAM_INTF_META_PENDING_REQUESTS,
     /* COLOR CORRECTION.*/
@@ -1117,6 +1119,11 @@ typedef enum {
     CAM_FLASH_CTRL_SINGLE,
     CAM_FLASH_CTRL_TORCH
 } cam_flash_ctrl_t;
+
+typedef struct {
+    uint8_t frame_dropped; /*  This flag indicates whether any stream buffer is dropped or not */
+    uint32_t stream_type_mask; /* if dropped, Stream type mask of dropped streams */
+} cam_frame_dropped_t;
 
 typedef struct {
     uint8_t ae_mode;

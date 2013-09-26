@@ -725,6 +725,8 @@ int QCamera3HardwareInterface::configureStreams(
     /* Initialize mPendingRequestInfo and mPendnigBuffersMap */
     mPendingRequestsList.clear();
 
+    mPendingFrameDropList.clear();
+
     /*flush the metadata list*/
     if (!mStoredMetadataList.empty()) {
         for (List<MetadataBufferInfo>::iterator m = mStoredMetadataList.begin();
@@ -1322,6 +1324,8 @@ void QCamera3HardwareInterface::captureResultCb(mm_camera_super_buf_t *metadata_
             POINTER_OF(CAM_INTF_META_SENSOR_TIMESTAMP, metadata);
         nsecs_t capture_time = (nsecs_t)tv->tv_sec * NSEC_PER_SEC +
             tv->tv_usec * NSEC_PER_USEC;
+        cam_frame_dropped_t cam_frame_drop = *(cam_frame_dropped_t *)
+            POINTER_OF(CAM_INTF_META_FRAME_DROPPED, metadata);
 
         if (!frame_number_valid) {
             ALOGV("%s: Not a valid frame number, used as SOF only", __func__);
@@ -1357,6 +1361,34 @@ void QCamera3HardwareInterface::captureResultCb(mm_camera_super_buf_t *metadata_
             mCallbackOps->notify(mCallbackOps, &notify_msg);
             ALOGV("%s: notify frame_number = %d, capture_time = %lld", __func__,
                     i->frame_number, capture_time);
+
+            // Check whether any stream buffer corresponding to this is dropped or not
+            // If dropped, then send the ERROR_BUFFER for the corresponding stream
+            if (cam_frame_drop.frame_dropped) {
+                camera3_notify_msg_t notify_msg;
+                for (List<RequestedBufferInfo>::iterator j = i->buffers.begin();
+                        j != i->buffers.end(); j++) {
+                    QCamera3Channel *channel = (QCamera3Channel *)j->stream->priv;
+                    uint32_t streamTypeMask = channel->getStreamTypeMask();
+                    if (streamTypeMask & cam_frame_drop.stream_type_mask) {
+                        // Send Error notify to frameworks with CAMERA3_MSG_ERROR_BUFFER
+                        ALOGV("%s: Start of reporting error frame#=%d, streamMask=%d",
+                               __func__, i->frame_number, streamTypeMask);
+                        notify_msg.type = CAMERA3_MSG_ERROR;
+                        notify_msg.message.error.frame_number = i->frame_number;
+                        notify_msg.message.error.error_code = CAMERA3_MSG_ERROR_BUFFER ;
+                        notify_msg.message.error.error_stream = j->stream;
+                        mCallbackOps->notify(mCallbackOps, &notify_msg);
+                        ALOGV("%s: End of reporting error frame#=%d, streamMask=%d",
+                               __func__, i->frame_number, streamTypeMask);
+                        PendingFrameDropInfo PendingFrameDrop;
+                        PendingFrameDrop.frame_number=i->frame_number;
+                        PendingFrameDrop.stream_type_mask = cam_frame_drop.stream_type_mask;
+                        // Add the Frame drop info to mPendingFrameDropList
+                        mPendingFrameDropList.push_back(PendingFrameDrop);
+                    }
+                }
+            }
 
             // Send empty metadata with already filled buffers for dropped metadata
             // and send valid metadata with already filled buffers for current metadata
@@ -1443,12 +1475,25 @@ void QCamera3HardwareInterface::captureResultCb(mm_camera_super_buf_t *metadata_
                 }
                 size_t result_buffers_idx = 0;
                 for (List<RequestedBufferInfo>::iterator j = i->buffers.begin();
-                        j != i->buffers.end(); j++) {
-                    if (j->buffer) {
-                        result_buffers[result_buffers_idx++] = *(j->buffer);
-                        free(j->buffer);
-                        j->buffer = NULL;
-                        mPendingBuffersMap.editValueFor(j->stream)--;
+                     j != i->buffers.end(); j++) {
+                     if (j->buffer) {
+                         for (List<PendingFrameDropInfo>::iterator m = mPendingFrameDropList.begin();
+                              m != mPendingFrameDropList.end(); m++) {
+                              QCamera3Channel *channel = (QCamera3Channel *)j->buffer->stream->priv;
+                              uint32_t streamTypeMask = channel->getStreamTypeMask();
+                              if((m->stream_type_mask & streamTypeMask) &&
+                                  (m->frame_number==frame_number)) {
+                                  j->buffer->status=CAMERA3_BUFFER_STATUS_ERROR;
+                                  ALOGV("%s: Stream STATUS_ERROR frame_number=%d, streamTypeMask=%d",
+                                        __func__, frame_number, streamTypeMask);
+                                  m = mPendingFrameDropList.erase(m);
+                                  break;
+                              }
+                         }
+                         result_buffers[result_buffers_idx++] = *(j->buffer);
+                         free(j->buffer);
+                         j->buffer = NULL;
+                         mPendingBuffersMap.editValueFor(j->stream)--;
                     }
                 }
                 result.output_buffers = result_buffers;
@@ -1505,6 +1550,19 @@ done_metadata:
             result.result = NULL;
             result.frame_number = frame_number;
             result.num_output_buffers = 1;
+            for (List<PendingFrameDropInfo>::iterator m = mPendingFrameDropList.begin();
+                  m != mPendingFrameDropList.end(); m++) {
+                QCamera3Channel *channel = (QCamera3Channel *)buffer->stream->priv;
+                uint32_t streamTypeMask = channel->getStreamTypeMask();
+                if((m->stream_type_mask & streamTypeMask) &&
+                    (m->frame_number==frame_number) ) {
+                    buffer->status=CAMERA3_BUFFER_STATUS_ERROR;
+                    ALOGV("%s: Stream STATUS_ERROR frame_number=%d, streamTypeMask=%d",
+                            __func__, frame_number, streamTypeMask);
+                    m = mPendingFrameDropList.erase(m);
+                    break;
+                }
+            }
             result.output_buffers = buffer;
             ALOGV("%s: result frame_number = %d, buffer = %p",
                     __func__, frame_number, buffer);
