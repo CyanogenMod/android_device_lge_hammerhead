@@ -247,4 +247,6 @@
         <item>10</item>
     </integer-array>
 
+    <!-- Wifi driver supports batched scan -->
+    <bool translatable="false" name="config_wifi_batched_scan_supported">true</bool>
 </resources>
