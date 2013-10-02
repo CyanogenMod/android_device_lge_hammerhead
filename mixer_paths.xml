@@ -433,9 +433,9 @@
         <ctl name="SLIM RX1 MUX" value="AIF1_PB" />
         <ctl name="SLIM_0_RX Channels" value="One" />
         <ctl name="RX1 MIX1 INP1" value="RX1" />
+        <ctl name="RX2 MIX1 INP1" value="RX1" />
         <ctl name="CLASS_H_DSM MUX" value="DSM_HPHL_RX1" />
         <ctl name="HPHL DAC Switch" value="1" />
-        <ctl name="HPHL Volume" value="14" />
     </path>
 
     <path name="voice-tty-full-headphones">
@@ -455,7 +455,8 @@
 
     <path name="voice-tty-full-headset-mic">
         <path name="adc2" />
-        <ctl name="ADC2 Volume" value="18" />
+        <ctl name="DEC5 Volume" value="74" />
+        <ctl name="ADC2 Volume" value="16" />
     </path>
 
     <path name="voice-tty-hco-headset-mic">
