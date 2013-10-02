@@ -64,3 +64,4 @@ $(call add-clean-step, find $(PRODUCT_OUT) -name "*lights.msm8974.so" -print0 | 
 $(call add-clean-step, rm -f $(OUT_DIR)/target/product/hammerhead/system/build.prop)
 $(call add-clean-step, rm -f $(OUT_DIR)/target/product/hammerhead/system/build.prop)
 $(call add-clean-step, rm -f $(OUT_DIR)/target/product/hammerhead/system/build.prop)
+$(call add-clean-step, rm -f $(OUT_DIR)/target/product/hammerhead/system/build.prop)
