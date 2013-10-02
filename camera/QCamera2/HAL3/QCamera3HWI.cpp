@@ -554,6 +554,7 @@ int QCamera3HardwareInterface::configureStreams(
     if (rc < 0) {
         ALOGE("%s: metadata channel initialization failed", __func__);
         delete mMetadataChannel;
+        mMetadataChannel = NULL;
         pthread_mutex_unlock(&mMutex);
         return rc;
     }
