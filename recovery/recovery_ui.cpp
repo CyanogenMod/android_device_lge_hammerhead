@@ -56,6 +56,12 @@ public:
         return ENQUEUE;
     }
 
+    void Init() {
+      install_overlay_offset_x = 0;
+      install_overlay_offset_y = 0;
+      ScreenRecoveryUI::Init();
+    }
+
 private:
     int consecutive_power_keys;
 };
