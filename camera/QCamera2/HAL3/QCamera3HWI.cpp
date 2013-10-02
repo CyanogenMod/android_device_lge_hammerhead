@@ -83,6 +83,7 @@ const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::WHITE_BAL
 };
 
 const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::SCENE_MODES_MAP[] = {
+    { ANDROID_CONTROL_SCENE_MODE_FACE_PRIORITY,  CAM_SCENE_MODE_OFF },
     { ANDROID_CONTROL_SCENE_MODE_ACTION,         CAM_SCENE_MODE_ACTION },
     { ANDROID_CONTROL_SCENE_MODE_PORTRAIT,       CAM_SCENE_MODE_PORTRAIT },
     { ANDROID_CONTROL_SCENE_MODE_LANDSCAPE,      CAM_SCENE_MODE_LANDSCAPE },
@@ -1664,7 +1665,6 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
     uint8_t curr_entry = GET_FIRST_PARAM_ID(metadata);
     uint8_t next_entry;
     while (curr_entry != CAM_INTF_PARM_MAX) {
-       ALOGV("%s: META_DEBUG: cur_entry is %d", __func__, curr_entry);
        switch (curr_entry) {
          case CAM_INTF_META_FACE_DETECTION:{
              cam_face_detection_data_t *faceDetectionInfo =
@@ -3062,7 +3062,7 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
     static const uint8_t effectMode = ANDROID_CONTROL_EFFECT_MODE_OFF;
     settings.update(ANDROID_CONTROL_EFFECT_MODE, &effectMode, 1);
 
-    static const uint8_t sceneMode = ANDROID_CONTROL_SCENE_MODE_FACE_PRIORITY; //similar to AUTO?
+    static const uint8_t sceneMode = ANDROID_CONTROL_SCENE_MODE_FACE_PRIORITY;
     settings.update(ANDROID_CONTROL_SCENE_MODE, &sceneMode, 1);
 
     static uint8_t focusMode;
@@ -3253,11 +3253,11 @@ int QCamera3HardwareInterface::translateMetadataToParameters
            rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_BESTSHOT_MODE,
                 sizeof(sceneMode), &sceneMode);
         } else if (metaMode == ANDROID_CONTROL_MODE_OFF) {
-           uint8_t sceneMode = 0;//CAMERA_BESTSHOT_OFF;
+           uint8_t sceneMode = CAM_SCENE_MODE_OFF;
            rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_BESTSHOT_MODE,
                 sizeof(sceneMode), &sceneMode);
         } else if (metaMode == ANDROID_CONTROL_MODE_AUTO) {
-           uint8_t sceneMode = 0;//CAMERA_BESTSHOT_OFF;
+           uint8_t sceneMode = CAM_SCENE_MODE_OFF;
            rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_BESTSHOT_MODE,
                 sizeof(sceneMode), &sceneMode);
         }
