@@ -21,4 +21,8 @@ void dumpstate_board()
     dump_file("INTERRUPTS", "/proc/interrupts");
     dump_file("Power Management Stats", "/proc/msm_pm_stats");
     run_command("SUBSYSTEM TOMBSTONES", 5, SU_PATH, "root", "ls", "-l", "/data/tombstones/ramdump", NULL);
+    dump_file("BAM DMUX Log", "/d/ipc_logging/bam_dmux/log");
+    dump_file("SMD Log", "/d/ipc_logging/smd/log");
+    dump_file("SMD PKT Log", "/d/ipc_logging/smd_pkt/log");
+    dump_file("IPC Router Log", "/d/ipc_logging/ipc_router/log");
 };
