@@ -450,7 +450,7 @@ typedef union {
     INCLUDE(CAM_INTF_META_CAPTURE_INTENT,           uint8_t,                     1);
     INCLUDE(CAM_INTF_META_MODE,                     uint8_t,                     1);
     INCLUDE(CAM_INTF_META_DEMOSAIC,                 int32_t,                     1);
-    INCLUDE(CAM_INTF_META_EDGE_MODE,                int32_t,                     1);
+    INCLUDE(CAM_INTF_META_EDGE_MODE,                cam_edge_application_t,      1);
     INCLUDE(CAM_INTF_META_SHARPNESS_STRENGTH,       int32_t,                     1);
     INCLUDE(CAM_INTF_META_FLASH_POWER,              uint8_t,                     1);
     INCLUDE(CAM_INTF_META_FLASH_FIRING_TIME,        int64_t,                     1);

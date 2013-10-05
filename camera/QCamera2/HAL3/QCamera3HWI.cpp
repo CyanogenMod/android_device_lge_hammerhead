@@ -1779,8 +1779,11 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
              break;
           }
           case CAM_INTF_META_EDGE_MODE: {
-             uint8_t  *edgeMode = (uint8_t *)POINTER_OF(CAM_INTF_META_EDGE_MODE, metadata);
-             camMetadata.update(ANDROID_EDGE_MODE, edgeMode, 1);
+             cam_edge_application_t  *edgeApplication =
+                (cam_edge_application_t *)POINTER_OF(CAM_INTF_META_EDGE_MODE, metadata);
+             uint8_t edgeStrength = (uint8_t)edgeApplication->sharpness;
+             camMetadata.update(ANDROID_EDGE_MODE, &(edgeApplication->edge_mode), 1);
+             camMetadata.update(ANDROID_EDGE_STRENGTH, &edgeStrength, 1);
              break;
           }
           case CAM_INTF_META_FLASH_POWER: {
@@ -1858,6 +1861,12 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
              uint8_t  *noiseRedMode =
                 (uint8_t *)POINTER_OF(CAM_INTF_META_NOISE_REDUCTION_MODE, metadata);
              camMetadata.update(ANDROID_NOISE_REDUCTION_MODE , noiseRedMode, 1);
+             break;
+          }
+          case CAM_INTF_META_NOISE_REDUCTION_STRENGTH: {
+             uint8_t  *noiseRedStrength =
+                (uint8_t *)POINTER_OF(CAM_INTF_META_NOISE_REDUCTION_STRENGTH, metadata);
+             camMetadata.update(ANDROID_NOISE_REDUCTION_STRENGTH, noiseRedStrength, 1);
              break;
           }
           case CAM_INTF_META_SCALER_CROP_REGION: {
@@ -2000,6 +2009,15 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
           }
           case CAM_INTF_PARM_LED_MODE:
              break;
+          case CAM_INTF_PARM_EFFECT: {
+             uint8_t *effectMode = (uint8_t*)
+                  POINTER_OF(CAM_INTF_PARM_EFFECT, metadata);
+             uint8_t fwk_effectMode = lookupFwkName(EFFECT_MODES_MAP,
+                                                    sizeof(EFFECT_MODES_MAP),
+                                                    *effectMode);
+             camMetadata.update(ANDROID_CONTROL_EFFECT_MODE, &fwk_effectMode, 1);
+             break;
+          }
           default:
              ALOGV("%s: This is not a valid metadata type to report to fwk, %d",
                    __func__, curr_entry);
@@ -3128,7 +3146,7 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
     static const uint8_t tonemap_mode = ANDROID_TONEMAP_MODE_HIGH_QUALITY;
     settings.update(ANDROID_TONEMAP_MODE, &tonemap_mode, 1);
 
-    int32_t edge_strength = gCamCapability[mCameraId]->sharpness_ctrl.def_value;
+    uint8_t edge_strength = (uint8_t)gCamCapability[mCameraId]->sharpness_ctrl.def_value;
     settings.update(ANDROID_EDGE_STRENGTH, &edge_strength, 1);
 
     int32_t scaler_crop_region[4];
@@ -3452,9 +3470,9 @@ int QCamera3HardwareInterface::translateMetadataToParameters
             edge_application.sharpness = 0;
         } else {
             if (frame_settings.exists(ANDROID_EDGE_STRENGTH)) {
-                int32_t edgeStrength =
-                    frame_settings.find(ANDROID_EDGE_STRENGTH).data.i32[0];
-                edge_application.sharpness = edgeStrength;
+                uint8_t edgeStrength =
+                    frame_settings.find(ANDROID_EDGE_STRENGTH).data.u8[0];
+                edge_application.sharpness = (int32_t)edgeStrength;
             } else {
                 edge_application.sharpness = gCamCapability[mCameraId]->sharpness_ctrl.def_value; //default
             }

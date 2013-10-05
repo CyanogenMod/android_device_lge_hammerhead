@@ -527,7 +527,7 @@ typedef enum {
 
 typedef struct {
    uint8_t edge_mode;
-   int sharpness;
+   int32_t sharpness;
 } cam_edge_application_t;
 
 typedef enum {
