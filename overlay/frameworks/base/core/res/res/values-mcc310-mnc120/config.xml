@@ -61,4 +61,7 @@
 
     <!-- Sometimes, PDU has garbages. So, need to use valid index -->
     <integer name="config_valid_wappush_index">4</integer>
+
+    <!-- Default network policy warning threshold, in megabytes. -->
+    <integer name="config_networkPolicyDefaultWarning">51200</integer>
 </resources>
