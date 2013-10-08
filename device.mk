@@ -112,10 +112,7 @@ DEVICE_PACKAGE_OVERLAYS := \
 
 # Live Wallpapers
 PRODUCT_PACKAGES += \
-    LiveWallpapers \
     LiveWallpapersPicker \
-    MagicSmokeWallpapers \
-    VisualizationWallpapers \
     librs_jni
 
 PRODUCT_PACKAGES += \
