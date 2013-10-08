@@ -185,8 +185,7 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     nfc_nci.hammerhead \
     NfcNci \
-    Tag \
-    com.android.nfc_extras
+    Tag
 
 PRODUCT_PACKAGES += \
     libion
