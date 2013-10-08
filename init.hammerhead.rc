@@ -91,6 +91,12 @@ on boot
     write /proc/sys/net/core/rmem_max  2097152
     write /proc/sys/net/core/wmem_max  2097152
 
+    # Define TCP buffer sizes
+    # ReadMin, ReadInitial, ReadMax, WriteMin, WriteInitial, WriteMax
+    setprop net.tcp.buffersize.hsdpa    4094,87380,704512,4096,16384,110208
+    setprop net.tcp.buffersize.hspa     4094,87380,704512,4096,16384,110208
+    setprop net.tcp.buffersize.hsupa    4094,87380,704512,4096,16384,110208
+
     # create symlink for fb1 as HDMI
     symlink /dev/graphics/fb1 /dev/graphics/hdmi
 
