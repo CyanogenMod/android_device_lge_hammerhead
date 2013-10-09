@@ -1167,7 +1167,8 @@ int32_t mm_stream_qbuf(mm_stream_t *my_obj, mm_camera_buf_def_t *buf)
                 my_obj->my_hdl,
                 my_obj->fd,
                 mm_stream_data_notify,
-                (void*)my_obj);
+                (void*)my_obj,
+                mm_camera_async_call);
         CDBG_HIGH("%s: Started poll on stream %p type :%d", __func__, my_obj,my_obj->stream_info->stream_type);
         if (rc < 0) {
             ALOGE("%s: add poll fd error", __func__);

@@ -1448,7 +1448,8 @@ int32_t mm_camera_evt_sub(mm_camera_obj_t * my_obj,
                                                my_obj->my_hdl,
                                                my_obj->ctrl_fd,
                                                mm_camera_event_notify,
-                                               (void*)my_obj);
+                                               (void*)my_obj,
+                                               mm_camera_sync_call);
     }
     return rc;
 }

@@ -370,6 +370,7 @@ int32_t mm_camera_poll_thread_notify_entries_updated(mm_camera_poll_thread_t * p
  *   @fd        : file descriptor need to be added into polling thread
  *   @notify_cb : callback function to handle if any notify from fd
  *   @userdata  : user data ptr
+ *   @call_type : Whether its Synchronous or Asynchronous call
  *
  * RETURN     : none
  *==========================================================================*/
@@ -377,7 +378,8 @@ int32_t mm_camera_poll_thread_add_poll_fd(mm_camera_poll_thread_t * poll_cb,
                                           uint32_t handler,
                                           int32_t fd,
                                           mm_camera_poll_notify_t notify_cb,
-                                          void* userdata)
+                                          void* userdata,
+                                          mm_camera_call_type_t call_type)
 {
     int32_t rc = -1;
     uint8_t idx = 0;
@@ -396,7 +398,11 @@ int32_t mm_camera_poll_thread_add_poll_fd(mm_camera_poll_thread_t * poll_cb,
         poll_cb->poll_entries[idx].notify_cb = notify_cb;
         poll_cb->poll_entries[idx].user_data = userdata;
         /* send poll entries updated signal to poll thread */
-        rc = mm_camera_poll_sig(poll_cb, MM_CAMERA_PIPE_CMD_POLL_ENTRIES_UPDATED);
+        if (call_type == mm_camera_sync_call ) {
+            rc = mm_camera_poll_sig(poll_cb, MM_CAMERA_PIPE_CMD_POLL_ENTRIES_UPDATED);
+        } else {
+            rc = mm_camera_poll_sig_async(poll_cb, MM_CAMERA_PIPE_CMD_POLL_ENTRIES_UPDATED_ASYNC );
+        }
     } else {
         CDBG_ERROR("%s: invalid handler %d (%d)",
                    __func__, handler, idx);
