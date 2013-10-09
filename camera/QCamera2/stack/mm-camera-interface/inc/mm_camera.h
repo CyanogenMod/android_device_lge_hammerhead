@@ -561,7 +561,8 @@ extern int32_t mm_camera_poll_thread_add_poll_fd(
                                 uint32_t handler,
                                 int32_t fd,
                                 mm_camera_poll_notify_t nofity_cb,
-                                void *userdata);
+                                void *userdata,
+                                mm_camera_call_type_t);
 extern int32_t mm_camera_poll_thread_del_poll_fd(
                                 mm_camera_poll_thread_t * poll_cb,
                                 uint32_t handler,
