@@ -120,6 +120,7 @@ PRODUCT_PACKAGES += \
     gralloc.msm8974 \
     libgenlock \
     hwcomposer.msm8974 \
+    memtrack.msm8974 \
     libqdutils \
     libqdMetaData
 
