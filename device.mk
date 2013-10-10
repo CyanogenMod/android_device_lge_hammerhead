@@ -280,6 +280,11 @@ PRODUCT_PROPERTY_OVERRIDES += \
     telephony.lteOnCdmaDevice=1 \
     persist.radio.mode_pref_nv10=1
 
+# update 1x signal strength after 2s
+PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
+    persist.radio.snapshot_enabled=1 \
+    persist.radio.snapshot_timer=2
+
 # Audio Configuration
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.audio.handset.mic.type=digital \
