@@ -317,7 +317,7 @@ service sensors /system/bin/sensors.qcom
     user root
     group root
 
-service irsc_util /system/bin/logwrapper /system/bin/irsc_util "/etc/sec_config"
+service irsc_util /system/bin/irsc_util "/etc/sec_config"
     class main
     user root
     oneshot
