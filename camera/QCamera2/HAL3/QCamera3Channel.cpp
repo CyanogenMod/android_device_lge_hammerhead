@@ -702,7 +702,7 @@ void QCamera3RegularChannel::putStreamBufs()
     mMemory = NULL;
 }
 
-int QCamera3RegularChannel::kMaxBuffers = 5;
+int QCamera3RegularChannel::kMaxBuffers = 4;
 
 QCamera3MetadataChannel::QCamera3MetadataChannel(uint32_t cam_handle,
                     mm_camera_ops_t *cam_ops,
