@@ -1671,10 +1671,10 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
              cam_face_detection_data_t *faceDetectionInfo =
                 (cam_face_detection_data_t *)POINTER_OF(CAM_INTF_META_FACE_DETECTION, metadata);
              uint8_t numFaces = faceDetectionInfo->num_faces_detected;
-             int32_t faceIds[numFaces];
-             uint8_t faceScores[numFaces];
-             int32_t faceRectangles[numFaces * 4];
-             int32_t faceLandmarks[numFaces * 6];
+             int32_t faceIds[MAX_ROI];
+             uint8_t faceScores[MAX_ROI];
+             int32_t faceRectangles[MAX_ROI * 4];
+             int32_t faceLandmarks[MAX_ROI * 6];
              int j = 0, k = 0;
              for (int i = 0; i < numFaces; i++) {
                  faceIds[i] = faceDetectionInfo->faces[i].face_id;
@@ -1685,14 +1685,21 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
                  j+= 4;
                  k+= 6;
              }
-             if (numFaces > 0) {
-                 camMetadata.update(ANDROID_STATISTICS_FACE_IDS, faceIds, numFaces);
-                 camMetadata.update(ANDROID_STATISTICS_FACE_SCORES, faceScores, numFaces);
-                 camMetadata.update(ANDROID_STATISTICS_FACE_RECTANGLES,
-                     faceRectangles, numFaces*4);
-                 camMetadata.update(ANDROID_STATISTICS_FACE_LANDMARKS,
-                     faceLandmarks, numFaces*6);
+
+             if (numFaces <= 0) {
+                memset(faceIds, 0, sizeof(int32_t) * MAX_ROI);
+                memset(faceScores, 0, sizeof(uint8_t) * MAX_ROI);
+                memset(faceRectangles, 0, sizeof(int32_t) * MAX_ROI * 4);
+                memset(faceLandmarks, 0, sizeof(int32_t) * MAX_ROI * 6);
              }
+
+             camMetadata.update(ANDROID_STATISTICS_FACE_IDS, faceIds, numFaces);
+             camMetadata.update(ANDROID_STATISTICS_FACE_SCORES, faceScores, numFaces);
+             camMetadata.update(ANDROID_STATISTICS_FACE_RECTANGLES,
+               faceRectangles, numFaces*4);
+             camMetadata.update(ANDROID_STATISTICS_FACE_LANDMARKS,
+               faceLandmarks, numFaces*6);
+
             break;
             }
          case CAM_INTF_META_COLOR_CORRECT_MODE:{
