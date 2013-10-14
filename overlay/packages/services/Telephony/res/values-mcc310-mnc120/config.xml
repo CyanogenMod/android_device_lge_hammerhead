@@ -27,6 +27,10 @@
          default values are in Phone/res/values/config.xml and maybe overridden
          in operator specific resource directories or device specific overlays. -->
     <bool name="config_apn_expand" translatable="false">false</bool>
+    <!-- Show enabled lte option for lte device -->
+    <bool name="config_enabled_lte" translatable="false">true</bool>
+    <!-- Show cdma auto network mode in (glabal) roaming -->
+    <bool name="config_show_cdma" translatable="false">true</bool>
     <!-- CDMA activation goes through HFA [DO NOT TRANSLATE] -->
     <bool name="config_use_hfa_for_provisioning" translatable="false">true</bool>
 </resources>
