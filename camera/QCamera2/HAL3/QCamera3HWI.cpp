@@ -151,6 +151,7 @@ camera3_device_ops_t QCamera3HardwareInterface::mCameraOps = {
     reserved:                           {0},
 };
 
+int QCamera3HardwareInterface::kMaxInFlight = 5;
 
 /*===========================================================================
  * FUNCTION   : QCamera3HardwareInterface
@@ -982,6 +983,7 @@ void QCamera3HardwareInterface::handleMetadataWithLock(
         mCallbackOps->notify(mCallbackOps, &notify_msg);
         ALOGV("%s: notify frame_number = %d, capture_time = %lld", __func__,
                 i->frame_number, capture_time);
+        mPendingRequest--;
 
         // Check whether any stream buffer corresponding to this is dropped or not
         // If dropped, then send the ERROR_BUFFER for the corresponding stream
@@ -1208,7 +1210,6 @@ void QCamera3HardwareInterface::handleBufferWithLock(
             }
         }
         mCallbackOps->process_capture_result(mCallbackOps, &result);
-        unblockRequestIfNecessary();
     } else {
         for (List<RequestedBufferInfo>::iterator j = i->buffers.begin();
                 j != i->buffers.end(); j++) {
@@ -1251,7 +1252,6 @@ void QCamera3HardwareInterface::unblockRequestIfNecessary()
     }
     if (!max_buffers_dequeued) {
         // Unblock process_capture_request
-        mPendingRequest = 0;
         pthread_cond_signal(&mRequestCond);
     }
 }
@@ -1544,8 +1544,8 @@ int QCamera3HardwareInterface::processCaptureRequest(
         ts.tv_sec += 5;
     }
     //Block on conditional variable
-    mPendingRequest = 1;
-    while (mPendingRequest == 1) {
+    mPendingRequest++;
+    do {
         if (!isValidTimeout) {
             ALOGV("%s: Blocking on conditional wait", __func__);
             pthread_cond_wait(&mRequestCond, &mMutex);
@@ -1560,7 +1560,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
             }
         }
         ALOGV("%s: Unblocked", __func__);
-    }
+    }while (mPendingRequest >= kMaxInFlight);
 
     pthread_mutex_unlock(&mMutex);
 
