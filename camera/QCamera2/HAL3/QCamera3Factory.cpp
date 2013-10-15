@@ -54,7 +54,18 @@ QCamera3Factory gQCamera3Factory;
  *==========================================================================*/
 QCamera3Factory::QCamera3Factory()
 {
+    camera_info info;
+
     mNumOfCameras = get_num_of_cameras();
+
+    //Query camera at this point in order
+    //to avoid any delays during subsequent
+    //calls to 'getCameraInfo()'
+    for (int i = 0 ; i < mNumOfCameras ; i++) {
+        getCameraInfo(i, &info);
+    }
+    //
+
 }
 
 /*===========================================================================
