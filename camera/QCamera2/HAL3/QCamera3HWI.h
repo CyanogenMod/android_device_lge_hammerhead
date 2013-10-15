@@ -246,6 +246,9 @@ private:
 
     power_module_t *m_pPowerModule;   // power module
 
+#ifdef HAS_MULTIMEDIA_HINTS
+    bool mHdrHint;
+#endif
     static const QCameraMap EFFECT_MODES_MAP[];
     static const QCameraMap WHITE_BALANCE_MODES_MAP[];
     static const QCameraMap SCENE_MODES_MAP[];
