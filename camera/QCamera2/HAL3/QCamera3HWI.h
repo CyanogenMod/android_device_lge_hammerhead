@@ -163,6 +163,11 @@ private:
 
     void deriveMinFrameDuration();
     int64_t getMinFrameDuration(const camera3_capture_request_t *request);
+
+    void handleMetadataWithLock(mm_camera_super_buf_t *metadata_buf);
+    void handleBufferWithLock(camera3_stream_buffer_t *buffer,
+        uint32_t frame_number);
+    void unblockRequestIfNecessary();
 public:
 
     bool needOnlineRotation();
