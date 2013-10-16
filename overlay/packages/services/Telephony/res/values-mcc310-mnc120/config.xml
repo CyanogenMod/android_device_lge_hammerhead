@@ -33,4 +33,9 @@
     <bool name="config_show_cdma" translatable="false">true</bool>
     <!-- CDMA activation goes through HFA [DO NOT TRANSLATE] -->
     <bool name="config_use_hfa_for_provisioning" translatable="false">true</bool>
+    <!-- Display carrier settings -->
+    <bool name="config_carrier_settings_enable">true</bool>
+    <!-- carrier settings menu -->
+    <string name="carrier_settings" translatable="false">com.lge.update</string>
+    <string name="carrier_settings_menu" translatable="false">com.lge.update.SprintUpdateSetting</string>
 </resources>
