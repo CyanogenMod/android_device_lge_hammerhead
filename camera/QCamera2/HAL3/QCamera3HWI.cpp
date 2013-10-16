@@ -180,7 +180,8 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId)
       mMinProcessedFrameDuration(0),
       mMinJpegFrameDuration(0),
       mMinRawFrameDuration(0),
-      m_pPowerModule(NULL)
+      m_pPowerModule(NULL),
+      mHdrHint(false)
 {
     mCameraDevice.common.tag = HARDWARE_DEVICE_TAG;
     mCameraDevice.common.version = CAMERA_DEVICE_API_VERSION_3_0;
@@ -380,6 +381,11 @@ int QCamera3HardwareInterface::closeCamera()
     if (rc == NO_ERROR) {
         if (m_pPowerModule) {
             if (m_pPowerModule->powerHint) {
+                if(mHdrHint == true) {
+                    m_pPowerModule->powerHint(m_pPowerModule, POWER_HINT_VIDEO_ENCODE,
+                            (void *)"state=3");
+                    mHdrHint = false;
+                }
                 m_pPowerModule->powerHint(m_pPowerModule, POWER_HINT_VIDEO_ENCODE,
                         (void *)"state=0");
             }
@@ -470,6 +476,18 @@ int QCamera3HardwareInterface::configureStreams(
         /* If content of mStreamInfo is not 0, there is metadata stream */
         mMetadataChannel->stop();
     }
+
+#ifdef HAS_MULTIMEDIA_HINTS
+    if(mHdrHint == true) {
+        if (m_pPowerModule) {
+            if (m_pPowerModule->powerHint) {
+                m_pPowerModule->powerHint(m_pPowerModule, POWER_HINT_VIDEO_ENCODE,
+                        (void *)"state=3");
+                mHdrHint = false;
+            }
+        }
+    }
+#endif
 
     pthread_mutex_lock(&mMutex);
 
@@ -586,6 +604,15 @@ int QCamera3HardwareInterface::configureStreams(
               break;
            case HAL_PIXEL_FORMAT_YCbCr_420_888:
               stream_config_info.type[i] = CAM_STREAM_TYPE_CALLBACK;
+#ifdef HAS_MULTIMEDIA_HINTS
+              if (m_pPowerModule) {
+                  if (m_pPowerModule->powerHint) {
+                      m_pPowerModule->powerHint(m_pPowerModule,
+                          POWER_HINT_VIDEO_ENCODE, (void *)"state=2");
+                      mHdrHint = true;
+                  }
+              }
+#endif
               break;
            case HAL_PIXEL_FORMAT_BLOB:
               stream_config_info.type[i] = CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT;
