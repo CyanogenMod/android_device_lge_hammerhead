@@ -30,15 +30,17 @@ PRODUCT_COPY_FILES := \
     vendor/qcom/hammerhead/proprietary/rmt_storage:system/bin/rmt_storage:qcom \
     vendor/qcom/hammerhead/proprietary/sensors.qcom:system/bin/sensors.qcom:qcom \
     vendor/qcom/hammerhead/proprietary/subsystem_ramdump:system/bin/subsystem_ramdump:qcom \
-    vendor/qcom/hammerhead/proprietary/thermal-engine:system/bin/thermal-engine:qcom \
+    vendor/qcom/hammerhead/proprietary/thermal-engine-hh:system/bin/thermal-engine-hh:qcom \
+    vendor/qcom/hammerhead/proprietary/time_daemon:system/bin/time_daemon:qcom \
     vendor/qcom/hammerhead/proprietary/usbhub:system/bin/usbhub:qcom \
     vendor/qcom/hammerhead/proprietary/usbhub_init:system/bin/usbhub_init:qcom \
     vendor/qcom/hammerhead/proprietary/cpp_firmware_v1_1_1.fw:system/etc/firmware/cpp_firmware_v1_1_1.fw:qcom \
     vendor/qcom/hammerhead/proprietary/cpp_firmware_v1_1_6.fw:system/etc/firmware/cpp_firmware_v1_1_6.fw:qcom \
     vendor/qcom/hammerhead/proprietary/cpp_firmware_v1_2_0.fw:system/etc/firmware/cpp_firmware_v1_2_0.fw:qcom \
+    vendor/qcom/hammerhead/proprietary/qcrilhook.xml:system/etc/permissions/qcrilhook.xml:qcom \
+    vendor/qcom/hammerhead/proprietary/qcrilhook.jar:system/framework/qcrilhook.jar:qcom \
+    vendor/qcom/hammerhead/proprietary/flp.msm8974.so:system/lib/hw/flp.msm8974.so:qcom \
     vendor/qcom/hammerhead/proprietary/gps.msm8974.so:system/lib/hw/gps.msm8974.so:qcom \
-    vendor/qcom/hammerhead/proprietary/libI420colorconvert.so:system/lib/libI420colorconvert.so:qcom \
-    vendor/qcom/hammerhead/proprietary/libQSEEComAPI.so:system/lib/libQSEEComAPI.so:qcom \
     vendor/qcom/hammerhead/proprietary/libadsprpc.so:system/lib/libadsprpc.so:qcom \
     vendor/qcom/hammerhead/proprietary/libchromatix_imx179_common.so:system/lib/libchromatix_imx179_common.so:qcom \
     vendor/qcom/hammerhead/proprietary/libchromatix_imx179_default_video.so:system/lib/libchromatix_imx179_default_video.so:qcom \
@@ -51,19 +53,20 @@ PRODUCT_COPY_FILES := \
     vendor/qcom/hammerhead/proprietary/libdrmdiag.so:system/lib/libdrmdiag.so:qcom \
     vendor/qcom/hammerhead/proprietary/libdrmfs.so:system/lib/libdrmfs.so:qcom \
     vendor/qcom/hammerhead/proprietary/libdrmtime.so:system/lib/libdrmtime.so:qcom \
-    vendor/qcom/hammerhead/proprietary/libgeofence.so:system/lib/libgeofence.so:qcom \
     vendor/qcom/hammerhead/proprietary/libgps.utils.so:system/lib/libgps.utils.so:qcom \
-    vendor/qcom/hammerhead/proprietary/libloc_adapter.so:system/lib/libloc_adapter.so:qcom \
-    vendor/qcom/hammerhead/proprietary/libloc_api_v02.so:system/lib/libloc_api_v02.so:qcom \
+    vendor/qcom/hammerhead/proprietary/libI420colorconvert.so:system/lib/libI420colorconvert.so:qcom \
+    vendor/qcom/hammerhead/proprietary/libloc_core.so:system/lib/libloc_core.so:qcom \
     vendor/qcom/hammerhead/proprietary/libloc_eng.so:system/lib/libloc_eng.so:qcom \
     vendor/qcom/hammerhead/proprietary/libmm-abl.so:system/lib/libmm-abl.so:qcom \
-    vendor/qcom/hammerhead/proprietary/libmm-color-convertor.so:system/lib/libmm-color-convertor.so:qcom \
-    vendor/qcom/hammerhead/proprietary/libmmQSM.so:system/lib/libmmQSM.so:qcom \
     vendor/qcom/hammerhead/proprietary/libmmcamera_hdr_lib.so:system/lib/libmmcamera_hdr_lib.so:qcom \
     vendor/qcom/hammerhead/proprietary/libmmcamera_image_stab.so:system/lib/libmmcamera_image_stab.so:qcom \
     vendor/qcom/hammerhead/proprietary/libmmcamera_imx179.so:system/lib/libmmcamera_imx179.so:qcom \
     vendor/qcom/hammerhead/proprietary/libmmcamera_mt9m114b.so:system/lib/libmmcamera_mt9m114b.so:qcom \
     vendor/qcom/hammerhead/proprietary/libmmcamera_wavelet_lib.so:system/lib/libmmcamera_wavelet_lib.so:qcom \
+    vendor/qcom/hammerhead/proprietary/libmm-color-convertor.so:system/lib/libmm-color-convertor.so:qcom \
+    vendor/qcom/hammerhead/proprietary/libmmQSM.so:system/lib/libmmQSM.so:qcom \
+    vendor/qcom/hammerhead/proprietary/liboemcrypto.so:system/lib/liboemcrypto.so:qcom \
+    vendor/qcom/hammerhead/proprietary/libQSEEComAPI.so:system/lib/libQSEEComAPI.so:qcom \
     vendor/qcom/hammerhead/proprietary/libril-qc-qmi-1.so:system/lib/libril-qc-qmi-1.so:qcom \
     vendor/qcom/hammerhead/proprietary/libstagefright_hdcp.so:system/lib/libstagefright_hdcp.so:qcom \
     vendor/qcom/hammerhead/proprietary/libxml.so:system/lib/libxml.so:qcom \
@@ -74,33 +77,39 @@ PRODUCT_COPY_FILES := \
     vendor/qcom/hammerhead/proprietary/venus.b02:system/vendor/firmware/venus.b02:qcom \
     vendor/qcom/hammerhead/proprietary/venus.b03:system/vendor/firmware/venus.b03:qcom \
     vendor/qcom/hammerhead/proprietary/venus.b04:system/vendor/firmware/venus.b04:qcom \
-    vendor/qcom/hammerhead/proprietary/venus.b05:system/vendor/firmware/venus.b05:qcom \
-    vendor/qcom/hammerhead/proprietary/venus.b06:system/vendor/firmware/venus.b06:qcom \
     vendor/qcom/hammerhead/proprietary/venus.mdt:system/vendor/firmware/venus.mdt:qcom \
     vendor/qcom/hammerhead/proprietary/eglsubAndroid.so:system/vendor/lib/egl/eglsubAndroid.so:qcom \
     vendor/qcom/hammerhead/proprietary/libEGL_adreno.so:system/vendor/lib/egl/libEGL_adreno.so:qcom \
     vendor/qcom/hammerhead/proprietary/libGLESv1_CM_adreno.so:system/vendor/lib/egl/libGLESv1_CM_adreno.so:qcom \
     vendor/qcom/hammerhead/proprietary/libGLESv2_adreno.so:system/vendor/lib/egl/libGLESv2_adreno.so:qcom \
+    vendor/qcom/hammerhead/proprietary/libplayback_adreno.so:system/vendor/lib/egl/libplayback_adreno.so:qcom \
+    vendor/qcom/hammerhead/proprietary/libq3dtools_adreno.so:system/vendor/lib/egl/libq3dtools_adreno.so:qcom \
     vendor/qcom/hammerhead/proprietary/sensors.msm8974.so:system/vendor/lib/hw/sensors.msm8974.so:qcom \
-    vendor/qcom/hammerhead/proprietary/libC2D2.so:system/vendor/lib/libC2D2.so:qcom \
-    vendor/qcom/hammerhead/proprietary/libCommandSvc.so:system/vendor/lib/libCommandSvc.so:qcom \
-    vendor/qcom/hammerhead/proprietary/libFuzzmmstillomxenc.so:system/vendor/lib/libFuzzmmstillomxenc.so:qcom \
     vendor/qcom/hammerhead/proprietary/libacdbloader.so:system/vendor/lib/libacdbloader.so:qcom \
     vendor/qcom/hammerhead/proprietary/libacdbrtac.so:system/vendor/lib/libacdbrtac.so:qcom \
     vendor/qcom/hammerhead/proprietary/libadiertac.so:system/vendor/lib/libadiertac.so:qcom \
     vendor/qcom/hammerhead/proprietary/libadreno_utils.so:system/vendor/lib/libadreno_utils.so:qcom \
     vendor/qcom/hammerhead/proprietary/libaudcal.so:system/vendor/lib/libaudcal.so:qcom \
-    vendor/qcom/hammerhead/proprietary/libc2d2_a3xx.so:system/vendor/lib/libc2d2_a3xx.so:qcom \
+    vendor/qcom/hammerhead/proprietary/libC2D2.so:system/vendor/lib/libC2D2.so:qcom \
+    vendor/qcom/hammerhead/proprietary/libc2d30-a3xx.so:system/vendor/lib/libc2d30-a3xx.so:qcom \
+    vendor/qcom/hammerhead/proprietary/libc2d30.so:system/vendor/lib/libc2d30.so:qcom \
+    vendor/qcom/hammerhead/proprietary/libCB.so:system/vendor/lib/libCB.so:qcom \
+    vendor/qcom/hammerhead/proprietary/libCommandSvc.so:system/vendor/lib/libCommandSvc.so:qcom \
     vendor/qcom/hammerhead/proprietary/libconfigdb.so:system/vendor/lib/libconfigdb.so:qcom \
     vendor/qcom/hammerhead/proprietary/libdiag.so:system/vendor/lib/libdiag.so:qcom \
     vendor/qcom/hammerhead/proprietary/libdrmdecrypt.so:system/vendor/lib/libdrmdecrypt.so:qcom \
     vendor/qcom/hammerhead/proprietary/libdsi_netctrl.so:system/vendor/lib/libdsi_netctrl.so:qcom \
     vendor/qcom/hammerhead/proprietary/libdsutils.so:system/vendor/lib/libdsutils.so:qcom \
+    vendor/qcom/hammerhead/proprietary/libFuzzmmstillomxenc.so:system/vendor/lib/libFuzzmmstillomxenc.so:qcom \
+    vendor/qcom/hammerhead/proprietary/libgeofence.so:system/vendor/lib/libgeofence.so:qcom \
     vendor/qcom/hammerhead/proprietary/libgsl.so:system/vendor/lib/libgsl.so:qcom \
     vendor/qcom/hammerhead/proprietary/libidl.so:system/vendor/lib/libidl.so:qcom \
+    vendor/qcom/hammerhead/proprietary/libizat_core.so:system/vendor/lib/libizat_core.so:qcom \
     vendor/qcom/hammerhead/proprietary/libjpegdhw.so:system/vendor/lib/libjpegdhw.so:qcom \
     vendor/qcom/hammerhead/proprietary/libjpegehw.so:system/vendor/lib/libjpegehw.so:qcom \
     vendor/qcom/hammerhead/proprietary/libllvm-a3xx.so:system/vendor/lib/libllvm-a3xx.so:qcom \
+    vendor/qcom/hammerhead/proprietary/libloc_api_v02.so:system/vendor/lib/libloc_api_v02.so:qcom \
+    vendor/qcom/hammerhead/proprietary/libloc_ds_api.so:system/vendor/lib/libloc_ds_api.so:qcom \
     vendor/qcom/hammerhead/proprietary/libmmcamera2_c2d_module.so:system/vendor/lib/libmmcamera2_c2d_module.so:qcom \
     vendor/qcom/hammerhead/proprietary/libmmcamera2_cpp_module.so:system/vendor/lib/libmmcamera2_cpp_module.so:qcom \
     vendor/qcom/hammerhead/proprietary/libmmcamera2_iface_modules.so:system/vendor/lib/libmmcamera2_iface_modules.so:qcom \
@@ -123,17 +132,22 @@ PRODUCT_COPY_FILES := \
     vendor/qcom/hammerhead/proprietary/libqcci_legacy.so:system/vendor/lib/libqcci_legacy.so:qcom \
     vendor/qcom/hammerhead/proprietary/libqdi.so:system/vendor/lib/libqdi.so:qcom \
     vendor/qcom/hammerhead/proprietary/libqdp.so:system/vendor/lib/libqdp.so:qcom \
-    vendor/qcom/hammerhead/proprietary/libqmi.so:system/vendor/lib/libqmi.so:qcom \
     vendor/qcom/hammerhead/proprietary/libqmi_cci.so:system/vendor/lib/libqmi_cci.so:qcom \
     vendor/qcom/hammerhead/proprietary/libqmi_client_qmux.so:system/vendor/lib/libqmi_client_qmux.so:qcom \
     vendor/qcom/hammerhead/proprietary/libqmi_common_so.so:system/vendor/lib/libqmi_common_so.so:qcom \
     vendor/qcom/hammerhead/proprietary/libqmi_csi.so:system/vendor/lib/libqmi_csi.so:qcom \
     vendor/qcom/hammerhead/proprietary/libqmi_encdec.so:system/vendor/lib/libqmi_encdec.so:qcom \
     vendor/qcom/hammerhead/proprietary/libqmiservices.so:system/vendor/lib/libqmiservices.so:qcom \
+    vendor/qcom/hammerhead/proprietary/libqmi.so:system/vendor/lib/libqmi.so:qcom \
     vendor/qcom/hammerhead/proprietary/libqomx_jpegenc.so:system/vendor/lib/libqomx_jpegenc.so:qcom \
     vendor/qcom/hammerhead/proprietary/libril-qcril-hook-oem.so:system/vendor/lib/libril-qcril-hook-oem.so:qcom \
+    vendor/qcom/hammerhead/proprietary/librs_adreno_sha1.so:system/vendor/lib/librs_adreno_sha1.so:qcom \
+    vendor/qcom/hammerhead/proprietary/librs_adreno.so:system/vendor/lib/librs_adreno.so:qcom \
+    vendor/qcom/hammerhead/proprietary/libRSDriver_adreno.so:system/vendor/lib/libRSDriver_adreno.so:qcom \
     vendor/qcom/hammerhead/proprietary/libsc-a3xx.so:system/vendor/lib/libsc-a3xx.so:qcom \
     vendor/qcom/hammerhead/proprietary/libsensor1.so:system/vendor/lib/libsensor1.so:qcom \
     vendor/qcom/hammerhead/proprietary/libsensor_reg.so:system/vendor/lib/libsensor_reg.so:qcom \
     vendor/qcom/hammerhead/proprietary/libsensor_user_cal.so:system/vendor/lib/libsensor_user_cal.so:qcom \
+    vendor/qcom/hammerhead/proprietary/libtime_genoff.so:system/vendor/lib/libtime_genoff.so:qcom \
+    vendor/qcom/hammerhead/proprietary/libTimeService.so:system/vendor/lib/libTimeService.so:qcom \
 

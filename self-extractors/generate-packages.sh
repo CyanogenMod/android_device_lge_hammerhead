@@ -21,8 +21,8 @@
 BRANCH=klp-dev
 if test $BRANCH = klp-dev
 then
-  ZIP=hammerhead-ota-741161
-  BUILD=krs15
+  ZIP=hammerhead-ota-866693
+  BUILD=866693
 fi # klp-dev
 ROOTDEVICE=hammerhead
 DEVICE=hammerhead
@@ -40,12 +40,15 @@ do
     TO_EXTRACT="\
             system/vendor/firmware/bcm2079x-b5_firmware.ncd \
             system/vendor/firmware/bcm2079x-b5_pre_firmware.ncd \
-            system/vendor/firmware/bcm4335a0.hcd \
             system/vendor/firmware/bcm4335c0.hcd \
             "
     ;;
   lge)
     TO_EXTRACT="\
+            system/app/OmaDmclient.apk \
+            system/app/qcrilmsgtunnel.apk \
+            system/app/SprintHiddenMenu.apk \
+            system/app/UpdateSetting.apk \
             system/etc/Bluetooth_cal.acdb \
             system/etc/DxHDCP.cfg \
             system/etc/General_cal.acdb \
@@ -53,9 +56,12 @@ do
             system/etc/Handset_cal.acdb \
             system/etc/Hdmi_cal.acdb \
             system/etc/Headset_cal.acdb \
+            system/etc/permissions/serviceitems.xml \
+            system/etc/qcril.db \
+            system/etc/sensor_def_hh.conf \
             system/etc/Speaker_cal.acdb \
+            system/framework/serviceitems.jar \
             system/vendor/bin/vss_init \
-            system/vendor/firmware/bu24205_LGIT_VER_2_CAL.bin \
             system/vendor/firmware/bu24205_LGIT_VER_2_DATA1.bin \
             system/vendor/firmware/bu24205_LGIT_VER_2_DATA2.bin \
             system/vendor/firmware/bu24205_LGIT_VER_2_DATA3.bin \
@@ -75,9 +81,14 @@ do
             system/vendor/firmware/keymaster/keymaster.mdt \
             system/vendor/lib/libAKM8963.so \
             system/vendor/lib/libDxHdcp.so \
+            system/vendor/lib/libvdmengine.so \
+            system/vendor/lib/libvdmfumo.so \
             system/vendor/lib/libvss_common_core.so \
             system/vendor/lib/libvss_common_idl.so \
             system/vendor/lib/libvss_common_iface.so \
+            system/vendor/lib/libvss_nv_core.so \
+            system/vendor/lib/libvss_nv_idl.so \
+            system/vendor/lib/libvss_nv_iface.so \
             "
     ;;
   qcom)
@@ -98,15 +109,17 @@ do
             system/bin/rmt_storage \
             system/bin/sensors.qcom \
             system/bin/subsystem_ramdump \
-            system/bin/thermal-engine \
+            system/bin/thermal-engine-hh \
+            system/bin/time_daemon \
             system/bin/usbhub \
             system/bin/usbhub_init \
             system/etc/firmware/cpp_firmware_v1_1_1.fw \
             system/etc/firmware/cpp_firmware_v1_1_6.fw \
             system/etc/firmware/cpp_firmware_v1_2_0.fw \
+            system/etc/permissions/qcrilhook.xml \
+            system/framework/qcrilhook.jar \
+            system/lib/hw/flp.msm8974.so \
             system/lib/hw/gps.msm8974.so \
-            system/lib/libI420colorconvert.so \
-            system/lib/libQSEEComAPI.so \
             system/lib/libadsprpc.so \
             system/lib/libchromatix_imx179_common.so \
             system/lib/libchromatix_imx179_default_video.so \
@@ -119,19 +132,20 @@ do
             system/lib/libdrmdiag.so \
             system/lib/libdrmfs.so \
             system/lib/libdrmtime.so \
-            system/lib/libgeofence.so \
             system/lib/libgps.utils.so \
-            system/lib/libloc_adapter.so \
-            system/lib/libloc_api_v02.so \
+            system/lib/libI420colorconvert.so \
+            system/lib/libloc_core.so \
             system/lib/libloc_eng.so \
             system/lib/libmm-abl.so \
-            system/lib/libmm-color-convertor.so \
-            system/lib/libmmQSM.so \
             system/lib/libmmcamera_hdr_lib.so \
             system/lib/libmmcamera_image_stab.so \
             system/lib/libmmcamera_imx179.so \
             system/lib/libmmcamera_mt9m114b.so \
             system/lib/libmmcamera_wavelet_lib.so \
+            system/lib/libmm-color-convertor.so \
+            system/lib/libmmQSM.so \
+            system/lib/liboemcrypto.so \
+            system/lib/libQSEEComAPI.so \
             system/lib/libril-qc-qmi-1.so \
             system/lib/libstagefright_hdcp.so \
             system/lib/libxml.so \
@@ -142,33 +156,39 @@ do
             system/vendor/firmware/venus.b02 \
             system/vendor/firmware/venus.b03 \
             system/vendor/firmware/venus.b04 \
-            system/vendor/firmware/venus.b05 \
-            system/vendor/firmware/venus.b06 \
             system/vendor/firmware/venus.mdt \
             system/vendor/lib/egl/eglsubAndroid.so \
             system/vendor/lib/egl/libEGL_adreno.so \
             system/vendor/lib/egl/libGLESv1_CM_adreno.so \
             system/vendor/lib/egl/libGLESv2_adreno.so \
+            system/vendor/lib/egl/libplayback_adreno.so \
+            system/vendor/lib/egl/libq3dtools_adreno.so \
             system/vendor/lib/hw/sensors.msm8974.so \
-            system/vendor/lib/libC2D2.so \
-            system/vendor/lib/libCommandSvc.so \
-            system/vendor/lib/libFuzzmmstillomxenc.so \
             system/vendor/lib/libacdbloader.so \
             system/vendor/lib/libacdbrtac.so \
             system/vendor/lib/libadiertac.so \
             system/vendor/lib/libadreno_utils.so \
             system/vendor/lib/libaudcal.so \
-            system/vendor/lib/libc2d2_a3xx.so \
+            system/vendor/lib/libC2D2.so \
+            system/vendor/lib/libc2d30-a3xx.so \
+            system/vendor/lib/libc2d30.so \
+            system/vendor/lib/libCB.so \
+            system/vendor/lib/libCommandSvc.so \
             system/vendor/lib/libconfigdb.so \
             system/vendor/lib/libdiag.so \
             system/vendor/lib/libdrmdecrypt.so \
             system/vendor/lib/libdsi_netctrl.so \
             system/vendor/lib/libdsutils.so \
+            system/vendor/lib/libFuzzmmstillomxenc.so \
+            system/vendor/lib/libgeofence.so \
             system/vendor/lib/libgsl.so \
             system/vendor/lib/libidl.so \
+            system/vendor/lib/libizat_core.so \
             system/vendor/lib/libjpegdhw.so \
             system/vendor/lib/libjpegehw.so \
             system/vendor/lib/libllvm-a3xx.so \
+            system/vendor/lib/libloc_api_v02.so \
+            system/vendor/lib/libloc_ds_api.so \
             system/vendor/lib/libmmcamera2_c2d_module.so \
             system/vendor/lib/libmmcamera2_cpp_module.so \
             system/vendor/lib/libmmcamera2_iface_modules.so \
@@ -191,19 +211,24 @@ do
             system/vendor/lib/libqcci_legacy.so \
             system/vendor/lib/libqdi.so \
             system/vendor/lib/libqdp.so \
-            system/vendor/lib/libqmi.so \
             system/vendor/lib/libqmi_cci.so \
             system/vendor/lib/libqmi_client_qmux.so \
             system/vendor/lib/libqmi_common_so.so \
             system/vendor/lib/libqmi_csi.so \
             system/vendor/lib/libqmi_encdec.so \
             system/vendor/lib/libqmiservices.so \
+            system/vendor/lib/libqmi.so \
             system/vendor/lib/libqomx_jpegenc.so \
             system/vendor/lib/libril-qcril-hook-oem.so \
+            system/vendor/lib/librs_adreno_sha1.so \
+            system/vendor/lib/librs_adreno.so \
+            system/vendor/lib/libRSDriver_adreno.so \
             system/vendor/lib/libsc-a3xx.so \
             system/vendor/lib/libsensor1.so \
             system/vendor/lib/libsensor_reg.so \
             system/vendor/lib/libsensor_user_cal.so \
+            system/vendor/lib/libtime_genoff.so \
+            system/vendor/lib/libTimeService.so \
             "
     ;;
   esac
