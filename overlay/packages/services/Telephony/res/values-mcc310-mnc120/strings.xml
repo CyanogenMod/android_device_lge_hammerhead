@@ -15,8 +15,5 @@
 -->
 
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-
-    <string name="additional_system_update" translatable="false">com.lge.update</string>
-    <string name="additional_system_update_menu" translatable="false">com.lge.update.SprintUpdateSetting</string>
-
+    <string name="carrier_settings_title">Carrier settings</string>
 </resources>
