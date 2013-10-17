@@ -287,6 +287,9 @@ PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
     persist.radio.snapshot_enabled=1 \
     persist.radio.snapshot_timer=2
 
+PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
+    persist.radio.use_cc_names=true
+
 # Audio Configuration
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.audio.handset.mic.type=digital \
