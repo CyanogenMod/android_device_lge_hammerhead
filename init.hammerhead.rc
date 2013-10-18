@@ -344,7 +344,7 @@ service wpa_supplicant /system/bin/logwrapper /system/bin/wpa_supplicant \
     disabled
     oneshot
 
-service dhcpcd_wlan0 /system/bin/dhcpcd -ABKLG
+service dhcpcd_wlan0 /system/bin/dhcpcd -ABDKLG
     class late_start
     disabled
     oneshot
