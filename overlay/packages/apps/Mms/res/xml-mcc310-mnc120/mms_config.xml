@@ -48,6 +48,6 @@
     <string name="userAgent">Nexus5</string>
 
      <!-- UAProf URL -->
-    <string name="uaProfUrl">http://gsm.lge.com/html/gsm/Nexus5-M10.xml</string>
+    <string name="uaProfUrl">http://gsm.lge.com/html/gsm/Nexus5-M20.xml</string>
 </mms_config>
 
