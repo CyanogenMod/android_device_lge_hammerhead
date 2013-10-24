@@ -15,14 +15,13 @@
 # limitations under the License.
 
 # start klp-dev
-# 730924 = KRS02B
-# 741161 = KRS15
+# 886418 = KRT16I
 # end klp-dev
 BRANCH=klp-dev
 if test $BRANCH = klp-dev
 then
-  ZIP=hammerhead-ota-866693
-  BUILD=866693
+  ZIP=hammerhead-ota-886418
+  BUILD=krt16i
 fi # klp-dev
 ROOTDEVICE=hammerhead
 DEVICE=hammerhead
@@ -45,12 +44,10 @@ do
     ;;
   lge)
     TO_EXTRACT="\
-            system/app/OmaDmclient.apk \
             system/app/qcrilmsgtunnel.apk \
             system/app/SprintHiddenMenu.apk \
             system/app/UpdateSetting.apk \
             system/etc/Bluetooth_cal.acdb \
-            system/etc/DxHDCP.cfg \
             system/etc/General_cal.acdb \
             system/etc/Global_cal.acdb \
             system/etc/Handset_cal.acdb \
@@ -61,7 +58,6 @@ do
             system/etc/sensor_def_hh.conf \
             system/etc/Speaker_cal.acdb \
             system/framework/serviceitems.jar \
-            system/vendor/bin/vss_init \
             system/vendor/firmware/bu24205_LGIT_VER_2_DATA1.bin \
             system/vendor/firmware/bu24205_LGIT_VER_2_DATA2.bin \
             system/vendor/firmware/bu24205_LGIT_VER_2_DATA3.bin \
@@ -69,26 +65,12 @@ do
             system/vendor/firmware/bu24205_LGIT_VER_3_DATA1.bin \
             system/vendor/firmware/bu24205_LGIT_VER_3_DATA2.bin \
             system/vendor/firmware/bu24205_LGIT_VER_3_DATA3.bin \
-            system/vendor/firmware/discretix/dxhdcp2.b00 \
-            system/vendor/firmware/discretix/dxhdcp2.b01 \
-            system/vendor/firmware/discretix/dxhdcp2.b02 \
-            system/vendor/firmware/discretix/dxhdcp2.b03 \
-            system/vendor/firmware/discretix/dxhdcp2.mdt \
             system/vendor/firmware/keymaster/keymaster.b00 \
             system/vendor/firmware/keymaster/keymaster.b01 \
             system/vendor/firmware/keymaster/keymaster.b02 \
             system/vendor/firmware/keymaster/keymaster.b03 \
             system/vendor/firmware/keymaster/keymaster.mdt \
             system/vendor/lib/libAKM8963.so \
-            system/vendor/lib/libDxHdcp.so \
-            system/vendor/lib/libvdmengine.so \
-            system/vendor/lib/libvdmfumo.so \
-            system/vendor/lib/libvss_common_core.so \
-            system/vendor/lib/libvss_common_idl.so \
-            system/vendor/lib/libvss_common_iface.so \
-            system/vendor/lib/libvss_nv_core.so \
-            system/vendor/lib/libvss_nv_idl.so \
-            system/vendor/lib/libvss_nv_iface.so \
             "
     ;;
   qcom)
@@ -147,7 +129,6 @@ do
             system/lib/liboemcrypto.so \
             system/lib/libQSEEComAPI.so \
             system/lib/libril-qc-qmi-1.so \
-            system/lib/libstagefright_hdcp.so \
             system/lib/libxml.so \
             system/vendor/firmware/a330_pfp.fw \
             system/vendor/firmware/a330_pm4.fw \
