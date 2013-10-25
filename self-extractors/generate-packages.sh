@@ -129,9 +129,29 @@ do
             system/lib/liboemcrypto.so \
             system/lib/libQSEEComAPI.so \
             system/lib/libril-qc-qmi-1.so \
+            system/lib/libstagefright_hdcp.so \
             system/lib/libxml.so \
             system/vendor/firmware/a330_pfp.fw \
             system/vendor/firmware/a330_pm4.fw \
+            system/vendor/firmware/adsp.b00 \
+            system/vendor/firmware/adsp.b01 \
+            system/vendor/firmware/adsp.b02 \
+            system/vendor/firmware/adsp.b03 \
+            system/vendor/firmware/adsp.b04 \
+            system/vendor/firmware/adsp.b05 \
+            system/vendor/firmware/adsp.b06 \
+            system/vendor/firmware/adsp.b07 \
+            system/vendor/firmware/adsp.b08 \
+            system/vendor/firmware/adsp.b09 \
+            system/vendor/firmware/adsp.b10 \
+            system/vendor/firmware/adsp.b11 \
+            system/vendor/firmware/adsp.b12 \
+            system/vendor/firmware/adsp.mdt \
+            system/vendor/firmware/cmnlib.b00 \
+            system/vendor/firmware/cmnlib.b01 \
+            system/vendor/firmware/cmnlib.b02 \
+            system/vendor/firmware/cmnlib.b03 \
+            system/vendor/firmware/cmnlib.mdt \
             system/vendor/firmware/venus.b00 \
             system/vendor/firmware/venus.b01 \
             system/vendor/firmware/venus.b02 \
