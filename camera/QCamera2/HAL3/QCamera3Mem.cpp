@@ -27,7 +27,7 @@
  *
  */
 
-#define LOG_TAG "QCameraHWI_Mem"
+#define LOG_TAG "QCamera3HWI_Mem"
 
 #include <string.h>
 #include <fcntl.h>
@@ -630,7 +630,7 @@ int QCamera3GrallocMemory::registerBuffers(uint32_t num_buffers, buffer_handle_t
                     ALOGE("%s: ion free failed", __func__);
                 }
                 close(mMemInfo[i].main_ion_fd);
-                ALOGD("%s: cancel_buffer: hdl =%p", __func__, (*mBufferHandle[i]));
+                ALOGV("%s: cancel_buffer: hdl =%p", __func__, (*mBufferHandle[i]));
                 mBufferHandle[i] = NULL;
             }
             memset(&mMemInfo, 0, sizeof(mMemInfo));
@@ -657,7 +657,7 @@ int QCamera3GrallocMemory::registerBuffers(uint32_t num_buffers, buffer_handle_t
                 goto end;
             }
         }
-        ALOGD("%s: idx = %d, fd = %d, size = %d, offset = %d",
+        ALOGV("%s: idx = %d, fd = %d, size = %d, offset = %d",
               __func__, cnt, mPrivateHandle[cnt]->fd,
               mPrivateHandle[cnt]->size,
               mPrivateHandle[cnt]->offset);
@@ -712,7 +712,7 @@ void QCamera3GrallocMemory::unregisterBuffers()
             ALOGE("ion free failed");
         }
         close(mMemInfo[cnt].main_ion_fd);
-        ALOGD("put buffer %d successfully", cnt);
+        ALOGV("put buffer %d successfully", cnt);
     }
     mBufferCount = 0;
     ALOGV(" %s : X ",__FUNCTION__);
