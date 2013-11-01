@@ -185,6 +185,7 @@ typedef struct{
     float focal_lengths[CAM_FOCAL_LENGTHS_MAX];
     uint8_t focal_lengths_count;
 
+    /* Needs to be regular f number instead of APEX */
     float apertures[CAM_APERTURES_MAX];
     uint8_t apertures_count;
 
