@@ -3572,7 +3572,7 @@ int QCamera3HardwareInterface::translateMetadataToParameters
                 frame_settings.find(ANDROID_CONTROL_AE_MODE).data.u8[0];
             if (fwk_aeMode > ANDROID_CONTROL_AE_MODE_ON) {
                 respectFlashMode = 0;
-                ALOGI("%s: AE Mode controls flash, ignore android.flash.mode",
+                ALOGV("%s: AE Mode controls flash, ignore android.flash.mode",
                     __func__);
             }
         }
@@ -3582,7 +3582,7 @@ int QCamera3HardwareInterface::translateMetadataToParameters
             flashMode = (int32_t)lookupHalName(FLASH_MODES_MAP,
                                           sizeof(FLASH_MODES_MAP),
                                           flashMode);
-            ALOGI("%s: flash mode after mapping %d", __func__, flashMode);
+            ALOGV("%s: flash mode after mapping %d", __func__, flashMode);
             // To check: CAM_INTF_META_FLASH_MODE usage
             rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_PARM_LED_MODE,
                           sizeof(flashMode), &flashMode);
