@@ -99,8 +99,10 @@ BOARD_SEPOLICY_DIRS += \
 
 # The list below is order dependent
 BOARD_SEPOLICY_UNION += \
+       file.te \
        device.te \
        app.te \
+       ueventd.te \
        file_contexts
 
 HAVE_ADRENO_SOURCE:= false
