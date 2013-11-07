@@ -885,6 +885,8 @@ typedef enum {
     /* specific to HAL3 */
     /* Whether the metadata maps to a valid frame number */
     CAM_INTF_META_FRAME_NUMBER_VALID,
+    /* Whether the urgent metadata maps to a valid frame number */
+    CAM_INTF_META_URGENT_FRAME_NUMBER_VALID,
     /* Whether the stream buffer corresponding this frame is dropped or not */
     CAM_INTF_META_FRAME_DROPPED,
     /* Number of pending requests yet to be processed */
@@ -905,6 +907,9 @@ typedef enum {
     /* A frame counter set by the framework. Must be maintained unchanged in
      * output frame. */
     CAM_INTF_META_FRAME_NUMBER,
+    /* A frame counter set by the framework. Must be maintained unchanged in
+     * output frame. */
+    CAM_INTF_META_URGENT_FRAME_NUMBER,
     /*Number of streams and size of streams in current configuration*/
     CAM_INTF_META_STREAM_INFO,
     /* List of areas to use for metering */
