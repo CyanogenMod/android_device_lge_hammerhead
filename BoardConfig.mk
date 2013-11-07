@@ -89,6 +89,7 @@ BOARD_CHARGER_ENABLE_SUSPEND := true
 TARGET_RECOVERY_PIXEL_FORMAT := RGBX_8888
 TARGET_RECOVERY_UI_LIB := librecovery_ui_hammerhead
 TARGET_RECOVERY_FSTAB = device/lge/hammerhead/fstab.hammerhead
+BOARD_USE_CUSTOM_RECOVERY_FONT := \"roboto_23x41.h\"
 
 TARGET_RELEASETOOLS_EXTENSIONS := device/lge/hammerhead
 
