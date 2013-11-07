@@ -129,7 +129,7 @@ int mm_app_allocate_ion_memory(mm_camera_app_buf_t *buf, int ion_type)
     alloc.len = (alloc.len + 4095) & (~4095);
     alloc.align = 4096;
     alloc.flags = ION_FLAG_CACHED;
-    alloc.heap_mask = ion_type;
+    alloc.heap_id_mask = ion_type;
     rc = ioctl(main_ion_fd, ION_IOC_ALLOC, &alloc);
     if (rc < 0) {
         CDBG_ERROR("ION allocation failed\n");
