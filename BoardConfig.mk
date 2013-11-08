@@ -102,6 +102,7 @@ BOARD_SEPOLICY_UNION += \
        file.te \
        device.te \
        app.te \
+       rmt.te \
        ueventd.te \
        file_contexts
 
