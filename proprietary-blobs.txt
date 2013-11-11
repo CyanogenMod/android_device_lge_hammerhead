@@ -81,6 +81,7 @@
 /system/lib/libQSEEComAPI.so
 /system/lib/libril-qc-qmi-1.so
 /system/lib/libstagefright_hdcp.so
+/system/lib/libWVphoneAPI.so
 /system/lib/libxml.so
 /system/vendor/bin/vss_init
 /system/vendor/firmware/a330_pfp.fw
@@ -125,6 +126,12 @@
 /system/vendor/firmware/venus.b03
 /system/vendor/firmware/venus.b04
 /system/vendor/firmware/venus.mdt
+/system/vendor/firmware/widevine.b00
+/system/vendor/firmware/widevine.b01
+/system/vendor/firmware/widevine.b02
+/system/vendor/firmware/widevine.b03
+/system/vendor/firmware/widevine.mdt
+/system/vendor/lib/drm/libdrmwvmplugin.so
 /system/vendor/lib/egl/eglsubAndroid.so
 /system/vendor/lib/egl/libEGL_adreno.so
 /system/vendor/lib/egl/libGLESv1_CM_adreno.so
@@ -205,3 +212,7 @@
 /system/vendor/lib/libvss_nv_core.so
 /system/vendor/lib/libvss_nv_idl.so
 /system/vendor/lib/libvss_nv_iface.so
+/system/vendor/lib/libwvdrm_L1.so
+/system/vendor/lib/libwvm.so
+/system/vendor/lib/libWVStreamControlAPI_L1.so
+/system/vendor/lib/mediadrm/libwvdrmengine.so
