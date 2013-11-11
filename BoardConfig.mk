@@ -77,7 +77,6 @@ USE_OPENGL_RENDERER := true
 VSYNC_EVENT_PHASE_OFFSET_NS := 7500000
 SF_VSYNC_EVENT_PHASE_OFFSET_NS := 5000000
 TARGET_USES_ION := true
-BOARD_HAS_NO_SELECT_BUTTON := true
 
 # Enable dex-preoptimization to speed up first boot sequence
 ifeq ($(HOST_OS),linux)
@@ -141,6 +140,11 @@ USE_DEVICE_SPECIFIC_CAMERA:= true
 ifeq ($(USE_SVELTE_KERNEL),true)
 MALLOC_IMPL := dlmalloc
 endif
+
+# Recovery
+RECOVERY_FSTAB_VERSION := 2
+BOARD_HAS_NO_SELECT_BUTTON := true
+BOARD_USE_CUSTOM_RECOVERY_FONT := \"roboto_23x41.h\"
 
 -include vendor/lge/hammerhead/BoardConfigVendor.mk
 
