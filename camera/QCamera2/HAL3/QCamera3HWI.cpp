@@ -48,6 +48,7 @@ using namespace android;
 namespace qcamera {
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 #define DATA_PTR(MEM_OBJ,INDEX) MEM_OBJ->getPtr( INDEX )
 cam_capability_t *gCamCapability[MM_CAMERA_MAX_NUM_SENSORS];
@@ -2247,18 +2248,17 @@ void QCamera3HardwareInterface::convertToRegions(cam_rect_t rect, int32_t* regio
 }
 
 /*===========================================================================
- * FUNCTION   : convertFromRegions
+ * FUNCTION   : intersectWithRegions
  *
- * DESCRIPTION: helper method to convert from array to cam_rect_t
+ * DESCRIPTION: helper method to intersect an existing region with new region
  *
  * PARAMETERS :
- *   @rect   : cam_rect_t struct to convert
- *   @region : int32_t destination array
- *   @weight : if we are converting from cam_area_t, weight is valid
- *             else weight = -1
+ *   @roi      : roi to be intersected
+ *   @settings : camera_metadata_t structure containing setting
+ *   @tag      : metadata tag to intersect with roi
  *
  *==========================================================================*/
-void QCamera3HardwareInterface::convertFromRegions(cam_area_t* roi,
+void QCamera3HardwareInterface::intersectWithRegions(cam_area_t* roi,
                                                    const camera_metadata_t *settings,
                                                    uint32_t tag){
     CameraMetadata frame_settings;
@@ -2267,15 +2267,19 @@ void QCamera3HardwareInterface::convertFromRegions(cam_area_t* roi,
     int32_t y_min = frame_settings.find(tag).data.i32[1];
     int32_t x_max = frame_settings.find(tag).data.i32[2];
     int32_t y_max = frame_settings.find(tag).data.i32[3];
-    roi->weight = frame_settings.find(tag).data.i32[4];
-    roi->rect.left = x_min;
-    roi->rect.top = y_min;
-    roi->rect.width = x_max - x_min;
-    roi->rect.height = y_max - y_min;
+    int32_t weight = frame_settings.find(tag).data.i32[4];
+
+    if (weight > 0) {
+        roi->rect.left = MAX(x_min, roi->rect.left);
+        roi->rect.top = MAX(y_min, roi->rect.top);
+        roi->rect.width = MIN(x_max - x_min, roi->rect.width);
+        roi->rect.height = MIN(y_max - y_min, roi->rect.height);
+        roi->weight = weight;
+    }
 }
 
 /*===========================================================================
- * FUNCTION   : resetIfNeededROI
+ * FUNCTION   : convertFromCropRegion
  *
  * DESCRIPTION: helper method to reset the roi if it is greater than scaler
  *              crop region
@@ -2286,34 +2290,14 @@ void QCamera3HardwareInterface::convertFromRegions(cam_area_t* roi,
  *
  *
  *==========================================================================*/
-bool QCamera3HardwareInterface::resetIfNeededROI(cam_area_t* roi,
+void QCamera3HardwareInterface::convertFromCropRegion(cam_area_t* roi,
                                                  const cam_crop_region_t* scalerCropRegion)
 {
-    int32_t roi_x_max = roi->rect.width + roi->rect.left;
-    int32_t roi_y_max = roi->rect.height + roi->rect.top;
-    int32_t crop_x_max = scalerCropRegion->width + scalerCropRegion->left;
-    int32_t crop_y_max = scalerCropRegion->height + scalerCropRegion->top;
-    if ((roi_x_max < scalerCropRegion->left) ||
-        (roi_y_max < scalerCropRegion->top)  ||
-        (roi->rect.left > crop_x_max) ||
-        (roi->rect.top > crop_y_max)){
-        return false;
-    }
-    if (roi->rect.left < scalerCropRegion->left) {
-        roi->rect.left = scalerCropRegion->left;
-    }
-    if (roi->rect.top < scalerCropRegion->top) {
-        roi->rect.top = scalerCropRegion->top;
-    }
-    if (roi_x_max > crop_x_max) {
-        roi_x_max = crop_x_max;
-    }
-    if (roi_y_max > crop_y_max) {
-        roi_y_max = crop_y_max;
-    }
-    roi->rect.width = roi_x_max - roi->rect.left;
-    roi->rect.height = roi_y_max - roi->rect.top;
-    return true;
+    roi->weight = 1;
+    roi->rect.left = scalerCropRegion->left;
+    roi->rect.top = scalerCropRegion->top;
+    roi->rect.width = scalerCropRegion->width;
+    roi->rect.height = scalerCropRegion->height;
 }
 
 /*===========================================================================
@@ -3787,7 +3771,10 @@ int QCamera3HardwareInterface::translateMetadataToParameters
     }
 
     cam_crop_region_t scalerCropRegion;
-    bool scalerCropSet = false;
+    scalerCropRegion.left = 0;
+    scalerCropRegion.top = 0;
+    scalerCropRegion.width = gCamCapability[mCameraId]->active_array_size.width;
+    scalerCropRegion.height = gCamCapability[mCameraId]->active_array_size.height;
     if (frame_settings.exists(ANDROID_SCALER_CROP_REGION)) {
         scalerCropRegion.left =
             frame_settings.find(ANDROID_SCALER_CROP_REGION).data.i32[0];
@@ -3800,7 +3787,6 @@ int QCamera3HardwareInterface::translateMetadataToParameters
         rc = AddSetParmEntryToBatch(mParameters,
                 CAM_INTF_META_SCALER_CROP_REGION,
                 sizeof(scalerCropRegion), &scalerCropRegion);
-        scalerCropSet = true;
     }
 
     if (frame_settings.exists(ANDROID_SENSOR_EXPOSURE_TIME)) {
@@ -3960,44 +3946,32 @@ int QCamera3HardwareInterface::translateMetadataToParameters
                 sizeof(lensShadingMapMode), &lensShadingMapMode);
     }
 
+    cam_area_t roi;
+    convertFromCropRegion(&roi, &scalerCropRegion);
     if (frame_settings.exists(ANDROID_CONTROL_AE_REGIONS)) {
-        cam_area_t roi;
-        bool reset = true;
-        convertFromRegions(&roi, request->settings, ANDROID_CONTROL_AE_REGIONS);
-        if (scalerCropSet) {
-            reset = resetIfNeededROI(&roi, &scalerCropRegion);
-        }
-        if (reset) {
-            rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_AEC_ROI,
-                    sizeof(roi), &roi);
-        }
+        intersectWithRegions(&roi, request->settings, ANDROID_CONTROL_AE_REGIONS);
     }
+    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_AEC_ROI,
+        sizeof(roi), &roi);
 
+    convertFromCropRegion(&roi, &scalerCropRegion);
     if (frame_settings.exists(ANDROID_CONTROL_AF_REGIONS)) {
-        cam_area_t roi;
-        bool reset = true;
-        convertFromRegions(&roi, request->settings, ANDROID_CONTROL_AF_REGIONS);
-        if (scalerCropSet) {
-            reset = resetIfNeededROI(&roi, &scalerCropRegion);
-        }
-        if (reset) {
-            rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_AF_ROI,
-                    sizeof(roi), &roi);
-        }
+        intersectWithRegions(&roi, request->settings, ANDROID_CONTROL_AF_REGIONS);
     }
+    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_AF_ROI,
+        sizeof(roi), &roi);
 
+    roi.rect.left = 0;
+    roi.rect.top = 0;
+    roi.rect.width = gCamCapability[mCameraId]->active_array_size.width;
+    roi.rect.height = gCamCapability[mCameraId]->active_array_size.height;
+    roi.weight = 1;
     if (frame_settings.exists(ANDROID_CONTROL_AWB_REGIONS)) {
-        cam_area_t roi;
-        bool reset = true;
-        convertFromRegions(&roi, request->settings, ANDROID_CONTROL_AWB_REGIONS);
-        if (scalerCropSet) {
-            reset = resetIfNeededROI(&roi, &scalerCropRegion);
-        }
-        if (reset) {
-            rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_AWB_REGIONS,
-                    sizeof(roi), &roi);
-        }
+        intersectWithRegions(&roi, request->settings, ANDROID_CONTROL_AWB_REGIONS);
     }
+    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_AWB_REGIONS,
+        sizeof(roi), &roi);
+
     return rc;
 }
 
