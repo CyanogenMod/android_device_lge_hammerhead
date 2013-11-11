@@ -219,6 +219,10 @@ on post-fs-data
     chmod 664 /sys/devices/system/cpu/cpu3/online
     write /dev/cpuctl/apps/cpu.notify_on_migrate 1
 
+    # Torch
+    chown system camera /sys/class/leds/led:flash_torch/brightness
+    chmod 0660 /sys/class/leds/led:flash_torch/brightness
+
 on charger
     # Booting modem
     wait /dev/block/platform/msm_sdcc.1/by-name/modem

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2013 The CyanogenMod Project
+
+     This program is free software; you can redistribute it and/or
+     modify it under the terms of the GNU General Public License
+     version 3 as published by the Free Software Foundation.
+
+     This program is distributed in the hope that it will be useful,
+     but WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+     GNU General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program; if not, write to the Free Software
+     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+     MA  02110-1301, USA.
+-->
+
+<!-- These resources are around just to allow their values to be customized
+     for different hardware and product builds. -->
+<resources>
+    <!-- If there is no sysfs-based control mechanism, enable this -->
+    <bool name="useCameraInterface">false</bool>
+
+    <!-- Full path to the sysfs toggle -->
+    <string name="flashDevice">/sys/class/leds/led:flash_torch/brightness</string>
+
+    <!-- Lowest setting -->
+    <integer name="valueOn">90</integer>
+    <!-- Middle setting -->
+    <integer name="valueHigh">150</integer>
+    <!-- Highest setting, leave -1 if it doesn't exist -->
+    <integer name="valueDeathRay">200</integer>
+</resources>

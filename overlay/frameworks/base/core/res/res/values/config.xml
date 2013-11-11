@@ -261,4 +261,8 @@
 
     <!-- Disable lockscreen translucent decor by default -->
     <bool name="config_enableLockScreenTranslucentDecor">true</bool>
+
+    <!-- Enable flashlight -->
+    <bool name="config_enableTorch">true</bool>
+
 </resources>
