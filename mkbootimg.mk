@@ -3,7 +3,7 @@ LOCAL_PATH := $(call my-dir)
 ## THIS IS A DEFAULT: YOU SHOULD OVERRIDE IT FROM THE DEVICE-SPECIFIC
 ## BoardConfig. Check the kernel's arch/arm/boot/dts/ path for possible
 ## values.
-G2_DTS_TARGET ?= msm8974-hammerhead-rev-11j
+G2_DTS_TARGET ?= msm8974-hammerhead
 
 
 ## Don't change anything under here. The variables are named G2_whatever
@@ -14,7 +14,7 @@ G2_DTS_TARGET ?= msm8974-hammerhead-rev-11j
 KERNEL_CONFIG := $(KERNEL_OUT)/.config
 G2_DTS_NAMES := msm8974
 
-G2_DTS_FILES = $(wildcard $(TOP)/$(TARGET_KERNEL_SOURCE)/arch/arm/boot/dts/$(G2_DTS_TARGET)/*.dts)
+G2_DTS_FILES = $(wildcard $(TOP)/$(TARGET_KERNEL_SOURCE)/arch/arm/boot/dts/$(G2_DTS_TARGET)*.dts)
 G2_DTS_FILE = $(lastword $(subst /, ,$(1)))
 DTB_FILE = $(addprefix $(KERNEL_OUT)/arch/arm/boot/,$(patsubst %.dts,%.dtb,$(call G2_DTS_FILE,$(1))))
 ZIMG_FILE = $(addprefix $(KERNEL_OUT)/arch/arm/boot/,$(patsubst %.dts,%-zImage,$(call G2_DTS_FILE,$(1))))
