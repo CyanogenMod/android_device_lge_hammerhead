@@ -75,7 +75,7 @@ typedef struct {
     qcamera_release_data_t   release_data; // any data needs to be release after notify
 } qcamera_data_argm_t;
 
-#define MAX_EXIF_TABLE_ENTRIES 16
+#define MAX_EXIF_TABLE_ENTRIES 17
 class QCameraExif
 {
 public:
