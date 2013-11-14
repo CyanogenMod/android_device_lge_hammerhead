@@ -1055,29 +1055,32 @@ void QCamera3HardwareInterface::handleMetadataWithLock(
         mPendingRequest--;
 
         // Check whether any stream buffer corresponding to this is dropped or not
-        // If dropped, then send the ERROR_BUFFER for the corresponding stream
+        // If dropped, then notify ERROR_BUFFER for the corresponding stream and
+        // buffer with CAMERA3_BUFFER_STATUS_ERROR
         if (cam_frame_drop.frame_dropped) {
             camera3_notify_msg_t notify_msg;
             for (List<RequestedBufferInfo>::iterator j = i->buffers.begin();
                     j != i->buffers.end(); j++) {
                 QCamera3Channel *channel = (QCamera3Channel *)j->stream->priv;
-                uint32_t streamTypeMask = channel->getStreamTypeMask();
-                if (streamTypeMask & cam_frame_drop.stream_type_mask) {
-                    // Send Error notify to frameworks with CAMERA3_MSG_ERROR_BUFFER
-                    ALOGV("%s: Start of reporting error frame#=%d, streamMask=%d",
-                           __func__, i->frame_number, streamTypeMask);
-                    notify_msg.type = CAMERA3_MSG_ERROR;
-                    notify_msg.message.error.frame_number = i->frame_number;
-                    notify_msg.message.error.error_code = CAMERA3_MSG_ERROR_BUFFER ;
-                    notify_msg.message.error.error_stream = j->stream;
-                    mCallbackOps->notify(mCallbackOps, &notify_msg);
-                    ALOGV("%s: End of reporting error frame#=%d, streamMask=%d",
-                           __func__, i->frame_number, streamTypeMask);
-                    PendingFrameDropInfo PendingFrameDrop;
-                    PendingFrameDrop.frame_number=i->frame_number;
-                    PendingFrameDrop.stream_type_mask = cam_frame_drop.stream_type_mask;
-                    // Add the Frame drop info to mPendingFrameDropList
-                    mPendingFrameDropList.push_back(PendingFrameDrop);
+                uint32_t streamID = channel->getStreamID(channel->getStreamTypeMask());
+                for (uint32_t k=0; k<cam_frame_drop.cam_stream_ID.num_streams; k++) {
+                  if (streamID == cam_frame_drop.cam_stream_ID.streamID[k]) {
+                      // Send Error notify to frameworks with CAMERA3_MSG_ERROR_BUFFER
+                      ALOGV("%s: Start of reporting error frame#=%d, streamID=%d",
+                             __func__, i->frame_number, streamID);
+                      notify_msg.type = CAMERA3_MSG_ERROR;
+                      notify_msg.message.error.frame_number = i->frame_number;
+                      notify_msg.message.error.error_code = CAMERA3_MSG_ERROR_BUFFER ;
+                      notify_msg.message.error.error_stream = j->stream;
+                      mCallbackOps->notify(mCallbackOps, &notify_msg);
+                      ALOGV("%s: End of reporting error frame#=%d, streamID=%d",
+                             __func__, i->frame_number, streamID);
+                      PendingFrameDropInfo PendingFrameDrop;
+                      PendingFrameDrop.frame_number=i->frame_number;
+                      PendingFrameDrop.stream_ID = streamID;
+                      // Add the Frame drop info to mPendingFrameDropList
+                      mPendingFrameDropList.push_back(PendingFrameDrop);
+                  }
                 }
             }
         }
@@ -1171,12 +1174,11 @@ void QCamera3HardwareInterface::handleMetadataWithLock(
                     for (List<PendingFrameDropInfo>::iterator m = mPendingFrameDropList.begin();
                             m != mPendingFrameDropList.end(); m++) {
                         QCamera3Channel *channel = (QCamera3Channel *)j->buffer->stream->priv;
-                        uint32_t streamTypeMask = channel->getStreamTypeMask();
-                        if((m->stream_type_mask & streamTypeMask) &&
-                                (m->frame_number==frame_number)) {
+                        uint32_t streamID = channel->getStreamID(channel->getStreamTypeMask());
+                        if((m->stream_ID==streamID) && (m->frame_number==frame_number)) {
                             j->buffer->status=CAMERA3_BUFFER_STATUS_ERROR;
-                            ALOGV("%s: Stream STATUS_ERROR frame_number=%d, streamTypeMask=%d",
-                                  __func__, frame_number, streamTypeMask);
+                            ALOGV("%s: Stream STATUS_ERROR frame_number=%d, streamID=%d",
+                                  __func__, frame_number, streamID);
                             m = mPendingFrameDropList.erase(m);
                             break;
                         }
@@ -1247,12 +1249,11 @@ void QCamera3HardwareInterface::handleBufferWithLock(
         for (List<PendingFrameDropInfo>::iterator m = mPendingFrameDropList.begin();
                 m != mPendingFrameDropList.end(); m++) {
             QCamera3Channel *channel = (QCamera3Channel *)buffer->stream->priv;
-            uint32_t streamTypeMask = channel->getStreamTypeMask();
-            if((m->stream_type_mask & streamTypeMask) &&
-                (m->frame_number==frame_number) ) {
+            uint32_t streamID = channel->getStreamID(channel->getStreamTypeMask());
+            if((m->stream_ID==streamID) && (m->frame_number==frame_number)) {
                 buffer->status=CAMERA3_BUFFER_STATUS_ERROR;
-                ALOGV("%s: Stream STATUS_ERROR frame_number=%d, streamTypeMask=%d",
-                        __func__, frame_number, streamTypeMask);
+                ALOGV("%s: Stream STATUS_ERROR frame_number=%d, streamID=%d",
+                        __func__, frame_number, streamID);
                 m = mPendingFrameDropList.erase(m);
                 break;
             }
@@ -1456,7 +1457,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
     }
 
     uint32_t frameNumber = request->frame_number;
-    uint32_t streamTypeMask = 0;
+    cam_stream_ID_t streamID;
 
     if (meta.exists(ANDROID_REQUEST_ID)) {
         request_id = meta.find(ANDROID_REQUEST_ID).data.i32[0];
@@ -1500,10 +1501,11 @@ int QCamera3HardwareInterface::processCaptureRequest(
             pthread_mutex_unlock(&mMutex);
             return rc;
         }
-        streamTypeMask |= channel->getStreamTypeMask();
+        streamID.streamID[i]=channel->getStreamID(channel->getStreamTypeMask());
     }
+    streamID.num_streams=request->num_output_buffers;
 
-    rc = setFrameParameters(request, streamTypeMask);
+    rc = setFrameParameters(request, streamID);
     if (rc < 0) {
         ALOGE("%s: fail to set frame parameters", __func__);
         pthread_mutex_unlock(&mMutex);
@@ -3364,13 +3366,13 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
  *
  * PARAMETERS :
  *   @request   : request that needs to be serviced
- *   @streamTypeMask : bit mask of stream types on which buffers are requested
+ *   @streamID : Stream ID of all the requested streams
  *
  * RETURN     : success: NO_ERROR
  *              failure:
  *==========================================================================*/
 int QCamera3HardwareInterface::setFrameParameters(camera3_capture_request_t *request,
-                    uint32_t streamTypeMask)
+                    cam_stream_ID_t streamID)
 {
     /*translate from camera_metadata_t type to parm_type_t*/
     int rc = 0;
@@ -3398,9 +3400,10 @@ int QCamera3HardwareInterface::setFrameParameters(camera3_capture_request_t *req
         return BAD_VALUE;
     }
 
-    /* Update stream id mask where buffers are requested */
-    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_STREAM_TYPE_MASK,
-                                sizeof(streamTypeMask), &streamTypeMask);
+    /* Update stream id of all the requested buffers */
+    rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_STREAM_ID,
+                                sizeof(cam_stream_ID_t), &streamID);
+
     if (rc < 0) {
         ALOGE("%s: Failed to set stream type mask in the parameters", __func__);
         return BAD_VALUE;

@@ -342,6 +342,27 @@ uint32_t QCamera3Channel::getStreamTypeMask()
 }
 
 /*===========================================================================
+ * FUNCTION   : getStreamID
+ *
+ * DESCRIPTION: Get StreamID of requested stream type
+ *
+ * PARAMETERS : streamMask
+ *
+ * RETURN     : Stream ID
+ *==========================================================================*/
+uint32_t QCamera3Channel::getStreamID(uint32_t streamMask)
+{
+    uint32_t streamID = 0;
+    for (int i = 0; i < m_numStreams; i++) {
+        if (streamMask == (uint32_t )(0x1 << mStreams[i]->getMyType())) {
+            streamID = mStreams[i]->getMyServerID();
+            break;
+        }
+    }
+    return streamID;
+}
+
+/*===========================================================================
  * FUNCTION   : getInternalFormatBuffer
  *
  * DESCRIPTION: return buffer in the internal format structure

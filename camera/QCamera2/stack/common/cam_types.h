@@ -783,6 +783,11 @@ typedef struct {
     uint32_t type[MAX_NUM_STREAMS];
 } cam_stream_size_info_t;
 
+typedef struct {
+    uint32_t num_streams;
+    uint32_t streamID[MAX_NUM_STREAMS];
+} cam_stream_ID_t;
+
 typedef  struct {
     uint8_t is_stats_valid;               /* if histgram data is valid */
     cam_hist_stats_t stats_data;          /* histogram data */
@@ -1032,8 +1037,8 @@ typedef enum {
      * compensate for lens shading for this frame */
     CAM_INTF_META_LENS_SHADING_MAP,
     CAM_INTF_META_PRIVATE_DATA,
-    /* Indicates streams this request needs buffers on */
-    CAM_INTF_META_STREAM_TYPE_MASK,
+    /* Indicates streams ID of all the requested buffers */
+    CAM_INTF_META_STREAM_ID,
     /*AEC info for Exif*/
     CAM_INTF_META_AEC_INFO,
     CAM_INTF_PARM_MAX
@@ -1127,7 +1132,7 @@ typedef enum {
 
 typedef struct {
     uint8_t frame_dropped; /*  This flag indicates whether any stream buffer is dropped or not */
-    uint32_t stream_type_mask; /* if dropped, Stream type mask of dropped streams */
+    cam_stream_ID_t cam_stream_ID; /* if dropped, Stream ID of dropped streams */
 } cam_frame_dropped_t;
 
 typedef struct {
