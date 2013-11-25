@@ -424,6 +424,7 @@ struct msm_isp_event_data {
 #define VIDIOC_MSM_ISP_CFG_STATS_STREAM   _IOWR('V', BASE_VIDIOC_PRIVATE+10, struct msm_vfe_stats_stream_cfg_cmd)
 #define VIDIOC_MSM_ISP_RELEASE_STATS_STREAM   _IOWR('V', BASE_VIDIOC_PRIVATE+11,   struct msm_vfe_stats_stream_release_cmd)
 #define VIDIOC_MSM_ISP_UPDATE_STREAM   _IOWR('V', BASE_VIDIOC_PRIVATE+13, struct msm_vfe_axi_stream_update_cmd)
-#endif
+#define VIDIOC_MSM_ISP_CONFIG_DONE   _IOWR('V', BASE_VIDIOC_PRIVATE+14, int)
 /* WARNING: DO NOT EDIT, AUTO-GENERATED CODE - SEE TOP FOR INSTRUCTIONS */
+#endif
 
