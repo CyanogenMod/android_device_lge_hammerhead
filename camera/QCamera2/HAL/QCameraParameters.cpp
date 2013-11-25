@@ -4173,7 +4173,7 @@ int32_t QCameraParameters::setExposureCompensation(int expComp)
     // Don't need to pass step as part of setParameter because
     // camera daemon is already aware of it.
     return AddSetParmEntryToBatch(m_pParamBuf,
-                                  CAM_INTF_PARM_EXPOSURE_COMPENSATION,
+                                  CAM_INTF_PARM_EV,
                                   sizeof(expComp),
                                   &expComp);
 }

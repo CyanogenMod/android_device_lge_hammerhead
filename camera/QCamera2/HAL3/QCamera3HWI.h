@@ -68,6 +68,14 @@ class QCamera3PicChannel;
 class QCamera3HeapMemory;
 class QCamera3Exif;
 
+typedef struct {
+    camera3_stream_t *stream;
+    camera3_stream_buffer_set_t buffer_set;
+    stream_status_t status;
+    int registered;
+    QCamera3Channel *channel;
+} stream_info_t;
+
 class QCamera3HardwareInterface {
 public:
     /* static variable and functions accessed by camera service */
@@ -82,11 +90,28 @@ public:
                                 const struct camera3_device *, int type);
     static int process_capture_request(const struct camera3_device *,
                                 camera3_capture_request_t *request);
+
     static void get_metadata_vendor_tag_ops(const struct camera3_device *,
                                                vendor_tag_query_ops_t* ops);
+    static const char* get_camera_vendor_section_name(
+            const vendor_tag_query_ops_t *ops,
+            uint32_t tag);
+    static const char* get_camera_vendor_tag_name(
+            const vendor_tag_query_ops_t *ops,
+            uint32_t tag);
+    static int get_camera_vendor_tag_type(
+            const vendor_tag_query_ops_t *ops,
+            uint32_t tag);
+    static int get_camera_vendor_tag_count(
+            const vendor_tag_query_ops_t *ops);
+    static void get_camera_vendor_tags(
+            const vendor_tag_query_ops_t *ops,
+            uint32_t *tag_array);
+
     static void dump(const struct camera3_device *, int fd);
     static int flush(const struct camera3_device *);
     static int close_camera_device(struct hw_device_t* device);
+
 public:
     QCamera3HardwareInterface(int cameraId);
     virtual ~QCamera3HardwareInterface();
@@ -119,23 +144,21 @@ public:
     int configureStreams(camera3_stream_configuration_t *stream_list);
     int registerStreamBuffers(const camera3_stream_buffer_set_t *buffer_set);
     int processCaptureRequest(camera3_capture_request_t *request);
-    void getMetadataVendorTagOps(vendor_tag_query_ops_t* ops);
     void dump(int fd);
     int flush();
 
     int setFrameParameters(camera3_capture_request_t *request, cam_stream_ID_t streamID);
-    int translateMetadataToParameters(const camera3_capture_request_t *request);
+    int setReprocParameters(camera3_capture_request_t *request);
+    int translateToHalMetadata(const camera3_capture_request_t *request, metadata_buffer_t *parm);
     camera_metadata_t* translateCbUrgentMetadataToResultMetadata (
                              metadata_buffer_t *metadata);
 
-    camera_metadata_t* translateCbMetadataToResultMetadata(metadata_buffer_t *metadata,
-                            nsecs_t timestamp, int32_t request_id, int32_t BlobRequest,
-                            jpeg_settings_t* InputJpegSettings, uint32_t frameNumber);
+    camera_metadata_t* translateFromHalMetadata(metadata_buffer_t *metadata,
+                            nsecs_t timestamp, int32_t request_id, int32_t blob);
     int getJpegSettings(const camera_metadata_t *settings);
     int initParameters();
     void deinitParameters();
-    int getMaxUnmatchedFramesInQueue();
-    QCamera3ReprocessChannel *addOnlineReprocChannel(QCamera3Channel *pInputChannel, QCamera3PicChannel *picChHandle);
+    QCamera3ReprocessChannel *addOfflineReprocChannel(QCamera3Channel *pInputChannel, QCamera3PicChannel *picChHandle, metadata_buffer_t *metadata);
     bool needRotationReprocess();
     bool needReprocess();
     bool isWNREnabled();
@@ -153,8 +176,8 @@ private:
 
     int openCamera();
     int closeCamera();
-    int AddSetParmEntryToBatch(parm_buffer_t *p_table,
-                               cam_intf_parm_type_t paramType,
+    int AddSetMetaEntryToBatch(metadata_buffer_t *p_table,
+                               unsigned int paramType,
                                uint32_t paramLength,
                                void *paramValue);
     static int8_t lookupHalName(const QCameraMap arr[],
@@ -176,10 +199,11 @@ private:
                             int32_t enabled,
                             const char *type,
                             uint32_t frameNumber);
+
+    int queueReprocMetadata(metadata_buffer_t *metadata);
 public:
 
     bool needOnlineRotation();
-    void getThumbnailSize(cam_dimension_t &dim);
     int getJpegQuality();
     int calcMaxJpegSize();
     QCamera3Exif *getExifData();
@@ -204,7 +228,7 @@ private:
      //First request yet to be processed after configureStreams
     bool mFirstRequest;
     QCamera3HeapMemory *mParamHeap;
-    parm_buffer_t* mParameters;
+    metadata_buffer_t* mParameters;
     bool m_bWNROn;
 
     /* Data structure to store pending request */
@@ -218,7 +242,6 @@ private:
         int32_t request_id;
         List<RequestedBufferInfo> buffers;
         int blob_request;
-        jpeg_settings_t input_jpeg_settings;
         nsecs_t timestamp;
         uint8_t bNotified;
         int input_buffer_present;
@@ -227,12 +250,6 @@ private:
         uint32_t frame_number;
         uint32_t stream_ID;
     } PendingFrameDropInfo;
-    /*Data structure to store metadata information*/
-    typedef struct {
-       mm_camera_super_buf_t* meta_buf;
-       buffer_handle_t*       zsl_buf_hdl;
-       uint32_t               frame_number;
-    }MetadataBufferInfo;
 
     // Store the Pending buffers for Flushing
     typedef struct {
@@ -250,21 +267,19 @@ private:
         List<PendingBufferInfo> mPendingBufferList;
     } PendingBuffersMap;
 
-    List<MetadataBufferInfo> mStoredMetadataList;
     List<PendingRequestInfo> mPendingRequestsList;
     List<PendingFrameDropInfo> mPendingFrameDropList;
     PendingBuffersMap mPendingBuffersMap;
     pthread_cond_t mRequestCond;
     int mPendingRequest;
     int32_t mCurrentRequestId;
+    camera3_capture_result_t *mLoopBackResult;
+    nsecs_t mLoopBackTimestamp;
 
     //mutex for serialized access to camera3_device_ops_t functions
     pthread_mutex_t mMutex;
 
-    jpeg_settings_t* mJpegSettings;
-    metadata_response_t mMetadataResponse;
     List<stream_info_t*> mStreamInfo;
-    bool mIsZslMode;
 
     int64_t mMinProcessedFrameDuration;
     int64_t mMinJpegFrameDuration;

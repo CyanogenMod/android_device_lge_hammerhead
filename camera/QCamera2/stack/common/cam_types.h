@@ -51,6 +51,8 @@
 #define MAX_NUM_STREAMS          8
 #define MAX_TEST_PATTERN_CNT     8
 
+#define GPS_PROCESSING_METHOD_SIZE 33
+
 typedef enum {
     CAM_HAL_V1 = 1,
     CAM_HAL_V3 = 3
@@ -868,7 +870,8 @@ typedef enum {
 
     /* common between HAL1 and HAL3 */
     CAM_INTF_PARM_ANTIBANDING,
-    CAM_INTF_PARM_EXPOSURE_COMPENSATION,
+    CAM_INTF_PARM_EV,
+    CAM_INTF_PARM_EV_STEP,
     CAM_INTF_PARM_AEC_LOCK,
     CAM_INTF_PARM_FPS_RANGE,
     CAM_INTF_PARM_AWB_LOCK,
@@ -878,11 +881,10 @@ typedef enum {
     CAM_INTF_PARM_LED_MODE,
     CAM_INTF_META_HISTOGRAM, /* 10 */
     CAM_INTF_META_FACE_DETECTION,
-    CAM_INTF_META_AUTOFOCUS_DATA,
 
     /* specific to HAl1 */
+    CAM_INTF_META_AUTOFOCUS_DATA,
     CAM_INTF_PARM_QUERY_FLASH4SNAP,
-    CAM_INTF_PARM_EXPOSURE,
     CAM_INTF_PARM_SHARPNESS,
     CAM_INTF_PARM_CONTRAST,
     CAM_INTF_PARM_SATURATION,
@@ -1074,6 +1076,14 @@ typedef enum {
     CAM_INTF_META_TEST_PATTERN_DATA,
     /*AEC info for Exif*/
     CAM_INTF_META_AEC_INFO,
+    CAM_INTF_META_JPEG_GPS_COORDINATES,
+    CAM_INTF_META_JPEG_GPS_PROC_METHODS,
+    CAM_INTF_META_JPEG_GPS_TIMESTAMP,
+    CAM_INTF_META_JPEG_ORIENTATION,
+    CAM_INTF_META_JPEG_QUALITY,
+    CAM_INTF_META_JPEG_THUMB_QUALITY,
+    CAM_INTF_META_JPEG_THUMB_SIZE,
+
     CAM_INTF_PARM_MAX
 } cam_intf_parm_type_t;
 
@@ -1267,6 +1277,9 @@ typedef struct {
 
     /* number of input reprocess buffers */
     uint8_t num_of_bufs;
+
+    cam_stream_type_t input_stream_type;
+
 } cam_pp_offline_src_config_t;
 
 /* reprocess stream input configuration */
@@ -1283,21 +1296,9 @@ typedef struct {
 } cam_stream_reproc_config_t;
 
 typedef struct {
-    uint8_t crop_enabled;
-    cam_rect_t input_crop;
-} cam_crop_param_t;
-
-typedef struct {
     uint8_t trigger;
     int32_t trigger_id;
 } cam_trigger_t;
-
-typedef struct {
-    cam_denoise_param_t denoise;
-    cam_crop_param_t crop;
-    uint32_t flip;     /* 0 means no flip */
-    int32_t sharpness; /* 0 means no sharpness */
-} cam_per_frame_pp_config_t;
 
 typedef enum {
     CAM_OPT_STAB_OFF,

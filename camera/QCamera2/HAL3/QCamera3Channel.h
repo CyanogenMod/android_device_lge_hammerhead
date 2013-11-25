@@ -76,9 +76,8 @@ public:
                 uint32_t /*frameNumber*/){ return 0;};
     virtual int32_t request(buffer_handle_t * /*buffer*/,
                 uint32_t /*frameNumber*/,
-                jpeg_settings_t* /*mJpegSettings*/,
                 mm_camera_buf_def_t* /*pInputBuffer*/,
-                QCamera3Channel* /*pInputChannel*/){ return 0;};
+                metadata_buffer_t* /*metadata*/){ return 0;};
     virtual void streamCbRoutine(mm_camera_super_buf_t *super_frame,
                             QCamera3Stream *stream) = 0;
 
@@ -224,8 +223,9 @@ public:
     virtual int32_t initialize();
 
     virtual int32_t request(buffer_handle_t *buffer,
-            uint32_t frameNumber, jpeg_settings_t* mJpegSettings,
-            mm_camera_buf_def_t* pInputBuffer,QCamera3Channel* pInputChannel);
+            uint32_t frameNumber,
+            mm_camera_buf_def_t* pInputBuffer,
+            metadata_buffer_t* metadata);
     virtual int32_t registerBuffers(uint32_t num_buffers,
             buffer_handle_t **buffers);
     virtual void streamCbRoutine(mm_camera_super_buf_t *super_frame,
@@ -233,13 +233,12 @@ public:
 
     virtual QCamera3Memory *getStreamBufs(uint32_t le);
     virtual void putStreamBufs();
+
     bool isWNREnabled() {return m_bWNROn;};
     bool needOnlineRotation();
-    void getThumbnailSize(cam_dimension_t &dim);
-    int getJpegQuality();
-    int getJpegRotation();
-    bool isRawSnapshot();
-    QCamera3Exif *getExifData();
+    QCamera3Exif *getExifData(metadata_buffer_t *metadata,
+            jpeg_settings_t *jpeg_settings);
+    void overrideYuvSize(uint32_t width, uint32_t height);
     static void jpegEvtHandle(jpeg_job_status_t status,
             uint32_t /*client_hdl*/,
             uint32_t jobId,
@@ -247,9 +246,10 @@ public:
             void *userdata);
     static void dataNotifyCB(mm_camera_super_buf_t *recvd_frame,
             void *userdata);
-    void queueMetadata(mm_camera_super_buf_t *metadata_buf,
-                                       QCamera3Channel *pMetaChannel,
-                                       bool relinquish);
+    int32_t queueReprocMetadata(metadata_buffer_t *metadata);
+
+private:
+    int32_t queueJpegSetting(int32_t out_buf_index, metadata_buffer_t *metadata);
 
 public:
     static int kMaxBuffers;
@@ -258,15 +258,15 @@ private:
     camera3_stream_t *mCamera3Stream;
     uint32_t mNumBufs;
     buffer_handle_t **mCamera3Buffers;
-    jpeg_settings_t* mJpegSettings;
     int32_t mCurrentBufIndex;
     bool m_bWNROn;
-
+    uint32_t mYuvWidth, mYuvHeight;
 
     QCamera3GrallocMemory *mMemory;
     QCamera3HeapMemory *mYuvMemory;
     QCamera3Channel *m_pMetaChannel;
     mm_camera_super_buf_t *mMetaFrame;
+
 };
 
 // reprocess channel class
@@ -283,6 +283,8 @@ public:
     // online reprocess
     int32_t doReprocess(mm_camera_super_buf_t *frame,
                         mm_camera_super_buf_t *meta_frame);
+    int32_t doReprocessOffline(mm_camera_super_buf_t *frame,
+                        metadata_buffer_t *metadata);
     // offline reprocess
     int32_t doReprocess(int buf_fd, uint32_t buf_length, int32_t &ret_val,
                         mm_camera_super_buf_t *meta_buf);
@@ -294,10 +296,11 @@ public:
                             QCamera3Stream *stream);
     static void dataNotifyCB(mm_camera_super_buf_t *recvd_frame,
                                        void* userdata);
-    int32_t addReprocStreamsFromSource(cam_pp_feature_config_t &config,
+    int32_t addReprocStreamsFromSource(cam_pp_feature_config_t &pp_config,
                                        QCamera3Channel *pSrcChannel,
                                        QCamera3Channel *pMetaChannel);
-    QCamera3Stream *getStreamBySourceHandle(uint32_t srcHandle);
+    QCamera3Stream *getStreamBySrcHandle(uint32_t srcHandle);
+    QCamera3Stream *getSrcStreamBySrcHandle(uint32_t srcHandle);
     int32_t metadataBufDone(mm_camera_super_buf_t *recvd_frame);
 public:
     void *picChHandle;

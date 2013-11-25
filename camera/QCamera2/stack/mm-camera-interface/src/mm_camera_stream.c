@@ -2284,15 +2284,23 @@ int32_t mm_stream_calc_offset_postproc(cam_stream_info_t *stream_info,
                                        cam_stream_buf_plane_info_t *buf_planes)
 {
     int32_t rc = 0;
+    cam_stream_type_t type = CAM_STREAM_TYPE_DEFAULT;
     if (stream_info->reprocess_config.pp_type == CAM_OFFLINE_REPROCESS_TYPE) {
-        if (buf_planes->plane_info.frame_len == 0) {
-            // take offset from input source
-            *buf_planes = stream_info->reprocess_config.offline.input_buf_planes;
+        type = stream_info->reprocess_config.offline.input_stream_type;
+        if (CAM_STREAM_TYPE_DEFAULT == type) {
+            if (buf_planes->plane_info.frame_len == 0) {
+                // take offset from input source
+                *buf_planes = stream_info->reprocess_config.offline.input_buf_planes;
+                return rc;
+            }
+        } else {
+            type = stream_info->reprocess_config.offline.input_stream_type;
         }
-        return rc;
+    } else {
+        type = stream_info->reprocess_config.online.input_stream_type;
     }
 
-    switch (stream_info->reprocess_config.online.input_stream_type) {
+    switch (type) {
     case CAM_STREAM_TYPE_PREVIEW:
     case CAM_STREAM_TYPE_CALLBACK:
     case CAM_STREAM_TYPE_POSTVIEW:
@@ -2324,7 +2332,7 @@ int32_t mm_stream_calc_offset_postproc(cam_stream_info_t *stream_info,
         break;
     default:
         CDBG_ERROR("%s: not supported for stream type %d",
-                   __func__, stream_info->reprocess_config.online.input_stream_type);
+                   __func__, type);
         rc = -1;
         break;
     }
