@@ -94,11 +94,11 @@ PDK_PLATFORM_ZIP_PRODUCT_BINARIES := device/lge/hammerhead-kernel/vmlinux.bz2
 
 BOARD_HAL_STATIC_LIBRARIES := libdumpstate.hammerhead
 
-BOARD_SEPOLICY_DIRS := \
+BOARD_SEPOLICY_DIRS += \
        device/lge/hammerhead/sepolicy
 
 # The list below is order dependent
-BOARD_SEPOLICY_UNION := \
+BOARD_SEPOLICY_UNION += \
        device.te \
        app.te \
        file_contexts
