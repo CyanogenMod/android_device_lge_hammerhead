@@ -6,3 +6,6 @@
 
 # nfc
 /dev/bcm2079x       u:object_r:nfc_device:s0
+
+# Used by keystore to access trustzone
+/dev/qseecom        u:object_r:tee_device:s0
