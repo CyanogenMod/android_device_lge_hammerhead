@@ -9,3 +9,7 @@
 
 # Used by keystore to access trustzone
 /dev/qseecom        u:object_r:tee_device:s0
+
+# rmt_storage is a qualcomm specific daemon responsible
+# for servicing modem filesystem requests.
+/system/bin/rmt_storage            u:object_r:rmt_exec:s0
