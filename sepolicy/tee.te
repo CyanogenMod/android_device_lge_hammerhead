@@ -1,0 +1,11 @@
+# /data/misc/playready labeling
+type_transition tee system_data_file:dir drm_data_file;
+
+# Access /data/misc/playready
+allow tee system_data_file:dir ra_dir_perms;
+allow tee drm_data_file:dir create_dir_perms;
+allow tee drm_data_file:file create_file_perms;
+
+# Read from persist partition
+allow tee persist_file:dir search;
+r_dir_file(tee, persist_data_file)

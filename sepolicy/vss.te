@@ -1,0 +1,7 @@
+type vss, domain;
+type vss_exec, exec_type, file_type;
+
+# Started by init
+init_daemon_domain(vss)
+
+permissive vss;

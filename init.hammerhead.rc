@@ -41,6 +41,7 @@ on init
 
 on fs
     mount_all ./fstab.hammerhead
+    restorecon_recursive /persist
     setprop ro.crypto.fuse_sdcard true
     write /sys/kernel/boot_adsp/boot 1
 
@@ -59,7 +60,9 @@ on boot
 
     # bluetooth LPM
     chown bluetooth net_bt_stack /proc/bluetooth/sleep/lpm
+    restorecon /proc/bluetooth/sleep/lpm
     chown bluetooth net_bt_stack /proc/bluetooth/sleep/btwrite
+    restorecon /proc/bluetooth/sleep/btwrite
 
     #bluetooth UART dev
     chown bluetooth net_bt_stack /sys/devices/platform/msm_serial_hs.0/clock
@@ -170,12 +173,15 @@ on post-fs-data
     mkdir /data/misc/dhcp 0770 dhcp dhcp
     chown dhcp dhcp /data/misc/dhcp
 
+    # Apply correct labeling to DRM files
+    restorecon_recursive /data/misc/playready
+
     # communicate with mpdecision and thermald
-    mkdir /dev/socket/mpdecision 0770 system system
-    chmod 2770 /dev/socket/mpdecision
+    mkdir /dev/socket/mpdecision 2770 root system
 
     # save rtc time offsets
-    mkdir /data/system/time/ 0700 system system
+    mkdir /data/system/time 0700 system system
+    restorecon_recursive /data/system/time
 
     # Ecc_Handler qcril.db
     mkdir /data/misc/radio 0770 radio radio
@@ -287,6 +293,7 @@ on property:sys.boot_completed=1
 service rmt_storage /system/bin/rmt_storage
     class core
     user root
+    group system
 
 service bridgemgrd /system/bin/bridgemgrd
     class main
@@ -301,6 +308,7 @@ service qmuxd /system/bin/qmuxd
 
 service netmgrd /system/bin/netmgrd
     class main
+    group radio
 
 # QCOM sensor
 service sensors /system/bin/sensors.qcom
@@ -313,7 +321,7 @@ service irsc_util /system/bin/irsc_util "/etc/sec_config"
     user root
     oneshot
 
-service p2p_supplicant /system/bin/logwrapper /system/bin/wpa_supplicant \
+service p2p_supplicant /system/bin/wpa_supplicant \
     -iwlan0 -Dnl80211 -c/data/misc/wifi/wpa_supplicant.conf \
     -I/system/etc/wifi/wpa_supplicant_overlay.conf \
     -O/data/misc/wifi/sockets -N \
@@ -330,7 +338,7 @@ service p2p_supplicant /system/bin/logwrapper /system/bin/wpa_supplicant \
     disabled
     oneshot
 
-service wpa_supplicant /system/bin/logwrapper /system/bin/wpa_supplicant \
+service wpa_supplicant /system/bin/wpa_supplicant \
     -iwlan0 -Dnl80211 -c/data/misc/wifi/wpa_supplicant.conf \
     -I/system/etc/wifi/wpa_supplicant_overlay.conf \
     -O/data/misc/wifi/sockets \
@@ -439,7 +447,7 @@ service ssr_ramdump /system/bin/subsystem_ramdump -m -t emmc
 service thermal-engine /system/bin/thermal-engine-hh
    class main
    user root
-   group root
+   group radio
 
 service vss_init /vendor/bin/vss_init
     class late_start
@@ -451,4 +459,3 @@ service time_daemon /system/bin/time_daemon
     class late_start
     user root
     group root
-
