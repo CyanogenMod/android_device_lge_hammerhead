@@ -77,4 +77,12 @@
     </array>
     <!-- This is the battery capacity in mAh -->
     <item name="battery.capacity">2300</item>
+
+    <array name="wifi.batchedscan"> <!-- mA.  Current figures based on .0801 s/c and 75.48mA while scanning -->
+        <value>.0076</value> <!-- 1-8/hr -->
+        <value>.0613</value>  <!-- 9-64/hr -->
+        <value>.4845</value>   <!-- 65-512/hr -->
+        <value>3.870</value>    <!-- 513-4096/hr -->
+        <value>30.96</value>   <!-- 4097-?/hr -->
+    </array>
 </device>

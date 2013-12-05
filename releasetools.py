@@ -110,16 +110,21 @@ def WriteRadio(info, radio_img):
 #                 unsigned int size;
 #         } img_info[];
 # };
+#
+# Hammerhead's bootloader.img contains 6 separate images.
+# Each goes to its own partition:
+#    aboot, rpm, tz, sbl1, sdi, imgdata
+#
+# Hammerhead also has 4 backup partitions:
+#    aboot, rpm, sbl1, tz
+#
+
+release_partitions = "aboot rpm tz sbl1 sdi imgdata"
+debug_partitions = "aboot rpm tz sbl1 sdi imgdata"
+backup_partitions = "aboot rpm sbl1 tz"
 
 def WriteBootloader(info, bootloader):
   info.script.Print("Writing bootloader...")
-
-  # bootloader.img contains 6 separate images.  Each goes to its own
-  # partition; we write all 6 for development devices but skip one for
-  # release devices..  There are backup partitions of all but the
-  # special one that we also write.  The special one is "sbl1", which
-  # does not have a backup, so we don't update it on release devices..
-
 
   header_fmt = "<8sIII"
   header_size = struct.calcsize(header_fmt)
@@ -154,14 +159,13 @@ def WriteBootloader(info, bootloader):
       'package_extract_file("bootloader-flag.txt", "%s");' %
       (misc_device,))
 
-  # flashing sbl1 is somewhat dangerous because if we die while doing
-  # it the device can't boot.  Do it for development devices but not
-  # release devices.
+  # Depending on the build fingerprint, we can decide which partitions
+  # to update.
   fp = info.info_dict["build.prop"]["ro.build.fingerprint"]
   if "release-keys" in fp:
-    to_flash = "sbl2 sbl3 tz rpm aboot".split()
+    to_flash = release_partitions.split()
   else:
-    to_flash = "sbl1 sbl2 sbl3 tz rpm aboot".split()
+    to_flash = debug_partitions.split()
 
   # Write the images to separate files in the OTA package
   for i in to_flash:
@@ -181,8 +185,7 @@ def WriteBootloader(info, bootloader):
       (misc_device,))
 
   try:
-    # there is no "sbl1b" partition
-    for i in "sbl2 sbl3 tz rpm aboot".split():
+    for i in backup_partitions.split():
       _, device = common.GetTypeAndDevice("/"+i+"b", info.info_dict)
       info.script.AppendExtra(
           'package_extract_file("bootloader.%s.img", "%s");' % (i, device))

@@ -109,5 +109,8 @@ BOARD_SEPOLICY_UNION += \
 HAVE_ADRENO_SOURCE:= false
 
 OVERRIDE_RS_DRIVER:= libRSDriver_adreno.so
+TARGET_FORCE_HWC_FOR_VIRTUAL_DISPLAYS := true
+
+TARGET_TOUCHBOOST_FREQUENCY:= 1200
 
 -include vendor/lge/hammerhead/BoardConfigVendor.mk
