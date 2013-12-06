@@ -15,5 +15,3 @@ allow time alarm_device:chr_file rw_file_perms;
 allow time self:socket *;
 
 allow time self:capability { setuid setgid };
-
-permissive time;
