@@ -113,6 +113,12 @@ PRODUCT_CHARACTERISTICS := nosdcard
 DEVICE_PACKAGE_OVERLAYS := \
     device/lge/hammerhead/overlay
 
+PRODUCT_PACKAGES := \
+    libwpa_client \
+    hostapd \
+    wpa_supplicant \
+    wpa_supplicant.conf
+
 # Live Wallpapers
 PRODUCT_PACKAGES += \
     LiveWallpapersPicker \
