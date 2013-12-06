@@ -5,8 +5,6 @@ type bluetooth_loader_exec, exec_type, file_type;
 # Start bdAddrLoader from init
 init_daemon_domain(bluetooth_loader)
 
-permissive bluetooth_loader;
-
 # Read mac address from persist partition
 allow bluetooth_loader persist_file:dir search;
 r_dir_file(bluetooth_loader, persist_bluetooth_file)
