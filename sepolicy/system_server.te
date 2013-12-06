@@ -1,0 +1,20 @@
+# Grant GPU access to system services (e.g., PowerManagerService)
+allow system_server gpu_device:chr_file rw_file_perms;
+
+# Grant access to Qualcomm MSM Interface (QMI) radio sockets to system services
+# (e.g., LocationManager)
+qmux_socket(system_server)
+
+# PowerManagerService access to sensors socket
+unix_socket_connect(system_server, sensors, sensors)
+unix_socket_send(system_server, sensors, sensors)
+allow system_server sensors:unix_stream_socket sendto;
+allow system_server sensors_socket:sock_file r_file_perms;
+
+# mpdecision socket access
+unix_socket_connect(system_server, mpdecision, mpdecision)
+unix_socket_send(system_server, mpdecision, mpdecision)
+allow system_server mpdecision:unix_stream_socket sendto;
+allow system_server mpdecision_socket:dir search;
+
+allow system_server self:netlink_socket create_socket_perms;
