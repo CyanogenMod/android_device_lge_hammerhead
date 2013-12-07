@@ -219,6 +219,19 @@
         <path name="compress-offload-playback" />
     </path>
 
+    <path name="compress-offload-playback afe-proxy">
+        <ctl name="AFE_PCM_RX Audio Mixer MultiMedia4" value="1" />
+    </path>
+
+    <path name="compress-offload-playback usb-headphones">
+        <path name="compress-offload-playback afe-proxy" />
+    </path>
+
+    <path name="compress-offload-playback speaker-and-usb-headphones">
+        <path name="compress-offload-playback usb-headphones" />
+        <path name="compress-offload-playback" />
+    </path>
+
     <path name="audio-record">
         <ctl name="MultiMedia1 Mixer SLIM_0_TX" value="1" />
     </path>
