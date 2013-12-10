@@ -24,9 +24,13 @@ on early-init
     chown system system /sys/kernel/debug/kgsl/proc
 
 on init
+    chmod 0701 /mnt/media_rw
+    mkdir /mnt/media_rw/usbdisk 0775 system system
+
     # Set permissions for persist partition
     mkdir /persist 0771 system system
     mkdir /firmware 0771 system system
+    mkdir /storage/usbdisk 0000 system system
 
     # Support legacy paths
     symlink /sdcard /mnt/sdcard
@@ -397,6 +401,10 @@ service qseecomd /system/bin/qseecomd
     class core
     user root
     group root
+
+service fuse_usbdisk /system/bin/sdcard -u 1023 -g 1023 /mnt/media_rw/usbdisk /storage/usbdisk
+    class late_start
+    disabled
 
 service charger /sbin/healthd -c
     class charger
