@@ -456,3 +456,7 @@ service time_daemon /system/bin/time_daemon
     user root
     group root
 
+service audiod /system/bin/audiod
+    class late_start
+    user system
+    group system
