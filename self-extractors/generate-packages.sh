@@ -20,8 +20,8 @@
 BRANCH=klp-dev
 if test $BRANCH = klp-dev
 then
-  ZIP=hammerhead-ota-886418
-  BUILD=krt16i
+  ZIP=hammerhead-ota-937116
+  BUILD=kot49h
 fi # klp-dev
 ROOTDEVICE=hammerhead
 DEVICE=hammerhead
@@ -58,6 +58,7 @@ do
             system/etc/sensor_def_hh.conf \
             system/etc/Speaker_cal.acdb \
             system/framework/serviceitems.jar \
+            system/vendor/bin/vss_init \
             system/vendor/firmware/bu24205_LGIT_VER_2_DATA1.bin \
             system/vendor/firmware/bu24205_LGIT_VER_2_DATA2.bin \
             system/vendor/firmware/bu24205_LGIT_VER_2_DATA3.bin \
@@ -71,6 +72,12 @@ do
             system/vendor/firmware/keymaster/keymaster.b03 \
             system/vendor/firmware/keymaster/keymaster.mdt \
             system/vendor/lib/libAKM8963.so \
+            system/vendor/lib/libvss_common_core.so \
+            system/vendor/lib/libvss_common_idl.so \
+            system/vendor/lib/libvss_common_iface.so \
+            system/vendor/lib/libvss_nv_core.so \
+            system/vendor/lib/libvss_nv_idl.so \
+            system/vendor/lib/libvss_nv_iface.so \
             "
     ;;
   qcom)
