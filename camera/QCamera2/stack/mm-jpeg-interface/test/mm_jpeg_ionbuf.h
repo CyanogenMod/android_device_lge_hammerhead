@@ -36,7 +36,6 @@
 #include <sys/mman.h>
 #include <unistd.h>
 #include <errno.h>
-#include <linux/android_pmem.h>
 #include <fcntl.h>
 #include "mm_jpeg_dbg.h"
 
