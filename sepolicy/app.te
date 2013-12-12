@@ -1,6 +1,2 @@
-# Grant GPU access to all processes started by Zygote.
-# They need that to render the standard UI.
-allow appdomain gpu_device:chr_file { rw_file_perms execute };
-
 # Grant access to qmux socket that is created by rild
 allow radio rild_qmuxd_socket:sock_file rw_file_perms;
