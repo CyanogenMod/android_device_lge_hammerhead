@@ -129,6 +129,10 @@ on boot
     #venus
     write /sys/bus/msm_subsys/devices/subsys2/restart_level "related"
 
+    # Modem logging collection
+    mkdir /data/diag_logs 0777 system system
+    chmod 666 /dev/diag
+
     # leds
     chown system system /sys/class/leds/red/on_off_ms
     chown system system /sys/class/leds/green/on_off_ms
