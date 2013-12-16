@@ -9,3 +9,4 @@ allow tee drm_data_file:file create_file_perms;
 # Read from persist partition
 allow tee persist_file:dir search;
 r_dir_file(tee, persist_data_file)
+r_dir_file(tee, persist_drm_file)
