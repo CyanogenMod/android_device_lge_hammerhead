@@ -105,6 +105,7 @@ BOARD_SEPOLICY_UNION += \
        camera.te \
        device.te \
        file.te \
+       irsc_util.te \
        mediaserver.te \
        mpdecision.te \
        netmgrd.te \
