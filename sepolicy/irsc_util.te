@@ -1,0 +1,7 @@
+# irsc_util
+
+type irsc_util, domain;
+type irsc_util_exec, exec_type, file_type;
+
+init_daemon_domain(irsc_util)
+unconfined_domain(irsc_util)
