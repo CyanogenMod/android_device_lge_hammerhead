@@ -125,6 +125,10 @@ BOARD_SEPOLICY_UNION += \
        genfs_contexts \
        te_macros
 
+ifneq ($(TARGET_BUILD_VARIANT),user)
+       BOARD_SEPOLICY_UNION += domain.te
+endif
+
 HAVE_ADRENO_SOURCE:= false
 
 OVERRIDE_RS_DRIVER:= libRSDriver_adreno.so
