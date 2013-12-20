@@ -1,3 +1,5 @@
+allow tee self:process execmem;
+
 # /data/misc/playready labeling
 type_transition tee system_data_file:dir drm_data_file;
 
