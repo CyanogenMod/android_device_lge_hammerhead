@@ -46,6 +46,14 @@ char const *const GREEN_TIMEOUT_FILE = "/sys/class/leds/green/on_off_ms";
 char const *const BLUE_TIMEOUT_FILE  = "/sys/class/leds/blue/on_off_ms";
 char const *const RGB_LOCKED_FILE    = "/sys/class/leds/red/rgb_start";
 
+struct led_config {
+    unsigned int colorRGB;
+    int onMS, offMS;
+};
+
+static struct led_config g_leds[3]; // For battery, notifications, and attention.
+static int g_cur_led = -1;          // Presently showing LED of the above.
+
 /**
  * device methods
  */
@@ -119,43 +127,16 @@ static int set_light_backlight(struct light_device_t* dev,
     return err;
 }
 
-static int set_light_locked(struct light_state_t const* state, int type)
-{
-    int len;
-    int red, green, blue;
-    int onMS, offMS;
-    unsigned int colorRGB;
+static int write_leds_locked(struct led_config *led) {
+    static const struct led_config led_off = {0, 0, 0};
 
-    switch (state->flashMode) {
-    case LIGHT_FLASH_TIMED:
-    case LIGHT_FLASH_HARDWARE:
-        onMS = state->flashOnMS;
-        offMS = state->flashOffMS;
-        break;
-    case LIGHT_FLASH_NONE:
-    default:
-        onMS = 0;
-        offMS = 0;
-        break;
+    if (led == NULL) {
+        led = (struct led_config *) &led_off;
     }
 
-    colorRGB = state->color;
-
-#if DEBUG
-    ALOGD("set_light_locked mode %d, colorRGB=%08X, onMS=%d, offMS=%d\n",
-            state->flashMode, colorRGB, onMS, offMS);
-#endif
-
-    red = (colorRGB >> 16) & 0xFF;
-    green = (colorRGB >> 8) & 0xFF;
-    blue = colorRGB & 0xFF;
-
-    // due to limitation of driver
-    if (onMS == 0) {
-        red = 0;
-        green = 0;
-        blue = 0;
-    }
+    int red = (led->colorRGB >> 16) & 0xFF;
+    int green = (led->colorRGB >> 8) & 0xFF;
+    int blue = led->colorRGB & 0xFF;
 
     write_int(RGB_LOCKED_FILE, 0);
 
@@ -163,16 +144,83 @@ static int set_light_locked(struct light_state_t const* state, int type)
     write_int(GREEN_LED_FILE, green);
     write_int(BLUE_LED_FILE, blue);
 
-    write_on_off(RED_TIMEOUT_FILE, onMS, offMS);
-    write_on_off(GREEN_TIMEOUT_FILE, onMS, offMS);
-    write_on_off(BLUE_TIMEOUT_FILE, onMS, offMS);
+    write_on_off(RED_TIMEOUT_FILE, led->onMS, led->offMS);
+    write_on_off(GREEN_TIMEOUT_FILE, led->onMS, led->offMS);
+    write_on_off(BLUE_TIMEOUT_FILE, led->onMS, led->offMS);
 
     write_int(RGB_LOCKED_FILE, 1);
 
     return 0;
 }
 
-static int set_light_notifications(struct light_device_t* dev,
+static int set_light_locked(struct light_state_t const* state, int type)
+{
+    int red, green, blue;
+    struct led_config *led;
+    int err = 0;
+
+    if (type < 0 || (unsigned int)type >= sizeof(g_leds)/sizeof(g_leds[0]))
+        return -EINVAL;
+
+    /* type is one of:
+     *   0. battery
+     *   1. notifications
+     *   2. attention
+     * which are multiplexed onto the same physical LED in the above order. */
+    led = &g_leds[type];
+
+    switch (state->flashMode) {
+    case LIGHT_FLASH_TIMED:
+    case LIGHT_FLASH_HARDWARE:
+        led->onMS = state->flashOnMS;
+        led->offMS = state->flashOffMS;
+        break;
+    case LIGHT_FLASH_NONE:
+    default:
+        led->onMS = 0;
+        led->offMS = 0;
+        break;
+    }
+
+#if DEBUG
+    ALOGD("set_light_locked: mode %d, color=%08X, onMS=%d, offMS=%d, type=%d\n",
+            state->flashMode, state->color, led->onMS, led->offMS, type);
+#endif
+
+    led->colorRGB = state->color & 0x00ffffff;
+
+    if (led->colorRGB > 0) {
+        /* This LED is lit. */
+        if (type >= g_cur_led) {
+            /* And it has the highest priority, so show it. */
+            err = write_leds_locked(led);
+            g_cur_led = type;
+        }
+    } else {
+        /* This LED is not (any longer) lit. */
+        if (type == g_cur_led) {
+            /* But it is currently showing, switch to a lower-priority LED. */
+            int i;
+
+            for (i = type-1; i >= 0; i--) {
+                if (g_leds[i].colorRGB > 0) {
+                    /* Found a lower-priority LED to switch to. */
+                    err = write_leds_locked(&g_leds[i]);
+                    goto switched;
+                }
+            }
+
+            /* No LEDs are lit, turn off. */
+            err = write_leds_locked(NULL);
+switched:
+            g_cur_led = i;
+        }
+    }
+
+    return err;
+}
+
+static int set_light_battery(struct light_device_t* dev,
         struct light_state_t const* state)
 {
     pthread_mutex_lock(&g_lock);
@@ -182,11 +230,40 @@ static int set_light_notifications(struct light_device_t* dev,
     return 0;
 }
 
-static int set_light_attention(struct light_device_t* dev,
+static int set_light_notifications(struct light_device_t* dev,
         struct light_state_t const* state)
 {
     pthread_mutex_lock(&g_lock);
     set_light_locked(state, 1);
+    pthread_mutex_unlock(&g_lock);
+
+    return 0;
+}
+
+static int set_light_attention(struct light_device_t* dev,
+        struct light_state_t const* state)
+{
+    struct light_state_t fixed;
+
+    pthread_mutex_lock(&g_lock);
+
+    memcpy(&fixed, state, sizeof(fixed));
+    /* The framework does odd things with the attention lights, fix them up to
+     * do something sensible here. */
+    switch (fixed.flashMode) {
+    case LIGHT_FLASH_NONE:
+        /* LightsService.Light::stopFlashing calls with non-zero color. */
+        fixed.color = 0;
+        break;
+    case LIGHT_FLASH_HARDWARE:
+        /* PowerManagerService::setAttentionLight calls with onMS=3, offMS=0, which
+         * just makes for a slightly-dimmer LED. */
+        if (fixed.flashOnMS > 0 && fixed.flashOffMS == 0)
+            fixed.flashMode = LIGHT_FLASH_NONE;
+        break;
+    }
+
+    set_light_locked(&fixed, 2);
     pthread_mutex_unlock(&g_lock);
 
     return 0;
@@ -221,6 +298,8 @@ static int open_lights(const struct hw_module_t* module, char const* name,
         set_light = set_light_notifications;
     else if (!strcmp(LIGHT_ID_ATTENTION, name))
         set_light = set_light_attention;
+    else if (!strcmp(LIGHT_ID_BATTERY, name))
+        set_light = set_light_battery;
     else
         return -EINVAL;
 
