@@ -120,8 +120,7 @@
 /sys/module/pm_8x60/modes(/.*)?        u:object_r:sysfs_mpdecision:s0
 
 # Sysfs files used by surfaceflinger
-/sys/devices/virtual/graphics/fb1/format_3d -- u:object_r:sysfs_surfaceflinger:s0
-/sys/devices/virtual/graphics/fb1/hpd       -- u:object_r:sysfs_surfaceflinger:s0
+/sys/devices/virtual/graphics/fb1(/.*)? -- u:object_r:sysfs_surfaceflinger:s0
 
 # Sysfs files used by qmuxd
 /sys/devices/virtual/smdpkt/smdcntl([0-9])+/open_timeout u:object_r:sysfs_smdcntl_open_timeout:s0
