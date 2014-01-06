@@ -12,8 +12,7 @@ allow sensors self:capability chown;
 dontaudit sensors self:capability fsetid;
 
 # Access /data/misc/sensors/debug and /data/system/sensors/settings
-allow sensors self:capability dac_read_search;
-dontaudit sensors self:capability dac_override;
+allow sensors self:capability { dac_override dac_read_search };
 
 # Create /data/app/sensor_ctl_socket (Might want to change location).
 type_transition sensors apk_data_file:sock_file sensors_socket "sensor_ctl_socket";
