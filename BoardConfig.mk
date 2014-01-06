@@ -110,6 +110,7 @@ BOARD_SEPOLICY_UNION += \
        mpdecision.te \
        netmgrd.te \
        qmux.te \
+       radio.te \
        rild.te \
        rmt.te \
        sensors.te \
