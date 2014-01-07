@@ -30,3 +30,6 @@ dontaudit netmgrd system_file:file execute_no_trans;
 unix_socket_connect(netmgrd, property, init)
 # Set net.rmnet0.* values
 allow netmgrd radio_prop:property_service set;
+
+# Access to /proc/sys/net/*
+allow netmgrd proc_net:file write;
