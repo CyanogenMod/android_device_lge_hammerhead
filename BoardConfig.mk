@@ -124,4 +124,6 @@ BOARD_USE_CUSTOM_RECOVERY_FONT := \"roboto_23x41.h\"
 # Flags
 COMMON_GLOBAL_CFLAGS += -DNO_SECURE_DISCARD
 
+TARGET_USES_CM_POWERHAL := true
+
 -include vendor/lge/hammerhead/BoardConfigVendor.mk
