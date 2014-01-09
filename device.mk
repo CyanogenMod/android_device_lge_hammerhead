@@ -203,6 +203,9 @@ PRODUCT_PACKAGES += \
     qrngd \
     qrngp
 
+PRODUCT_PACKAGES += \
+    init.recovery.hammerhead.rc
+
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.opengles.version=196608
 
