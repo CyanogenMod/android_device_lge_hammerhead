@@ -9,7 +9,7 @@ allow thermald self:socket create_socket_perms;
 
 # CPU hotplug uevent
 allow thermald self:netlink_kobject_uevent_socket { create setopt bind read };
-# XXX: The dac_override should likely be fixed. It is included to
+# b/12450712: The dac_override should likely be fixed. It is included to
 # allow access to a few /sys/module/msm_thermal/ files. Once
 # the proper perms on those files are fixed this can likely be
 # reverted. We also want to auditallow every instance
