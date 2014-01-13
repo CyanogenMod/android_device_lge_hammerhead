@@ -15,3 +15,5 @@ allow system_server mpdecision:unix_stream_socket sendto;
 allow system_server mpdecision_socket:dir search;
 
 allow system_server self:netlink_socket create_socket_perms;
+
+allow system_server rtc:chr_file rw_file_perms;
