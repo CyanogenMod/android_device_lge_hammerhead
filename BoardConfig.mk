@@ -104,6 +104,7 @@ BOARD_SEPOLICY_UNION += \
        bridge.te \
        camera.te \
        device.te \
+       domain.te \
        file.te \
        irsc_util.te \
        mediaserver.te \
@@ -127,10 +128,6 @@ BOARD_SEPOLICY_UNION += \
        file_contexts \
        genfs_contexts \
        te_macros
-
-ifneq ($(TARGET_BUILD_VARIANT),user)
-       BOARD_SEPOLICY_UNION += domain.te
-endif
 
 HAVE_ADRENO_SOURCE:= false
 
