@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2014, The Linux Foundataion. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -221,13 +221,28 @@ private:
         uint32_t frame_number;
         uint32_t stream_ID;
     } PendingFrameDropInfo;
-    typedef KeyedVector<camera3_stream_t *, uint32_t> PendingBuffersMap;
     /*Data structure to store metadata information*/
     typedef struct {
        mm_camera_super_buf_t* meta_buf;
        buffer_handle_t*       zsl_buf_hdl;
        uint32_t               frame_number;
     }MetadataBufferInfo;
+
+    // Store the Pending buffers for Flushing
+    typedef struct {
+        // Frame number pertaining to the buffer
+        uint32_t frame_number;
+        camera3_stream_t *stream;
+        // Buffer handle
+        buffer_handle_t *buffer;
+    } PendingBufferInfo;
+
+    typedef struct {
+        // Total number of buffer requests pending
+        uint32_t num_buffers;
+        // List of pending buffers
+        List<PendingBufferInfo> mPendingBufferList;
+    } PendingBuffersMap;
 
     List<MetadataBufferInfo> mStoredMetadataList;
     List<PendingRequestInfo> mPendingRequestsList;

@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2014, The Linux Foundataion. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -224,7 +224,7 @@ QCamera3HardwareInterface::~QCamera3HardwareInterface()
         /*flush the metadata list*/
     if (!mStoredMetadataList.empty()) {
         for (List<MetadataBufferInfo>::iterator m = mStoredMetadataList.begin();
-              m != mStoredMetadataList.end(); m++) {
+              m != mStoredMetadataList.end(); ) {
             mMetadataChannel->bufDone(m->meta_buf);
             free(m->meta_buf);
             m = mStoredMetadataList.erase(m);
@@ -271,6 +271,9 @@ QCamera3HardwareInterface::~QCamera3HardwareInterface()
 
     if (mCameraOpened)
         closeCamera();
+
+    mPendingBuffersMap.mPendingBufferList.clear();
+    mPendingRequestsList.clear();
 
     for (size_t i = 0; i < CAMERA3_TEMPLATE_COUNT; i++)
         if (mDefaultMetadata[i])
@@ -743,19 +746,14 @@ int QCamera3HardwareInterface::configureStreams(
                         __func__, channel, (*it)->buffer_set.num_buffers);
             }
         }
-
-        ssize_t index = mPendingBuffersMap.indexOfKey((*it)->stream);
-        if (index == NAME_NOT_FOUND) {
-            mPendingBuffersMap.add((*it)->stream, 0);
-        } else {
-            mPendingBuffersMap.editValueAt(index) = 0;
-        }
     }
 
     /* Initialize mPendingRequestInfo and mPendnigBuffersMap */
     mPendingRequestsList.clear();
-
     mPendingFrameDropList.clear();
+    // Initialize/Reset the pending buffers list
+    mPendingBuffersMap.num_buffers = 0;
+    mPendingBuffersMap.mPendingBufferList.clear();
 
     /*flush the metadata list*/
     if (!mStoredMetadataList.empty()) {
@@ -1182,10 +1180,23 @@ void QCamera3HardwareInterface::handleMetadataWithLock(
                             break;
                         }
                     }
+
+                    for (List<PendingBufferInfo>::iterator k =
+                      mPendingBuffersMap.mPendingBufferList.begin();
+                      k != mPendingBuffersMap.mPendingBufferList.end(); k++) {
+                      if (k->buffer == j->buffer->buffer) {
+                        ALOGV("%s: Found buffer %p in pending buffer List "
+                              "for frame %d, Take it out!!", __func__,
+                               k->buffer, k->frame_number);
+                        mPendingBuffersMap.num_buffers--;
+                        k = mPendingBuffersMap.mPendingBufferList.erase(k);
+                        break;
+                      }
+                    }
+
                     result_buffers[result_buffers_idx++] = *(j->buffer);
                     free(j->buffer);
                     j->buffer = NULL;
-                    mPendingBuffersMap.editValueFor(j->stream)--;
                 }
             }
             result.output_buffers = result_buffers;
@@ -1259,8 +1270,23 @@ void QCamera3HardwareInterface::handleBufferWithLock(
         }
         result.output_buffers = buffer;
         ALOGV("%s: result frame_number = %d, buffer = %p",
-                __func__, frame_number, buffer);
-        mPendingBuffersMap.editValueFor(buffer->stream)--;
+                __func__, frame_number, buffer->buffer);
+
+        for (List<PendingBufferInfo>::iterator k =
+                mPendingBuffersMap.mPendingBufferList.begin();
+                k != mPendingBuffersMap.mPendingBufferList.end(); k++ ) {
+            if (k->buffer == buffer->buffer) {
+                ALOGV("%s: Found Frame buffer, take it out from list",
+                        __func__);
+
+                mPendingBuffersMap.num_buffers--;
+                k = mPendingBuffersMap.mPendingBufferList.erase(k);
+                break;
+            }
+        }
+        ALOGV("%s: mPendingBuffersMap.num_buffers = %d",
+            __func__, mPendingBuffersMap.num_buffers);
+
         if (buffer->stream->stream_type == CAMERA3_STREAM_BIDIRECTIONAL) {
             int found = 0;
             for (List<MetadataBufferInfo>::iterator k = mStoredMetadataList.begin();
@@ -1311,14 +1337,27 @@ void QCamera3HardwareInterface::handleBufferWithLock(
 void QCamera3HardwareInterface::unblockRequestIfNecessary()
 {
     bool max_buffers_dequeued = false;
-    for (size_t i = 0; i < mPendingBuffersMap.size(); i++) {
-        const camera3_stream_t *stream = mPendingBuffersMap.keyAt(i);
-        uint32_t queued_buffers = mPendingBuffersMap.valueAt(i);
-        if (queued_buffers == stream->max_buffers) {
-            max_buffers_dequeued = true;
-            break;
+
+    uint32_t queued_buffers = 0;
+    for(List<stream_info_t*>::iterator it=mStreamInfo.begin();
+        it != mStreamInfo.end(); it++) {
+        queued_buffers = 0;
+        for (List<PendingBufferInfo>::iterator k =
+            mPendingBuffersMap.mPendingBufferList.begin();
+            k != mPendingBuffersMap.mPendingBufferList.end(); k++ ) {
+            if (k->stream == (*it)->stream)
+                queued_buffers++;
+
+            ALOGV("%s: Dequeued %d buffers for stream %p", __func__,
+                queued_buffers, (*it)->stream);
+            if (queued_buffers >=(* it)->stream->max_buffers) {
+                ALOGV("%s: Wait!!! Max buffers Dequed", __func__);
+                max_buffers_dequeued = true;
+                break;
+            }
         }
     }
+
     if (!max_buffers_dequeued) {
         // Unblock process_capture_request
         pthread_cond_signal(&mRequestCond);
@@ -1528,8 +1567,19 @@ int QCamera3HardwareInterface::processCaptureRequest(
         requestedBuf.buffer = NULL;
         pendingRequest.buffers.push_back(requestedBuf);
 
-        mPendingBuffersMap.editValueFor(requestedBuf.stream)++;
+        // Add to buffer handle the pending buffers list
+        PendingBufferInfo bufferInfo;
+        bufferInfo.frame_number = frameNumber;
+        bufferInfo.buffer = request->output_buffers[i].buffer;
+        bufferInfo.stream = request->output_buffers[i].stream;
+        mPendingBuffersMap.mPendingBufferList.push_back(bufferInfo);
+        mPendingBuffersMap.num_buffers++;
+        ALOGV("%s: frame = %d, buffer = %p, stream = %p, stream format = %d",
+          __func__, frameNumber, bufferInfo.buffer, bufferInfo.stream,
+          bufferInfo.stream->format);
     }
+    ALOGV("%s: mPendingBuffersMap.num_buffers = %d",
+          __func__, mPendingBuffersMap.num_buffers);
     mPendingRequestsList.push_back(pendingRequest);
 
     // Notify metadata channel we receive a request
@@ -1693,12 +1743,157 @@ void QCamera3HardwareInterface::dump(int /*fd*/)
  *==========================================================================*/
 int QCamera3HardwareInterface::flush()
 {
-    /*Enable lock when we implement this function*/
-    /*
+
+    unsigned int frameNum = 0;
+    camera3_notify_msg_t notify_msg;
+    camera3_capture_result_t result;
+    camera3_stream_buffer_t pStream_Buf;
+
+    ALOGV("%s: Unblocking Process Capture Request", __func__);
+
+    // Stop the Streams/Channels
+    for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
+        it != mStreamInfo.end(); it++) {
+        QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
+        channel->stop();
+        (*it)->status = INVALID;
+    }
+
+    if (mMetadataChannel) {
+        /* If content of mStreamInfo is not 0, there is metadata stream */
+        mMetadataChannel->stop();
+    }
+
+    // Mutex Lock
     pthread_mutex_lock(&mMutex);
 
+    // Unblock process_capture_request
+    mPendingRequest = 0;
+    pthread_cond_signal(&mRequestCond);
+
+    List<PendingRequestInfo>::iterator i = mPendingRequestsList.begin();
+    frameNum = i->frame_number;
+    ALOGV("%s: Latest frame num on  mPendingRequestsList = %d",
+      __func__, frameNum);
+
+    // Go through the pending buffers and send buffer errors
+    for (List<PendingBufferInfo>::iterator k =
+         mPendingBuffersMap.mPendingBufferList.begin();
+         k != mPendingBuffersMap.mPendingBufferList.end();  ) {
+         ALOGV("%s: frame = %d, buffer = %p, stream = %p, stream format = %d",
+          __func__, k->frame_number, k->buffer, k->stream,
+          k->stream->format);
+
+        if (k->frame_number < frameNum) {
+            // Send Error notify to frameworks for each buffer for which
+            // metadata buffer is already sent
+            ALOGV("%s: Sending ERROR BUFFER for frame %d, buffer %p",
+              __func__, k->frame_number, k->buffer);
+
+            notify_msg.type = CAMERA3_MSG_ERROR;
+            notify_msg.message.error.error_code = CAMERA3_MSG_ERROR_BUFFER;
+            notify_msg.message.error.error_stream = k->stream;
+            notify_msg.message.error.frame_number = k->frame_number;
+            mCallbackOps->notify(mCallbackOps, &notify_msg);
+            ALOGV("%s: notify frame_number = %d", __func__,
+                    i->frame_number);
+
+            pStream_Buf.acquire_fence = -1;
+            pStream_Buf.release_fence = -1;
+            pStream_Buf.buffer = k->buffer;
+            pStream_Buf.status = CAMERA3_BUFFER_STATUS_ERROR;
+            pStream_Buf.stream = k->stream;
+
+            result.result = NULL;
+            result.frame_number = k->frame_number;
+            result.num_output_buffers = 1;
+            result.output_buffers = &pStream_Buf ;
+            mCallbackOps->process_capture_result(mCallbackOps, &result);
+
+            mPendingBuffersMap.num_buffers--;
+            k = mPendingBuffersMap.mPendingBufferList.erase(k);
+        }
+        else {
+          k++;
+        }
+    }
+
+    ALOGV("%s:Sending ERROR REQUEST for all pending requests", __func__);
+
+    // Go through the pending requests info and send error request to framework
+    for (i = mPendingRequestsList.begin(); i != mPendingRequestsList.end(); ) {
+        int numBuffers = 0;
+        ALOGV("%s:Sending ERROR REQUEST for frame %d",
+              __func__, i->frame_number);
+
+        // Send shutter notify to frameworks
+        notify_msg.type = CAMERA3_MSG_ERROR;
+        notify_msg.message.error.error_code = CAMERA3_MSG_ERROR_REQUEST;
+        notify_msg.message.error.error_stream = NULL;
+        notify_msg.message.error.frame_number = i->frame_number;
+        mCallbackOps->notify(mCallbackOps, &notify_msg);
+
+        result.frame_number = i->frame_number;
+        result.num_output_buffers = 0;
+        result.output_buffers = NULL;
+        numBuffers = 0;
+
+        for (List<PendingBufferInfo>::iterator k =
+             mPendingBuffersMap.mPendingBufferList.begin();
+             k != mPendingBuffersMap.mPendingBufferList.end(); ) {
+          if (k->frame_number == i->frame_number) {
+            ALOGV("%s: Sending Error for frame = %d, buffer = %p,"
+                   " stream = %p, stream format = %d",__func__,
+                   k->frame_number, k->buffer, k->stream, k->stream->format);
+
+            pStream_Buf.acquire_fence = -1;
+            pStream_Buf.release_fence = -1;
+            pStream_Buf.buffer = k->buffer;
+            pStream_Buf.status = CAMERA3_BUFFER_STATUS_ERROR;
+            pStream_Buf.stream = k->stream;
+
+            result.num_output_buffers = 1;
+            result.output_buffers = &pStream_Buf;
+            result.result = NULL;
+            result.frame_number = i->frame_number;
+
+            mCallbackOps->process_capture_result(mCallbackOps, &result);
+            mPendingBuffersMap.num_buffers--;
+            k = mPendingBuffersMap.mPendingBufferList.erase(k);
+            numBuffers++;
+          }
+          else {
+            k++;
+          }
+        }
+        ALOGV("%s: mPendingBuffersMap.num_buffers = %d",
+              __func__, mPendingBuffersMap.num_buffers);
+
+        i = mPendingRequestsList.erase(i);
+    }
+
+    /* Reset pending buffer list and requests list */
+    mPendingRequestsList.clear();
+    /* Reset pending frame Drop list and requests list */
+    mPendingFrameDropList.clear();
+
+    mPendingBuffersMap.num_buffers = 0;
+    mPendingBuffersMap.mPendingBufferList.clear();
+    ALOGV("%s: Cleared all the pending buffers ", __func__);
+
+    /*flush the metadata list*/
+    if (!mStoredMetadataList.empty()) {
+        for (List<MetadataBufferInfo>::iterator m = mStoredMetadataList.begin();
+              m != mStoredMetadataList.end(); ) {
+            mMetadataChannel->bufDone(m->meta_buf);
+            free(m->meta_buf);
+            m = mStoredMetadataList.erase(m);
+        }
+    }
+    ALOGV("%s: Flushing the metadata list done!! ", __func__);
+
+    mFirstRequest = true;
     pthread_mutex_unlock(&mMutex);
-    */
     return 0;
 }
 
