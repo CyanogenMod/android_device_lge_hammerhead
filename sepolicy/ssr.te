@@ -4,4 +4,4 @@ type ssr_exec, exec_type, file_type;
 # Started by init
 init_daemon_domain(ssr)
 
-permissive ssr;
+permissive_or_unconfined(ssr)
