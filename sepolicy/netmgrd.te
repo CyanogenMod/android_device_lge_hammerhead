@@ -5,7 +5,7 @@ type netmgrd_exec, exec_type, file_type;
 # Started by init
 init_daemon_domain(netmgrd)
 
-permissive netmgrd;
+permissive_or_unconfined(netmgrd)
 
 # Starts as (root,radio) changes to (radio,radio)
 allow netmgrd self:capability { setuid setgid net_admin net_raw };
