@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2014, The Linux Foundataion. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -895,12 +895,12 @@ void QCamera3PicChannel::jpegEvtHandle(jpeg_job_status_t status,
 
         if(obj->mJpegSettings->max_jpeg_size <= 0 ||
                 obj->mJpegSettings->max_jpeg_size > obj->mMemory->getSize(obj->mCurrentBufIndex)){
-            ALOGE("%s:Max Jpeg size :%d is out of valid range setting to size of buffer",
+            ALOGW("%s:Max Jpeg size :%d is out of valid range setting to size of buffer",
                     __func__, obj->mJpegSettings->max_jpeg_size);
             maxJpegSize =  obj->mMemory->getSize(obj->mCurrentBufIndex);
         } else {
             maxJpegSize = obj->mJpegSettings->max_jpeg_size;
-            ALOGE("%s: Setting max jpeg size to %d",__func__, maxJpegSize);
+            ALOGI("%s: Setting max jpeg size to %d",__func__, maxJpegSize);
         }
         jpeg_eof = &jpeg_buf[maxJpegSize-sizeof(jpegHeader)];
         memcpy(jpeg_eof, &jpegHeader, sizeof(jpegHeader));

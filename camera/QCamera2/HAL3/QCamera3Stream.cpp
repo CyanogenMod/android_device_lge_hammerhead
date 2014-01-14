@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2014, The Linux Foundataion. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -275,7 +275,7 @@ int32_t QCamera3Stream::init(cam_stream_type_t streamType,
        mStreamInfo->streaming_mode = CAM_STREAMING_MODE_BURST;
        //mStreamInfo->num_of_burst = reprocess_config->offline.num_of_bufs;
        mStreamInfo->num_of_burst = 1;
-       ALOGE("%s: num_of_burst is %d", __func__, mStreamInfo->num_of_burst);
+       ALOGI("%s: num_of_burst is %d", __func__, mStreamInfo->num_of_burst);
     } else {
        mStreamInfo->streaming_mode = CAM_STREAMING_MODE_CONTINUOUS;
     }

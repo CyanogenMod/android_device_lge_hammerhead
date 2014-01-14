@@ -3482,10 +3482,8 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
 
     static uint8_t focusMode;
     if (gCamCapability[mCameraId]->supported_focus_modes_cnt > 1) {
-        ALOGE("%s: Setting focus mode to auto", __func__);
         focusMode = ANDROID_CONTROL_AF_MODE_AUTO;
     } else {
-        ALOGE("%s: Setting focus mode to off", __func__);
         focusMode = ANDROID_CONTROL_AF_MODE_OFF;
     }
     settings.update(ANDROID_CONTROL_AF_MODE, &focusMode, 1);
