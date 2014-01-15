@@ -140,6 +140,8 @@ on boot
     chown system system /sys/class/leds/red/rgb_start
 
 on post-fs-data
+    restorecon_recursive /data/fdAlbum
+
     mkdir /data/media 0770 media_rw media_rw
 
     # NFC: create data/nfc for nv storage
@@ -154,6 +156,7 @@ on post-fs-data
 
     # Create directory used by audio subsystem
     mkdir /data/misc/audio 0770 audio audio
+    restorecon_recursive /data/misc/audio
 
     # Create directory used by sensor subsystem
     mkdir /data/system 0755 system system
