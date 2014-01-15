@@ -139,10 +139,12 @@ on post-fs-data
     restorecon_recursive /data/fdAlbum
 
     mkdir /data/media 0770 media_rw media_rw
+    restorecon_recursive /data/media
 
     # NFC: create data/nfc for nv storage
     mkdir /data/nfc 0770 nfc nfc
     mkdir /data/nfc/param 0770 nfc nfc
+    restorecon_recursive /data/nfc
 
     # wifi
     chown wifi system /persist/wifi
