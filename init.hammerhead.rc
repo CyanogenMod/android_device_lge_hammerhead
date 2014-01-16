@@ -197,6 +197,9 @@ on post-fs-data
     mkdir /data/misc/radio 0770 radio radio
     symlink /system/etc/qcril.db /data/misc/radio/qcril.db
 
+    # Remove old socket so that it is re-created in the right context.
+    rm /data/app/sensor_ctl_socket
+
     setprop vold.post_fs_data_done 1
 
     # Set the CPU Freq Sampling rates
