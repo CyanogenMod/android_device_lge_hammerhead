@@ -60,9 +60,7 @@ on boot
 
     # bluetooth LPM
     chown bluetooth net_bt_stack /proc/bluetooth/sleep/lpm
-    restorecon /proc/bluetooth/sleep/lpm
     chown bluetooth net_bt_stack /proc/bluetooth/sleep/btwrite
-    restorecon /proc/bluetooth/sleep/btwrite
 
     #bluetooth UART dev
     chown bluetooth net_bt_stack /sys/devices/platform/msm_serial_hs.0/clock
@@ -140,8 +138,6 @@ on boot
     chown system system /sys/class/leds/red/rgb_start
 
 on post-fs-data
-    restorecon_recursive /data/fdAlbum
-
     mkdir /data/media 0770 media_rw media_rw
     restorecon_recursive /data/media
 
@@ -176,6 +172,9 @@ on post-fs-data
     # Sensor
     mkdir /persist/sensors
     chmod 775 /persist/sensors
+
+    # Label in case file already exists
+    restorecon /data/fdAlbum
 
     # Create the directories used by the Wireless subsystem
     mkdir /data/misc/wifi 0770 wifi wifi
