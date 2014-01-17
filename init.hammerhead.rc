@@ -15,6 +15,7 @@
 #
 
 import init.hammerhead.usb.rc
+import init.hammerhead_svelte.rc
 
 on early-init
     mount debugfs debugfs /sys/kernel/debug
