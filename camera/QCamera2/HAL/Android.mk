@@ -26,6 +26,7 @@ LOCAL_C_INCLUDES := \
         frameworks/native/include/media/openmax \
         hardware/qcom/display/libgralloc \
         hardware/qcom/media/libstagefrighthw \
+        system/media/camera/include \
         $(LOCAL_PATH)/../../mm-image-codec/qexif \
         $(LOCAL_PATH)/../../mm-image-codec/qomx_core \
         $(LOCAL_PATH)/../util
