@@ -1523,7 +1523,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
         sp<Fence> acquireFence = new Fence(output.acquire_fence);
 
         if (output.stream->format == HAL_PIXEL_FORMAT_BLOB) {
-        //Call function to store local copy of jpeg data for encode params.
+            //Call function to store local copy of jpeg data for encode params.
             blob_request = 1;
             rc = getJpegSettings(request->settings);
             if (rc < 0) {

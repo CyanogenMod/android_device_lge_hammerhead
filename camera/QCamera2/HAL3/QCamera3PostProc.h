@@ -71,7 +71,7 @@ typedef struct {
     mm_jpeg_output_t out_data;         // ptr to jpeg output buf
 } qcamera_jpeg_evt_payload_t;
 
-#define MAX_EXIF_TABLE_ENTRIES 17
+#define MAX_EXIF_TABLE_ENTRIES 22
 class QCamera3Exif
 {
 public:
