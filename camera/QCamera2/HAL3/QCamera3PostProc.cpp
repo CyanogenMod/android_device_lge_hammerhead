@@ -982,7 +982,7 @@ int32_t QCamera3PostProcessor::encodeData(qcamera_jpeg_data_t *jpeg_job_data,
         jpg_job.encode_job.p_metadata_v1 = (cam_metadata_info_t *)meta_frame->buffer;
     } else if (p_metaFrame != NULL) {
        //Fill in the metadata passed as parameter
-       jpg_job.encode_job.p_metadata_v3 = (metadata_buffer_t *)p_metaFrame->bufs[0]->buffer;;
+       jpg_job.encode_job.p_metadata_v3 = (metadata_buffer_t *)p_metaFrame->bufs[0]->buffer;
     } else {
        ALOGE("%s: Metadata is null", __func__);
     }
@@ -1102,9 +1102,6 @@ void *QCamera3PostProcessor::dataProcessRoutine(void *data)
                             (qcamera_jpeg_data_t *)pme->m_inputJpegQ.dequeue();
 
                         if (NULL != jpeg_job) {
-                            //TBD_later - play shutter sound
-                            //pme->m_parent->playShutter();
-
                             // add into ongoing jpeg job Q
                             pme->m_ongoingJpegQ.enqueue((void *)jpeg_job);
                             ret = pme->encodeData(jpeg_job, needNewSess, meta_frame);
