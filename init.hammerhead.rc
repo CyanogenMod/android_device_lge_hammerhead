@@ -483,3 +483,18 @@ service time_daemon /system/bin/time_daemon
     class late_start
     user root
     group root
+
+service qrngd /system/bin/qrngd -f
+    class main
+    user root
+    group root
+
+service qrngp /system/bin/qrngp
+    class main
+    user root
+    group root
+    oneshot
+    disabled
+
+on property:sys.boot_completed=1
+    start qrngp
