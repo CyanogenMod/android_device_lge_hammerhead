@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012-2014, The Linux Foundataion. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -41,7 +41,7 @@ using namespace android;
 
 namespace qcamera {
 
-QCamera3Factory gQCamera3Factory;
+QCamera3Factory *gQCamera3Factory = NULL;
 
 /*===========================================================================
  * FUNCTION   : QCamera3Factory
@@ -92,7 +92,14 @@ QCamera3Factory::~QCamera3Factory()
  *==========================================================================*/
 int QCamera3Factory::get_number_of_cameras()
 {
-    return gQCamera3Factory.getNumberOfCameras();
+    if (!gQCamera3Factory) {
+        gQCamera3Factory = new QCamera3Factory();
+        if (!gQCamera3Factory) {
+            ALOGE("%s: Failed to allocate Camera3Factory object", __func__);
+            return 0;
+        }
+    }
+    return gQCamera3Factory->getNumberOfCameras();
 }
 
 /*===========================================================================
@@ -110,7 +117,7 @@ int QCamera3Factory::get_number_of_cameras()
  *==========================================================================*/
 int QCamera3Factory::get_camera_info(int camera_id, struct camera_info *info)
 {
-    return gQCamera3Factory.getCameraInfo(camera_id, info);
+    return gQCamera3Factory->getCameraInfo(camera_id, info);
 }
 
 /*===========================================================================
@@ -213,7 +220,7 @@ int QCamera3Factory::camera_device_open(
         ALOGE("Invalid camera id");
         return BAD_VALUE;
     }
-    return gQCamera3Factory.cameraDeviceOpen(atoi(id), hw_device);
+    return gQCamera3Factory->cameraDeviceOpen(atoi(id), hw_device);
 }
 
 struct hw_module_methods_t QCamera3Factory::mModuleMethods = {
