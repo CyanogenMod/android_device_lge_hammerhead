@@ -305,8 +305,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
     persist.audio.dualmic.config=endfire \
     persist.audio.fluence.voicecall=true \
     persist.audio.fluence.voicerec=false \
-    persist.audio.fluence.speaker=false \
-    af.resampler.quality=4
+    persist.audio.fluence.speaker=false
 
 # Setup custom emergency number list based on the MCC. This is needed by RIL
 PRODUCT_PROPERTY_OVERRIDES += \
