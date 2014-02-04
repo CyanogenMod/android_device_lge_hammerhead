@@ -182,13 +182,6 @@ on post-fs-data
     # Label in case file already exists
     restorecon /data/fdAlbum
 
-    # Create the directories used by the Wireless subsystem
-    mkdir /data/misc/wifi 0770 wifi wifi
-    mkdir /data/misc/wifi/sockets 0770 wifi wifi
-    mkdir /data/misc/wifi/wpa_supplicant 0770 wifi wifi
-    mkdir /data/misc/dhcp 0770 dhcp dhcp
-    chown dhcp dhcp /data/misc/dhcp
-
     # Apply correct labeling to DRM files
     restorecon_recursive /data/misc/playready
 
