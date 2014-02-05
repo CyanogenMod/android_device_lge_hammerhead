@@ -8,6 +8,7 @@ type thermald_socket, file_type;
 
 type sensors_data_file, file_type, data_file_type;
 type time_data_file, file_type, data_file_type;
+type ramdump_data_file, file_type, data_file_type;
 
 type mpdecision_socket, file_type;
 
