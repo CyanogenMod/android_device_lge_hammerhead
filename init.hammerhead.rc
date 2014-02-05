@@ -130,6 +130,7 @@ on boot
     # Subsytem Ramdump collection
     mkdir /data/tombstones 0777 system system
     mkdir /data/tombstones/ramdump 0777 system system
+    restorecon_recursive /data/tombstones
     write /sys/module/subsystem_restart/parameters/enable_ramdumps 1
 
     # Modem logging collection
