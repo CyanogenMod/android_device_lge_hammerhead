@@ -3914,21 +3914,6 @@ int QCamera3HardwareInterface::translateMetadataToParameters
                 CAM_INTF_META_FLASH_FIRING_TIME, sizeof(flashFiringTime), &flashFiringTime);
     }
 
-    if (frame_settings.exists(ANDROID_GEOMETRIC_MODE)) {
-        uint8_t geometricMode =
-            frame_settings.find(ANDROID_GEOMETRIC_MODE).data.u8[0];
-        rc = AddSetParmEntryToBatch(mParameters, CAM_INTF_META_GEOMETRIC_MODE,
-                sizeof(geometricMode), &geometricMode);
-    }
-
-    if (frame_settings.exists(ANDROID_GEOMETRIC_STRENGTH)) {
-        uint8_t geometricStrength =
-            frame_settings.find(ANDROID_GEOMETRIC_STRENGTH).data.u8[0];
-        rc = AddSetParmEntryToBatch(mParameters,
-                CAM_INTF_META_GEOMETRIC_STRENGTH,
-                sizeof(geometricStrength), &geometricStrength);
-    }
-
     if (frame_settings.exists(ANDROID_HOT_PIXEL_MODE)) {
         uint8_t hotPixelMode =
             frame_settings.find(ANDROID_HOT_PIXEL_MODE).data.u8[0];
