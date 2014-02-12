@@ -310,6 +310,9 @@ on property:sys.boot_completed=1
     # enable slimport detection
     write /sys/module/slimport/parameters/enable_irq 1
 
+    # enable logging of wake up reasons to kernel logs
+    write /sys/module/msm_show_resume_irq/parameters/debug_mask 1
+
 service rmt_storage /system/bin/rmt_storage
     class core
     user root
