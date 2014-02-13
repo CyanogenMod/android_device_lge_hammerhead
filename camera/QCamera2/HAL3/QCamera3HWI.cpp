@@ -2769,16 +2769,6 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       lens_shading_map_size,
                       sizeof(lens_shading_map_size)/sizeof(int32_t));
 
-    int32_t geo_correction_map_size[] = {gCamCapability[cameraId]->geo_correction_map_size.width,
-                                                      gCamCapability[cameraId]->geo_correction_map_size.height};
-    staticInfo.update(ANDROID_LENS_INFO_GEOMETRIC_CORRECTION_MAP_SIZE,
-            geo_correction_map_size,
-            sizeof(geo_correction_map_size)/sizeof(int32_t));
-
-    staticInfo.update(ANDROID_LENS_INFO_GEOMETRIC_CORRECTION_MAP,
-                       gCamCapability[cameraId]->geo_correction_map,
-                       sizeof(gCamCapability[cameraId]->geo_correction_map)/sizeof(float));
-
     staticInfo.update(ANDROID_SENSOR_INFO_PHYSICAL_SIZE,
             gCamCapability[cameraId]->sensor_physical_size, 2);
 
