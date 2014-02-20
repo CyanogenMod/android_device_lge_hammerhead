@@ -12,3 +12,5 @@ type power_control_device, dev_type;
 
 # Real Time Clock
 type rtc, dev_type;
+
+type modem_block_device, dev_type;
