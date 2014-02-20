@@ -28,6 +28,12 @@
 
 /dev/diag                          u:object_r:diag_device:s0
 
+# Block labeling
+/dev/block/mmcblk0                 u:object_r:root_block_device:s0
+# ssd, fsc, fsg, modemst1, modemst2 labeling
+/dev/block/mmcblk0p1[23]           u:object_r:modem_block_device:s0
+/dev/block/mmcblk0p2[123]          u:object_r:modem_block_device:s0
+
 # CPU governor controls
 /dev/socket/mpdecision(/.*)?           u:object_r:mpdecision_socket:s0
 
