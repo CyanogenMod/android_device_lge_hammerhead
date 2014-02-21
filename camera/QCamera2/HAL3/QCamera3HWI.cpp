@@ -3037,8 +3037,11 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
             available_flash_levels,
             gCamCapability[cameraId]->supported_flash_firing_level_cnt);
 
-
-    uint8_t flashAvailable = gCamCapability[cameraId]->flash_available;
+    uint8_t flashAvailable;
+    if (gCamCapability[cameraId]->flash_available)
+        flashAvailable = ANDROID_FLASH_INFO_AVAILABLE_TRUE;
+    else
+        flashAvailable = ANDROID_FLASH_INFO_AVAILABLE_FALSE;
     staticInfo.update(ANDROID_FLASH_INFO_AVAILABLE,
             &flashAvailable, 1);
 
