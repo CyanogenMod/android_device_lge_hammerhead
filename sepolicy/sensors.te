@@ -24,6 +24,11 @@ allow sensors apk_data_file:dir { add_name write };
 # Socket can be deleted. So might have to keep in order to work.
 allow sensors apk_data_file:dir remove_name;
 
+# In a future release of Android, /data/app/sensor_ctl_socket moved
+# to /dev/socket/sensor_ctl_socket .
+type_transition sensors socket_device:sock_file sensors_socket "sensor_ctl_socket";
+allow sensors socket_device:dir { write add_name };
+
 # Create directories and files under /data/misc/sensors
 # and /data/system/sensors. Allow generic r/w file access.
 allow sensors sensors_data_file:dir create_dir_perms;
