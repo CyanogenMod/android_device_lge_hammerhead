@@ -294,6 +294,9 @@ typedef struct{
     cam_rational_type_t base_gain_factor;    /* sensor base gain factor */
 
     uint8_t focus_dist_calibrated;
+
+    uint8_t supported_test_pattern_modes_cnt;
+    cam_test_pattern_mode_t supported_test_pattern_modes[MAX_TEST_PATTERN_CNT];
 } cam_capability_t;
 
 typedef enum {
@@ -480,6 +483,7 @@ typedef union {
     INCLUDE(CAM_INTF_META_TONEMAP_MODE,             uint8_t,                     1);
     INCLUDE(CAM_INTF_META_FLASH_MODE,               uint8_t,                     1);
     INCLUDE(CAM_INTF_META_STREAM_ID,                cam_stream_ID_t,             1);
+    INCLUDE(CAM_INTF_META_TEST_PATTERN_DATA,        cam_test_pattern_data_t,     1);
 } parm_type_t;
 
 
@@ -548,6 +552,7 @@ typedef union {
     INCLUDE(CAM_INTF_META_STATS_SHARPNESS_MAP,          cam_sharpness_map_t,         3);
     INCLUDE(CAM_INTF_META_LENS_SHADING_MAP,             cam_lens_shading_map_t,      1);
     INCLUDE(CAM_INTF_META_AEC_INFO,                     cam_3a_params_t,             1);
+    INCLUDE(CAM_INTF_META_TEST_PATTERN_DATA,            cam_test_pattern_data_t,     1);
     INCLUDE(CAM_INTF_META_PRIVATE_DATA,                 char,                        MAX_METADATA_PAYLOAD_SIZE);
 } metadata_type_t;
 

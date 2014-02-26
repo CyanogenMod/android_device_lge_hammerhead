@@ -49,6 +49,7 @@
 #define MAX_ROI 5
 #define MAX_STREAM_NUM_IN_BUNDLE 4
 #define MAX_NUM_STREAMS          8
+#define MAX_TEST_PATTERN_CNT     8
 
 typedef enum {
     CAM_HAL_V1 = 1,
@@ -1046,6 +1047,7 @@ typedef enum {
     CAM_INTF_META_PRIVATE_DATA,
     /* Indicates streams ID of all the requested buffers */
     CAM_INTF_META_STREAM_ID,
+    CAM_INTF_META_TEST_PATTERN_DATA,
     /*AEC info for Exif*/
     CAM_INTF_META_AEC_INFO,
     CAM_INTF_PARM_MAX
@@ -1317,5 +1319,21 @@ typedef enum {
     CAM_FOCUS_APPROXIMATE,
     CAM_FOCUS_CALIBRATED
 } cam_focus_calibration_t;
+
+typedef enum {
+    CAM_TEST_PATTERN_OFF,
+    CAM_TEST_PATTERN_SOLID_COLOR,
+    CAM_TEST_PATTERN_COLOR_BARS,
+    CAM_TEST_PATTERN_COLOR_BARS_FADE_TO_GRAY,
+    CAM_TEST_PATTERN_PN9,
+} cam_test_pattern_mode_t;
+
+typedef struct {
+    cam_test_pattern_mode_t mode;
+    int32_t r;
+    int32_t gr;
+    int32_t gb;
+    int32_t b;
+} cam_test_pattern_data_t;
 
 #endif /* __QCAMERA_TYPES_H__ */
