@@ -3065,6 +3065,10 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       max_output_streams,
                       3);
 
+    uint8_t avail_leds = 0;
+    staticInfo.update(ANDROID_LED_AVAILABLE_LEDS,
+                      &avail_leds, 0);
+
     gStaticMetadata[cameraId] = staticInfo.release();
     return rc;
 }
