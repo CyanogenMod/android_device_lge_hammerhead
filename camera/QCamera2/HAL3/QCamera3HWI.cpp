@@ -2217,6 +2217,14 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
                                   4*map_width*map_height);
                break;
           }
+
+          case CAM_INTF_META_TONEMAP_MODE: {
+             uint8_t  *toneMapMode =
+                (uint8_t *)POINTER_OF(CAM_INTF_META_TONEMAP_MODE, metadata);
+             camMetadata.update(ANDROID_TONEMAP_MODE, toneMapMode, 1);
+             break;
+          }
+
           case CAM_INTF_META_TONEMAP_CURVES:{
              //Populate CAM_INTF_META_TONEMAP_CURVES
              /* ch0 = G, ch 1 = B, ch 2 = R*/
