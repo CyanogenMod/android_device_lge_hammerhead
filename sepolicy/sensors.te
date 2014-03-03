@@ -19,15 +19,12 @@ allow sensors self:capability { dac_override dac_read_search };
 # Create /data/app/sensor_ctl_socket (Might want to change location).
 type_transition sensors apk_data_file:sock_file sensors_socket "sensor_ctl_socket";
 allow sensors sensors_socket:sock_file create_file_perms;
-# Trying to be restrictive with perms on apk_data_file
-allow sensors apk_data_file:dir { add_name write };
-# Socket can be deleted. So might have to keep in order to work.
-allow sensors apk_data_file:dir remove_name;
+allow sensors apk_data_file:dir rw_dir_perms;
 
 # In a future release of Android, /data/app/sensor_ctl_socket moved
 # to /dev/socket/sensor_ctl_socket .
 type_transition sensors socket_device:sock_file sensors_socket "sensor_ctl_socket";
-allow sensors socket_device:dir { write add_name };
+allow sensors socket_device:dir rw_dir_perms;
 
 # Create directories and files under /data/misc/sensors
 # and /data/system/sensors. Allow generic r/w file access.
