@@ -344,6 +344,9 @@ typedef struct {
        offset_x, offset_y, stride, scanline, plane offset */
     cam_stream_buf_plane_info_t buf_planes;
 
+    /* number of stream bufs will be allocated */
+    uint8_t num_bufs;
+
     /* streaming type */
     cam_streaming_mode_t streaming_mode;
     /* num of frames needs to be generated.

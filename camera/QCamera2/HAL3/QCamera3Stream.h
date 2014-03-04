@@ -91,6 +91,7 @@ private:
     mm_camera_ops_t *mCamOps;
     cam_stream_info_t *mStreamInfo; // ptr to stream info buf
     mm_camera_stream_mem_vtbl_t mMemVtbl;
+    mm_camera_map_unmap_ops_tbl_t *mMemOps;
     uint8_t mNumBufs;
     stream_cb_routine mDataCB;
     void *mUserData;

@@ -225,6 +225,8 @@ typedef struct mm_stream {
 
     mm_camera_stream_mem_vtbl_t mem_vtbl; /* mem ops tbl */
 
+    mm_camera_map_unmap_ops_tbl_t map_ops;
+
     int8_t queued_buffer_count;
 } mm_stream_t;
 

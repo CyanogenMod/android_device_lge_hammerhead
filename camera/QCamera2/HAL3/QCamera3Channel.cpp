@@ -239,6 +239,8 @@ int32_t QCamera3Channel::start()
 
     if (m_numStreams > 1) {
         ALOGE("%s: bundle not supported", __func__);
+    } else if (m_numStreams == 0) {
+        return NO_INIT;
     }
 
     for (int i = 0; i < m_numStreams; i++) {
@@ -430,6 +432,7 @@ void QCamera3Channel::streamCbRoutine(mm_camera_super_buf_t *super_frame,
  *   @cam_ops    : ptr to camera ops table
  *   @cb_routine : callback routine to frame aggregator
  *   @stream     : camera3_stream_t structure
+ *   @stream_type: Channel stream type
  *
  * RETURN     : none
  *==========================================================================*/
@@ -438,13 +441,16 @@ QCamera3RegularChannel::QCamera3RegularChannel(uint32_t cam_handle,
                     channel_cb_routine cb_routine,
                     cam_padding_info_t *paddingInfo,
                     void *userData,
-                    camera3_stream_t *stream) :
+                    camera3_stream_t *stream,
+                    cam_stream_type_t stream_type) :
                         QCamera3Channel(cam_handle, cam_ops, cb_routine,
                                                 paddingInfo, userData),
                         mMemory(NULL),
                         mCamera3Stream(stream),
                         mNumBufs(0),
-                        mCamera3Buffers(NULL)
+                        mRegisteredBuffers(0),
+                        mCamera3Buffers(NULL),
+                        mStreamType(stream_type)
 {
 }
 
@@ -464,10 +470,102 @@ QCamera3RegularChannel::~QCamera3RegularChannel()
     }
 }
 
+/*===========================================================================
+ * FUNCTION   : initialize
+ *
+ * DESCRIPTION: Initialize and add camera channel & stream
+ *
+ * PARAMETERS :
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+
 int32_t QCamera3RegularChannel::initialize()
 {
-  //TO DO
-  return 0;
+    int32_t rc = NO_ERROR;
+    cam_format_t streamFormat;
+    cam_dimension_t streamDim;
+
+    if (NULL == mCamera3Stream) {
+        ALOGE("%s: Camera stream uninitialized", __func__);
+        return NO_INIT;
+    }
+
+    if (1 <= m_numStreams) {
+        // Only one stream per channel supported in v3 Hal
+        return NO_ERROR;
+    }
+
+    rc = init(NULL, NULL);
+    if (rc < 0) {
+        ALOGE("%s: init failed", __func__);
+        return rc;
+    }
+
+    mNumBufs = CAM_MAX_NUM_BUFS_PER_STREAM;
+    mCamera3Buffers = new buffer_handle_t*[mNumBufs];
+    if (mCamera3Buffers == NULL) {
+        ALOGE("%s: Failed to allocate buffer_handle_t*", __func__);
+        return -ENOMEM;
+    }
+
+    if (mCamera3Stream->format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED) {
+        if (mStreamType ==  CAM_STREAM_TYPE_VIDEO) {
+            streamFormat = CAM_FORMAT_YUV_420_NV12;
+        } else if (mStreamType == CAM_STREAM_TYPE_PREVIEW) {
+            streamFormat = CAM_FORMAT_YUV_420_NV21;
+        } else {
+            //TODO: Add a new flag in libgralloc for ZSL buffers, and its size needs
+            // to be properly aligned and padded.
+            streamFormat = CAM_FORMAT_YUV_420_NV21;
+        }
+    } else if(mCamera3Stream->format == HAL_PIXEL_FORMAT_YCbCr_420_888) {
+         streamFormat = CAM_FORMAT_YUV_420_NV21;
+    } else if (mCamera3Stream->format == HAL_PIXEL_FORMAT_RAW_OPAQUE ||
+            mCamera3Stream->format == HAL_PIXEL_FORMAT_RAW16) {
+        // Bayer pattern doesn't matter here.
+        // All CAMIF raw format uses 10bit.
+        streamFormat = CAM_FORMAT_BAYER_QCOM_RAW_10BPP_GBRG;
+    } else {
+
+        //TODO: Fail for other types of streams for now
+        ALOGE("%s: format is not IMPLEMENTATION_DEFINED or flexible", __func__);
+        return -EINVAL;
+    }
+
+    streamDim.width = mCamera3Stream->width;
+    streamDim.height = mCamera3Stream->height;
+
+    rc = QCamera3Channel::addStream(mStreamType,
+            streamFormat,
+            streamDim,
+            mNumBufs);
+
+    return rc;
+}
+
+/*===========================================================================
+ * FUNCTION   : start
+ *
+ * DESCRIPTION: start a regular channel
+ *
+ * PARAMETERS :
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCamera3RegularChannel::start()
+{
+    int32_t rc = NO_ERROR;
+
+    if (0 < mRegisteredBuffers) {
+        rc = QCamera3Channel::start();
+    }
+
+    return rc;
 }
 /*===========================================================================
  * FUNCTION   : getInternalFormatBuffer
@@ -511,11 +609,22 @@ int32_t QCamera3RegularChannel::request(buffer_handle_t *buffer, uint32_t frameN
 
     int32_t rc = NO_ERROR;
     int index;
+
+    if (NULL == buffer) {
+        ALOGE("%s: Invalid buffer in channel request", __func__);
+        return BAD_VALUE;
+    }
+
     if(!m_bIsActive) {
-        ALOGD("%s: First request on this channel starting stream",__func__);
-        start();
-        if(rc != NO_ERROR) {
-            ALOGE("%s: Failed to start the stream on the request",__func__);
+        rc = registerBuffer(buffer);
+        if (NO_ERROR != rc) {
+            ALOGE("%s: On-the-fly buffer registration failed %d",
+                    __func__, rc);
+            return rc;
+        }
+
+        rc = start();
+        if (NO_ERROR != rc) {
             return rc;
         }
     } else {
@@ -529,8 +638,19 @@ int32_t QCamera3RegularChannel::request(buffer_handle_t *buffer, uint32_t frameN
 
     index = mMemory->getMatchBufIndex((void*)buffer);
     if(index < 0) {
-        ALOGE("%s: Could not find object among registered buffers",__func__);
-        return DEAD_OBJECT;
+        rc = registerBuffer(buffer);
+        if (NO_ERROR != rc) {
+            ALOGE("%s: On-the-fly buffer registration failed %d",
+                    __func__, rc);
+            return rc;
+        }
+
+        index = mMemory->getMatchBufIndex((void*)buffer);
+        if (index < 0) {
+            ALOGE("%s: Could not find object among registered buffers",
+                    __func__);
+            return DEAD_OBJECT;
+        }
     }
 
     rc = mStreams[0]->bufDone(index);
@@ -544,78 +664,54 @@ int32_t QCamera3RegularChannel::request(buffer_handle_t *buffer, uint32_t frameN
 }
 
 /*===========================================================================
- * FUNCTION   : registerBuffers
+ * FUNCTION   : registerBuffer
  *
- * DESCRIPTION: register streaming buffers to the channel object
+ * DESCRIPTION: register streaming buffer to the channel object
  *
  * PARAMETERS :
- *   @num_buffers : number of buffers to be registered
- *   @buffers     : buffer to be registered
+ *   @buffer     : buffer to be registered
  *
- * RETURN     : 0 on a success start of capture
- *              -EINVAL on invalid input
- *              -ENOMEM on failure to register the buffer
- *              -ENODEV on serious error
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
  *==========================================================================*/
-int32_t QCamera3RegularChannel::registerBuffers(uint32_t num_buffers, buffer_handle_t **buffers)
+int32_t QCamera3RegularChannel::registerBuffer(buffer_handle_t *buffer)
 {
     int rc = 0;
-    struct private_handle_t *priv_handle = (struct private_handle_t *)(*buffers[0]);
-    cam_stream_type_t streamType;
-    cam_format_t streamFormat;
-    cam_dimension_t streamDim;
 
-    rc = init(NULL, NULL);
-    if (rc < 0) {
-        ALOGE("%s: init failed", __func__);
+    if (mRegisteredBuffers > (mNumBufs - 1)) {
+        ALOGE("%s: Trying to register more buffers than initially requested",
+                __func__);
+        return BAD_VALUE;
+    }
+
+    if (0 == m_numStreams) {
+        rc = initialize();
+        if (rc != NO_ERROR) {
+            ALOGE("%s: Couldn't initialize camera stream %d",
+                    __func__, rc);
+            return rc;
+        }
+    }
+
+    if(NULL == mMemory) {
+        mMemory = new QCamera3GrallocMemory();
+        if (mMemory == NULL) {
+            return NO_MEMORY;
+        }
+    }
+
+    rc = mMemory->registerBuffer(buffer);
+    if (ALREADY_EXISTS == rc) {
+        return NO_ERROR;
+    } else if (NO_ERROR != rc) {
+        ALOGE("%s: Buffer %p couldn't be registered %d", __func__, buffer, rc);
         return rc;
     }
 
-    if (mCamera3Stream->format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED) {
-        if (priv_handle->flags & private_handle_t::PRIV_FLAGS_VIDEO_ENCODER) {
-            streamType = CAM_STREAM_TYPE_VIDEO;
-            streamFormat = CAM_FORMAT_YUV_420_NV12;
-        } else if (priv_handle->flags & private_handle_t::PRIV_FLAGS_HW_TEXTURE) {
-            streamType = CAM_STREAM_TYPE_PREVIEW;
-            streamFormat = CAM_FORMAT_YUV_420_NV21;
-        } else {
-            //TODO: Add a new flag in libgralloc for ZSL buffers, and its size needs
-            // to be properly aligned and padded.
-            ALOGE("%s: priv_handle->flags 0x%x not supported",
-                    __func__, priv_handle->flags);
-            streamType = CAM_STREAM_TYPE_SNAPSHOT;
-            streamFormat = CAM_FORMAT_YUV_420_NV21;
-        }
-    } else if(mCamera3Stream->format == HAL_PIXEL_FORMAT_YCbCr_420_888) {
-         streamType = CAM_STREAM_TYPE_CALLBACK;
-         streamFormat = CAM_FORMAT_YUV_420_NV21;
-    } else if (mCamera3Stream->format == HAL_PIXEL_FORMAT_RAW_OPAQUE ||
-            mCamera3Stream->format == HAL_PIXEL_FORMAT_RAW16) {
-         streamType = CAM_STREAM_TYPE_RAW;
-         // Bayer pattern doesn't matter here.
-         // All CAMIF raw format uses 10bit.
-         streamFormat = CAM_FORMAT_BAYER_QCOM_RAW_10BPP_GBRG;
-    } else {
-        //TODO: Fail for other types of streams for now
-        ALOGE("%s: format is not IMPLEMENTATION_DEFINED or flexible", __func__);
-        return -EINVAL;
-    }
+    mCamera3Buffers[mRegisteredBuffers] = buffer;
+    mRegisteredBuffers++;
 
-    /* Bookkeep buffer set because they go out of scope after register call */
-    mNumBufs = num_buffers;
-    mCamera3Buffers = new buffer_handle_t*[num_buffers];
-    if (mCamera3Buffers == NULL) {
-        ALOGE("%s: Failed to allocate buffer_handle_t*", __func__);
-        return -ENOMEM;
-    }
-    for (size_t i = 0; i < num_buffers; i++)
-        mCamera3Buffers[i] = buffers[i];
-
-    streamDim.width = mCamera3Stream->width;
-    streamDim.height = mCamera3Stream->height;
-
-    rc = QCamera3Channel::addStream(streamType, streamFormat, streamDim,
-        num_buffers);
     return rc;
 }
 
@@ -670,29 +766,23 @@ void QCamera3RegularChannel::streamCbRoutine(
 
 QCamera3Memory* QCamera3RegularChannel::getStreamBufs(uint32_t /*len*/)
 {
-    if (mNumBufs == 0 || mCamera3Buffers == NULL) {
-        ALOGE("%s: buffers not registered yet", __func__);
-        return NULL;
+    if(NULL == mMemory) {
+        mMemory = new QCamera3GrallocMemory();
+        if (mMemory == NULL) {
+            return NULL;
+        }
     }
 
-    mMemory = new QCamera3GrallocMemory();
-    if (mMemory == NULL) {
-        return NULL;
-    }
-
-    if (mMemory->registerBuffers(mNumBufs, mCamera3Buffers) < 0) {
-        delete mMemory;
-        mMemory = NULL;
-        return NULL;
-    }
     return mMemory;
 }
 
 void QCamera3RegularChannel::putStreamBufs()
 {
-    mMemory->unregisterBuffers();
-    delete mMemory;
-    mMemory = NULL;
+    if (NULL != mMemory) {
+        mMemory->unregisterBuffers();
+        delete mMemory;
+        mMemory = NULL;
+    }
 }
 
 int QCamera3RegularChannel::kMaxBuffers = 7;
@@ -756,13 +846,6 @@ int32_t QCamera3MetadataChannel::request(buffer_handle_t * /*buffer*/,
         return 0;
 }
 
-int32_t QCamera3MetadataChannel::registerBuffers(uint32_t /*num_buffers*/,
-                                        buffer_handle_t ** /*buffers*/)
-{
-    // no registerBuffers are supported for metadata channel
-    return -EINVAL;
-}
-
 void QCamera3MetadataChannel::streamCbRoutine(
                         mm_camera_super_buf_t *super_frame,
                         QCamera3Stream * /*stream*/)
@@ -817,7 +900,8 @@ QCamera3RawChannel::QCamera3RawChannel(uint32_t cam_handle,
                     camera3_stream_t *stream,
                     bool raw_16) :
                         QCamera3RegularChannel(cam_handle, cam_ops,
-                                cb_routine, paddingInfo, userData, stream),
+                                cb_routine, paddingInfo, userData, stream,
+                                CAM_STREAM_TYPE_RAW),
                         mIsRaw16(raw_16)
 {
     char prop[PROPERTY_VALUE_MAX];
@@ -1014,6 +1098,7 @@ QCamera3PicChannel::QCamera3PicChannel(uint32_t cam_handle,
                         mNumBufs(0),
                         mCamera3Buffers(NULL),
                         mCurrentBufIndex(-1),
+                        mRegisteredBuffers(0),
                         mMemory(NULL),
                         mYuvMemory(NULL),
                         mMetaFrame(NULL)
@@ -1045,6 +1130,16 @@ int32_t QCamera3PicChannel::initialize()
     cam_format_t streamFormat;
     mm_camera_channel_attr_t attr;
 
+    if (NULL == mCamera3Stream) {
+        ALOGE("%s: Camera stream uninitialized", __func__);
+        return NO_INIT;
+    }
+
+    if (1 <= m_numStreams) {
+        // Only one stream per channel supported in v3 Hal
+        return NO_ERROR;
+    }
+
     memset(&attr, 0, sizeof(mm_camera_channel_attr_t));
     attr.notify_mode = MM_CAMERA_SUPER_BUF_NOTIFY_BURST;
     attr.look_back = 1;
@@ -1065,6 +1160,13 @@ int32_t QCamera3PicChannel::initialize()
 
     int num_buffers = 1;
 
+    mNumBufs = CAM_MAX_NUM_BUFS_PER_STREAM;
+    mCamera3Buffers = new buffer_handle_t*[num_buffers];
+    if (mCamera3Buffers == NULL) {
+        ALOGE("%s: Failed to allocate buffer_handle_t*", __func__);
+        return -ENOMEM;
+    }
+
     rc = QCamera3Channel::addStream(streamType, streamFormat, streamDim,
             num_buffers);
 
@@ -1082,19 +1184,31 @@ int32_t QCamera3PicChannel::request(buffer_handle_t *buffer,
     int index;
     // Picture stream has already been started before any request comes in
     if (!m_bIsActive) {
-        ALOGE("%s: Picture stream should have been started before any request",
-            __func__);
-        return -EINVAL;
+        ALOGE("%s: Channel not started!!", __func__);
+        return NO_INIT;
     }
-    if (mMemory == NULL) {
-        ALOGE("%s: Picture stream buffers not registered yet", __func__);
-        return -ENOMEM;
+
+    if(NULL == mMemory) {
+        mMemory = new QCamera3GrallocMemory();
+        if (mMemory == NULL) {
+            return NO_MEMORY;
+        }
     }
 
     index = mMemory->getMatchBufIndex((void*)buffer);
     if(index < 0) {
-        ALOGE("%s: Could not find object among registered buffers",__func__);
-        return DEAD_OBJECT;
+        rc = registerBuffer(buffer);
+        if (NO_ERROR != rc) {
+            ALOGE("%s: On-the-fly buffer registration failed %d",
+                    __func__, rc);
+            return rc;
+        }
+
+        index = mMemory->getMatchBufIndex((void*)buffer);
+        if (index < 0) {
+            ALOGE("%s: Could not find object among registered buffers",__func__);
+            return DEAD_OBJECT;
+        }
     }
     rc = mMemory->markFrameNumber(index, frameNumber);
 
@@ -1171,40 +1285,55 @@ void QCamera3PicChannel::dataNotifyCB(mm_camera_super_buf_t *recvd_frame,
     return;
 }
 
-
-int32_t QCamera3PicChannel::registerBuffers(uint32_t num_buffers,
-                        buffer_handle_t **buffers)
+/*===========================================================================
+ * FUNCTION   : registerBuffer
+ *
+ * DESCRIPTION: register streaming buffer to the channel object
+ *
+ * PARAMETERS :
+ *   @buffer     : buffer to be registered
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCamera3PicChannel::registerBuffer(buffer_handle_t *buffer)
 {
     int rc = 0;
-    cam_stream_type_t streamType;
-    cam_format_t streamFormat;
 
-    ALOGV("%s: E",__func__);
-    rc = QCamera3PicChannel::initialize();
-    if (rc < 0) {
-        ALOGE("%s: init failed", __func__);
+    if (mRegisteredBuffers > (mNumBufs - 1)) {
+        ALOGE("%s: Trying to register more buffers than initially requested",
+                __func__);
+        return BAD_VALUE;
+    }
+
+    if (0 == m_numStreams) {
+        rc = initialize();
+        if (rc != NO_ERROR) {
+            ALOGE("%s: Couldn't initialize camera stream %d",
+                    __func__, rc);
+            return rc;
+        }
+    }
+
+    if(NULL == mMemory) {
+        mMemory = new QCamera3GrallocMemory();
+        if (mMemory == NULL) {
+            return NO_MEMORY;
+        }
+    }
+
+    rc = mMemory->registerBuffer(buffer);
+    if (ALREADY_EXISTS == rc) {
+        return NO_ERROR;
+    } else if (NO_ERROR != rc) {
+        ALOGE("%s: Buffer %p couldn't be registered %d", __func__, buffer, rc);
         return rc;
     }
 
-    if (mCamera3Stream->format == HAL_PIXEL_FORMAT_BLOB) {
-        streamType = CAM_STREAM_TYPE_NON_ZSL_SNAPSHOT;
-        streamFormat = CAM_FORMAT_YUV_420_NV21;
-    } else {
-        //TODO: Fail for other types of streams for now
-        ALOGE("%s: format is not BLOB", __func__);
-        return -EINVAL;
-    }
-    /* Bookkeep buffer set because they go out of scope after register call */
-    mNumBufs = num_buffers;
-    mCamera3Buffers = new buffer_handle_t*[num_buffers];
-    if (mCamera3Buffers == NULL) {
-        ALOGE("%s: Failed to allocate buffer_handle_t*", __func__);
-        return -ENOMEM;
-    }
-    for (size_t i = 0; i < num_buffers; i++)
-        mCamera3Buffers[i] = buffers[i];
+    mCamera3Buffers[mRegisteredBuffers] = buffer;
+    mRegisteredBuffers++;
 
-    ALOGV("%s: X",__func__);
     return rc;
 }
 
@@ -1267,20 +1396,11 @@ QCamera3Memory* QCamera3PicChannel::getStreamBufs(uint32_t len)
         return NULL;
     }
 
-    if(mMemory) {
-        delete mMemory;
-        mMemory = NULL;
-    }
-    mMemory = new QCamera3GrallocMemory();
-    if (mMemory == NULL) {
-        return NULL;
-    }
-
-    //Registering Jpeg output buffer
-    if (mMemory->registerBuffers(mNumBufs, mCamera3Buffers) < 0) {
-        delete mMemory;
-        mMemory = NULL;
-        return NULL;
+    if(NULL == mMemory) {
+        mMemory = new QCamera3GrallocMemory();
+        if (mMemory == NULL) {
+            return NULL;
+        }
     }
 
     mYuvMemory = new QCamera3HeapMemory();
@@ -1302,9 +1422,11 @@ QCamera3Memory* QCamera3PicChannel::getStreamBufs(uint32_t len)
 
 void QCamera3PicChannel::putStreamBufs()
 {
-    mMemory->unregisterBuffers();
-    delete mMemory;
-    mMemory = NULL;
+    if (NULL != mMemory) {
+        mMemory->unregisterBuffers();
+        delete mMemory;
+        mMemory = NULL;
+    }
 
     mYuvMemory->deallocate();
     delete mYuvMemory;
@@ -2056,21 +2178,6 @@ QCamera3ReprocessChannel::QCamera3ReprocessChannel() :
     m_pSrcChannel(NULL),
     m_pMetaChannel(NULL)
 {
-}
-
-/*===========================================================================
- * FUNCTION   : QCamera3ReprocessChannel
- *
- * DESCRIPTION: register the buffers of the reprocess channel
- *
- * PARAMETERS : none
- *
- * RETURN     : none
- *==========================================================================*/
-int32_t QCamera3ReprocessChannel::registerBuffers(
-    uint32_t /*num_buffers*/, buffer_handle_t ** /*buffers*/)
-{
-   return 0;
 }
 
 /*===========================================================================

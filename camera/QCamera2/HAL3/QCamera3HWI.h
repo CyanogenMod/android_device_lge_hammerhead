@@ -70,9 +70,7 @@ class QCamera3Exif;
 
 typedef struct {
     camera3_stream_t *stream;
-    camera3_stream_buffer_set_t buffer_set;
     stream_status_t status;
-    int registered;
     QCamera3Channel *channel;
 } stream_info_t;
 

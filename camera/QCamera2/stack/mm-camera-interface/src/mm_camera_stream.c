@@ -1402,7 +1402,6 @@ int32_t mm_stream_init_bufs(mm_stream_t * my_obj)
 {
     int32_t i, rc = 0;
     uint8_t *reg_flags = NULL;
-    mm_camera_map_unmap_ops_tbl_t ops_tbl;
     CDBG("%s: E, my_handle = 0x%x, fd = %d, state = %d",
          __func__, my_obj->my_hdl, my_obj->fd, my_obj->state);
 
@@ -1411,15 +1410,15 @@ int32_t mm_stream_init_bufs(mm_stream_t * my_obj)
         mm_stream_deinit_bufs(my_obj);
     }
 
-    ops_tbl.map_ops = mm_stream_map_buf_ops;
-    ops_tbl.unmap_ops = mm_stream_unmap_buf_ops;
-    ops_tbl.userdata = my_obj;
+    my_obj->map_ops.map_ops = mm_stream_map_buf_ops;
+    my_obj->map_ops.unmap_ops = mm_stream_unmap_buf_ops;
+    my_obj->map_ops.userdata = my_obj;
 
     rc = my_obj->mem_vtbl.get_bufs(&my_obj->frame_offset,
                                    &my_obj->buf_num,
                                    &reg_flags,
                                    &my_obj->buf,
-                                   &ops_tbl,
+                                   &my_obj->map_ops,
                                    my_obj->mem_vtbl.user_data);
 
     if (0 != rc) {
