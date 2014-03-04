@@ -136,6 +136,15 @@ const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::FACEDETEC
     { ANDROID_STATISTICS_FACE_DETECT_MODE_FULL,   CAM_FACE_DETECT_MODE_FULL    }
 };
 
+const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::FOCUS_CALIBRATION_MAP[] = {
+    { ANDROID_LENS_INFO_FOCUS_DISTANCE_CALIBRATION_UNCALIBRATED,
+      CAM_FOCUS_UNCALIBRATED },
+    { ANDROID_LENS_INFO_FOCUS_DISTANCE_CALIBRATION_APPROXIMATE,
+      CAM_FOCUS_APPROXIMATE },
+    { ANDROID_LENS_INFO_FOCUS_DISTANCE_CALIBRATION_CALIBRATED,
+      CAM_FOCUS_CALIBRATED }
+};
+
 const int32_t available_thumbnail_sizes[] = {0, 0,
                                              176, 144,
                                              320, 240,
@@ -2742,18 +2751,8 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
 
     int facingBack = gCamCapability[cameraId]->position == CAM_POSITION_BACK;
     /*HAL 3 only*/
-    /*staticInfo.update(ANDROID_LENS_INFO_MINIMUM_FOCUS_DISTANCE,
-                    &gCamCapability[cameraId]->min_focus_distance, 1); */
-
-    /*hard coded for now but this should come from sensor*/
-    float min_focus_distance;
-    if(facingBack){
-        min_focus_distance = 10;
-    } else {
-        min_focus_distance = 0;
-    }
     staticInfo.update(ANDROID_LENS_INFO_MINIMUM_FOCUS_DISTANCE,
-                    &min_focus_distance, 1);
+                    &gCamCapability[cameraId]->min_focus_distance, 1);
 
     staticInfo.update(ANDROID_LENS_INFO_HYPERFOCAL_DISTANCE,
                     &gCamCapability[cameraId]->hyper_focal_distance, 1);
@@ -3088,6 +3087,14 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     uint8_t avail_leds = 0;
     staticInfo.update(ANDROID_LED_AVAILABLE_LEDS,
                       &avail_leds, 0);
+
+    int8_t val = lookupFwkName(FOCUS_CALIBRATION_MAP,
+            sizeof(FOCUS_CALIBRATION_MAP)/sizeof(FOCUS_CALIBRATION_MAP[0]),
+            gCamCapability[cameraId]->focus_dist_calibrated);
+    if (val != NAME_NOT_FOUND) {
+        staticInfo.update(ANDROID_LENS_INFO_FOCUS_DISTANCE_CALIBRATION,
+                     &gCamCapability[cameraId]->focus_dist_calibrated, 1);
+    }
 
     gStaticMetadata[cameraId] = staticInfo.release();
     return rc;

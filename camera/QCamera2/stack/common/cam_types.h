@@ -1312,4 +1312,10 @@ typedef enum {
     CAM_AWB_STATE_LOCKED
 } cam_awb_state_t;
 
+typedef enum {
+    CAM_FOCUS_UNCALIBRATED,
+    CAM_FOCUS_APPROXIMATE,
+    CAM_FOCUS_CALIBRATED
+} cam_focus_calibration_t;
+
 #endif /* __QCAMERA_TYPES_H__ */

@@ -292,6 +292,8 @@ typedef struct{
     uint8_t flash_available;
 
     cam_rational_type_t base_gain_factor;    /* sensor base gain factor */
+
+    uint8_t focus_dist_calibrated;
 } cam_capability_t;
 
 typedef enum {
