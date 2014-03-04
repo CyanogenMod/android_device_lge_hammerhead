@@ -35,6 +35,7 @@
 #include "QCamera3Mem.h"
 #include "QCamera3PostProc.h"
 #include "QCamera3HALHeader.h"
+#include "utils/Vector.h"
 
 extern "C" {
 #include <mm_camera_interface.h>
@@ -144,12 +145,11 @@ public:
 public:
     static int kMaxBuffers;
 protected:
-    QCamera3GrallocMemory *mMemory;
+    QCamera3GrallocMemory mMemory;
 private:
     camera3_stream_t *mCamera3Stream;
     uint32_t mNumBufs;
-    uint32_t mRegisteredBuffers;
-    buffer_handle_t **mCamera3Buffers;
+    Vector<buffer_handle_t *> mCamera3Buffers;
 
     cam_stream_type_t mStreamType; // Stream type
 };
@@ -290,13 +290,12 @@ public:
 private:
     camera3_stream_t *mCamera3Stream;
     uint32_t mNumBufs;
-    buffer_handle_t **mCamera3Buffers;
+    Vector<buffer_handle_t *> mCamera3Buffers;
     int32_t mCurrentBufIndex;
     bool m_bWNROn;
     uint32_t mYuvWidth, mYuvHeight;
-    uint32_t mRegisteredBuffers;
 
-    QCamera3GrallocMemory *mMemory;
+    QCamera3GrallocMemory mMemory;
     QCamera3HeapMemory *mYuvMemory;
     QCamera3Channel *m_pMetaChannel;
     mm_camera_super_buf_t *mMetaFrame;
