@@ -2289,6 +2289,10 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
        next_entry = GET_NEXT_PARAM_ID(curr_entry, metadata);
        curr_entry = next_entry;
     }
+
+    int32_t hotPixelMap[2];
+    camMetadata.update(ANDROID_HOT_PIXEL_MAP, &hotPixelMap[0], 0);
+
     resultMetadata = camMetadata.release();
     return resultMetadata;
 }
