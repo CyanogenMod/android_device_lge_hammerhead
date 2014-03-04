@@ -49,6 +49,7 @@ class QCamera3Channel;
         int32_t out_buf_index;
         int32_t jpeg_orientation;
         uint8_t jpeg_quality;
+        uint8_t jpeg_thumb_quality;
         cam_dimension_t thumbnail_size;
         uint8_t gps_timestamp_valid;
         int64_t gps_timestamp;

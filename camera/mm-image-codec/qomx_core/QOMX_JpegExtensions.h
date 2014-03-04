@@ -153,6 +153,10 @@ typedef struct {
 *  @input_height - Heighr of the input thumbnail buffer
 *  @scaling_enabled - Flag indicating if thumbnail scaling is
 *  enabled.
+*  @quality - JPEG Q factor value in the range of 1-100. A factor of 1
+ *               produces the smallest, worst quality images, and a factor
+ *               of 100 produces the largest, best quality images.  A
+ *               typical default is 75 for small good quality images.
 *  @crop_info - Includes the crop width, crop height,
 *               horizontal and vertical offsets.
 *  @output_width - Output Width of the the thumbnail. This is
@@ -168,6 +172,7 @@ typedef struct {
   OMX_U32 input_width;
   OMX_U32 input_height;
   OMX_U8 scaling_enabled;
+  OMX_U32 quality;
   OMX_CONFIG_RECTTYPE crop_info;
   OMX_U32 output_width;
   OMX_U32 output_height;

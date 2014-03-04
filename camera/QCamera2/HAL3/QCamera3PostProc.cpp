@@ -269,6 +269,9 @@ int32_t QCamera3PostProcessor::getJpegEncodeConfig(
     // get jpeg quality
     encode_parm.quality = jpeg_settings->jpeg_quality;
 
+    // get jpeg thumbnail quality
+    encode_parm.thumb_quality = jpeg_settings->jpeg_thumb_quality;
+
     cam_frame_len_offset_t main_offset;
     memset(&main_offset, 0, sizeof(cam_frame_len_offset_t));
     main_stream->getFrameOffset(main_offset);
