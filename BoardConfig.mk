@@ -106,6 +106,7 @@ BOARD_SEPOLICY_UNION += \
        device.te \
        domain.te \
        file.te \
+       hostapd.te \
        irsc_util.te \
        mediaserver.te \
        mpdecision.te \
