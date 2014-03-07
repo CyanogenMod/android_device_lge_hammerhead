@@ -34,21 +34,11 @@ const char* ITEMS[] = { "reboot system now",
                         "wipe cache partition",
                         NULL };
 
-class HammerheadUI : public ScreenRecoveryUI
-{
-public:
-    void Init() {
-      install_overlay_offset_x = 0;
-      install_overlay_offset_y = 0;
-      ScreenRecoveryUI::Init();
-    }
-};
-
 class HammerheadDevice : public Device
 {
 public:
     HammerheadDevice() :
-        ui(new HammerheadUI) {
+        ui(new ScreenRecoveryUI) {
     }
 
     RecoveryUI* GetUI() { return ui; }
