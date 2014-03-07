@@ -43,6 +43,9 @@
 # shared memory drivers
 /dev/smdcntl[0-7]                      u:object_r:radio_device:s0
 
+# subsystem_ramdump related device nodes
+/dev/ramdump_.*                   u:object_r:ramdump_device:s0
+
 # Default label for shared memory drivers
 /dev/smd([0-9])+                       u:object_r:smd_device:s0
 /dev/smem_log                          u:object_r:shared_log_device:s0
@@ -87,6 +90,7 @@
 /data/misc/playready(/.*)?         u:object_r:drm_data_file:s0
 /data/fdAlbum                      u:object_r:camera_data_file:s0
 /data/system/time(/.*)?            u:object_r:time_data_file:s0
+/data/tombstones/ramdump(/.*)?     u:object_r:ramdump_data_file:s0
 
 # rmt_storage is a qualcomm specific daemon responsible
 # for servicing modem filesystem requests.
