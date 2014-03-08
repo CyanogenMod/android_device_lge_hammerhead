@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -330,7 +330,7 @@ int process_sensor_data(cam_sensor_params_t *p_sensor_params,
     val_short = 0;
   }
   //val_short =  (p_sensor_params->flash_mode << 3) | val_short;
-  ALOGE("%s: Flash value %d flash mode %d flash state %d", __func__, val_short,
+  ALOGI("%s: Flash value %d flash mode %d flash state %d", __func__, val_short,
     p_sensor_params->flash_mode, p_sensor_params->flash_state);
   rc = addExifEntry(exif_info, EXIFTAGID_FLASH, EXIF_SHORT, 1, &val_short);
   if (rc) {
