@@ -192,8 +192,7 @@ typedef struct{
     float filter_densities[CAM_FILTER_DENSITIES_MAX];
     uint8_t filter_densities_count;
 
-    cam_optical_stab_modes_t
-        optical_stab_modes[CAM_OPT_STAB_MAX];
+    uint8_t optical_stab_modes[CAM_OPT_STAB_MAX];
     uint8_t optical_stab_modes_count;
 
     cam_dimension_t lens_shading_map_size;
