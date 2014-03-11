@@ -34,43 +34,11 @@ const char* ITEMS[] = { "reboot system now",
                         "wipe cache partition",
                         NULL };
 
-class HammerheadUI : public ScreenRecoveryUI
-{
-public:
-    HammerheadUI() :
-        consecutive_power_keys(0) {
-    }
-
-    virtual KeyAction CheckKey(int key) {
-        if (IsKeyPressed(KEY_POWER) && key == KEY_VOLUMEUP) {
-            return TOGGLE;
-        }
-        if (key == KEY_POWER) {
-            ++consecutive_power_keys;
-            if (consecutive_power_keys >= 7) {
-                return REBOOT;
-            }
-        } else {
-            consecutive_power_keys = 0;
-        }
-        return ENQUEUE;
-    }
-
-    void Init() {
-      install_overlay_offset_x = 0;
-      install_overlay_offset_y = 0;
-      ScreenRecoveryUI::Init();
-    }
-
-private:
-    int consecutive_power_keys;
-};
-
 class HammerheadDevice : public Device
 {
 public:
     HammerheadDevice() :
-        ui(new HammerheadUI) {
+        ui(new ScreenRecoveryUI) {
     }
 
     RecoveryUI* GetUI() { return ui; }
