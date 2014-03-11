@@ -541,6 +541,12 @@ typedef enum {
 } cam_lens_shading_map_mode_t;
 
 typedef enum {
+    CAM_LENS_SHADING_MODE_OFF,
+    CAM_LENS_SHADING_MODE_FAST,
+    CAM_LENS_SHADING_MODE_HIGH_QUALITY,
+} cam_lens_shading_mode_t;
+
+typedef enum {
     CAM_FACE_DETECT_MODE_OFF,
     CAM_FACE_DETECT_MODE_SIMPLE,
     CAM_FACE_DETECT_MODE_FULL,
