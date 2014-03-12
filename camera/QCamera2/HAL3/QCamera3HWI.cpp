@@ -3449,30 +3449,39 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
     int32_t defaultRequestID = 0;
     settings.update(ANDROID_REQUEST_ID, &defaultRequestID, 1);
 
-    /*control*/
-
     uint8_t controlIntent = 0;
+    uint8_t focusMode;
     switch (type) {
       case CAMERA3_TEMPLATE_PREVIEW:
         controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW;
+        focusMode = ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE;
         break;
       case CAMERA3_TEMPLATE_STILL_CAPTURE:
         controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE;
+        focusMode = ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE;
         break;
       case CAMERA3_TEMPLATE_VIDEO_RECORD:
         controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD;
+        focusMode = ANDROID_CONTROL_AF_MODE_CONTINUOUS_VIDEO;
         break;
       case CAMERA3_TEMPLATE_VIDEO_SNAPSHOT:
         controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT;
+        focusMode = ANDROID_CONTROL_AF_MODE_CONTINUOUS_VIDEO;
         break;
       case CAMERA3_TEMPLATE_ZERO_SHUTTER_LAG:
         controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_ZERO_SHUTTER_LAG;
+        focusMode = ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE;
         break;
       default:
         controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_CUSTOM;
         break;
     }
     settings.update(ANDROID_CONTROL_CAPTURE_INTENT, &controlIntent, 1);
+
+    if (gCamCapability[mCameraId]->supported_focus_modes_cnt == 1) {
+        focusMode = ANDROID_CONTROL_AF_MODE_OFF;
+    }
+    settings.update(ANDROID_CONTROL_AF_MODE, &focusMode, 1);
 
     settings.update(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION,
             &gCamCapability[mCameraId]->exposure_compensation_default, 1);
@@ -3494,14 +3503,6 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
 
     static const uint8_t sceneMode = ANDROID_CONTROL_SCENE_MODE_FACE_PRIORITY;
     settings.update(ANDROID_CONTROL_SCENE_MODE, &sceneMode, 1);
-
-    static uint8_t focusMode;
-    if (gCamCapability[mCameraId]->supported_focus_modes_cnt > 1) {
-        focusMode = ANDROID_CONTROL_AF_MODE_AUTO;
-    } else {
-        focusMode = ANDROID_CONTROL_AF_MODE_OFF;
-    }
-    settings.update(ANDROID_CONTROL_AF_MODE, &focusMode, 1);
 
     static const uint8_t aeMode = ANDROID_CONTROL_AE_MODE_ON;
     settings.update(ANDROID_CONTROL_AE_MODE, &aeMode, 1);
@@ -3576,6 +3577,73 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
                              ANDROID_LENS_OPTICAL_STABILIZATION_MODE_OFF;
     settings.update(ANDROID_LENS_OPTICAL_STABILIZATION_MODE, &opt_stab_mode, 1);
 
+    /*focus distance*/
+    float focus_distance = 0.0;
+    settings.update(ANDROID_LENS_FOCUS_DISTANCE, &focus_distance, 1);
+
+    /*target fps range: use maximum range for picture, and maximum fixed range for video*/
+    float max_range = 0.0;
+    float max_fixed_fps = 0.0;
+    int32_t fps_range[2] = {0, 0};
+    for (uint32_t i = 0; i < gCamCapability[mCameraId]->fps_ranges_tbl_cnt;
+            i++) {
+        float range = gCamCapability[mCameraId]->fps_ranges_tbl[i].max_fps -
+            gCamCapability[mCameraId]->fps_ranges_tbl[i].min_fps;
+        if (type == CAMERA3_TEMPLATE_PREVIEW ||
+                type == CAMERA3_TEMPLATE_STILL_CAPTURE ||
+                type == CAMERA3_TEMPLATE_ZERO_SHUTTER_LAG) {
+            if (range > max_range) {
+                fps_range[0] =
+                    (int32_t)gCamCapability[mCameraId]->fps_ranges_tbl[i].min_fps;
+                fps_range[1] =
+                    (int32_t)gCamCapability[mCameraId]->fps_ranges_tbl[i].max_fps;
+                max_range = range;
+            }
+        } else {
+            if (range < 0.01 && max_fixed_fps <
+                    gCamCapability[mCameraId]->fps_ranges_tbl[i].max_fps) {
+                fps_range[0] =
+                    (int32_t)gCamCapability[mCameraId]->fps_ranges_tbl[i].min_fps;
+                fps_range[1] =
+                    (int32_t)gCamCapability[mCameraId]->fps_ranges_tbl[i].max_fps;
+                max_fixed_fps = gCamCapability[mCameraId]->fps_ranges_tbl[i].max_fps;
+            }
+        }
+    }
+    settings.update(ANDROID_CONTROL_AE_TARGET_FPS_RANGE, fps_range, 2);
+
+    /*precapture trigger*/
+    uint8_t precapture_trigger = ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER_IDLE;
+    settings.update(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER, &precapture_trigger, 1);
+
+    /*af trigger*/
+    uint8_t af_trigger = ANDROID_CONTROL_AF_TRIGGER_IDLE;
+    settings.update(ANDROID_CONTROL_AF_TRIGGER, &af_trigger, 1);
+
+    /* ae & af regions */
+    int32_t active_region[] = {
+            gCamCapability[mCameraId]->active_array_size.left,
+            gCamCapability[mCameraId]->active_array_size.top,
+            gCamCapability[mCameraId]->active_array_size.left +
+                    gCamCapability[mCameraId]->active_array_size.width,
+            gCamCapability[mCameraId]->active_array_size.top +
+                    gCamCapability[mCameraId]->active_array_size.height,
+            1};
+    settings.update(ANDROID_CONTROL_AE_REGIONS, active_region, 5);
+    settings.update(ANDROID_CONTROL_AF_REGIONS, active_region, 5);
+
+    /* black level lock */
+    uint8_t blacklevel_lock = ANDROID_BLACK_LEVEL_LOCK_OFF;
+    settings.update(ANDROID_BLACK_LEVEL_LOCK, &blacklevel_lock, 1);
+
+    /* face detect mode */
+    uint8_t facedetect_mode = ANDROID_STATISTICS_FACE_DETECT_MODE_OFF;
+    settings.update(ANDROID_STATISTICS_FACE_DETECT_MODE, &facedetect_mode, 1);
+
+    /* lens shading map mode */
+    uint8_t shadingmap_mode = ANDROID_STATISTICS_LENS_SHADING_MAP_MODE_OFF;
+    settings.update(ANDROID_STATISTICS_LENS_SHADING_MAP_MODE, &shadingmap_mode, 1);
+
     mDefaultMetadata[type] = settings.release();
 
     pthread_mutex_unlock(&mMutex);
@@ -3636,6 +3704,7 @@ int QCamera3HardwareInterface::setFrameParameters(camera3_capture_request_t *req
     if(request->settings != NULL){
         rc = translateMetadataToParameters(request);
     }
+
     /*set the parameters to backend*/
     mCameraHandle->ops->set_parms(mCameraHandle->camera_handle, mParameters);
     return rc;
