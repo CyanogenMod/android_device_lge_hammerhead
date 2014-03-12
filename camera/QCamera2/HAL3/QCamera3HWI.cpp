@@ -2826,7 +2826,8 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_SENSOR_INFO_PIXEL_ARRAY_SIZE,
                       pixel_array_size, 2);
 
-    int32_t active_array_size[] = {0, 0,
+    int32_t active_array_size[] = {gCamCapability[cameraId]->active_array_size.left,
+                                                gCamCapability[cameraId]->active_array_size.top,
                                                 gCamCapability[cameraId]->active_array_size.width,
                                                 gCamCapability[cameraId]->active_array_size.height};
     staticInfo.update(ANDROID_SENSOR_INFO_ACTIVE_ARRAY_SIZE,
