@@ -2313,7 +2313,7 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
     }
 
     int32_t hotPixelMap[2];
-    camMetadata.update(ANDROID_HOT_PIXEL_MAP, &hotPixelMap[0], 0);
+    camMetadata.update(ANDROID_STATISTICS_HOT_PIXEL_MAP, &hotPixelMap[0], 0);
 
     resultMetadata = camMetadata.release();
     return resultMetadata;
