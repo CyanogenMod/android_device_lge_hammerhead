@@ -21,7 +21,7 @@
      for different hardware and product builds. -->
 <resources>
     <!-- If there is no sysfs-based control mechanism, enable this -->
-    <bool name="useCameraInterface">false</bool>
+    <bool name="useCameraInterface">true</bool>
 
     <!-- Full path to the sysfs toggle -->
     <string name="flashDevice">/sys/class/leds/led:flash_torch/brightness</string>
