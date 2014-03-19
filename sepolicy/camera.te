@@ -7,8 +7,6 @@ init_daemon_domain(camera)
 
 allow camera self:process execmem;
 
-permissive_or_unconfined(camera)
-
 # Interact with other media devices
 allow camera camera_device:dir search;
 allow camera { gpu_device video_device camera_device }:chr_file rw_file_perms;
