@@ -519,6 +519,7 @@ typedef union {
     /* HAL internal metadata */
     INCLUDE(CAM_INTF_META_AEC_INFO,                     cam_3a_params_t,             1);
     INCLUDE(CAM_INTF_META_TEST_PATTERN_DATA,            cam_test_pattern_data_t,     1);
+    INCLUDE(CAM_INTF_META_OTP_WB_GRGB,                  float,                       1);
     INCLUDE(CAM_INTF_META_PRIVATE_DATA,                 char,                        MAX_METADATA_PAYLOAD_SIZE);
 } metadata_type_t;
 

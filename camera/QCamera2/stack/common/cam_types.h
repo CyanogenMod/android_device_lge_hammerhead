@@ -1084,6 +1084,8 @@ typedef enum {
     CAM_INTF_META_JPEG_THUMB_QUALITY,
     CAM_INTF_META_JPEG_THUMB_SIZE,
 
+    /* OTP : WB gr/gb */
+    CAM_INTF_META_OTP_WB_GRGB,
     CAM_INTF_PARM_MAX
 } cam_intf_parm_type_t;
 

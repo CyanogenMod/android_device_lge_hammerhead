@@ -2219,6 +2219,13 @@ QCamera3HardwareInterface::translateFromHalMetadata
              break;
 
           }
+
+          case CAM_INTF_META_OTP_WB_GRGB:{
+             float *otpWbGrGb = (float*) POINTER_OF(CAM_INTF_META_OTP_WB_GRGB, metadata);
+             camMetadata.update(ANDROID_SENSOR_GREEN_SPLIT, otpWbGrGb, 1);
+             break;
+          }
+
           case CAM_INTF_META_BLACK_LEVEL_LOCK:{
              uint8_t *blackLevelLock = (uint8_t*)
                POINTER_OF(CAM_INTF_META_BLACK_LEVEL_LOCK, metadata);
