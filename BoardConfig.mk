@@ -125,7 +125,4 @@ BOARD_RECOVERY_SWIPE := true
 # Flags
 COMMON_GLOBAL_CFLAGS += -DNO_SECURE_DISCARD
 
-# Kernel handles input boosting
-TARGET_POWERHAL_NO_TOUCH_BOOST := true
-
 -include vendor/lge/hammerhead/BoardConfigVendor.mk
