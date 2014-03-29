@@ -2780,7 +2780,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       sizeof(gCamCapability[cameraId]->lens_position)/ sizeof(float));
 
     int32_t lens_shading_map_size[] = {gCamCapability[cameraId]->lens_shading_map_size.width,
-                                                    gCamCapability[cameraId]->lens_shading_map_size.height};
+                                       gCamCapability[cameraId]->lens_shading_map_size.height};
     staticInfo.update(ANDROID_LENS_INFO_SHADING_MAP_SIZE,
                       lens_shading_map_size,
                       sizeof(lens_shading_map_size)/sizeof(int32_t));
@@ -2804,7 +2804,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                      (uint8_t*)&gCamCapability[cameraId]->color_arrangement, 1);
 
     int32_t pixel_array_size[] = {gCamCapability[cameraId]->pixel_array_size.width,
-                                               gCamCapability[cameraId]->pixel_array_size.height};
+                                  gCamCapability[cameraId]->pixel_array_size.height};
     staticInfo.update(ANDROID_SENSOR_INFO_PIXEL_ARRAY_SIZE,
                       pixel_array_size, 2);
 
@@ -2837,7 +2837,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
             &gCamCapability[cameraId]->max_histogram_count, 1);
 
     int32_t sharpness_map_size[] = {gCamCapability[cameraId]->sharpness_map_size.width,
-                                                gCamCapability[cameraId]->sharpness_map_size.height};
+                                    gCamCapability[cameraId]->sharpness_map_size.height};
 
     staticInfo.update(ANDROID_STATISTICS_INFO_SHARPNESS_MAP_SIZE,
             sharpness_map_size, sizeof(sharpness_map_size)/sizeof(int32_t));
@@ -2851,7 +2851,8 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                        1);
 
     int32_t scalar_formats[] = {HAL_PIXEL_FORMAT_YCbCr_420_888,
-                                                HAL_PIXEL_FORMAT_BLOB};
+                                HAL_PIXEL_FORMAT_BLOB,
+                           HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED};
     int scalar_formats_count = sizeof(scalar_formats)/sizeof(int32_t);
     staticInfo.update(ANDROID_SCALER_AVAILABLE_FORMATS,
                       scalar_formats,
@@ -2909,7 +2910,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       sizeof(availableFaceDetectModes));
 
     int32_t exposureCompensationRange[] = {gCamCapability[cameraId]->exposure_compensation_min,
-                                                        gCamCapability[cameraId]->exposure_compensation_max};
+                                           gCamCapability[cameraId]->exposure_compensation_max};
     staticInfo.update(ANDROID_CONTROL_AE_COMPENSATION_RANGE,
             exposureCompensationRange,
             sizeof(exposureCompensationRange)/sizeof(int32_t));
@@ -2925,6 +2926,27 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_JPEG_AVAILABLE_THUMBNAIL_SIZES,
                       available_thumbnail_sizes,
                       sizeof(available_thumbnail_sizes)/sizeof(int32_t));
+
+    /*all sizes will be clubbed into this tag*/
+    int32_t available_stream_configs_size = gCamCapability[cameraId]->picture_sizes_tbl_cnt *
+                                    sizeof(scalar_formats)/sizeof(int32_t) * 4;
+    int32_t available_stream_configs[available_stream_configs_size];
+    int idx = 0;
+    for (int j = 0; j < scalar_formats_count; j++) {
+        for (int i = 0; i < gCamCapability[cameraId]->picture_sizes_tbl_cnt; i++) {
+           available_stream_configs[idx] = scalar_formats[j];
+           available_stream_configs[idx+1] = gCamCapability[cameraId]->picture_sizes_tbl[i].width;
+           available_stream_configs[idx+2] = gCamCapability[cameraId]->picture_sizes_tbl[i].height;
+           available_stream_configs[idx+3] = ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT;
+           idx+=4;
+        }
+    }
+
+    staticInfo.update(ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS,
+                      available_stream_configs,
+                      available_stream_configs_size);
+
+
 
     int32_t max_jpeg_size = 0;
     int temp_width, temp_height;
@@ -3095,6 +3117,196 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
         staticInfo.update(ANDROID_LENS_INFO_FOCUS_DISTANCE_CALIBRATION,
                      &gCamCapability[cameraId]->focus_dist_calibrated, 1);
     }
+
+    uint8_t max_pipeline_depth = kMaxInFlight;
+    staticInfo.update(ANDROID_REQUEST_PIPELINE_MAX_DEPTH,
+                      &max_pipeline_depth,
+                      1);
+
+    int32_t partial_result_count = 2;
+    staticInfo.update(ANDROID_REQUEST_PARTIAL_RESULT_COUNT,
+                      &partial_result_count,
+                       1);
+
+    uint8_t available_capabilities[] =
+        {ANDROID_REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE,
+         ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR,
+         ANDROID_REQUEST_AVAILABLE_CAPABILITIES_GCAM};
+    staticInfo.update(ANDROID_REQUEST_AVAILABLE_CAPABILITIES,
+                      available_capabilities,
+                      3);
+
+    int32_t max_input_streams = 0;
+    staticInfo.update(ANDROID_REQUEST_MAX_NUM_INPUT_STREAMS,
+                      &max_input_streams,
+                      1);
+
+    int32_t io_format_map[] = {};
+    staticInfo.update(ANDROID_SCALER_AVAILABLE_INPUT_OUTPUT_FORMATS_MAP,
+                      io_format_map, 0);
+
+    int32_t max_latency = ANDROID_SYNC_MAX_LATENCY_PER_FRAME_CONTROL;
+    staticInfo.update(ANDROID_SYNC_MAX_LATENCY,
+                      &max_latency,
+                      1);
+
+    float optical_axis_angle[2];
+    optical_axis_angle[0] = 0; //need to verify
+    optical_axis_angle[1] = 0; //need to verify
+    staticInfo.update(ANDROID_LENS_OPTICAL_AXIS_ANGLE,
+                      optical_axis_angle,
+                      2);
+
+    uint8_t available_hot_pixel_modes[] = {ANDROID_HOT_PIXEL_MODE_FAST};
+    staticInfo.update(ANDROID_HOT_PIXEL_AVAILABLE_HOT_PIXEL_MODES,
+                      available_hot_pixel_modes,
+                      1);
+
+    uint8_t available_edge_modes[] = {ANDROID_EDGE_MODE_OFF,
+                                      ANDROID_EDGE_MODE_FAST};
+    staticInfo.update(ANDROID_EDGE_AVAILABLE_EDGE_MODES,
+                      available_edge_modes,
+                      2);
+
+    uint8_t available_noise_red_modes[] = {ANDROID_NOISE_REDUCTION_MODE_OFF,
+                                           ANDROID_NOISE_REDUCTION_MODE_FAST};
+    staticInfo.update(ANDROID_NOISE_REDUCTION_AVAILABLE_NOISE_REDUCTION_MODES,
+                      available_noise_red_modes,
+                      2);
+
+    uint8_t available_tonemap_modes[] = {ANDROID_TONEMAP_MODE_CONTRAST_CURVE,
+                                         ANDROID_TONEMAP_MODE_FAST,
+                                         ANDROID_TONEMAP_MODE_HIGH_QUALITY};
+    staticInfo.update(ANDROID_TONEMAP_AVAILABLE_TONE_MAP_MODES,
+                      available_tonemap_modes,
+                      3);
+
+    uint8_t available_hot_pixel_map_modes[] = {ANDROID_STATISTICS_HOT_PIXEL_MAP_MODE_OFF};
+    staticInfo.update(ANDROID_STATISTICS_INFO_AVAILABLE_HOT_PIXEL_MAP_MODES,
+                      available_hot_pixel_map_modes,
+                      1);
+
+
+    int32_t avail_min_frame_durations_size = gCamCapability[cameraId]->picture_sizes_tbl_cnt *
+                                                 sizeof(scalar_formats)/sizeof(int32_t) * 4;
+    int64_t avail_min_frame_durations[avail_min_frame_durations_size];
+    int pos = 0;
+    for (int j = 0; j < scalar_formats_count; j++) {
+        for (int i = 0; i < gCamCapability[cameraId]->picture_sizes_tbl_cnt; i++) {
+           avail_min_frame_durations[pos]   = scalar_formats[j];
+           avail_min_frame_durations[pos+1] = gCamCapability[cameraId]->picture_sizes_tbl[i].width;
+           avail_min_frame_durations[pos+2] = gCamCapability[cameraId]->picture_sizes_tbl[i].height;
+           avail_min_frame_durations[pos+3] = gCamCapability[cameraId]->jpeg_min_duration[i];
+           pos+=4;
+        }
+    }
+    staticInfo.update(ANDROID_SCALER_AVAILABLE_MIN_FRAME_DURATIONS,
+                      avail_min_frame_durations,
+                      avail_min_frame_durations_size);
+
+    int32_t available_request_keys[] = {ANDROID_COLOR_CORRECTION_MODE,
+       ANDROID_COLOR_CORRECTION_TRANSFORM, ANDROID_COLOR_CORRECTION_GAINS,
+       ANDROID_CONTROL_AE_ANTIBANDING_MODE, ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION,
+       ANDROID_CONTROL_AE_LOCK, ANDROID_CONTROL_AE_MODE,
+       ANDROID_CONTROL_AE_REGIONS, ANDROID_CONTROL_AE_TARGET_FPS_RANGE,
+       ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER, ANDROID_CONTROL_AF_MODE,
+       ANDROID_CONTROL_AF_REGIONS, ANDROID_CONTROL_AF_TRIGGER,
+       ANDROID_CONTROL_AWB_LOCK, ANDROID_CONTROL_AWB_MODE, ANDROID_CONTROL_AWB_REGIONS,
+       ANDROID_CONTROL_CAPTURE_INTENT, ANDROID_CONTROL_EFFECT_MODE, ANDROID_CONTROL_MODE,
+       ANDROID_CONTROL_SCENE_MODE, ANDROID_CONTROL_VIDEO_STABILIZATION_MODE,
+       ANDROID_DEMOSAIC_MODE, ANDROID_EDGE_MODE, ANDROID_EDGE_STRENGTH,
+       ANDROID_FLASH_FIRING_POWER, ANDROID_FLASH_FIRING_TIME, ANDROID_FLASH_MODE,
+       ANDROID_JPEG_GPS_COORDINATES,
+       ANDROID_JPEG_GPS_PROCESSING_METHOD, ANDROID_JPEG_GPS_TIMESTAMP,
+       ANDROID_JPEG_ORIENTATION, ANDROID_JPEG_QUALITY, ANDROID_JPEG_THUMBNAIL_QUALITY,
+       ANDROID_JPEG_THUMBNAIL_SIZE, ANDROID_LENS_APERTURE, ANDROID_LENS_FILTER_DENSITY,
+       ANDROID_LENS_FOCAL_LENGTH, ANDROID_LENS_FOCUS_DISTANCE,
+       ANDROID_LENS_OPTICAL_STABILIZATION_MODE, ANDROID_NOISE_REDUCTION_MODE,
+       ANDROID_NOISE_REDUCTION_STRENGTH, ANDROID_REQUEST_ID, ANDROID_REQUEST_TYPE,
+       ANDROID_SCALER_CROP_REGION, ANDROID_SENSOR_EXPOSURE_TIME,
+       ANDROID_SENSOR_FRAME_DURATION,
+       ANDROID_SENSOR_SENSITIVITY, ANDROID_SHADING_MODE,
+       ANDROID_SHADING_STRENGTH, ANDROID_STATISTICS_FACE_DETECT_MODE,
+       ANDROID_STATISTICS_HISTOGRAM_MODE, ANDROID_STATISTICS_SHARPNESS_MAP_MODE,
+       ANDROID_STATISTICS_LENS_SHADING_MAP_MODE, ANDROID_TONEMAP_CURVE_BLUE,
+       ANDROID_TONEMAP_CURVE_GREEN, ANDROID_TONEMAP_CURVE_RED, ANDROID_TONEMAP_MODE,
+       ANDROID_BLACK_LEVEL_LOCK };
+    staticInfo.update(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS,
+                      available_request_keys,
+                      sizeof(available_request_keys)/sizeof(int32_t));
+
+    int32_t available_result_keys[] = {ANDROID_COLOR_CORRECTION_TRANSFORM,
+       ANDROID_COLOR_CORRECTION_GAINS, ANDROID_CONTROL_AE_MODE, ANDROID_CONTROL_AE_REGIONS,
+       ANDROID_CONTROL_AE_STATE, ANDROID_CONTROL_AF_MODE, ANDROID_CONTROL_AF_REGIONS,
+       ANDROID_CONTROL_AF_STATE, ANDROID_CONTROL_AWB_MODE, ANDROID_CONTROL_AWB_REGIONS,
+       ANDROID_CONTROL_AWB_STATE, ANDROID_CONTROL_MODE, ANDROID_EDGE_MODE,
+       ANDROID_FLASH_FIRING_POWER, ANDROID_FLASH_FIRING_TIME, ANDROID_FLASH_MODE,
+       ANDROID_FLASH_STATE, ANDROID_JPEG_GPS_COORDINATES, ANDROID_JPEG_GPS_PROCESSING_METHOD,
+       ANDROID_JPEG_GPS_TIMESTAMP, ANDROID_JPEG_ORIENTATION, ANDROID_JPEG_QUALITY,
+       ANDROID_JPEG_THUMBNAIL_QUALITY, ANDROID_JPEG_THUMBNAIL_SIZE, ANDROID_LENS_APERTURE,
+       ANDROID_LENS_FILTER_DENSITY, ANDROID_LENS_FOCAL_LENGTH, ANDROID_LENS_FOCUS_DISTANCE,
+       ANDROID_LENS_FOCUS_RANGE, ANDROID_LENS_STATE, ANDROID_LENS_OPTICAL_STABILIZATION_MODE,
+       ANDROID_NOISE_REDUCTION_MODE, ANDROID_QUIRKS_PARTIAL_RESULT, ANDROID_REQUEST_ID,
+       ANDROID_SCALER_CROP_REGION, ANDROID_SHADING_MODE, ANDROID_SENSOR_EXPOSURE_TIME,
+       ANDROID_SENSOR_FRAME_DURATION, ANDROID_SENSOR_FORWARD_MATRIX,
+       ANDROID_SENSOR_COLOR_TRANSFORM, ANDROID_SENSOR_CALIBRATION_TRANSFORM,
+       ANDROID_SENSOR_SENSITIVITY, ANDROID_SENSOR_TIMESTAMP, ANDROID_SENSOR_NEUTRAL_COLOR_POINT,
+       ANDROID_SENSOR_PROFILE_TONE_CURVE, ANDROID_BLACK_LEVEL_LOCK, ANDROID_TONEMAP_CURVE_BLUE,
+       ANDROID_TONEMAP_CURVE_GREEN, ANDROID_TONEMAP_CURVE_RED, ANDROID_TONEMAP_MODE,
+       ANDROID_STATISTICS_FACE_DETECT_MODE, ANDROID_STATISTICS_HISTOGRAM_MODE,
+       ANDROID_STATISTICS_SHARPNESS_MAP, ANDROID_STATISTICS_SHARPNESS_MAP_MODE,
+       ANDROID_STATISTICS_PREDICTED_COLOR_GAINS, ANDROID_STATISTICS_PREDICTED_COLOR_TRANSFORM,
+       ANDROID_STATISTICS_SCENE_FLICKER, ANDROID_STATISTICS_FACE_IDS,
+       ANDROID_STATISTICS_FACE_LANDMARKS, ANDROID_STATISTICS_FACE_RECTANGLES,
+       ANDROID_STATISTICS_FACE_SCORES};
+    staticInfo.update(ANDROID_REQUEST_AVAILABLE_RESULT_KEYS,
+                      available_result_keys,
+                      sizeof(available_result_keys)/sizeof(int32_t));
+
+    int32_t available_characteristics_keys[] = {ANDROID_CONTROL_AE_AVAILABLE_ANTIBANDING_MODES,
+       ANDROID_CONTROL_AE_AVAILABLE_MODES, ANDROID_CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES,
+       ANDROID_CONTROL_AE_COMPENSATION_RANGE, ANDROID_CONTROL_AE_COMPENSATION_STEP,
+       ANDROID_CONTROL_AF_AVAILABLE_MODES, ANDROID_CONTROL_AVAILABLE_EFFECTS,
+       ANDROID_CONTROL_AVAILABLE_SCENE_MODES,
+       ANDROID_CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES,
+       ANDROID_CONTROL_AWB_AVAILABLE_MODES, ANDROID_CONTROL_MAX_REGIONS,
+       ANDROID_CONTROL_SCENE_MODE_OVERRIDES,ANDROID_FLASH_INFO_AVAILABLE,
+       ANDROID_FLASH_INFO_CHARGE_DURATION, ANDROID_JPEG_AVAILABLE_THUMBNAIL_SIZES,
+       ANDROID_JPEG_MAX_SIZE, ANDROID_LENS_INFO_AVAILABLE_APERTURES,
+       ANDROID_LENS_INFO_AVAILABLE_FILTER_DENSITIES,
+       ANDROID_LENS_INFO_AVAILABLE_FOCAL_LENGTHS,
+       ANDROID_LENS_INFO_AVAILABLE_OPTICAL_STABILIZATION,
+       ANDROID_LENS_INFO_HYPERFOCAL_DISTANCE, ANDROID_LENS_INFO_MINIMUM_FOCUS_DISTANCE,
+       ANDROID_LENS_INFO_SHADING_MAP_SIZE, ANDROID_LENS_INFO_FOCUS_DISTANCE_CALIBRATION,
+       ANDROID_LENS_FACING, ANDROID_LENS_OPTICAL_AXIS_ANGLE,ANDROID_LENS_POSITION,
+       ANDROID_REQUEST_MAX_NUM_OUTPUT_STREAMS, ANDROID_REQUEST_MAX_NUM_INPUT_STREAMS,
+       ANDROID_REQUEST_PIPELINE_MAX_DEPTH, ANDROID_REQUEST_AVAILABLE_CAPABILITIES,
+       ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS, ANDROID_REQUEST_AVAILABLE_RESULT_KEYS,
+       ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS, ANDROID_REQUEST_PARTIAL_RESULT_COUNT,
+       ANDROID_SCALER_AVAILABLE_MAX_DIGITAL_ZOOM,
+       ANDROID_SCALER_AVAILABLE_INPUT_OUTPUT_FORMATS_MAP,
+       ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS,
+       /*ANDROID_SCALER_AVAILABLE_STALL_DURATIONS,*/
+       ANDROID_SCALER_AVAILABLE_MIN_FRAME_DURATIONS, ANDROID_SENSOR_INFO_ACTIVE_ARRAY_SIZE,
+       ANDROID_SENSOR_INFO_SENSITIVITY_RANGE, ANDROID_SENSOR_INFO_COLOR_FILTER_ARRANGEMENT,
+       ANDROID_SENSOR_INFO_EXPOSURE_TIME_RANGE, ANDROID_SENSOR_INFO_MAX_FRAME_DURATION,
+       ANDROID_SENSOR_INFO_PHYSICAL_SIZE, ANDROID_SENSOR_INFO_PIXEL_ARRAY_SIZE,
+       ANDROID_SENSOR_INFO_WHITE_LEVEL, ANDROID_SENSOR_BASE_GAIN_FACTOR,
+       ANDROID_SENSOR_BLACK_LEVEL_PATTERN, ANDROID_SENSOR_MAX_ANALOG_SENSITIVITY,
+       ANDROID_SENSOR_ORIENTATION, ANDROID_SENSOR_AVAILABLE_TEST_PATTERN_MODES,
+       ANDROID_STATISTICS_INFO_AVAILABLE_FACE_DETECT_MODES,
+       ANDROID_STATISTICS_INFO_HISTOGRAM_BUCKET_COUNT,
+       ANDROID_STATISTICS_INFO_MAX_FACE_COUNT, ANDROID_STATISTICS_INFO_MAX_HISTOGRAM_COUNT,
+       ANDROID_STATISTICS_INFO_MAX_SHARPNESS_MAP_VALUE,
+       ANDROID_STATISTICS_INFO_SHARPNESS_MAP_SIZE, ANDROID_HOT_PIXEL_AVAILABLE_HOT_PIXEL_MODES,
+       ANDROID_EDGE_AVAILABLE_EDGE_MODES,
+       ANDROID_NOISE_REDUCTION_AVAILABLE_NOISE_REDUCTION_MODES,
+       ANDROID_TONEMAP_AVAILABLE_TONE_MAP_MODES,
+       ANDROID_STATISTICS_INFO_AVAILABLE_HOT_PIXEL_MAP_MODES,
+       ANDROID_TONEMAP_MAX_CURVE_POINTS, ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL };
+    staticInfo.update(ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS,
+                      available_characteristics_keys,
+                      sizeof(available_characteristics_keys)/sizeof(int32_t));
 
     gStaticMetadata[cameraId] = staticInfo.release();
     return rc;
