@@ -25,3 +25,6 @@ allow rmt cgroup:dir { create add_name };
 
 # Wake lock access
 allow rmt sysfs_wake_lock:file { open append };
+
+# Allow access to /dev/uio0.
+allow rmt uio_device:chr_file rw_file_perms;
