@@ -12,7 +12,10 @@ allow rmt self:capability { setuid setgid };
 
 # opens and reads /dev/block/mmcblk0
 allow rmt root_block_device:blk_file r_file_perms;
-allow rmt root_block_device:dir r_dir_perms;
+allow rmt block_device:dir r_dir_perms;
+
+# Needed for ioprio_set(IOPRIO_WHO_PROCESS, 0, IOPRIO_CLASS_RT << IOPRIO_CLASS_SHIFT);
+allow rmt self:capability sys_admin;
 
 # Allow reads/writes to modem related block devices
 allow rmt modem_block_device:blk_file rw_file_perms;
