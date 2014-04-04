@@ -101,7 +101,7 @@ mm_camera_stream_t * mm_app_add_rdi_stream(mm_camera_test_obj_t *test_obj,
         return NULL;
     }
 
-    CDBG_ERROR("%s: raw_dim w:%d height:%d\n", __func__, cam_cap->raw_dim.width, cam_cap->raw_dim.height);
+    CDBG_ERROR("%s: raw_dim w:%d height:%d\n", __func__, cam_cap->raw_dim[0].width, cam_cap->raw_dim[0].height);
     for (i = 0;i < cam_cap->supported_raw_fmt_cnt;i++) {
         CDBG_ERROR("%s: supported_raw_fmts[%d]=%d\n", __func__, i, cam_cap->supported_raw_fmts[i]);
         if (CAM_FORMAT_BAYER_MIPI_RAW_8BPP_GBRG <= cam_cap->supported_raw_fmts[i] &&
@@ -137,8 +137,8 @@ mm_camera_stream_t * mm_app_add_rdi_stream(mm_camera_test_obj_t *test_obj,
         stream->s_config.stream_info->num_of_burst = num_burst;
     }
     stream->s_config.stream_info->fmt = fmt;
-    stream->s_config.stream_info->dim.width = cam_cap->raw_dim.width;
-    stream->s_config.stream_info->dim.height = cam_cap->raw_dim.height;
+    stream->s_config.stream_info->dim.width = cam_cap->raw_dim[0].width;
+    stream->s_config.stream_info->dim.height = cam_cap->raw_dim[0].height;
     stream->s_config.padding_info = cam_cap->padding_info;
 
     rc = mm_app_config_stream(test_obj, channel, stream, &stream->s_config);

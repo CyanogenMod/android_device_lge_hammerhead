@@ -111,6 +111,11 @@ typedef struct{
 
     uint8_t picture_sizes_tbl_cnt;                          /* picture sizes table size */
     cam_dimension_t picture_sizes_tbl[MAX_SIZES_CNT];       /* picture sizes table */
+    /* The minimum frame duration that is supported for each
+     * resolution in availableProcessedSizes. Should correspond
+     * to the frame duration when only that processed stream
+     * is active, with all processing set to FAST */
+    int64_t picture_min_duration[MAX_SIZES_CNT];
 
     /* capabilities specific to HAL 1 */
 
@@ -143,9 +148,13 @@ typedef struct{
     cam_format_t supported_picture_fmts[CAM_FORMAT_MAX];
 
     /* dimension and supported output format of raw dump from camif */
-    cam_dimension_t raw_dim;
+    uint8_t supported_raw_dim_cnt;
+    cam_dimension_t raw_dim[MAX_SIZES_CNT];
     uint8_t supported_raw_fmt_cnt;
     cam_format_t supported_raw_fmts[CAM_FORMAT_MAX];
+    /* The minimum frame duration that is supported for above
+       raw resolution */
+    int64_t raw_min_duration[MAX_SIZES_CNT];
 
     /* supported focus algorithms */
     uint8_t supported_focus_algos_cnt;
@@ -253,19 +262,6 @@ typedef struct{
     uint8_t supported_scalar_format_cnt;
     cam_format_t supported_scalar_fmts[CAM_FORMAT_MAX];
 
-    /* The minimum frame duration that is supported for above
-       raw resolution */
-    int64_t raw_min_duration;
-
-    uint8_t supported_sizes_tbl_cnt;
-    cam_dimension_t supported_sizes_tbl[MAX_SIZES_CNT];
-
-    /* The minimum frame duration that is supported for each
-     * resolution in availableProcessedSizes. Should correspond
-     * to the frame duration when only that processed stream
-     * is active, with all processing set to FAST */
-    int64_t min_duration[MAX_SIZES_CNT];
-
     uint32_t max_face_detection_count;
 
     /* Number of histogram buckets supported */
@@ -284,7 +280,6 @@ typedef struct{
     uint8_t supported_ae_modes_cnt;
     cam_ae_mode_type supported_ae_modes[CAM_AE_MODE_MAX];
 
-    int64_t jpeg_min_duration[MAX_SIZES_CNT];
 
     cam_sensitivity_range_t sensitivity_range;
     int32_t max_analog_sensitivity;
