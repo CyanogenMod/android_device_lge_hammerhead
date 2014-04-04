@@ -130,7 +130,7 @@ public:
 
     camera_metadata_t* translateCbMetadataToResultMetadata(metadata_buffer_t *metadata,
                             nsecs_t timestamp, int32_t request_id, int32_t BlobRequest,
-                            jpeg_settings_t* InputJpegSettings);
+                            jpeg_settings_t* InputJpegSettings, uint32_t frameNumber);
     int getJpegSettings(const camera_metadata_t *settings);
     int initParameters();
     void deinitParameters();
@@ -171,6 +171,11 @@ private:
     void handleBufferWithLock(camera3_stream_buffer_t *buffer,
         uint32_t frame_number);
     void unblockRequestIfNecessary();
+    void dumpMetadataToFile(tuning_params_t &meta,
+                            uint32_t &dumpFrameCount,
+                            int32_t enabled,
+                            const char *type,
+                            uint32_t frameNumber);
 public:
 
     bool needOnlineRotation();
@@ -194,6 +199,7 @@ private:
     camera3_stream_t *mInputStream;
     QCamera3MetadataChannel *mMetadataChannel;
     QCamera3PicChannel *mPictureChannel;
+    QCameraRawChannel *mRawChannel;
 
      //First request yet to be processed after configureStreams
     bool mFirstRequest;
@@ -263,12 +269,15 @@ private:
     int64_t mMinProcessedFrameDuration;
     int64_t mMinJpegFrameDuration;
     int64_t mMinRawFrameDuration;
+    bool mRawDump;
 
     power_module_t *m_pPowerModule;   // power module
 
 #ifdef HAS_MULTIMEDIA_HINTS
     bool mHdrHint;
 #endif
+    uint32_t mMetaFrameCount;
+
     static const QCameraMap EFFECT_MODES_MAP[];
     static const QCameraMap WHITE_BALANCE_MODES_MAP[];
     static const QCameraMap SCENE_MODES_MAP[];

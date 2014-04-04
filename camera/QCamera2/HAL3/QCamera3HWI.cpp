@@ -34,6 +34,7 @@
 #include <hardware/camera3.h>
 #include <camera/CameraMetadata.h>
 #include <stdlib.h>
+#include <fcntl.h>
 #include <utils/Log.h>
 #include <utils/Errors.h>
 #include <ui/Fence.h>
@@ -194,6 +195,7 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId)
       mInputStream(NULL),
       mMetadataChannel(NULL),
       mPictureChannel(NULL),
+      mRawChannel(NULL),
       mFirstRequest(false),
       mParamHeap(NULL),
       mParameters(NULL),
@@ -202,8 +204,10 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId)
       mMinProcessedFrameDuration(0),
       mMinJpegFrameDuration(0),
       mMinRawFrameDuration(0),
+      mRawDump(false),
       m_pPowerModule(NULL),
-      mHdrHint(false)
+      mHdrHint(false),
+      mMetaFrameCount(0)
 {
     mCameraDevice.common.tag = HARDWARE_DEVICE_TAG;
     mCameraDevice.common.version = CAMERA_DEVICE_API_VERSION_3_2;
@@ -214,6 +218,10 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId)
     // TODO: hardcode for now until mctl add support for min_num_pp_bufs
     //TBD - To see if this hardcoding is needed. Check by printing if this is filled by mctl to 3
     gCamCapability[cameraId]->min_num_pp_bufs = 3;
+
+    char prop[PROPERTY_VALUE_MAX];
+    property_get("persist.camera.raw.dump", prop, "0");
+    mRawDump = atoi(prop);
 
     pthread_cond_init(&mRequestCond, NULL);
     mPendingRequest = 0;
@@ -283,6 +291,11 @@ QCamera3HardwareInterface::~QCamera3HardwareInterface()
 
     /* Clean up all channels */
     if (mCameraInitialized) {
+        if (mRawChannel) {
+            mRawChannel->stop();
+            delete mRawChannel;
+            mRawChannel = NULL;
+        }
         if (mMetadataChannel) {
             mMetadataChannel->stop();
             delete mMetadataChannel;
@@ -488,6 +501,10 @@ int QCamera3HardwareInterface::configureStreams(
                 streamList->num_streams);
         return BAD_VALUE;
     }
+    // Stop the RAW Channel first
+    if (mRawChannel) {
+        mRawChannel->stop();
+    }
 
     /* first invalidate all the steams in the mStreamList
      * if they appear again, they will be validated */
@@ -522,7 +539,7 @@ int QCamera3HardwareInterface::configureStreams(
 
     for (size_t i = 0; i < streamList->num_streams; i++) {
         camera3_stream_t *newStream = streamList->streams[i];
-        ALOGV("%s: newStream type = %d, stream format = %d stream size : %d x %d",
+        ALOGD("%s: newStream type = %d, stream format = %d stream size : %d x %d",
                 __func__, newStream->stream_type, newStream->format,
                  newStream->width, newStream->height);
         //if the stream is in the mStreamList validate it
@@ -579,6 +596,12 @@ int QCamera3HardwareInterface::configureStreams(
             it++;
         }
     }
+
+    if (mRawChannel) {
+        delete mRawChannel;
+        mRawChannel = NULL;
+    }
+
     if (mMetadataChannel) {
         delete mMetadataChannel;
         mMetadataChannel = NULL;
@@ -601,6 +624,19 @@ int QCamera3HardwareInterface::configureStreams(
         mMetadataChannel = NULL;
         pthread_mutex_unlock(&mMutex);
         return rc;
+    }
+    if (mRawDump) {
+        //Create RAW channel and initialize it
+        mRawChannel = new QCameraRawChannel(mCameraHandle->camera_handle,
+                        mCameraHandle->ops, captureResultCb,
+                        &gCamCapability[mCameraId]->padding_info, this,
+                        &gCamCapability[mCameraId]->raw_dim);
+        if (mRawChannel == NULL) {
+            ALOGE("%s: failed to allocate RAW channel", __func__);
+            rc = -ENOMEM;
+            pthread_mutex_unlock(&mMutex);
+            return rc;
+        }
     }
 
     /* Allocate channel objects for the requested streams */
@@ -736,6 +772,18 @@ int QCamera3HardwareInterface::configureStreams(
 
     int32_t hal_version = CAM_HAL_V3;
     stream_config_info.num_streams = streamList->num_streams;
+    // ADD RAW Channel info to Stream Config
+    if (mRawDump) {
+        if (mRawChannel) {
+            stream_config_info.stream_sizes[streamList->num_streams].width =
+                               gCamCapability[mCameraId]->raw_dim.width;
+            stream_config_info.stream_sizes[streamList->num_streams].height =
+                               gCamCapability[mCameraId]->raw_dim.height;
+            stream_config_info.type[streamList->num_streams] =
+                               CAM_STREAM_TYPE_RAW;
+            stream_config_info.num_streams += 1;
+        }
+    }
 
     // settings/parameters don't carry over for new configureStreams
     memset(mParameters, 0, sizeof(parm_buffer_t));
@@ -1116,7 +1164,7 @@ void QCamera3HardwareInterface::handleMetadataWithLock(
         } else {
             result.result = translateCbMetadataToResultMetadata(metadata,
                     i->timestamp, i->request_id, i->blob_request,
-                    &(i->input_jpeg_settings));
+                    &(i->input_jpeg_settings), metadata_buf->bufs[0]->frame_idx);
             if (mIsZslMode) {
                 int found_metadata = 0;
                 //for ZSL case store the metadata buffer and corresp. ZSL handle ptr
@@ -1508,12 +1556,33 @@ int QCamera3HardwareInterface::processCaptureRequest(
                 mParameters);
         }
 
+        if (mRawDump && mRawChannel) {
+            ALOGD("%s: Initialize RAW Channel", __func__);
+            rc = mRawChannel->initialize();
+            if (rc < 0) {
+                ALOGE("%s: RAW channel initialization failed", __func__);
+                delete mRawChannel;
+                mRawChannel = NULL;
+                pthread_mutex_unlock(&mMutex);
+                return rc;
+            }
+        }
+
+        ALOGD("%s: Start META Channel", __func__);
         mMetadataChannel->start();
+
         for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
             it != mStreamInfo.end(); it++) {
             QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
+            ALOGD("%s: Start Regular Channel mask=%d", __func__, channel->getStreamTypeMask());
             channel->start();
         }
+
+        if (mRawDump) {
+            ALOGD("%s: Start RAW Channel last", __func__);
+            mRawChannel->start(); // Start RAW channel only when RAW set Prop is set
+        }
+
     }
 
     uint32_t frameNumber = request->frame_number;
@@ -1538,6 +1607,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
                                     request->input_buffer,
                                     frameNumber);
     // Acquire all request buffers first
+    streamID.num_streams = 0;
     int blob_request = 0;
     for (size_t i = 0; i < request->num_output_buffers; i++) {
         const camera3_stream_buffer_t& output = request->output_buffers[i];
@@ -1561,9 +1631,17 @@ int QCamera3HardwareInterface::processCaptureRequest(
             pthread_mutex_unlock(&mMutex);
             return rc;
         }
-        streamID.streamID[i]=channel->getStreamID(channel->getStreamTypeMask());
+
+        streamID.streamID[streamID.num_streams] =
+            channel->getStreamID(channel->getStreamTypeMask());
+        streamID.num_streams++;
+
+        if (mRawDump && output.stream->format == HAL_PIXEL_FORMAT_BLOB) {
+            streamID.streamID[streamID.num_streams] =
+                mRawChannel->getStreamID(mRawChannel->getStreamTypeMask());
+            streamID.num_streams++;
+        }
     }
-    streamID.num_streams=request->num_output_buffers;
 
     rc = setFrameParameters(request, streamID);
     if (rc < 0) {
@@ -1651,6 +1729,9 @@ int QCamera3HardwareInterface::processCaptureRequest(
             if (queueMetadata) {
                 mPictureChannel->queueMetadata(reproc_meta.meta_buf,mMetadataChannel,false);
             }
+            // Notify RAW when we receive a BLOB request and RAW setprop is set
+            if (mRawDump)
+                mRawChannel->request(NULL, frameNumber);
         } else {
             ALOGV("%s: %d, request with buffer %p, frame_number %d", __func__,
                 __LINE__, output.buffer, frameNumber);
@@ -1961,7 +2042,8 @@ camera_metadata_t*
 QCamera3HardwareInterface::translateCbMetadataToResultMetadata
                                 (metadata_buffer_t *metadata, nsecs_t timestamp,
                                  int32_t request_id, int32_t BlobRequest,
-                                 jpeg_settings_t* inputjpegsettings)
+                                 jpeg_settings_t* inputjpegsettings,
+                                 uint32_t frameNumber)
 {
     CameraMetadata camMetadata;
     camera_metadata_t* resultMetadata;
@@ -1999,6 +2081,19 @@ QCamera3HardwareInterface::translateCbMetadataToResultMetadata
         String8 str(inputjpegsettings->gps_processing_method);
         if (strlen(mJpegSettings->gps_processing_method) > 0) {
             camMetadata.update(ANDROID_JPEG_GPS_PROCESSING_METHOD, str);
+        }
+
+        //Dump tuning metadata if enabled and available
+        char prop[PROPERTY_VALUE_MAX];
+        memset(prop, 0, sizeof(prop));
+        property_get("persist.camera.dumpmetadata", prop, "0");
+        int32_t enabled = atoi(prop);
+        if (enabled && metadata->is_tuning_params_valid) {
+            dumpMetadataToFile(metadata->tuning_params,
+                               mMetaFrameCount,
+                               enabled,
+                               "Snapshot",
+                               frameNumber);
         }
     }
     uint8_t curr_entry = GET_FIRST_PARAM_ID(metadata);
@@ -2463,6 +2558,129 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
     }
     resultMetadata = camMetadata.release();
     return resultMetadata;
+}
+
+/*===========================================================================
+ * FUNCTION   : dumpMetadataToFile
+ *
+ * DESCRIPTION: Dumps tuning metadata to file system
+ *
+ * PARAMETERS :
+ *   @meta           : tuning metadata
+ *   @dumpFrameCount : current dump frame count
+ *   @enabled        : Enable mask
+ *
+ *==========================================================================*/
+void QCamera3HardwareInterface::dumpMetadataToFile(tuning_params_t &meta,
+                                                   uint32_t &dumpFrameCount,
+                                                   int32_t enabled,
+                                                   const char *type,
+                                                   uint32_t frameNumber)
+{
+    uint32_t frm_num = 0;
+
+    //Some sanity checks
+    if (meta.tuning_sensor_data_size > TUNING_SENSOR_DATA_MAX) {
+        ALOGE("%s : Tuning sensor data size bigger than expected %d: %d",
+              __func__,
+              meta.tuning_sensor_data_size,
+              TUNING_SENSOR_DATA_MAX);
+        return;
+    }
+
+    if (meta.tuning_vfe_data_size > TUNING_VFE_DATA_MAX) {
+        ALOGE("%s : Tuning VFE data size bigger than expected %d: %d",
+              __func__,
+              meta.tuning_vfe_data_size,
+              TUNING_VFE_DATA_MAX);
+        return;
+    }
+
+    if (meta.tuning_cpp_data_size > TUNING_CPP_DATA_MAX) {
+        ALOGE("%s : Tuning CPP data size bigger than expected %d: %d",
+              __func__,
+              meta.tuning_cpp_data_size,
+              TUNING_CPP_DATA_MAX);
+        return;
+    }
+
+    if (meta.tuning_cac_data_size > TUNING_CAC_DATA_MAX) {
+        ALOGE("%s : Tuning CAC data size bigger than expected %d: %d",
+              __func__,
+              meta.tuning_cac_data_size,
+              TUNING_CAC_DATA_MAX);
+        return;
+    }
+    //
+
+    if(enabled){
+        frm_num = ((enabled & 0xffff0000) >> 16);
+        if(frm_num == 0) {
+            frm_num = 10; //default 10 frames
+        }
+        if(frm_num > 256) {
+            frm_num = 256; //256 buffers cycle around
+        }
+        if((frm_num == 256) && (dumpFrameCount >= frm_num)) {
+            // reset frame count if cycling
+            dumpFrameCount = 0;
+        }
+        ALOGV("DumpFrmCnt = %d, frm_num = %d",dumpFrameCount, frm_num);
+        if (dumpFrameCount < frm_num) {
+            char timeBuf[FILENAME_MAX];
+            char buf[FILENAME_MAX];
+            memset(buf, 0, sizeof(buf));
+            memset(timeBuf, 0, sizeof(timeBuf));
+            time_t current_time;
+            struct tm * timeinfo;
+            time (&current_time);
+            timeinfo = localtime (&current_time);
+            strftime (timeBuf, sizeof(timeBuf),"/data/%Y%m%d%H%M%S", timeinfo);
+            String8 filePath(timeBuf);
+            snprintf(buf,
+                     sizeof(buf),
+                     "%d_HAL_META_%s_%d.bin",
+                     dumpFrameCount,
+                     type,
+                     frameNumber);
+            filePath.append(buf);
+            int file_fd = open(filePath.string(), O_RDWR | O_CREAT, 0777);
+            if (file_fd > 0) {
+                int written_len = 0;
+                meta.tuning_data_version = TUNING_DATA_VERSION;
+                void *data = (void *)((uint8_t *)&meta.tuning_data_version);
+                written_len += write(file_fd, data, sizeof(uint32_t));
+                data = (void *)((uint8_t *)&meta.tuning_sensor_data_size);
+                ALOGV("tuning_sensor_data_size %d",(int)(*(int *)data));
+                written_len += write(file_fd, data, sizeof(uint32_t));
+                data = (void *)((uint8_t *)&meta.tuning_vfe_data_size);
+                ALOGV("tuning_vfe_data_size %d",(int)(*(int *)data));
+                written_len += write(file_fd, data, sizeof(uint32_t));
+                data = (void *)((uint8_t *)&meta.tuning_cpp_data_size);
+                ALOGV("tuning_cpp_data_size %d",(int)(*(int *)data));
+                written_len += write(file_fd, data, sizeof(uint32_t));
+                data = (void *)((uint8_t *)&meta.tuning_cac_data_size);
+                ALOGV("tuning_cac_data_size %d",(int)(*(int *)data));
+                written_len += write(file_fd, data, sizeof(uint32_t));
+                int total_size = meta.tuning_sensor_data_size;
+                data = (void *)((uint8_t *)&meta.data);
+                written_len += write(file_fd, data, total_size);
+                total_size = meta.tuning_vfe_data_size;
+                data = (void *)((uint8_t *)&meta.data[TUNING_VFE_DATA_OFFSET]);
+                written_len += write(file_fd, data, total_size);
+                total_size = meta.tuning_cpp_data_size;
+                data = (void *)((uint8_t *)&meta.data[TUNING_CPP_DATA_OFFSET]);
+                written_len += write(file_fd, data, total_size);
+                total_size = meta.tuning_cac_data_size;
+                data = (void *)((uint8_t *)&meta.data[TUNING_CAC_DATA_OFFSET]);
+                written_len += write(file_fd, data, total_size);
+                close(file_fd);
+            }else {
+                ALOGE("%s: fail t open file for image dumping", __func__);
+            }
+            dumpFrameCount++;
+        }
+    }
 }
 
 /*===========================================================================
