@@ -29,7 +29,7 @@
 
 #define LOG_TAG "QCamera3Channel"
 //#define LOG_NDEBUG 0
-
+#include <fcntl.h>
 #include <stdlib.h>
 #include <cstdlib>
 #include <stdio.h>
@@ -834,6 +834,160 @@ void QCamera3MetadataChannel::putStreamBufs()
     delete mMemory;
     mMemory = NULL;
 }
+/*************************************************************************************/
+// RAW Channel related functions
+QCameraRawChannel::QCameraRawChannel(uint32_t cam_handle,
+                    mm_camera_ops_t *cam_ops,
+                    channel_cb_routine cb_routine,
+                    cam_padding_info_t *paddingInfo,
+                    void *userData,
+                    cam_dimension_t *raw_dim) :
+                        QCamera3Channel(cam_handle, cam_ops,
+                                cb_routine, paddingInfo, userData),
+                        mMemory(NULL)
+{
+
+  mWidth = raw_dim->width;
+  mHeight = raw_dim->height;
+  mMaxBuffers = 1;
+}
+
+QCameraRawChannel::~QCameraRawChannel()
+{
+    if (m_bIsActive)
+        stop();
+
+    if (mMemory) {
+        mMemory->deallocate();
+        delete mMemory;
+        mMemory = NULL;
+    }
+}
+
+int32_t QCameraRawChannel::initialize()
+{
+    int32_t rc;
+    cam_dimension_t streamDim;
+    cam_stream_type_t streamType;
+    cam_format_t streamFormat;
+
+    if (mMemory || m_numStreams > 0) {
+        ALOGE("%s: RAW channel already initialized", __func__);
+        return -EINVAL;
+    }
+
+    rc = init(NULL, NULL);
+    if (rc < 0) {
+        ALOGE("%s: init failed", __func__);
+        return rc;
+    }
+
+    streamDim.width = mWidth;
+    streamDim.height = mHeight;
+    streamType = CAM_STREAM_TYPE_RAW;
+    streamFormat = CAM_FORMAT_BAYER_QCOM_RAW_10BPP_GBRG;
+
+    ALOGD("%s: mWidth=%d, mHeight=%d", __func__, mWidth, mHeight);
+
+    rc = QCamera3Channel::addStream(streamType, streamFormat,
+        streamDim, mMaxBuffers);
+    if (rc < 0) {
+        ALOGE("%s: addStream failed", __func__);
+    }
+    return rc;
+}
+
+int32_t QCameraRawChannel::request(buffer_handle_t * /*buffer*/,
+                                                uint32_t /*frameNumber*/)
+{
+    int rc;
+    if (!m_bIsActive) {
+        return start();
+    }
+    else {
+        rc = mStreams[0]->bufDone(0);
+        if(rc != NO_ERROR) {
+            ALOGE("%s: Failed to Q RAW buffer",__func__);
+            return rc;
+        }
+        return 0;
+    }
+}
+
+int32_t QCameraRawChannel::registerBuffers(uint32_t /*num_buffers*/,
+                                        buffer_handle_t ** /*buffers*/)
+{
+    // no registerBuffers are supported for RAW channel
+    return -EINVAL;
+}
+
+void QCameraRawChannel::streamCbRoutine(
+                        mm_camera_super_buf_t *super_frame,
+                        QCamera3Stream * /*stream*/)
+{
+    if (super_frame == NULL || super_frame->num_bufs != 1) {
+        ALOGE("%s: RAW super_frame is not valid", __func__);
+        return;
+    }
+    // Dump the RAW data here and then hold the RAW frame
+    // untill next BLOB request comes
+    ALOGD("%s: Got the raw snapshot callback, going to dump it", __func__);
+    dumpRawSnapshot(super_frame->bufs[0]);
+    return;
+}
+
+QCamera3Memory* QCameraRawChannel::getStreamBufs(uint32_t len)
+{
+    int rc;
+    mMemory = new QCamera3HeapMemory();
+    if (!mMemory) {
+        ALOGE("%s: unable to create RAW memory", __func__);
+        return NULL;
+    }
+    ALOGD("%s: num_buffers=%d, len=%d", __func__, mMaxBuffers, len);
+    rc = mMemory->allocate(mMaxBuffers, len, false);
+    if (rc < 0) {
+        ALOGE("%s: unable to allocate RAW memory", __func__);
+        delete mMemory;
+        mMemory = NULL;
+        return NULL;
+    }
+    return mMemory;
+}
+
+void QCameraRawChannel::putStreamBufs()
+{
+    mMemory->deallocate();
+    delete mMemory;
+    mMemory = NULL;
+}
+
+void QCameraRawChannel::dumpRawSnapshot(mm_camera_buf_def_t *frame)
+{
+   QCamera3Stream *stream = getStreamByIndex(0);
+   char buf[32];
+   memset(buf, 0, sizeof(buf));
+   cam_dimension_t dim;
+   memset(&dim, 0, sizeof(dim));
+   stream->getFrameDimension(dim);
+
+   cam_frame_len_offset_t offset;
+   memset(&offset, 0, sizeof(cam_frame_len_offset_t));
+   stream->getFrameOffset(offset);
+   snprintf(buf, sizeof(buf), "/data/r_%d_%dx%d.raw",
+            frame->frame_idx, offset.mp[0].stride, offset.mp[0].scanline);
+
+   int file_fd = open(buf, O_RDWR| O_CREAT, 0777);
+   if (file_fd) {
+      int written_len = write(file_fd, frame->buffer, frame->frame_len);
+      ALOGE("%s: written number of bytes %d", __func__, written_len);
+      close(file_fd);
+   } else {
+      ALOGE("%s: failed to open file to dump image", __func__);
+   }
+
+}
+/*************************************************************************************/
 
 /*===========================================================================
  * FUNCTION   : jpegEvtHandle

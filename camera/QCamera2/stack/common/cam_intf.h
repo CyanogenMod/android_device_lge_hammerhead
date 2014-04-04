@@ -566,6 +566,9 @@ typedef struct {
 typedef struct {
     uint8_t first_flagged_entry;
     metadata_entry_type_t entry[CAM_INTF_PARM_MAX];
+    /*Tuning Data */
+    uint8_t is_tuning_params_valid;
+    tuning_params_t tuning_params;
 } metadata_buffer_t;
 
 typedef struct {
