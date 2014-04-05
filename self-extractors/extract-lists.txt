@@ -8,19 +8,16 @@
   lge)
     TO_EXTRACT="\
             system/app/qcrilmsgtunnel.apk \
-            system/app/SprintHiddenMenu.apk \
-            system/app/UpdateSetting.apk \
+            system/app/SprintDM.apk \
             system/etc/Bluetooth_cal.acdb \
             system/etc/General_cal.acdb \
             system/etc/Global_cal.acdb \
             system/etc/Handset_cal.acdb \
             system/etc/Hdmi_cal.acdb \
             system/etc/Headset_cal.acdb \
-            system/etc/permissions/serviceitems.xml \
             system/etc/qcril.db \
             system/etc/sensor_def_hh.conf \
             system/etc/Speaker_cal.acdb \
-            system/framework/serviceitems.jar \
             system/vendor/bin/vss_init \
             system/vendor/firmware/bu24205_LGIT_VER_2_DATA1.bin \
             system/vendor/firmware/bu24205_LGIT_VER_2_DATA2.bin \
