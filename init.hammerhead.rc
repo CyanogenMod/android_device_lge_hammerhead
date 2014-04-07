@@ -448,7 +448,6 @@ service mpdecision /system/bin/mpdecision --no_sleep --avg_comp
 
 service ssr_ramdump /system/bin/subsystem_ramdump -m -t emmc
     class main
-    disabled
     user root
     group root
 
