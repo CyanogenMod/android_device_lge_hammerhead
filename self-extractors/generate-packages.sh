@@ -45,7 +45,7 @@ do
   lge)
     TO_EXTRACT="\
             system/app/qcrilmsgtunnel.apk \
-            system/app/SprintHiddenMenu.apk \
+            system/app/SprintDM.apk \
             system/app/UpdateSetting.apk \
             system/etc/Bluetooth_cal.acdb \
             system/etc/General_cal.acdb \

@@ -21,8 +21,6 @@ system/etc/Hdmi_cal.acdb:lge
 system/etc/Headset_cal.acdb:lge
 system/etc/permissions/qcrilhook.xml:qcom
 system/framework/qcrilhook.jar:qcom
-system/etc/permissions/serviceitems.xml:lge
-system/framework/serviceitems.jar:lge
 system/etc/qcril.db:lge
 system/etc/sensor_def_hh.conf:lge
 system/lib/hw/flp.msm8974.so:qcom
@@ -44,8 +42,7 @@ system/vendor/lib/libvss_nv_iface.so:lge
 system/app/QXDMLogger.apk:google
 system/app/OmaDmclient.apk:lge
 system/app/qcrilmsgtunnel.apk:lge
-system/app/SprintHiddenMenu.apk:lge
-system/app/UpdateSetting.apk:lge
+system/app/SprintDM.apk:lge
 system/lib/libloc_core.so:qcom
 system/vendor/lib/egl/libq3dtools_adreno.so:qcom
 system/etc/Speaker_cal.acdb:lge

@@ -15,19 +15,16 @@
 # LGE blob(s) necessary for Hammerhead hardware
 PRODUCT_COPY_FILES := \
     vendor/lge/hammerhead/proprietary/qcrilmsgtunnel.apk:system/app/qcrilmsgtunnel.apk:lge \
-    vendor/lge/hammerhead/proprietary/SprintHiddenMenu.apk:system/app/SprintHiddenMenu.apk:lge \
-    vendor/lge/hammerhead/proprietary/UpdateSetting.apk:system/app/UpdateSetting.apk:lge \
+    vendor/lge/hammerhead/proprietary/SprintDM.apk:system/app/SprintDM.apk:lge \
     vendor/lge/hammerhead/proprietary/Bluetooth_cal.acdb:system/etc/Bluetooth_cal.acdb:lge \
     vendor/lge/hammerhead/proprietary/General_cal.acdb:system/etc/General_cal.acdb:lge \
     vendor/lge/hammerhead/proprietary/Global_cal.acdb:system/etc/Global_cal.acdb:lge \
     vendor/lge/hammerhead/proprietary/Handset_cal.acdb:system/etc/Handset_cal.acdb:lge \
     vendor/lge/hammerhead/proprietary/Hdmi_cal.acdb:system/etc/Hdmi_cal.acdb:lge \
     vendor/lge/hammerhead/proprietary/Headset_cal.acdb:system/etc/Headset_cal.acdb:lge \
-    vendor/lge/hammerhead/proprietary/serviceitems.xml:system/etc/permissions/serviceitems.xml:lge \
     vendor/lge/hammerhead/proprietary/qcril.db:system/etc/qcril.db:lge \
     vendor/lge/hammerhead/proprietary/sensor_def_hh.conf:system/etc/sensor_def_hh.conf:lge \
     vendor/lge/hammerhead/proprietary/Speaker_cal.acdb:system/etc/Speaker_cal.acdb:lge \
-    vendor/lge/hammerhead/proprietary/serviceitems.jar:system/framework/serviceitems.jar:lge \
     vendor/lge/hammerhead/proprietary/vss_init:system/vendor/bin/vss_init:lge \
     vendor/lge/hammerhead/proprietary/bu24205_LGIT_VER_2_DATA1.bin:system/vendor/firmware/bu24205_LGIT_VER_2_DATA1.bin:lge \
     vendor/lge/hammerhead/proprietary/bu24205_LGIT_VER_2_DATA2.bin:system/vendor/firmware/bu24205_LGIT_VER_2_DATA2.bin:lge \
