@@ -28,7 +28,7 @@
 */
 
 #define LOG_TAG "QCamera3HWI"
-#define LOG_NDEBUG 0
+//#define LOG_NDEBUG 0
 
 #define __STDC_LIMIT_MACROS
 #include <cutils/properties.h>
