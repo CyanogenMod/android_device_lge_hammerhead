@@ -36,6 +36,6 @@
     <!-- Display carrier settings -->
     <bool name="config_carrier_settings_enable">true</bool>
     <!-- carrier settings menu -->
-    <string name="carrier_settings" translatable="false">com.android.sdm.plugins.sprintdm</string>
-    <string name="carrier_settings_menu" translatable="false">com.android.sdm.plugins.sprintdm.SprintCarrierSettingsActivity</string>
+    <string name="carrier_settings" translatable="false">com.lge.update</string>
+    <string name="carrier_settings_menu" translatable="false">com.lge.update.SprintUpdateSetting</string>
 </resources>
