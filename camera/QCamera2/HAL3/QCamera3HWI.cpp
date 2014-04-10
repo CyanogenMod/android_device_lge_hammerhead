@@ -3885,6 +3885,10 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
         controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_ZERO_SHUTTER_LAG;
         focusMode = ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE;
         break;
+      case CAMERA3_TEMPLATE_MANUAL:
+        controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_MANUAL;
+        focusMode = ANDROID_CONTROL_AF_MODE_OFF;
+        break;
       default:
         controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_CUSTOM;
         break;
@@ -3941,6 +3945,36 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
     float default_focal_length = gCamCapability[mCameraId]->focal_length;
     settings.update(ANDROID_LENS_FOCAL_LENGTH, &default_focal_length, 1);
 
+    float default_focus_distance = 0;
+    settings.update(ANDROID_LENS_FOCUS_DISTANCE, &default_focus_distance, 1);
+
+    static const uint8_t demosaicMode = ANDROID_DEMOSAIC_MODE_FAST;
+    settings.update(ANDROID_DEMOSAIC_MODE, &demosaicMode, 1);
+
+    static const uint8_t hotpixelMode = ANDROID_HOT_PIXEL_MODE_FAST;
+    settings.update(ANDROID_HOT_PIXEL_MODE, &hotpixelMode, 1);
+
+    static const int32_t testpatternMode = ANDROID_SENSOR_TEST_PATTERN_MODE_OFF;
+    settings.update(ANDROID_SENSOR_TEST_PATTERN_MODE, &testpatternMode, 1);
+
+    static const uint8_t faceDetectMode = ANDROID_STATISTICS_FACE_DETECT_MODE_FULL;
+    settings.update(ANDROID_STATISTICS_FACE_DETECT_MODE, &faceDetectMode, 1);
+
+    static const uint8_t histogramMode = ANDROID_STATISTICS_HISTOGRAM_MODE_OFF;
+    settings.update(ANDROID_STATISTICS_HISTOGRAM_MODE, &histogramMode, 1);
+
+    static const uint8_t sharpnessMapMode = ANDROID_STATISTICS_SHARPNESS_MAP_MODE_OFF;
+    settings.update(ANDROID_STATISTICS_SHARPNESS_MAP_MODE, &sharpnessMapMode, 1);
+
+    static const uint8_t hotPixelMapMode = ANDROID_STATISTICS_HOT_PIXEL_MAP_MODE_OFF;
+    settings.update(ANDROID_STATISTICS_HOT_PIXEL_MAP_MODE, &hotPixelMapMode, 1);
+
+    static const uint8_t lensShadingMode = ANDROID_STATISTICS_LENS_SHADING_MAP_MODE_OFF;
+    settings.update(ANDROID_STATISTICS_LENS_SHADING_MAP_MODE, &lensShadingMode, 1);
+
+    static const uint8_t blackLevelLock = ANDROID_BLACK_LEVEL_LOCK_OFF;
+    settings.update(ANDROID_BLACK_LEVEL_LOCK, &blackLevelLock, 1);
+
     /* Exposure time(Update the Min Exposure Time)*/
     int64_t default_exposure_time = gCamCapability[mCameraId]->exposure_time_range[0];
     settings.update(ANDROID_SENSOR_EXPOSURE_TIME, &default_exposure_time, 1);
@@ -3954,19 +3988,19 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
     settings.update(ANDROID_SENSOR_SENSITIVITY, &default_sensitivity, 1);
 
     /*edge mode*/
-    static const uint8_t edge_mode = ANDROID_EDGE_MODE_HIGH_QUALITY;
+    static const uint8_t edge_mode = ANDROID_EDGE_MODE_FAST;
     settings.update(ANDROID_EDGE_MODE, &edge_mode, 1);
 
     /*noise reduction mode*/
-    static const uint8_t noise_red_mode = ANDROID_NOISE_REDUCTION_MODE_HIGH_QUALITY;
+    static const uint8_t noise_red_mode = ANDROID_NOISE_REDUCTION_MODE_FAST;
     settings.update(ANDROID_NOISE_REDUCTION_MODE, &noise_red_mode, 1);
 
     /*color correction mode*/
-    static const uint8_t color_correct_mode = ANDROID_COLOR_CORRECTION_MODE_HIGH_QUALITY;
+    static const uint8_t color_correct_mode = ANDROID_COLOR_CORRECTION_MODE_FAST;
     settings.update(ANDROID_COLOR_CORRECTION_MODE, &color_correct_mode, 1);
 
     /*transform matrix mode*/
-    static const uint8_t tonemap_mode = ANDROID_TONEMAP_MODE_HIGH_QUALITY;
+    static const uint8_t tonemap_mode = ANDROID_TONEMAP_MODE_FAST;
     settings.update(ANDROID_TONEMAP_MODE, &tonemap_mode, 1);
 
     uint8_t edge_strength = (uint8_t)gCamCapability[mCameraId]->sharpness_ctrl.def_value;
@@ -4057,6 +4091,26 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
     uint8_t shadingmap_mode = ANDROID_STATISTICS_LENS_SHADING_MAP_MODE_OFF;
     settings.update(ANDROID_STATISTICS_LENS_SHADING_MAP_MODE, &shadingmap_mode, 1);
 
+    //special defaults for manual template
+    if (type == CAMERA3_TEMPLATE_MANUAL) {
+        static const uint8_t manualControlMode = ANDROID_CONTROL_MODE_OFF;
+        settings.update(ANDROID_CONTROL_MODE, &manualControlMode, 1);
+
+        static const uint8_t manualFocusMode = ANDROID_CONTROL_AF_MODE_OFF;
+        settings.update(ANDROID_CONTROL_AF_MODE, &manualFocusMode, 1);
+
+        static const uint8_t manualAeMode = ANDROID_CONTROL_AE_MODE_OFF;
+        settings.update(ANDROID_CONTROL_AE_MODE, &manualAeMode, 1);
+
+        static const uint8_t manualAwbMode = ANDROID_CONTROL_AWB_MODE_OFF;
+        settings.update(ANDROID_CONTROL_AWB_MODE, &manualAwbMode, 1);
+
+        static const uint8_t manualTonemapMode = ANDROID_TONEMAP_MODE_FAST;
+        settings.update(ANDROID_TONEMAP_MODE, &manualTonemapMode, 1);
+
+        static const uint8_t manualColorCorrectMode = ANDROID_COLOR_CORRECTION_MODE_TRANSFORM_MATRIX;
+        settings.update(ANDROID_COLOR_CORRECTION_MODE, &manualColorCorrectMode, 1);
+    }
     mDefaultMetadata[type] = settings.release();
 
     pthread_mutex_unlock(&mMutex);
