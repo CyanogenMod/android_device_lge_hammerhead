@@ -208,7 +208,7 @@ vendor_tag_info_t *qcamera3_tag_info[QCAMERA3_SECTIONS_END -
 camera3_device_ops_t QCamera3HardwareInterface::mCameraOps = {
     initialize:                         QCamera3HardwareInterface::initialize,
     configure_streams:                  QCamera3HardwareInterface::configure_streams,
-    register_stream_buffers:            QCamera3HardwareInterface::register_stream_buffers,
+    register_stream_buffers:            NULL,
     construct_default_request_settings: QCamera3HardwareInterface::construct_default_request_settings,
     process_capture_request:            QCamera3HardwareInterface::process_capture_request,
     get_metadata_vendor_tag_ops:        QCamera3HardwareInterface::get_metadata_vendor_tag_ops,
