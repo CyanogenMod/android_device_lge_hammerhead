@@ -198,7 +198,7 @@ private:
                             const char *type,
                             uint32_t frameNumber);
 
-    int queueReprocMetadata(metadata_buffer_t *metadata);
+    void cleanAndSortStreamInfo();
 public:
 
     bool needOnlineRotation();

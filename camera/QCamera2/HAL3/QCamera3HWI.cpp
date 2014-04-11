@@ -591,19 +591,7 @@ int QCamera3HardwareInterface::configureStreams(
     }
     mInputStream = inputStream;
 
-    /*clean up invalid streams*/
-    for (List<stream_info_t*>::iterator it=mStreamInfo.begin();
-            it != mStreamInfo.end();) {
-        if(((*it)->status) == INVALID){
-            QCamera3Channel *channel = (QCamera3Channel*)(*it)->stream->priv;
-            delete channel;
-            free(*it);
-            it = mStreamInfo.erase(it);
-        } else {
-            it++;
-        }
-    }
-
+    cleanAndSortStreamInfo();
     if (mMetadataChannel) {
         delete mMetadataChannel;
         mMetadataChannel = NULL;
@@ -1503,7 +1491,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
                 return rc;
             }
         }
-        //Then start them
+        //Then start them.
         for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
             it != mStreamInfo.end(); it++) {
             QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
@@ -2588,6 +2576,53 @@ void QCamera3HardwareInterface::dumpMetadataToFile(tuning_params_t &meta,
             dumpFrameCount++;
         }
     }
+}
+
+/*===========================================================================
+ * FUNCTION   : cleanAndSortStreamInfo
+ *
+ * DESCRIPTION: helper method to clean up invalid streams in stream_info,
+ *              and sort them such that raw stream is at the end of the list
+ *              This is a workaround for camera daemon constraint.
+ *
+ * PARAMETERS : None
+ *
+ *==========================================================================*/
+void QCamera3HardwareInterface::cleanAndSortStreamInfo()
+{
+    List<stream_info_t *> newStreamInfo;
+
+    /*clean up invalid streams*/
+    for (List<stream_info_t*>::iterator it=mStreamInfo.begin();
+            it != mStreamInfo.end();) {
+        if(((*it)->status) == INVALID){
+            QCamera3Channel *channel = (QCamera3Channel*)(*it)->stream->priv;
+            delete channel;
+            free(*it);
+            it = mStreamInfo.erase(it);
+        } else {
+            it++;
+        }
+    }
+
+    // Move preview/video/callback/snapshot streams into newList
+    for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
+            it != mStreamInfo.end();) {
+        if ((*it)->stream->format != HAL_PIXEL_FORMAT_RAW_OPAQUE &&
+                (*it)->stream->format != HAL_PIXEL_FORMAT_RAW16) {
+            newStreamInfo.push_back(*it);
+            it = mStreamInfo.erase(it);
+        } else
+            it++;
+    }
+    // Move raw streams into newList
+    for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
+            it != mStreamInfo.end();) {
+        newStreamInfo.push_back(*it);
+        it = mStreamInfo.erase(it);
+    }
+
+    mStreamInfo = newStreamInfo;
 }
 
 /*===========================================================================
