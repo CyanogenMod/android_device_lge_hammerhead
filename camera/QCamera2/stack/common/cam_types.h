@@ -1085,6 +1085,9 @@ typedef enum {
 
     /* OTP : WB gr/gb */
     CAM_INTF_META_OTP_WB_GRGB,
+    /* DNG file support */
+    CAM_INTF_META_PROFILE_TONE_CURVE,
+
     CAM_INTF_PARM_MAX
 } cam_intf_parm_type_t;
 
@@ -1161,6 +1164,11 @@ typedef struct {
    int tonemap_points_cnt;
    cam_tonemap_curve_t curves[3];
 } cam_rgb_tonemap_curves;
+
+typedef struct {
+   int tonemap_points_cnt;
+   cam_tonemap_curve_t curve;
+} cam_profile_tone_curve;
 
 typedef enum {
     OFF,

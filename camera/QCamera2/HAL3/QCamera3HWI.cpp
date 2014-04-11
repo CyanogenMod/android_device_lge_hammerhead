@@ -2191,6 +2191,7 @@ QCamera3HardwareInterface::translateFromHalMetadata(
                                 tonemap->tonemap_points_cnt * 2);
              break;
           }
+
           case CAM_INTF_META_COLOR_CORRECT_GAINS:{
              cam_color_correct_gains_t *colorCorrectionGains = (cam_color_correct_gains_t*)
              POINTER_OF(CAM_INTF_META_COLOR_CORRECT_GAINS, metadata);
@@ -2204,6 +2205,17 @@ QCamera3HardwareInterface::translateFromHalMetadata(
                        (camera_metadata_rational_t*)colorCorrectionMatrix->transform_matrix, 3*3);
               break;
           }
+
+          /* DNG file realted metadata */
+          case CAM_INTF_META_PROFILE_TONE_CURVE: {
+             cam_profile_tone_curve *toneCurve = (cam_profile_tone_curve *)
+             POINTER_OF(CAM_INTF_META_PROFILE_TONE_CURVE, metadata);
+             camMetadata.update(ANDROID_SENSOR_PROFILE_TONE_CURVE,
+                                (float*)toneCurve->curve.tonemap_points,
+                                toneCurve->tonemap_points_cnt * 2);
+             break;
+          }
+
           case CAM_INTF_META_PRED_COLOR_CORRECT_GAINS:{
              cam_color_correct_gains_t *predColorCorrectionGains = (cam_color_correct_gains_t*)
              POINTER_OF(CAM_INTF_META_PRED_COLOR_CORRECT_GAINS, metadata);
