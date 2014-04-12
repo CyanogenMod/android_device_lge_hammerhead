@@ -2326,6 +2326,12 @@ QCamera3HardwareInterface::translateFromHalMetadata
        curr_entry = next_entry;
     }
 
+    uint8_t hotPixelMode = ANDROID_HOT_PIXEL_MODE_FAST;
+    camMetadata.update(ANDROID_HOT_PIXEL_MODE, &hotPixelMode, 1);
+
+    uint8_t hotPixelMapMode = ANDROID_STATISTICS_HOT_PIXEL_MAP_MODE_OFF;
+    camMetadata.update(ANDROID_STATISTICS_HOT_PIXEL_MAP_MODE, &hotPixelMapMode, 1);
+
     int32_t hotPixelMap[2];
     camMetadata.update(ANDROID_STATISTICS_HOT_PIXEL_MAP, &hotPixelMap[0], 0);
 
