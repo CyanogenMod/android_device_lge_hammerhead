@@ -145,14 +145,17 @@ public:
     void dump(int fd);
     int flush();
 
-    int setFrameParameters(camera3_capture_request_t *request, cam_stream_ID_t streamID);
+    int setFrameParameters(camera3_capture_request_t *request,
+            cam_stream_ID_t streamID);
     int setReprocParameters(camera3_capture_request_t *request);
-    int translateToHalMetadata(const camera3_capture_request_t *request, metadata_buffer_t *parm);
+    int translateToHalMetadata(const camera3_capture_request_t *request,
+            metadata_buffer_t *parm);
     camera_metadata_t* translateCbUrgentMetadataToResultMetadata (
                              metadata_buffer_t *metadata);
 
     camera_metadata_t* translateFromHalMetadata(metadata_buffer_t *metadata,
-                            nsecs_t timestamp, int32_t request_id, int32_t blob);
+                            nsecs_t timestamp, int32_t request_id,
+                            const CameraMetadata& jpegMetadata);
     int getJpegSettings(const camera_metadata_t *settings);
     int initParameters();
     void deinitParameters();
@@ -199,6 +202,8 @@ private:
                             uint32_t frameNumber);
 
     void cleanAndSortStreamInfo();
+    void extractJpegMetadata(CameraMetadata& jpegMetadata,
+            const camera3_capture_request_t *request);
 public:
 
     bool needOnlineRotation();
@@ -243,6 +248,7 @@ private:
         nsecs_t timestamp;
         uint8_t bNotified;
         int input_buffer_present;
+        CameraMetadata jpegMetadata;
     } PendingRequestInfo;
     typedef struct {
         uint32_t frame_number;

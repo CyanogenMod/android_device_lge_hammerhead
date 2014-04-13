@@ -1152,7 +1152,7 @@ void QCamera3HardwareInterface::handleMetadataWithLock(
             result.result = dummyMetadata.release();
         } else {
             result.result = translateFromHalMetadata(metadata,
-                    i->timestamp, i->request_id, i->blob_request);
+                    i->timestamp, i->request_id, i->jpegMetadata);
 
             if (i->blob_request) {
                 {
@@ -1563,6 +1563,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
     pendingRequest.blob_request = blob_request;
     pendingRequest.bNotified = 0;
     pendingRequest.input_buffer_present = (request->input_buffer != NULL)? 1 : 0;
+    extractJpegMetadata(pendingRequest.jpegMetadata, request);
 
     for (size_t i = 0; i < request->num_output_buffers; i++) {
         RequestedBufferInfo requestedBuf;
@@ -1583,6 +1584,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
     }
     ALOGV("%s: mPendingBuffersMap.num_buffers = %d",
           __func__, mPendingBuffersMap.num_buffers);
+
     mPendingRequestsList.push_back(pendingRequest);
 
     // Notify metadata channel we receive a request
@@ -1912,12 +1914,17 @@ void QCamera3HardwareInterface::captureResultCb(mm_camera_super_buf_t *metadata_
  *              metadata in a format specified by fwk
  *==========================================================================*/
 camera_metadata_t*
-QCamera3HardwareInterface::translateFromHalMetadata
-                                (metadata_buffer_t *metadata, nsecs_t timestamp,
-                                 int32_t request_id, int32_t blob)
+QCamera3HardwareInterface::translateFromHalMetadata(
+                                 metadata_buffer_t *metadata,
+                                 nsecs_t timestamp,
+                                 int32_t request_id,
+                                 const CameraMetadata& jpegMetadata)
 {
     CameraMetadata camMetadata;
     camera_metadata_t* resultMetadata;
+
+    if (jpegMetadata.entryCount())
+        camMetadata.append(jpegMetadata);
 
     camMetadata.update(ANDROID_SENSOR_TIMESTAMP, &timestamp, 1);
     camMetadata.update(ANDROID_REQUEST_ID, &request_id, 1);
@@ -2623,6 +2630,60 @@ void QCamera3HardwareInterface::cleanAndSortStreamInfo()
     }
 
     mStreamInfo = newStreamInfo;
+}
+
+/*===========================================================================
+ * FUNCTION   : extractJpegMetadata
+ *
+ * DESCRIPTION: helper method to extract Jpeg metadata from capture request.
+ *              JPEG metadata is cached in HAL, and return as part of capture
+ *              result when metadata is returned from camera daemon.
+ *
+ * PARAMETERS : @jpegMetadata: jpeg metadata to be extracted
+ *              @request:      capture request
+ *
+ *==========================================================================*/
+void QCamera3HardwareInterface::extractJpegMetadata(
+        CameraMetadata& jpegMetadata,
+        const camera3_capture_request_t *request)
+{
+    CameraMetadata frame_settings;
+    frame_settings = request->settings;
+
+    if (frame_settings.exists(ANDROID_JPEG_GPS_COORDINATES))
+        jpegMetadata.update(ANDROID_JPEG_GPS_COORDINATES,
+                frame_settings.find(ANDROID_JPEG_GPS_COORDINATES).data.d,
+                frame_settings.find(ANDROID_JPEG_GPS_COORDINATES).count);
+
+    if (frame_settings.exists(ANDROID_JPEG_GPS_PROCESSING_METHOD))
+        jpegMetadata.update(ANDROID_JPEG_GPS_PROCESSING_METHOD,
+                frame_settings.find(ANDROID_JPEG_GPS_PROCESSING_METHOD).data.u8,
+                frame_settings.find(ANDROID_JPEG_GPS_PROCESSING_METHOD).count);
+
+    if (frame_settings.exists(ANDROID_JPEG_GPS_TIMESTAMP))
+        jpegMetadata.update(ANDROID_JPEG_GPS_TIMESTAMP,
+                frame_settings.find(ANDROID_JPEG_GPS_TIMESTAMP).data.i64,
+                frame_settings.find(ANDROID_JPEG_GPS_TIMESTAMP).count);
+
+    if (frame_settings.exists(ANDROID_JPEG_ORIENTATION))
+        jpegMetadata.update(ANDROID_JPEG_ORIENTATION,
+                frame_settings.find(ANDROID_JPEG_ORIENTATION).data.i32,
+                frame_settings.find(ANDROID_JPEG_ORIENTATION).count);
+
+    if (frame_settings.exists(ANDROID_JPEG_QUALITY))
+        jpegMetadata.update(ANDROID_JPEG_QUALITY,
+                frame_settings.find(ANDROID_JPEG_QUALITY).data.u8,
+                frame_settings.find(ANDROID_JPEG_QUALITY).count);
+
+    if (frame_settings.exists(ANDROID_JPEG_THUMBNAIL_QUALITY))
+        jpegMetadata.update(ANDROID_JPEG_THUMBNAIL_QUALITY,
+                frame_settings.find(ANDROID_JPEG_THUMBNAIL_QUALITY).data.u8,
+                frame_settings.find(ANDROID_JPEG_THUMBNAIL_QUALITY).count);
+
+    if (frame_settings.exists(ANDROID_JPEG_THUMBNAIL_SIZE))
+        jpegMetadata.update(ANDROID_JPEG_THUMBNAIL_SIZE,
+                frame_settings.find(ANDROID_JPEG_THUMBNAIL_SIZE).data.i32,
+                frame_settings.find(ANDROID_JPEG_THUMBNAIL_SIZE).count);
 }
 
 /*===========================================================================
@@ -4171,7 +4232,8 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
  * RETURN     : success: NO_ERROR
  *              failure:
  *==========================================================================*/
-int QCamera3HardwareInterface::setFrameParameters(camera3_capture_request_t *request,
+int QCamera3HardwareInterface::setFrameParameters(
+                    camera3_capture_request_t *request,
                     cam_stream_ID_t streamID)
 {
     /*translate from camera_metadata_t type to parm_type_t*/
@@ -4225,7 +4287,8 @@ int QCamera3HardwareInterface::setFrameParameters(camera3_capture_request_t *req
  * RETURN     : success: NO_ERROR
  *              failure: non zero failure code
  *==========================================================================*/
-int QCamera3HardwareInterface::setReprocParameters(camera3_capture_request_t *request)
+int QCamera3HardwareInterface::setReprocParameters(
+        camera3_capture_request_t *request)
 {
     /*translate from camera_metadata_t type to parm_type_t*/
     int rc = 0;
