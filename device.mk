@@ -294,6 +294,8 @@ PRODUCT_PROPERTY_OVERRIDES += \
     af.resampler.quality=4 \
     audio.offload.buffer.size.kb=32 \
     audio.offload.gapless.enabled=false \
+    av.offload.enable=true \
+    av.streaming.offload.enable=true \
     av.offload.enable=true
 
 # Setup custom emergency number list based on the MCC. This is needed by RIL
