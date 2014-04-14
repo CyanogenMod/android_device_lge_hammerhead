@@ -1938,6 +1938,11 @@ QCamera3HardwareInterface::translateFromHalMetadata
     uint8_t next_entry;
     while (curr_entry != CAM_INTF_PARM_MAX) {
        switch (curr_entry) {
+         case CAM_INTF_META_FRAME_NUMBER:{
+             int64_t frame_number = *(uint32_t *) POINTER_OF(CAM_INTF_META_FRAME_NUMBER, metadata);
+             camMetadata.update(ANDROID_SYNC_FRAME_NUMBER, &frame_number, 1);
+             break;
+         }
          case CAM_INTF_META_FACE_DETECTION:{
              cam_face_detection_data_t *faceDetectionInfo =
                 (cam_face_detection_data_t *)POINTER_OF(CAM_INTF_META_FACE_DETECTION, metadata);
