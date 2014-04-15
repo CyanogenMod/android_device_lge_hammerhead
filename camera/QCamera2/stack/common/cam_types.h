@@ -942,7 +942,6 @@ typedef enum {
     /*The best fit color channels gains calculated by the stats*/
     CAM_INTF_META_PRED_COLOR_CORRECT_GAINS,
     /* CONTROL */
-//    CAM_INTF_META_REQUEST_ID,
     /* A frame counter set by the framework. Must be maintained unchanged in
      * output frame. */
     CAM_INTF_META_FRAME_NUMBER,

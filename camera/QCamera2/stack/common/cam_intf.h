@@ -500,10 +500,7 @@ typedef union {
     INCLUDE(CAM_INTF_META_LENS_FOCUS_RANGE,             float,                       2);
     INCLUDE(CAM_INTF_META_LENS_STATE,                   uint8_t,                     1);
     INCLUDE(CAM_INTF_META_LENS_OPT_STAB_MODE,           uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_LENS_FOCUS_STATE,             uint8_t,                     1);
     INCLUDE(CAM_INTF_META_NOISE_REDUCTION_MODE,         uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_QUIRKS_PARTIAL_RESULT,        uint8_t,                     1);
-    INCLUDE(CAM_INTF_META_REQUEST_ID,                   uint8_t,                     1);
     INCLUDE(CAM_INTF_META_SCALER_CROP_REGION,           cam_crop_region_t,           1);
     INCLUDE(CAM_INTF_META_SENSOR_EXPOSURE_TIME,         int64_t,                     1);
     INCLUDE(CAM_INTF_META_SENSOR_FRAME_DURATION,        int64_t,                     1);
