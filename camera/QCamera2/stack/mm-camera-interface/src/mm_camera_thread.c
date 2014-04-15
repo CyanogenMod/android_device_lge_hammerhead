@@ -46,6 +46,8 @@ typedef enum {
     MM_CAMERA_PIPE_CMD_POLL_ENTRIES_UPDATED,
     /* poll entries updated */
     MM_CAMERA_PIPE_CMD_POLL_ENTRIES_UPDATED_ASYNC,
+    /* commit updates */
+    MM_CAMERA_PIPE_CMD_COMMIT,
     /* exit */
     MM_CAMERA_PIPE_CMD_EXIT,
     /* max count */
@@ -252,6 +254,9 @@ static void mm_camera_poll_proc_pipe(mm_camera_poll_thread_t *poll_cb)
             mm_camera_poll_sig_done(poll_cb);
         break;
 
+    case MM_CAMERA_PIPE_CMD_COMMIT:
+        mm_camera_poll_sig_done(poll_cb);
+        break;
     case MM_CAMERA_PIPE_CMD_EXIT:
     default:
         mm_camera_poll_set_state(poll_cb, MM_CAMERA_POLL_TASK_STATE_STOPPED);
@@ -359,6 +364,23 @@ int32_t mm_camera_poll_thread_notify_entries_updated(mm_camera_poll_thread_t * p
 }
 
 /*===========================================================================
+ * FUNCTION   : mm_camera_poll_thread_commit_updates
+ *
+ * DESCRIPTION: sync with all previously pending async updates
+ *
+ * PARAMETERS :
+ *   @poll_cb : ptr to poll thread object
+ *
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
+ *==========================================================================*/
+int32_t mm_camera_poll_thread_commit_updates(mm_camera_poll_thread_t * poll_cb)
+{
+    return mm_camera_poll_sig(poll_cb, MM_CAMERA_PIPE_CMD_COMMIT);
+}
+
+/*===========================================================================
  * FUNCTION   : mm_camera_poll_thread_add_poll_fd
  *
  * DESCRIPTION: add a new fd into polling thread
@@ -420,7 +442,9 @@ int32_t mm_camera_poll_thread_add_poll_fd(mm_camera_poll_thread_t * poll_cb,
  *   @handler   : stream handle if channel data polling thread,
  *                0 if event polling thread
  *
- * RETURN     : none
+ * RETURN     : int32_t type of status
+ *              0  -- success
+ *              -1 -- failure
  *==========================================================================*/
 int32_t mm_camera_poll_thread_del_poll_fd(mm_camera_poll_thread_t * poll_cb,
                                           uint32_t handler,
@@ -453,6 +477,7 @@ int32_t mm_camera_poll_thread_del_poll_fd(mm_camera_poll_thread_t * poll_cb,
     } else {
         CDBG_ERROR("%s: invalid handler %d (%d)",
                    __func__, handler, idx);
+        return -1;
     }
 
     return rc;

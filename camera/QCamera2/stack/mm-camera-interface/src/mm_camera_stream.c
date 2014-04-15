@@ -911,7 +911,17 @@ int32_t mm_stream_streamoff(mm_stream_t *my_obj)
          __func__, my_obj->my_hdl, my_obj->fd, my_obj->state);
 
     /* step1: remove fd from data poll thread */
-    mm_camera_poll_thread_del_poll_fd(&my_obj->ch_obj->poll_thread[0], my_obj->my_hdl, mm_camera_sync_call);
+    rc = mm_camera_poll_thread_del_poll_fd(&my_obj->ch_obj->poll_thread[0],
+            my_obj->my_hdl, mm_camera_sync_call);
+    if (rc < 0) {
+        /* The error might be due to async update. In this case
+         * wait for all updates to complete before proceeding. */
+        rc = mm_camera_poll_thread_commit_updates(&my_obj->ch_obj->poll_thread[0]);
+        if (rc < 0) {
+            CDBG_ERROR("%s: Poll sync failed %d",
+                 __func__, rc);
+        }
+    }
 
     /* step2: stream off */
     rc = ioctl(my_obj->fd, VIDIOC_STREAMOFF, &buf_type);
