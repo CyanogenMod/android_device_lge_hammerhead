@@ -283,4 +283,5 @@
          config to 7. -->
     <integer name="config_deviceHardwareKeys">0</integer>
 
+    <bool name="config_hotswapCapable">true</bool>
 </resources>
