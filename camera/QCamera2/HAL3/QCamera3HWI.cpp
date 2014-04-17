@@ -239,6 +239,7 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId)
       mMetadataChannel(NULL),
       mPictureChannel(NULL),
       mRawChannel(NULL),
+      mSupportChannel(NULL),
       mFirstRequest(false),
       mParamHeap(NULL),
       mParameters(NULL),
@@ -298,6 +299,8 @@ QCamera3HardwareInterface::~QCamera3HardwareInterface()
             channel->stop();
         }
     }
+    if (mSupportChannel)
+        mSupportChannel->stop();
 
     for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
         it != mStreamInfo.end(); it++) {
@@ -305,6 +308,10 @@ QCamera3HardwareInterface::~QCamera3HardwareInterface()
         if (channel)
             delete channel;
         free (*it);
+    }
+    if (mSupportChannel) {
+        delete mSupportChannel;
+        mSupportChannel = NULL;
     }
 
     mPictureChannel = NULL;
@@ -616,6 +623,33 @@ int QCamera3HardwareInterface::configureStreams(
         return rc;
     }
 
+    /* Create dummy stream if there is one single raw stream */
+    if (streamList->num_streams == 1 &&
+            (streamList->streams[0]->format == HAL_PIXEL_FORMAT_RAW_OPAQUE ||
+            streamList->streams[0]->format == HAL_PIXEL_FORMAT_RAW16)) {
+        mSupportChannel = new QCamera3SupportChannel(
+                mCameraHandle->camera_handle,
+                mCameraHandle->ops,
+                &gCamCapability[mCameraId]->padding_info,
+                this);
+        if (!mSupportChannel) {
+            ALOGE("%s: dummy channel cannot be created", __func__);
+            pthread_mutex_unlock(&mMutex);
+            return -ENOMEM;
+        }
+
+        rc = mSupportChannel->initialize();
+        if (rc < 0) {
+            ALOGE("%s: dummy channel initialization failed", __func__);
+            delete mSupportChannel;
+            mSupportChannel = NULL;
+            delete mMetadataChannel;
+            mMetadataChannel = NULL;
+            pthread_mutex_unlock(&mMutex);
+            return rc;
+        }
+    }
+
     /* Allocate channel objects for the requested streams */
     for (size_t i = 0; i < streamList->num_streams; i++) {
         camera3_stream_t *newStream = streamList->streams[i];
@@ -769,6 +803,13 @@ int QCamera3HardwareInterface::configureStreams(
 
     int32_t hal_version = CAM_HAL_V3;
     stream_config_info.num_streams = streamList->num_streams;
+    if (mSupportChannel) {
+        stream_config_info.stream_sizes[stream_config_info.num_streams] =
+                QCamera3SupportChannel::kDim;
+        stream_config_info.type[stream_config_info.num_streams] =
+                CAM_STREAM_TYPE_CALLBACK;
+        stream_config_info.num_streams++;
+    }
 
     // settings/parameters don't carry over for new configureStreams
     memset(mParameters, 0, sizeof(metadata_buffer_t));
@@ -1059,7 +1100,7 @@ void QCamera3HardwareInterface::handleMetadataWithLock(
                 mCallbackOps->notify(mCallbackOps, &notify_msg);
                 i->timestamp = notify_msg.message.shutter.timestamp;
                 i->bNotified = 1;
-                ALOGV("%s: Dummy notification !!!! notify frame_number = %d, capture_time = %lld",
+                ALOGV("%s: Support notification !!!! notify frame_number = %d, capture_time = %lld",
                     __func__, i->frame_number, notify_msg.message.shutter.timestamp);
             }
 
@@ -1479,6 +1520,9 @@ int QCamera3HardwareInterface::processCaptureRequest(
         ALOGD("%s: Start META Channel", __func__);
         mMetadataChannel->start();
 
+        if (mSupportChannel)
+            mSupportChannel->start();
+
         //First initialize all streams
         for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
             it != mStreamInfo.end(); it++) {
@@ -1486,6 +1530,8 @@ int QCamera3HardwareInterface::processCaptureRequest(
             rc = channel->initialize();
             if (NO_ERROR != rc) {
                 ALOGE("%s : Channel initialization failed %d", __func__, rc);
+                if (mSupportChannel)
+                    mSupportChannel->stop();
                 mMetadataChannel->stop();
                 pthread_mutex_unlock(&mMutex);
                 return rc;
@@ -1731,6 +1777,9 @@ int QCamera3HardwareInterface::flush()
         (*it)->status = INVALID;
     }
 
+    if (mSupportChannel) {
+        mSupportChannel->stop();
+    }
     if (mMetadataChannel) {
         /* If content of mStreamInfo is not 0, there is metadata stream */
         mMetadataChannel->stop();

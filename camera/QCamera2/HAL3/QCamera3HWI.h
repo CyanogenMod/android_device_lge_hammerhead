@@ -227,6 +227,7 @@ private:
     QCamera3MetadataChannel *mMetadataChannel;
     QCamera3PicChannel *mPictureChannel;
     QCamera3RawChannel *mRawChannel;
+    QCamera3SupportChannel *mSupportChannel;
 
      //First request yet to be processed after configureStreams
     bool mFirstRequest;

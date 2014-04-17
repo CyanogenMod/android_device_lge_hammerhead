@@ -2480,5 +2480,96 @@ int32_t QCamera3ReprocessChannel::addReprocStreamsFromSource(cam_pp_feature_conf
     return rc;
 }
 
+cam_dimension_t QCamera3SupportChannel::kDim = {640, 480};
+
+QCamera3SupportChannel::QCamera3SupportChannel(uint32_t cam_handle,
+                    mm_camera_ops_t *cam_ops,
+                    cam_padding_info_t *paddingInfo,
+                    void *userData) :
+                        QCamera3Channel(cam_handle, cam_ops,
+                                NULL, paddingInfo, userData),
+                        mMemory(NULL)
+{
+}
+
+QCamera3SupportChannel::~QCamera3SupportChannel()
+{
+    if (m_bIsActive)
+        stop();
+
+    if (mMemory) {
+        mMemory->deallocate();
+        delete mMemory;
+        mMemory = NULL;
+    }
+}
+
+int32_t QCamera3SupportChannel::initialize()
+{
+    int32_t rc;
+
+    if (mMemory || m_numStreams > 0) {
+        ALOGE("%s: metadata channel already initialized", __func__);
+        return -EINVAL;
+    }
+
+    rc = init(NULL, NULL);
+    if (rc < 0) {
+        ALOGE("%s: init failed", __func__);
+        return rc;
+    }
+
+    // Hardcode to VGA size for now
+    rc = QCamera3Channel::addStream(CAM_STREAM_TYPE_CALLBACK,
+        CAM_FORMAT_YUV_420_NV21, kDim, MIN_STREAMING_BUFFER_NUM);
+    if (rc < 0) {
+        ALOGE("%s: addStream failed", __func__);
+    }
+    return rc;
+}
+
+int32_t QCamera3SupportChannel::request(buffer_handle_t * /*buffer*/,
+                                                uint32_t /*frameNumber*/)
+{
+    return NO_ERROR;
+}
+
+void QCamera3SupportChannel::streamCbRoutine(
+                        mm_camera_super_buf_t *super_frame,
+                        QCamera3Stream * /*stream*/)
+{
+    if (super_frame == NULL || super_frame->num_bufs != 1) {
+        ALOGE("%s: super_frame is not valid", __func__);
+        return;
+    }
+    bufDone(super_frame);
+    free(super_frame);
+}
+
+QCamera3Memory* QCamera3SupportChannel::getStreamBufs(uint32_t len)
+{
+    int rc;
+
+    mMemory = new QCamera3HeapMemory();
+    if (!mMemory) {
+        ALOGE("%s: unable to create heap memory", __func__);
+        return NULL;
+    }
+    rc = mMemory->allocate(MIN_STREAMING_BUFFER_NUM, len, true);
+    if (rc < 0) {
+        ALOGE("%s: unable to allocate heap memory", __func__);
+        delete mMemory;
+        mMemory = NULL;
+        return NULL;
+    }
+    return mMemory;
+}
+
+void QCamera3SupportChannel::putStreamBufs()
+{
+    mMemory->deallocate();
+    delete mMemory;
+    mMemory = NULL;
+}
 
 }; // namespace qcamera
