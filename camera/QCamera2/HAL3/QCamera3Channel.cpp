@@ -282,13 +282,13 @@ int32_t QCamera3Channel::stop()
         return rc;
     }
 
-    rc = m_camOps->stop_channel(m_camHandle, m_handle);
-
     for (int i = 0; i < m_numStreams; i++) {
         if (mStreams[i] != NULL) {
             mStreams[i]->stop();
         }
     }
+
+    rc = m_camOps->stop_channel(m_camHandle, m_handle);
 
     m_bIsActive = false;
     return rc;

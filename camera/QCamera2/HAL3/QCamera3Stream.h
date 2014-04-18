@@ -84,6 +84,8 @@ public:
     int32_t unmapBuf(uint8_t buf_type, uint32_t buf_idx, int32_t plane_idx);
     int32_t setParameter(cam_stream_parm_buffer_t &param);
 
+    static void releaseFrameData(void *data, void *user_data);
+
 private:
     uint32_t mCamHandle;
     uint32_t mChannelHandle;
@@ -105,6 +107,7 @@ private:
     cam_frame_len_offset_t mFrameLenOffset;
     cam_padding_info_t mPaddingInfo;
     QCamera3Channel *mChannel;
+    bool m_bActive; // if stream mProcTh is active
 
     static int32_t get_bufs(
                      cam_frame_len_offset_t *offset,
