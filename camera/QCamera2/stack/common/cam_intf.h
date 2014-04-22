@@ -518,6 +518,7 @@ typedef union {
     INCLUDE(CAM_INTF_META_TEST_PATTERN_DATA,            cam_test_pattern_data_t,     1);
     INCLUDE(CAM_INTF_META_OTP_WB_GRGB,                  float,                       1);
     INCLUDE(CAM_INTF_META_PROFILE_TONE_CURVE,           cam_profile_tone_curve,      1);
+    INCLUDE(CAM_INTF_META_NEUTRAL_COL_POINT,            cam_neutral_col_point_t,     1);
     INCLUDE(CAM_INTF_META_PRIVATE_DATA,                 char,                        MAX_METADATA_PAYLOAD_SIZE);
 } metadata_type_t;
 
