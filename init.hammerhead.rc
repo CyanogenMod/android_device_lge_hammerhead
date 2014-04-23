@@ -218,9 +218,12 @@ on post-fs-data
     write /sys/devices/system/cpu/cpufreq/interactive/io_is_busy 1
     write /sys/devices/system/cpu/cpufreq/interactive/target_loads "85 1500000:90 1800000:70"
     write /sys/devices/system/cpu/cpufreq/interactive/min_sample_time 40000
-    write /sys/devices/system/cpu/cpufreq/interactive/timer_rate 20000
+    write /sys/devices/system/cpu/cpufreq/interactive/timer_rate 30000
     write /sys/devices/system/cpu/cpufreq/interactive/sampling_down_factor 100000
-    write /sys/devices/system/cpu/cpufreq/interactive/timer_slack 20000
+    write /sys/devices/system/cpu/cpufreq/interactive/timer_slack 30000
+    write /sys/devices/system/cpu/cpufreq/interactive/up_threshold_any_cpu_load 50
+    write /sys/devices/system/cpu/cpufreq/interactive/sync_freq 1036800
+    write /sys/devices/system/cpu/cpufreq/interactive/up_threshold_any_cpu_freq 1190400
     write /sys/module/cpu_boost/parameters/boost_ms 10
     write /sys/module/cpu_boost/parameters/sync_threshold 1728000
     write /sys/module/cpu_boost/parameters/input_boost_freq 1497600
