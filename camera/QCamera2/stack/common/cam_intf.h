@@ -292,6 +292,8 @@ typedef struct{
 
     uint8_t supported_test_pattern_modes_cnt;
     cam_test_pattern_mode_t supported_test_pattern_modes[MAX_TEST_PATTERN_CNT];
+    
+    int64_t stall_durations[MAX_SIZES_CNT];
 } cam_capability_t;
 
 typedef enum {
