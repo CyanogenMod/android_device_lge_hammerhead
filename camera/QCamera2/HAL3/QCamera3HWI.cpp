@@ -230,7 +230,8 @@ int QCamera3HardwareInterface::kMaxInFlight = 5;
  *
  * RETURN     : none
  *==========================================================================*/
-QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId)
+QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId,
+                        const camera_module_callbacks_t *callbacks)
     : mCameraId(cameraId),
       mCameraHandle(NULL),
       mCameraOpened(false),
@@ -250,7 +251,8 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId)
       mMinRawFrameDuration(0),
       m_pPowerModule(NULL),
       mHdrHint(false),
-      mMetaFrameCount(0)
+      mMetaFrameCount(0),
+      mCallbacks(callbacks)
 {
     mCameraDevice.common.tag = HARDWARE_DEVICE_TAG;
     mCameraDevice.common.version = CAMERA_DEVICE_API_VERSION_3_2;

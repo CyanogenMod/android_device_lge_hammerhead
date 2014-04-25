@@ -56,6 +56,7 @@ QCamera3Factory::QCamera3Factory()
 {
     camera_info info;
 
+    mCallbacks = NULL;
     mNumOfCameras = get_num_of_cameras();
 
     //Query camera at this point in order
@@ -121,6 +122,22 @@ int QCamera3Factory::get_camera_info(int camera_id, struct camera_info *info)
 }
 
 /*===========================================================================
+ * FUNCTION   : set_callbacks
+ *
+ * DESCRIPTION: static function to set callbacks function to camera module
+ *
+ * PARAMETERS :
+ *   @callbacks : ptr to callback functions
+ *
+ * RETURN     : NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int QCamera3Factory::set_callbacks(const camera_module_callbacks_t *callbacks)
+{
+    return gQCamera3Factory->setCallbacks(callbacks);
+}
+
+/*===========================================================================
  * FUNCTION   : getNumberOfCameras
  *
  * DESCRIPTION: query number of cameras detected
@@ -163,6 +180,26 @@ int QCamera3Factory::getCameraInfo(int camera_id, struct camera_info *info)
 }
 
 /*===========================================================================
+ * FUNCTION   : setCallbacks
+ *
+ * DESCRIPTION: set callback functions to send asynchronous notifications to
+ *              frameworks.
+ *
+ * PARAMETERS :
+ *   @callbacks : callback function pointer
+ *
+ * RETURN     :
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int QCamera3Factory::setCallbacks(const camera_module_callbacks_t *callbacks)
+{
+    int rc = NO_ERROR;
+    mCallbacks = callbacks;
+    return rc;
+}
+
+/*===========================================================================
  * FUNCTION   : cameraDeviceOpen
  *
  * DESCRIPTION: open a camera device with its ID
@@ -182,7 +219,8 @@ int QCamera3Factory::cameraDeviceOpen(int camera_id,
     if (camera_id < 0 || camera_id >= mNumOfCameras)
         return -ENODEV;
 
-    QCamera3HardwareInterface *hw = new QCamera3HardwareInterface(camera_id);
+    QCamera3HardwareInterface *hw = new QCamera3HardwareInterface(
+            camera_id, mCallbacks);
     if (!hw) {
         ALOGE("Allocation of hardware interface failed");
         return NO_MEMORY;

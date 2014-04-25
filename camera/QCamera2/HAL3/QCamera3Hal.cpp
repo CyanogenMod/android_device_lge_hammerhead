@@ -31,7 +31,7 @@
 
 static hw_module_t camera_common = {
     tag: HARDWARE_MODULE_TAG,
-    module_api_version: CAMERA_MODULE_API_VERSION_2_0,
+    module_api_version: CAMERA_MODULE_API_VERSION_2_1,
     hal_api_version: HARDWARE_HAL_API_VERSION,
     id: CAMERA_HARDWARE_MODULE_ID,
     name: "QCamera Module",
@@ -45,7 +45,7 @@ camera_module_t HAL_MODULE_INFO_SYM = {
     common: camera_common,
     get_number_of_cameras: qcamera::QCamera3Factory::get_number_of_cameras,
     get_camera_info: qcamera::QCamera3Factory::get_camera_info,
-    set_callbacks: NULL,
+    set_callbacks: qcamera::QCamera3Factory::set_callbacks,
     get_vendor_tag_ops: NULL,
     reserved: {0}
 };

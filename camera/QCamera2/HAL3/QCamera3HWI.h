@@ -111,7 +111,8 @@ public:
     static int close_camera_device(struct hw_device_t* device);
 
 public:
-    QCamera3HardwareInterface(int cameraId);
+    QCamera3HardwareInterface(int cameraId,
+            const camera_module_callbacks_t *callbacks);
     virtual ~QCamera3HardwareInterface();
     int openCamera(struct hw_device_t **hw_device);
     int getMetadata(int type);
@@ -296,6 +297,7 @@ private:
     bool mHdrHint;
 #endif
     uint32_t mMetaFrameCount;
+    const camera_module_callbacks_t *mCallbacks;
 
     static const QCameraMap EFFECT_MODES_MAP[];
     static const QCameraMap WHITE_BALANCE_MODES_MAP[];
