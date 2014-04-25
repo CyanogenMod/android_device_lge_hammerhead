@@ -10,6 +10,7 @@ LOCAL_SRC_FILES := \
         QCamera3Stream.cpp \
         QCamera3Channel.cpp \
         QCamera3PostProc.cpp \
+        QCamera3VendorTags.cpp \
         ../util/QCameraCmdThread.cpp \
         ../util/QCameraQueue.cpp
 

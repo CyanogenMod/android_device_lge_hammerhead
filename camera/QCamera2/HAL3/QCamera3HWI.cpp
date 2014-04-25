@@ -45,6 +45,7 @@
 #include "QCamera3Mem.h"
 #include "QCamera3Channel.h"
 #include "QCamera3PostProc.h"
+#include "QCamera3VendorTags.h"
 
 using namespace android;
 
@@ -165,54 +166,13 @@ const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::TEST_PATT
 };
 /* Custom tag definitions */
 
-// QCamera3 camera metadata sections
-enum qcamera3_ext_section {
-    QCAMERA3_PRIVATEDATA = VENDOR_SECTION,
-    QCAMERA3_SECTIONS_END
-};
-
-const int QCAMERA3_SECTION_COUNT = QCAMERA3_SECTIONS_END - VENDOR_SECTION;
-
-enum qcamera3_ext_section_ranges {
-    QCAMERA3_PRIVATEDATA_START = QCAMERA3_PRIVATEDATA << 16
-};
-
-enum qcamera3_ext_tags {
-    QCAMERA3_PRIVATEDATA_REPROCESS = QCAMERA3_PRIVATEDATA_START,
-    QCAMERA3_PRIVATEDATA_END
-};
-
-enum qcamera3_ext_tags qcamera3_ext3_section_bounds[QCAMERA3_SECTIONS_END -
-    VENDOR_SECTION] = {
-        QCAMERA3_PRIVATEDATA_END
-} ;
-
-typedef struct vendor_tag_info {
-    const char *tag_name;
-    uint8_t     tag_type;
-} vendor_tag_info_t;
-
-const char *qcamera3_ext_section_names[QCAMERA3_SECTIONS_END -
-        VENDOR_SECTION] = {
-    "org.codeaurora.qcamera3.privatedata"
-};
-
-vendor_tag_info_t qcamera3_privatedata[QCAMERA3_PRIVATEDATA_END - QCAMERA3_PRIVATEDATA_START] = {
-    { "privatedata", TYPE_BYTE }
-};
-
-vendor_tag_info_t *qcamera3_tag_info[QCAMERA3_SECTIONS_END -
-        VENDOR_SECTION] = {
-    qcamera3_privatedata
-};
-
 camera3_device_ops_t QCamera3HardwareInterface::mCameraOps = {
     initialize:                         QCamera3HardwareInterface::initialize,
     configure_streams:                  QCamera3HardwareInterface::configure_streams,
     register_stream_buffers:            NULL,
     construct_default_request_settings: QCamera3HardwareInterface::construct_default_request_settings,
     process_capture_request:            QCamera3HardwareInterface::process_capture_request,
-    get_metadata_vendor_tag_ops:        QCamera3HardwareInterface::get_metadata_vendor_tag_ops,
+    get_metadata_vendor_tag_ops:        NULL,
     dump:                               QCamera3HardwareInterface::dump,
     flush:                              QCamera3HardwareInterface::flush,
     reserved:                           {0},
@@ -5263,125 +5223,6 @@ int QCamera3HardwareInterface::process_capture_request(
     int rc = hw->processCaptureRequest(request);
     ALOGV("%s: X", __func__);
     return rc;
-}
-
-/*===========================================================================
- * FUNCTION   : get_metadata_vendor_tag_ops
- *
- * DESCRIPTION: Get the metadata vendor tag function pointers
- *
- * PARAMETERS :
- *    @ops   : function pointer table to be filled by HAL
- *
- *
- * RETURN     : NONE
- *==========================================================================*/
-void QCamera3HardwareInterface::get_metadata_vendor_tag_ops(
-                const struct camera3_device * /*device*/,
-                vendor_tag_query_ops_t* ops)
-{
-    ALOGV("%s: E", __func__);
-    ops->get_camera_vendor_section_name = get_camera_vendor_section_name;
-    ops->get_camera_vendor_tag_name = get_camera_vendor_tag_name;
-    ops->get_camera_vendor_tag_type = get_camera_vendor_tag_type;
-    ALOGV("%s: X", __func__);
-    return;
-}
-
-/*===========================================================================
- * FUNCTION   : get_camera_vendor_section_name
- *
- * DESCRIPTION: Get section name for vendor tag
- *
- * PARAMETERS :
- *    @tag   :  Vendor specific tag
- *
- *
- * RETURN     : Success: the section name of the specific tag
- *              Failure: NULL
- *==========================================================================*/
-
-const char* QCamera3HardwareInterface::get_camera_vendor_section_name(
-                const vendor_tag_query_ops_t * /*ops*/,
-                uint32_t tag)
-{
-    ALOGV("%s: E", __func__);
-    const char *ret;
-    uint32_t section = tag >> 16;
-
-    if (section < VENDOR_SECTION || section > QCAMERA3_SECTIONS_END)
-        ret = NULL;
-    else
-        ret = qcamera3_ext_section_names[section - VENDOR_SECTION];
-
-    ALOGV("%s: X", __func__);
-    return ret;
-}
-
-/*===========================================================================
- * FUNCTION   : get_camera_vendor_tag_name
- *
- * DESCRIPTION: Get name of a vendor specific tag
- *
- * PARAMETERS :
- *    @tag   :  Vendor specific tag
- *
- *
- * RETURN     : Success: the name of the specific tag
- *              Failure: NULL
- *==========================================================================*/
-const char* QCamera3HardwareInterface::get_camera_vendor_tag_name(
-                const vendor_tag_query_ops_t * /*ops*/,
-                uint32_t tag)
-{
-    ALOGV("%s: E", __func__);
-    const char *ret;
-    uint32_t section = tag >> 16;
-    uint32_t section_index = section - VENDOR_SECTION;
-    uint32_t tag_index = tag & 0xFFFF;
-
-    if (section < VENDOR_SECTION || section > QCAMERA3_SECTIONS_END)
-        ret = NULL;
-    else if (tag >= (uint32_t)qcamera3_ext3_section_bounds[section_index])
-        ret = NULL;
-    else
-        ret = qcamera3_tag_info[section_index][tag_index].tag_name;
-
-    ALOGV("%s: X", __func__);
-    return ret;
-}
-
-/*===========================================================================
- * FUNCTION   : get_camera_vendor_tag_type
- *
- * DESCRIPTION: Get type of a vendor specific tag
- *
- * PARAMETERS :
- *    @tag   :  Vendor specific tag
- *
- *
- * RETURN     : Success: the type of the specific tag
- *              Failure: -1
- *==========================================================================*/
-int QCamera3HardwareInterface::get_camera_vendor_tag_type(
-                const vendor_tag_query_ops_t * /*ops*/,
-                uint32_t tag)
-{
-    ALOGV("%s: E", __func__);
-    int ret;
-    uint32_t section = tag >> 16;
-    uint32_t section_index = section - VENDOR_SECTION;
-    uint32_t tag_index = tag & 0xFFFF;
-
-    if (section < VENDOR_SECTION || section > QCAMERA3_SECTIONS_END)
-        ret = -1;
-    else if (tag >= (uint32_t )qcamera3_ext3_section_bounds[section_index])
-        ret = -1;
-    else
-        ret = qcamera3_tag_info[section_index][tag_index].tag_type;
-
-    ALOGV("%s: X", __func__);
-    return ret;
 }
 
 /*===========================================================================

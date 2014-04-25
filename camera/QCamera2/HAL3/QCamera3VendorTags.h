@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2014, The Linux Foundataion. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are
@@ -27,26 +27,47 @@
 *
 */
 
-#include "QCamera3Factory.h"
-#include "QCamera3VendorTags.h"
+#ifndef __QCAMERA3VENDORTAGS_H__
+#define __QCAMERA3VENDORTAGS_H__
 
-static hw_module_t camera_common = {
-    tag: HARDWARE_MODULE_TAG,
-    module_api_version: CAMERA_MODULE_API_VERSION_2_2,
-    hal_api_version: HARDWARE_HAL_API_VERSION,
-    id: CAMERA_HARDWARE_MODULE_ID,
-    name: "QCamera Module",
-    author: "Qualcomm Innovation Center Inc",
-    methods: &qcamera::QCamera3Factory::mModuleMethods,
-    dso: NULL,
-    reserved:  {0},
+namespace qcamera {
+
+enum qcamera3_ext_section {
+    QCAMERA3_PRIVATEDATA = VENDOR_SECTION,
+    QCAMERA3_SECTIONS_END
 };
 
-camera_module_t HAL_MODULE_INFO_SYM = {
-    common: camera_common,
-    get_number_of_cameras: qcamera::QCamera3Factory::get_number_of_cameras,
-    get_camera_info: qcamera::QCamera3Factory::get_camera_info,
-    set_callbacks: qcamera::QCamera3Factory::set_callbacks,
-    get_vendor_tag_ops: qcamera::QCamera3VendorTags::get_vendor_tag_ops,
-    reserved: {0}
+enum qcamera3_ext_section_ranges {
+    QCAMERA3_PRIVATEDATA_START = QCAMERA3_PRIVATEDATA << 16
 };
+
+enum qcamera3_ext_tags {
+    QCAMERA3_PRIVATEDATA_REPROCESS = QCAMERA3_PRIVATEDATA_START,
+    QCAMERA3_PRIVATEDATA_END
+};
+
+class QCamera3VendorTags {
+
+public:
+    static void get_vendor_tag_ops(vendor_tag_ops_t* ops);
+    static int get_tag_count(
+            const vendor_tag_ops_t *ops);
+    static void get_all_tags(
+            const vendor_tag_ops_t *ops,
+            uint32_t *tag_array);
+    static const char* get_section_name(
+            const vendor_tag_ops_t *ops,
+            uint32_t tag);
+    static const char* get_tag_name(
+            const vendor_tag_ops_t *ops,
+            uint32_t tag);
+    static int get_tag_type(
+            const vendor_tag_ops_t *ops,
+            uint32_t tag);
+
+    static const vendor_tag_ops_t *Ops;
+};
+
+}; // namespace qcamera
+
+#endif /* __QCAMERA3VENDORTAGS_H__ */
