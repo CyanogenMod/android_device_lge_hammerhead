@@ -53,6 +53,7 @@ namespace qcamera {
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 #define DATA_PTR(MEM_OBJ,INDEX) MEM_OBJ->getPtr( INDEX )
+
 cam_capability_t *gCamCapability[MM_CAMERA_MAX_NUM_SENSORS];
 const camera_metadata_t *gStaticMetadata[MM_CAMERA_MAX_NUM_SENSORS];
 
@@ -3682,6 +3683,27 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS,
                       available_characteristics_keys,
                       sizeof(available_characteristics_keys)/sizeof(int32_t));
+
+    /*available stall durations depend on the hw + sw and will be different for different devices */
+    /*have to add for raw after implementation*/
+    int32_t stall_formats[] = {HAL_PIXEL_FORMAT_BLOB};
+    size_t stall_formats_count = sizeof(stall_formats)/sizeof(int32_t);
+
+    size_t available_stall_size = gCamCapability[cameraId]->picture_sizes_tbl_cnt * 4;
+    int64_t available_stall_durations[available_stall_size];
+    idx = 0;
+    for (uint32_t j = 0; j < stall_formats_count; j++) {
+       for (uint32_t i = 0; i < gCamCapability[cameraId]->picture_sizes_tbl_cnt; i++) {
+          available_stall_durations[idx]   = stall_formats[j];
+          available_stall_durations[idx+1] = gCamCapability[cameraId]->picture_sizes_tbl[i].width;
+          available_stall_durations[idx+2] = gCamCapability[cameraId]->picture_sizes_tbl[i].height;
+          available_stall_durations[idx+3] = gCamCapability[cameraId]->stall_durations[i];
+          idx+=4;
+       }
+    }
+    staticInfo.update(ANDROID_SCALER_AVAILABLE_STALL_DURATIONS,
+                      available_stall_durations,
+                      idx);
 
     gStaticMetadata[cameraId] = staticInfo.release();
     return rc;
