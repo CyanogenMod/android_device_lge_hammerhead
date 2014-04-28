@@ -2379,6 +2379,15 @@ QCamera3HardwareInterface::translateFromHalMetadata(
                  privateData, MAX_METADATA_PAYLOAD_SIZE);
              break;
           }
+
+          case CAM_INTF_META_NEUTRAL_COL_POINT:{
+             cam_neutral_col_point_t *neuColPoint = (cam_neutral_col_point_t*)
+                 POINTER_OF(CAM_INTF_META_NEUTRAL_COL_POINT, metadata);
+             camMetadata.update(ANDROID_SENSOR_NEUTRAL_COLOR_POINT,
+                     (camera_metadata_rational_t*)neuColPoint->neutral_col_point, 3);
+             break;
+          }
+
           default:
              ALOGV("%s: This is not a valid metadata type to report to fwk, %d",
                    __func__, curr_entry);
