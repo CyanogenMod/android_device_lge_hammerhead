@@ -1375,4 +1375,18 @@ typedef struct {
     int32_t b;
 } cam_test_pattern_data_t;
 
+typedef enum {
+    CAM_AWB_D50,
+    CAM_AWB_D65,
+    CAM_AWB_D75,
+    CAM_AWB_A,
+    CAM_AWB_CUSTOM_A,
+    CAM_AWB_WARM_FLO,
+    CAM_AWB_COLD_FLO,
+    CAM_AWB_CUSTOM_FLO,
+    CAM_AWB_NOON,
+    CAM_AWB_CUSTOM_DAYLIGHT,
+    CAM_AWB_INVALID_ALL_LIGHT,
+} cam_illuminant_t;
+
 #endif /* __QCAMERA_TYPES_H__ */

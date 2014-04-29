@@ -294,6 +294,8 @@ typedef struct{
     cam_test_pattern_mode_t supported_test_pattern_modes[MAX_TEST_PATTERN_CNT];
     
     int64_t stall_durations[MAX_SIZES_CNT];
+    cam_illuminant_t reference_illuminant1;
+    cam_illuminant_t reference_illuminant2;
     cam_rational_type_t forward_matrix1[3][3];
     cam_rational_type_t forward_matrix2[3][3];
     cam_rational_type_t color_transform1[3][3];

@@ -164,6 +164,31 @@ const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::TEST_PATT
     { ANDROID_SENSOR_TEST_PATTERN_MODE_COLOR_BARS_FADE_TO_GRAY, CAM_TEST_PATTERN_COLOR_BARS_FADE_TO_GRAY },
     { ANDROID_SENSOR_TEST_PATTERN_MODE_PN9,          CAM_TEST_PATTERN_PN9 },
 };
+
+/* Since there is no mapping for all the options some Android enum are not listed.
+ * Also, the order in this list is important because while mapping from HAL to Android it will
+ * traverse from lower to higher index which means that for HAL values that are map to different
+ * Android values, the traverse logic will select the first one found.
+ */
+const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::REFERENCE_ILLUMINANT_MAP[] = {
+    { ANDROID_SENSOR_REFERENCE_ILLUMINANT1_FLUORESCENT, CAM_AWB_WARM_FLO},
+    { ANDROID_SENSOR_REFERENCE_ILLUMINANT1_DAYLIGHT_FLUORESCENT, CAM_AWB_CUSTOM_DAYLIGHT },
+    { ANDROID_SENSOR_REFERENCE_ILLUMINANT1_COOL_WHITE_FLUORESCENT, CAM_AWB_COLD_FLO },
+    { ANDROID_SENSOR_REFERENCE_ILLUMINANT1_STANDARD_A, CAM_AWB_A },
+    { ANDROID_SENSOR_REFERENCE_ILLUMINANT1_D55, CAM_AWB_NOON },
+    { ANDROID_SENSOR_REFERENCE_ILLUMINANT1_D65, CAM_AWB_D65 },
+    { ANDROID_SENSOR_REFERENCE_ILLUMINANT1_D75, CAM_AWB_D75 },
+    { ANDROID_SENSOR_REFERENCE_ILLUMINANT1_D50, CAM_AWB_D50 },
+    { ANDROID_SENSOR_REFERENCE_ILLUMINANT1_ISO_STUDIO_TUNGSTEN, CAM_AWB_CUSTOM_A},
+    { ANDROID_SENSOR_REFERENCE_ILLUMINANT1_DAYLIGHT, CAM_AWB_D50 },
+    { ANDROID_SENSOR_REFERENCE_ILLUMINANT1_TUNGSTEN, CAM_AWB_A },
+    { ANDROID_SENSOR_REFERENCE_ILLUMINANT1_FINE_WEATHER, CAM_AWB_D50 },
+    { ANDROID_SENSOR_REFERENCE_ILLUMINANT1_CLOUDY_WEATHER, CAM_AWB_D65 },
+    { ANDROID_SENSOR_REFERENCE_ILLUMINANT1_SHADE, CAM_AWB_D75 },
+    { ANDROID_SENSOR_REFERENCE_ILLUMINANT1_DAY_WHITE_FLUORESCENT, CAM_AWB_CUSTOM_DAYLIGHT },
+    { ANDROID_SENSOR_REFERENCE_ILLUMINANT1_WHITE_FLUORESCENT, CAM_AWB_COLD_FLO},
+};
+
 /* Custom tag definitions */
 
 camera3_device_ops_t QCamera3HardwareInterface::mCameraOps = {
@@ -3514,6 +3539,18 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_STATISTICS_INFO_AVAILABLE_HOT_PIXEL_MAP_MODES,
                       available_hot_pixel_map_modes,
                       1);
+
+    uint8_t fwkReferenceIlluminant = lookupFwkName(REFERENCE_ILLUMINANT_MAP,
+        sizeof(REFERENCE_ILLUMINANT_MAP) / sizeof(REFERENCE_ILLUMINANT_MAP[0]),
+        gCamCapability[cameraId]->reference_illuminant1);
+    staticInfo.update(ANDROID_SENSOR_REFERENCE_ILLUMINANT1,
+                      &fwkReferenceIlluminant, 1);
+
+    fwkReferenceIlluminant = lookupFwkName(REFERENCE_ILLUMINANT_MAP,
+        sizeof(REFERENCE_ILLUMINANT_MAP) / sizeof(REFERENCE_ILLUMINANT_MAP[0]),
+        gCamCapability[cameraId]->reference_illuminant2);
+    staticInfo.update(ANDROID_SENSOR_REFERENCE_ILLUMINANT2,
+                      &fwkReferenceIlluminant, 1);
 
     staticInfo.update(ANDROID_SENSOR_FORWARD_MATRIX1,
                       (camera_metadata_rational_t*)gCamCapability[cameraId]->forward_matrix1,

@@ -292,6 +292,7 @@ private:
     static const QCameraMap FACEDETECT_MODES_MAP[];
     static const QCameraMap FOCUS_CALIBRATION_MAP[];
     static const QCameraMap TEST_PATTERN_MAP[];
+    static const QCameraMap REFERENCE_ILLUMINANT_MAP[];
 
     static pthread_mutex_t mCameraSessionLock;
     static unsigned int mCameraSessionActive;
