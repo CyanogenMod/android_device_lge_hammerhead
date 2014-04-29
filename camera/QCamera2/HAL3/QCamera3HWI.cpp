@@ -3830,6 +3830,46 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_SCALER_AVAILABLE_STALL_DURATIONS,
                       available_stall_durations,
                       idx);
+    //QCAMERA3_OPAQUE_RAW
+    uint8_t raw_format = QCAMERA3_OPAQUE_RAW_FORMAT_LEGACY;
+    cam_format_t fmt = CAM_FORMAT_BAYER_QCOM_RAW_10BPP_GBRG;
+    switch (gCamCapability[cameraId]->opaque_raw_fmt) {
+    case LEGACY_RAW:
+        if (gCamCapability[cameraId]->white_level == (1<<8)-1)
+            fmt = CAM_FORMAT_BAYER_QCOM_RAW_8BPP_GBRG;
+        else if (gCamCapability[cameraId]->white_level == (1<<10)-1)
+            fmt = CAM_FORMAT_BAYER_QCOM_RAW_10BPP_GBRG;
+        else if (gCamCapability[cameraId]->white_level == (1<<12)-1)
+            fmt = CAM_FORMAT_BAYER_QCOM_RAW_12BPP_GBRG;
+        raw_format = QCAMERA3_OPAQUE_RAW_FORMAT_LEGACY;
+        break;
+    case MIPI_RAW:
+        if (gCamCapability[cameraId]->white_level == (1<<8)-1)
+            fmt = CAM_FORMAT_BAYER_MIPI_RAW_8BPP_GBRG;
+        else if (gCamCapability[cameraId]->white_level == (1<<10)-1)
+            fmt = CAM_FORMAT_BAYER_MIPI_RAW_10BPP_GBRG;
+        else if (gCamCapability[cameraId]->white_level == (1<<12)-1)
+            fmt = CAM_FORMAT_BAYER_MIPI_RAW_12BPP_GBRG;
+        raw_format = QCAMERA3_OPAQUE_RAW_FORMAT_MIPI;
+        break;
+    default:
+        ALOGE("%s: unknown opaque_raw_format %d", __func__,
+                gCamCapability[cameraId]->opaque_raw_fmt);
+        break;
+    }
+    staticInfo.update(QCAMERA3_OPAQUE_RAW_FORMAT, &raw_format, 1);
+
+    int32_t strides[3*gCamCapability[cameraId]->supported_raw_dim_cnt];
+    for (size_t i = 0; i < gCamCapability[cameraId]->supported_raw_dim_cnt; i++) {
+        cam_stream_buf_plane_info_t buf_planes;
+        strides[i*3] = gCamCapability[cameraId]->raw_dim[i].width;
+        strides[i*3+1] = gCamCapability[cameraId]->raw_dim[i].height;
+        mm_stream_calc_offset_raw(fmt, &gCamCapability[cameraId]->raw_dim[i],
+            &gCamCapability[cameraId]->padding_info, &buf_planes);
+        strides[i*3+2] = buf_planes.plane_info.mp[0].stride;
+    }
+    staticInfo.update(QCAMERA3_OPAQUE_RAW_STRIDES, strides,
+            3*gCamCapability[cameraId]->supported_raw_dim_cnt);
 
     gStaticMetadata[cameraId] = staticInfo.release();
     return rc;

@@ -43,7 +43,8 @@ const int QCAMERA3_SECTION_COUNT = QCAMERA3_SECTIONS_END - VENDOR_SECTION;
 
 enum qcamera3_ext_tags qcamera3_ext3_section_bounds[QCAMERA3_SECTIONS_END -
     VENDOR_SECTION] = {
-        QCAMERA3_PRIVATEDATA_END
+        QCAMERA3_PRIVATEDATA_END,
+        QCAMERA3_OPAQUE_RAW_END
 } ;
 
 typedef struct vendor_tag_info {
@@ -53,21 +54,32 @@ typedef struct vendor_tag_info {
 
 const char *qcamera3_ext_section_names[QCAMERA3_SECTIONS_END -
         VENDOR_SECTION] = {
-    "org.codeaurora.qcamera3.privatedata"
+    "org.codeaurora.qcamera3.privatedata",
+    "org.codeaurora.qcamera3.opaque_raw"
 };
 
 vendor_tag_info_t qcamera3_privatedata[QCAMERA3_PRIVATEDATA_END - QCAMERA3_PRIVATEDATA_START] = {
-    { "privatedata", TYPE_BYTE }
+    { "privatedata_reprocess", TYPE_BYTE }
+};
+
+vendor_tag_info_t qcamera3_opaque_raw[QCAMERA3_OPAQUE_RAW_END - QCAMERA3_OPAQUE_RAW_START] = {
+    { "opaque_raw_strides", TYPE_INT32 },
+    { "opaque_raw_format", TYPE_BYTE }
 };
 
 vendor_tag_info_t *qcamera3_tag_info[QCAMERA3_SECTIONS_END -
         VENDOR_SECTION] = {
-    qcamera3_privatedata
+    qcamera3_privatedata,
+    qcamera3_opaque_raw
 };
 
 uint32_t qcamera3_all_tags[] = {
     // QCAMERA3_PRIVATEDATA
-    (uint32_t)QCAMERA3_PRIVATEDATA_REPROCESS
+    (uint32_t)QCAMERA3_PRIVATEDATA_REPROCESS,
+
+    // QCAMERA3_OPAQUE_RAW
+    (uint32_t)QCAMERA3_OPAQUE_RAW_STRIDES,
+    (uint32_t)QCAMERA3_OPAQUE_RAW_FORMAT
 };
 
 const vendor_tag_ops_t* QCamera3VendorTags::Ops = NULL;

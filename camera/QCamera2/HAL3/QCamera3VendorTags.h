@@ -34,17 +34,77 @@ namespace qcamera {
 
 enum qcamera3_ext_section {
     QCAMERA3_PRIVATEDATA = VENDOR_SECTION,
+    QCAMERA3_OPAQUE_RAW,
     QCAMERA3_SECTIONS_END
 };
 
 enum qcamera3_ext_section_ranges {
-    QCAMERA3_PRIVATEDATA_START = QCAMERA3_PRIVATEDATA << 16
+    QCAMERA3_PRIVATEDATA_START = QCAMERA3_PRIVATEDATA << 16,
+    QCAMERA3_OPAQUE_RAW_START = QCAMERA3_OPAQUE_RAW << 16,
 };
 
 enum qcamera3_ext_tags {
     QCAMERA3_PRIVATEDATA_REPROCESS = QCAMERA3_PRIVATEDATA_START,
-    QCAMERA3_PRIVATEDATA_END
+    QCAMERA3_PRIVATEDATA_END,
+
+    //Property Name:  org.codeaurora.qcamera3.opaque_raw.opaque_raw_strides
+    //
+    //Type: int32 * n * 3 [public]
+    //
+    //Description: Distance in bytes from the beginning of one row of opaque
+    //raw image data to the beginning of next row.
+    //
+    //Details: The strides are listed as (raw_width, raw_height, stride)
+    //triplets. For each supported raw size, there will be a stride associated
+    //with it.
+    QCAMERA3_OPAQUE_RAW_STRIDES = QCAMERA3_OPAQUE_RAW_START,
+
+    //Property Name: org.codeaurora.qcamera3.opaque_raw.opaque_raw_format
+    //
+    //Type: byte(enum) [public]
+    //  * LEGACY - The legacy raw format where 8, 10, or 12-bit
+    //    raw data is packed into a 64-bit word.
+    //  * MIPI - raw format matching the data packing described
+    //    in MIPI CSI-2 specification. In memory, the data
+    //    is constructed by packing sequentially received pixels
+    //    into least significant parts of the words first.
+    //    Within each pixel, the least significant bits are also
+    //    placed towards the least significant part of the word.
+    //
+    //Details: Lay out of opaque raw data in memory is decided by two factors:
+    //         opaque_raw_format and bit depth (implied by whiteLevel). Below
+    //         list illustrates their relationship:
+    //  LEGACY8:  P7(7:0) P6(7:0) P5(7:0) P4(7:0) P3(7:0) P2(7:0) P1(7:0) P0(7:0)
+    //            8 pixels occupy 8 bytes, no padding needed
+    //            min_stride = CEILING8(raw_width)
+    // LEGACY10:  0000 P5(9:0) P4(9:0) P3(9:0) P2(9:0) P1(9:0) P0(9:0)
+    //            6 pixels occupy 8 bytes, 4 bits padding at MSB
+    //            min_stride = (raw_width+5)/6 * 8
+    // LEGACY12:  0000 P4(11:0) P3(11:0) P2(11:0) P1(11:0) P0(11:0)
+    //            5 pixels occupy 8 bytes, 4 bits padding at MSB
+    //            min_stride = (raw_width+4)/5 * 8
+    //    MIPI8:  P0(7:0)
+    //            1 pixel occupy 1 byte, no padding needed
+    //            min_stride = raw_width
+    //   MIPI10:  P3(1:0) P2(1:0) P1(1:0) P0(1:0) P3(9:2) P2(9:2) P1(9:2) P0(9:2)
+    //            4 pixels occupy 5 bytes, no padding needed
+    //            min_stride = (raw_width+3)/4 * 5
+    //   MIPI12:  P1(3:0) P0(3:0) P1(11:4) P0(11:4)
+    //            2 pixels occupy 3 bytes, no padding needed
+    //            min_stride = (raw_width+1)/2 * 3
+    //Note that opaque_raw_stride needs to be at least the required minimum
+    //stride from the table above. ISP hardware may need more generous stride
+    //setting. For example, for LEGACY8, the actual stride may be
+    //CEILING16(raw_width) due to bus burst length requirement.
+    QCAMERA3_OPAQUE_RAW_FORMAT,
+    QCAMERA3_OPAQUE_RAW_END,
 };
+
+// QCAMERA3_OPAQUE_RAW_FORMAT
+typedef enum qcamera3_ext_opaque_raw_format {
+    QCAMERA3_OPAQUE_RAW_FORMAT_LEGACY,
+    QCAMERA3_OPAQUE_RAW_FORMAT_MIPI
+} qcamera3_ext_opaque_raw_format_t;
 
 class QCamera3VendorTags {
 
