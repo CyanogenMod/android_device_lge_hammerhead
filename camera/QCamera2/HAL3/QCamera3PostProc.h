@@ -98,10 +98,10 @@ public:
     QCamera3PostProcessor(QCamera3PicChannel *ch_ctrl);
     virtual ~QCamera3PostProcessor();
 
-    int32_t init(jpeg_encode_callback_t jpeg_cb, void *user_data);
+    int32_t init(QCamera3Memory *mMemory,
+                 jpeg_encode_callback_t jpeg_cb, void *user_data);
     int32_t deinit();
-    int32_t start(QCamera3Memory *mMemory,
-                  QCamera3Channel *pInputChannel,
+    int32_t start(QCamera3Channel *pInputChannel,
                   metadata_buffer_t *metadata);
     int32_t stop();
     int32_t processData(mm_camera_super_buf_t *frame);

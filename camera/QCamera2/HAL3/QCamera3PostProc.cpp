@@ -102,11 +102,12 @@ QCamera3PostProcessor::~QCamera3PostProcessor()
  *              NO_ERROR  -- success
  *              none-zero failure code
  *==========================================================================*/
-int32_t QCamera3PostProcessor::init(jpeg_encode_callback_t jpeg_cb, void *user_data)
+int32_t QCamera3PostProcessor::init(QCamera3Memory* mMemory,
+                                    jpeg_encode_callback_t jpeg_cb, void *user_data)
 {
     mJpegCB = jpeg_cb;
     mJpegUserData = user_data;
-
+    mJpegMem = mMemory;
     mJpegClientHandle = jpeg_open(&mJpegHandle);
     if(!mJpegClientHandle) {
         ALOGE("%s : jpeg_open did not work", __func__);
@@ -147,6 +148,8 @@ int32_t QCamera3PostProcessor::deinit()
         memset(&mJpegHandle, 0, sizeof(mJpegHandle));
     }
 
+    mJpegMem = NULL;
+
     return NO_ERROR;
 }
 
@@ -168,12 +171,10 @@ int32_t QCamera3PostProcessor::deinit()
  * NOTE       : if any reprocess is needed, a reprocess channel/stream
  *              will be started.
  *==========================================================================*/
-int32_t QCamera3PostProcessor::start(QCamera3Memory* mMemory,
-                                     QCamera3Channel *pInputChannel,
+int32_t QCamera3PostProcessor::start(QCamera3Channel *pInputChannel,
                                      metadata_buffer_t *metadata)
 {
     int32_t rc = NO_ERROR;
-    mJpegMem = mMemory;
     QCamera3HardwareInterface* hal_obj = (QCamera3HardwareInterface*)m_parent->mUserData;
 
     if (hal_obj->needReprocess()) {
@@ -697,7 +698,6 @@ void QCamera3PostProcessor::releaseJpegJobData(qcamera_jpeg_data_t *job)
             free(job->jpeg_settings);
             job->jpeg_settings = NULL;
         }
-        mJpegMem = NULL;
     }
     ALOGV("%s: X", __func__);
 }

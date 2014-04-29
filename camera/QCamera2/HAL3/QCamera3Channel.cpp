@@ -1068,7 +1068,7 @@ QCamera3PicChannel::QCamera3PicChannel(uint32_t cam_handle,
 {
     mYuvWidth = stream->width;
     mYuvHeight = stream->height;
-    int32_t rc = m_postprocessor.init(jpegEvtHandle, this);
+    int32_t rc = m_postprocessor.init(&mMemory, jpegEvtHandle, this);
     if (rc != 0) {
         ALOGE("Init Postprocessor failed");
     }
@@ -1164,7 +1164,7 @@ int32_t QCamera3PicChannel::request(buffer_handle_t *buffer,
     mCurrentBufIndex = index;
 
     // Start postprocessor
-    m_postprocessor.start(&mMemory, this, metadata);
+    m_postprocessor.start(this, metadata);
 
     // Queue jpeg settings
     rc = queueJpegSetting(index, metadata);
@@ -1263,7 +1263,6 @@ int32_t QCamera3PicChannel::registerBuffer(buffer_handle_t *buffer)
             return rc;
         }
     }
-
     rc = mMemory.registerBuffer(buffer);
     if (ALREADY_EXISTS == rc) {
         return NO_ERROR;
@@ -1321,7 +1320,6 @@ void QCamera3PicChannel::streamCbRoutine(mm_camera_super_buf_t *super_frame,
        return;
     }
     *frame = *super_frame;
-
     m_postprocessor.processData(frame);
     free(super_frame);
     return;
@@ -1981,7 +1979,7 @@ void QCamera3PicChannel::overrideYuvSize(uint32_t width, uint32_t height)
    mYuvHeight = height;
 }
 
-int QCamera3PicChannel::kMaxBuffers = 2;
+int QCamera3PicChannel::kMaxBuffers = 1;
 
 /*===========================================================================
  * FUNCTION   : QCamera3ReprocessChannel
