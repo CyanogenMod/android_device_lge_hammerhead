@@ -3515,6 +3515,31 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       available_hot_pixel_map_modes,
                       1);
 
+    staticInfo.update(ANDROID_SENSOR_FORWARD_MATRIX1,
+                      (camera_metadata_rational_t*)gCamCapability[cameraId]->forward_matrix1,
+                      3*3);
+
+    staticInfo.update(ANDROID_SENSOR_FORWARD_MATRIX2,
+                      (camera_metadata_rational_t*)gCamCapability[cameraId]->forward_matrix2,
+                      3*3);
+
+    staticInfo.update(ANDROID_SENSOR_COLOR_TRANSFORM1,
+                   (camera_metadata_rational_t*) gCamCapability[cameraId]->color_transform1,
+                      3*3);
+
+    staticInfo.update(ANDROID_SENSOR_COLOR_TRANSFORM2,
+                   (camera_metadata_rational_t*) gCamCapability[cameraId]->color_transform2,
+                      3*3);
+
+    staticInfo.update(ANDROID_SENSOR_CALIBRATION_TRANSFORM1,
+                   (camera_metadata_rational_t*) gCamCapability[cameraId]->calibration_transform1,
+                      3*3);
+
+    staticInfo.update(ANDROID_SENSOR_CALIBRATION_TRANSFORM2,
+                   (camera_metadata_rational_t*) gCamCapability[cameraId]->calibration_transform2,
+                      3*3);
+
+
     int32_t available_request_keys[] = {ANDROID_COLOR_CORRECTION_MODE,
        ANDROID_COLOR_CORRECTION_TRANSFORM, ANDROID_COLOR_CORRECTION_GAINS,
        ANDROID_CONTROL_AE_ANTIBANDING_MODE, ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION,
