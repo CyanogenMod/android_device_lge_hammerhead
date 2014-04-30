@@ -3529,11 +3529,10 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       2);
 
     uint8_t available_tonemap_modes[] = {ANDROID_TONEMAP_MODE_CONTRAST_CURVE,
-                                         ANDROID_TONEMAP_MODE_FAST,
-                                         ANDROID_TONEMAP_MODE_HIGH_QUALITY};
+                                         ANDROID_TONEMAP_MODE_FAST};
     staticInfo.update(ANDROID_TONEMAP_AVAILABLE_TONE_MAP_MODES,
                       available_tonemap_modes,
-                      3);
+                      2);
 
     uint8_t available_hot_pixel_map_modes[] = {ANDROID_STATISTICS_HOT_PIXEL_MAP_MODE_OFF};
     staticInfo.update(ANDROID_STATISTICS_INFO_AVAILABLE_HOT_PIXEL_MAP_MODES,
