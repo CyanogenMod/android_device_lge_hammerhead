@@ -416,7 +416,7 @@ typedef union {
     /* Specific to HAl1 */
     INCLUDE(CAM_INTF_META_PREP_SNAPSHOT_DONE,           int32_t,                     1);
     INCLUDE(CAM_INTF_META_GOOD_FRAME_IDX_RANGE,         cam_frame_idx_range_t,       1);
-    INCLUDE(CAM_INTF_PARM_ANTIBANDING,              	int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_ANTIBANDING,                  int8_t,                      1);
     /* Specific to HAL3 */
     INCLUDE(CAM_INTF_META_FRAME_NUMBER_VALID,           int32_t,                     1);
     INCLUDE(CAM_INTF_META_URGENT_FRAME_NUMBER_VALID,    int32_t,                     1);

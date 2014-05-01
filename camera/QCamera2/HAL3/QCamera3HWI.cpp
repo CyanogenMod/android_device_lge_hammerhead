@@ -4545,10 +4545,13 @@ int QCamera3HardwareInterface::translateToHalMetadata
     }
 
     if (frame_settings.exists(ANDROID_CONTROL_AE_ANTIBANDING_MODE)) {
-        int32_t antibandingMode =
-            frame_settings.find(ANDROID_CONTROL_AE_ANTIBANDING_MODE).data.i32[0];
+        uint8_t fwk_antibandingMode =
+            frame_settings.find(ANDROID_CONTROL_AE_ANTIBANDING_MODE).data.u8[0];
+        uint8_t hal_antibandingMode = lookupHalName(ANTIBANDING_MODES_MAP,
+                     sizeof(ANTIBANDING_MODES_MAP)/sizeof(ANTIBANDING_MODES_MAP[0]),
+                     fwk_antibandingMode);
         rc = AddSetMetaEntryToBatch(hal_metadata, CAM_INTF_PARM_ANTIBANDING,
-                sizeof(antibandingMode), &antibandingMode);
+                sizeof(hal_antibandingMode), &hal_antibandingMode);
     }
 
     if (frame_settings.exists(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)) {
