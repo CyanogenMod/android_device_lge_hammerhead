@@ -831,4 +831,24 @@ void *QCamera3GrallocMemory::getPtr(int index) const
     return mPtr[index];
 }
 
+/*===========================================================================
+ * FUNCTION   : getBufferHandle
+ *
+ * DESCRIPTION: return framework pointer
+ *
+ * PARAMETERS :
+ *   @index   : index of the buffer
+ *
+ * RETURN     : buffer ptr if match found
+                NULL if failed
+ *==========================================================================*/
+void *QCamera3GrallocMemory::getBufferHandle(int index)
+{
+    if (index >= mBufferCount) {
+        ALOGE("index out of bound");
+        return NULL;
+    }
+    return mBufferHandle[index];
+}
+
 }; //namespace qcamera

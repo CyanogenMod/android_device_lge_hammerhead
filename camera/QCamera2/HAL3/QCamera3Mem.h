@@ -115,7 +115,7 @@ public:
     virtual void *getPtr(int index) const;
     int32_t markFrameNumber(int index, uint32_t frameNumber);
     int32_t getFrameNumber(int index);
-
+    void *getBufferHandle(int index);
 private:
     buffer_handle_t *mBufferHandle[MM_CAMERA_MAX_NUM_FRAMES];
     struct private_handle_t *mPrivateHandle[MM_CAMERA_MAX_NUM_FRAMES];

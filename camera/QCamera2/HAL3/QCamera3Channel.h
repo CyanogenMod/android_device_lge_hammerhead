@@ -149,7 +149,6 @@ protected:
 private:
     camera3_stream_t *mCamera3Stream;
     uint32_t mNumBufs;
-    Vector<buffer_handle_t *> mCamera3Buffers;
 
     cam_stream_type_t mStreamType; // Stream type
 };
@@ -290,7 +289,6 @@ public:
 private:
     camera3_stream_t *mCamera3Stream;
     uint32_t mNumBufs;
-    Vector<buffer_handle_t *> mCamera3Buffers;
     int32_t mCurrentBufIndex;
     bool m_bWNROn;
     uint32_t mYuvWidth, mYuvHeight;
