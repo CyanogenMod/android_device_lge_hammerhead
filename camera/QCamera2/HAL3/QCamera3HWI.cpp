@@ -106,6 +106,7 @@ const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::SCENE_MOD
 };
 
 const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::FOCUS_MODES_MAP[] = {
+    { ANDROID_CONTROL_AF_MODE_OFF,                CAM_FOCUS_MODE_OFF },
     { ANDROID_CONTROL_AF_MODE_OFF,                CAM_FOCUS_MODE_FIXED },
     { ANDROID_CONTROL_AF_MODE_AUTO,               CAM_FOCUS_MODE_AUTO },
     { ANDROID_CONTROL_AF_MODE_MACRO,              CAM_FOCUS_MODE_MACRO },
@@ -4521,27 +4522,22 @@ int QCamera3HardwareInterface::translateToHalMetadata
                 sizeof(whiteLevel), &whiteLevel);
     }
 
-    float focalDistance = -1.0;
-    if (frame_settings.exists(ANDROID_LENS_FOCUS_DISTANCE)) {
-        focalDistance = frame_settings.find(ANDROID_LENS_FOCUS_DISTANCE).data.f[0];
-        rc = AddSetMetaEntryToBatch(hal_metadata,
-                CAM_INTF_META_LENS_FOCUS_DISTANCE,
-                sizeof(focalDistance), &focalDistance);
-    }
-
     if (frame_settings.exists(ANDROID_CONTROL_AF_MODE)) {
         uint8_t fwk_focusMode =
             frame_settings.find(ANDROID_CONTROL_AF_MODE).data.u8[0];
         uint8_t focusMode;
-        if (focalDistance == 0.0 && fwk_focusMode == ANDROID_CONTROL_AF_MODE_OFF) {
-            focusMode = CAM_FOCUS_MODE_INFINITY;
-        } else{
-         focusMode = lookupHalName(FOCUS_MODES_MAP,
+        focusMode = lookupHalName(FOCUS_MODES_MAP,
                                    sizeof(FOCUS_MODES_MAP),
                                    fwk_focusMode);
-        }
         rc = AddSetMetaEntryToBatch(hal_metadata, CAM_INTF_PARM_FOCUS_MODE,
                 sizeof(focusMode), &focusMode);
+    }
+
+    if (frame_settings.exists(ANDROID_LENS_FOCUS_DISTANCE)) {
+        float focalDistance = frame_settings.find(ANDROID_LENS_FOCUS_DISTANCE).data.f[0];
+        rc = AddSetMetaEntryToBatch(hal_metadata,
+                CAM_INTF_META_LENS_FOCUS_DISTANCE,
+                sizeof(focalDistance), &focalDistance);
     }
 
     if (frame_settings.exists(ANDROID_CONTROL_AE_ANTIBANDING_MODE)) {

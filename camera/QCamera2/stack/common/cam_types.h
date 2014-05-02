@@ -410,6 +410,7 @@ typedef enum {
 
 /* Auto focus mode */
 typedef enum {
+    CAM_FOCUS_MODE_OFF,
     CAM_FOCUS_MODE_AUTO,
     CAM_FOCUS_MODE_INFINITY,
     CAM_FOCUS_MODE_MACRO,
