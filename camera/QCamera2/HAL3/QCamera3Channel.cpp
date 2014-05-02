@@ -981,7 +981,7 @@ void QCamera3PicChannel::jpegEvtHandle(jpeg_job_status_t status,
                                               mm_jpeg_output_t *p_output,
                                               void *userdata)
 {
-    buffer_handle_t *resultBuffer;
+    buffer_handle_t *resultBuffer, *jpegBufferHandle;
     int32_t resultFrameNumber;
     int resultStatus = CAMERA3_BUFFER_STATUS_OK;
     camera3_stream_buffer_t result;
@@ -1017,8 +1017,19 @@ void QCamera3PicChannel::jpegEvtHandle(jpeg_job_status_t status,
 
         char* jpeg_buf = (char *)p_output->buf_vaddr;
 
-        // Gralloc provides a proper sized (no padding) buffer already.
-        maxJpegSize = obj->mMemory.getSize(obj->mCurrentBufIndex);
+        // Gralloc buffer may have additional padding for 4K page size
+        // Follow size guidelines based on spec since framework relies
+        // on that to reach end of buffer and with it the header
+
+        //Handle same as resultBuffer, but for readablity
+        jpegBufferHandle =
+            (buffer_handle_t *)obj->mMemory.getBufferHandle(obj->mCurrentBufIndex);
+
+        maxJpegSize = ((private_handle_t*)(*jpegBufferHandle))->width;
+        if (maxJpegSize > obj->mMemory.getSize(obj->mCurrentBufIndex)) {
+            maxJpegSize = obj->mMemory.getSize(obj->mCurrentBufIndex);
+        }
+
         jpeg_eof = &jpeg_buf[maxJpegSize-sizeof(jpegHeader)];
         memcpy(jpeg_eof, &jpegHeader, sizeof(jpegHeader));
         obj->mMemory.cleanInvalidateCache(obj->mCurrentBufIndex);
