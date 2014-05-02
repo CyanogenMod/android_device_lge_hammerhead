@@ -907,11 +907,11 @@ void QCamera3RawChannel::dumpRawSnapshot(mm_camera_buf_def_t *frame)
    memset(&offset, 0, sizeof(cam_frame_len_offset_t));
    stream->getFrameOffset(offset);
    snprintf(buf, sizeof(buf), "/data/r_%d_%dx%d.raw",
-            frame->frame_idx, offset.mp[0].stride, offset.mp[0].scanline);
+            frame->frame_idx, dim.width, dim.height);
 
    int file_fd = open(buf, O_RDWR| O_CREAT, 0777);
    if (file_fd) {
-      int written_len = write(file_fd, frame->buffer, frame->frame_len);
+      int written_len = write(file_fd, frame->buffer, offset.frame_len);
       ALOGE("%s: written number of bytes %d", __func__, written_len);
       close(file_fd);
    } else {
@@ -949,7 +949,7 @@ void QCamera3RawChannel::convertToRaw16(mm_camera_buf_def_t *frame)
     // 2. Opaque raw10's stride is 6 pixels, and aligned to 16 bytes.
     for (int y = dim.height-1; y >= 0; y--) {
         uint64_t* row_start = (uint64_t *)frame->buffer +
-            y * offset.mp[0].stride / 6;
+            y * offset.mp[0].stride / 8;
         for (int x = dim.width-1;  x >= 0; x--) {
             uint16_t raw16_pixel = 0x3FF & (row_start[x/6] >> (10*(x%6)));
             raw16_buffer[y*raw16_stride+x] = raw16_pixel;
