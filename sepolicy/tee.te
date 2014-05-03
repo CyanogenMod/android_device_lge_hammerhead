@@ -9,6 +9,9 @@ allow tee drm_data_file:dir create_dir_perms;
 allow tee drm_data_file:file create_file_perms;
 
 # Read from persist partition
-allow tee persist_file:dir search;
+allow tee persist_file:dir r_dir_perms;
 r_dir_file(tee, persist_data_file)
 r_dir_file(tee, persist_drm_file)
+# Write to drm related pieces of persist partition
+allow tee persist_drm_file:dir w_dir_perms;
+allow tee persist_drm_file:file w_file_perms;
