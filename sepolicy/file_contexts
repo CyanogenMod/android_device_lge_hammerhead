@@ -106,7 +106,7 @@
 /system/bin/qmuxd                  u:object_r:qmux_exec:s0
 /system/bin/netmgrd                u:object_r:netmgrd_exec:s0
 /system/bin/mpdecision             u:object_r:mpdecision_exec:s0
-/system/bin/sensors.qcom           u:object_r:sensors_exec:s0
+/system/bin/sensors\.qcom           u:object_r:sensors_exec:s0
 /system/bin/mm-qcamera-daemon      u:object_r:camera_exec:s0
 /system/bin/qseecomd               u:object_r:tee_exec:s0
 /system/bin/subsystem_ramdump      u:object_r:ssr_exec:s0
