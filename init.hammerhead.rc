@@ -249,12 +249,15 @@ on post-fs-data
     chown root system /sys/class/timed_output/vibrator/amp
     chown root system /sys/devices/platform/kcal_ctrl.0/kcal
     chown root system /sys/devices/platform/kcal_ctrl.0/kcal_ctrl
+    chown root system /sys/android_touch/doubletap2wake
     chmod 0664 /sys/class/timed_output/vibrator/amp
     chmod 0664 /sys/devices/platform/kcal_ctrl.0/kcal
     chmod 0664 /sys/devices/platform/kcal_ctrl.0/kcal_ctrl
+    chmod 0664 /sys/android_touch/doubletap2wake
     restorecon /sys/class/timed_output/vibrator/amp
     restorecon /sys/devices/platform/kcal_ctrl.0/kcal
     restorecon /sys/devices/platform/kcal_ctrl.0/kcal_ctrl
+    restorecon /sys/android_touch/doubletap2wake
 
     # Torch
     chown system camera /sys/class/leds/led:flash_torch/brightness
