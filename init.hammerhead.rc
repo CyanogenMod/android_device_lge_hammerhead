@@ -293,6 +293,9 @@ on property:sys.boot_completed=1
     # enable logging of wake up reasons to kernel logs
     write /sys/module/msm_show_resume_irq/parameters/debug_mask 1
 
+on property:ro.debuggable=1
+    start ssr_ramdump
+
 service rmt_storage /system/bin/rmt_storage
     class core
     user root
@@ -444,6 +447,7 @@ service ssr_ramdump /system/bin/subsystem_ramdump -m -t emmc
     class main
     user root
     group root
+    disabled
 
 service thermal-engine /system/bin/thermal-engine-hh
    class main
