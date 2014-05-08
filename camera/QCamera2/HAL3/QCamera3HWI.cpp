@@ -2148,12 +2148,21 @@ QCamera3HardwareInterface::translateFromHalMetadata(
              camMetadata.update(ANDROID_SENSOR_SENSITIVITY, sensorSensitivity, 1);
              break;
           }
+
           case CAM_INTF_META_SHADING_MODE: {
              uint8_t  *shadingMode =
                 (uint8_t *)POINTER_OF(CAM_INTF_META_SHADING_MODE, metadata);
              camMetadata.update(ANDROID_SHADING_MODE, shadingMode, 1);
              break;
           }
+
+          case CAM_INTF_META_LENS_SHADING_MAP_MODE: {
+             uint8_t  *shadingMapMode =
+                (uint8_t *)POINTER_OF(CAM_INTF_META_LENS_SHADING_MAP_MODE, metadata);
+             camMetadata.update(ANDROID_STATISTICS_LENS_SHADING_MAP_MODE, shadingMapMode, 1);
+             break;
+          }
+
           case CAM_INTF_META_STATS_FACEDETECT_MODE: {
              uint8_t  *faceDetectMode =
                 (uint8_t *)POINTER_OF(CAM_INTF_META_STATS_FACEDETECT_MODE, metadata);
