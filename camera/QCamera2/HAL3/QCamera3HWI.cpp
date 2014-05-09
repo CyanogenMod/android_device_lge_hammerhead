@@ -2007,6 +2007,7 @@ QCamera3HardwareInterface::translateFromHalMetadata(
          case CAM_INTF_META_AEC_PRECAPTURE_ID:
          case CAM_INTF_META_AEC_ROI:
          case CAM_INTF_META_AEC_STATE:
+         case CAM_INTF_PARM_AEC_LOCK:
          case CAM_INTF_PARM_EV:
          case CAM_INTF_PARM_FOCUS_MODE:
          case CAM_INTF_META_AF_ROI:
@@ -2442,6 +2443,13 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
             camMetadata.update(ANDROID_CONTROL_AE_STATE, ae_state, 1);
             ALOGV("%s: urgent Metadata : ANDROID_CONTROL_AE_STATE", __func__);
             break;
+        }
+        case CAM_INTF_PARM_AEC_LOCK: {
+            uint8_t  *ae_lock =
+              (uint8_t *)POINTER_OF(CAM_INTF_PARM_AEC_LOCK, metadata);
+            camMetadata.update(ANDROID_CONTROL_AE_LOCK,
+                                          ae_lock, 1);
+            ALOGV("%s: urgent Metadata : ANDROID_CONTROL_AE_LOCK", __func__);
         }
         case CAM_INTF_PARM_EV: {
             int32_t  *expCompensation =
