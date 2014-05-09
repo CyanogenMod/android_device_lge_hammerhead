@@ -2007,6 +2007,7 @@ QCamera3HardwareInterface::translateFromHalMetadata(
          case CAM_INTF_META_AEC_PRECAPTURE_ID:
          case CAM_INTF_META_AEC_ROI:
          case CAM_INTF_META_AEC_STATE:
+         case CAM_INTF_PARM_EV:
          case CAM_INTF_PARM_FOCUS_MODE:
          case CAM_INTF_META_AF_ROI:
          case CAM_INTF_META_AF_STATE:
@@ -2441,6 +2442,14 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
             camMetadata.update(ANDROID_CONTROL_AE_STATE, ae_state, 1);
             ALOGV("%s: urgent Metadata : ANDROID_CONTROL_AE_STATE", __func__);
             break;
+        }
+        case CAM_INTF_PARM_EV: {
+            int32_t  *expCompensation =
+              (int32_t *)POINTER_OF(CAM_INTF_PARM_EV, metadata);
+            camMetadata.update(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION,
+                                          expCompensation, 1);
+            ALOGV("%s: urgent Metadata : ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION",
+                __func__);
         }
         case CAM_INTF_PARM_FOCUS_MODE:{
             uint8_t  *focusMode =
