@@ -3686,19 +3686,29 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
 
     /*available stall durations depend on the hw + sw and will be different for different devices */
     /*have to add for raw after implementation*/
-    int32_t stall_formats[] = {HAL_PIXEL_FORMAT_BLOB};
+    int32_t stall_formats[] = {HAL_PIXEL_FORMAT_BLOB, ANDROID_SCALER_AVAILABLE_FORMATS_RAW16};
     size_t stall_formats_count = sizeof(stall_formats)/sizeof(int32_t);
 
     size_t available_stall_size = gCamCapability[cameraId]->picture_sizes_tbl_cnt * 4;
     int64_t available_stall_durations[available_stall_size];
     idx = 0;
     for (uint32_t j = 0; j < stall_formats_count; j++) {
-       for (uint32_t i = 0; i < gCamCapability[cameraId]->picture_sizes_tbl_cnt; i++) {
-          available_stall_durations[idx]   = stall_formats[j];
-          available_stall_durations[idx+1] = gCamCapability[cameraId]->picture_sizes_tbl[i].width;
-          available_stall_durations[idx+2] = gCamCapability[cameraId]->picture_sizes_tbl[i].height;
-          available_stall_durations[idx+3] = gCamCapability[cameraId]->stall_durations[i];
-          idx+=4;
+       if (stall_formats[j] == HAL_PIXEL_FORMAT_BLOB) {
+          for (uint32_t i = 0; i < gCamCapability[cameraId]->picture_sizes_tbl_cnt; i++) {
+             available_stall_durations[idx]   = stall_formats[j];
+             available_stall_durations[idx+1] = gCamCapability[cameraId]->picture_sizes_tbl[i].width;
+             available_stall_durations[idx+2] = gCamCapability[cameraId]->picture_sizes_tbl[i].height;
+             available_stall_durations[idx+3] = gCamCapability[cameraId]->jpeg_stall_durations[i];
+             idx+=4;
+          }
+       } else {
+          for (uint32_t i = 0; i < gCamCapability[cameraId]->supported_raw_dim_cnt; i++) {
+             available_stall_durations[idx]   = stall_formats[j];
+             available_stall_durations[idx+1] = gCamCapability[cameraId]->raw_dim[i].width;
+             available_stall_durations[idx+2] = gCamCapability[cameraId]->raw_dim[i].height;
+             available_stall_durations[idx+3] = gCamCapability[cameraId]->raw16_stall_durations[i];
+             idx+=4;
+          }
        }
     }
     staticInfo.update(ANDROID_SCALER_AVAILABLE_STALL_DURATIONS,
