@@ -55,6 +55,8 @@ namespace qcamera {
 
 #define DATA_PTR(MEM_OBJ,INDEX) MEM_OBJ->getPtr( INDEX )
 
+#define EMPTY_PIPELINE_DELAY 2
+
 cam_capability_t *gCamCapability[MM_CAMERA_MAX_NUM_SENSORS];
 const camera_metadata_t *gStaticMetadata[MM_CAMERA_MAX_NUM_SENSORS];
 
@@ -1182,7 +1184,7 @@ void QCamera3HardwareInterface::handleMetadataWithLock(
             result.result = dummyMetadata.release();
         } else {
             result.result = translateFromHalMetadata(metadata,
-                    i->timestamp, i->request_id, i->jpegMetadata);
+                    i->timestamp, i->request_id, i->jpegMetadata, i->pipeline_depth);
 
             if (i->blob_request) {
                 {
@@ -1286,6 +1288,10 @@ void QCamera3HardwareInterface::handleMetadataWithLock(
     }
 
 done_metadata:
+    for (List<PendingRequestInfo>::iterator i = mPendingRequestsList.begin();
+        i != mPendingRequestsList.end() ;i++) {
+        i->pipeline_depth++;
+    }
     if (!pending_requests)
         unblockRequestIfNecessary();
 
@@ -1573,6 +1579,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
     pendingRequest.blob_request = blob_request;
     pendingRequest.bNotified = 0;
     pendingRequest.input_buffer_present = (request->input_buffer != NULL)? 1 : 0;
+    pendingRequest.pipeline_depth = 0;
     extractJpegMetadata(pendingRequest.jpegMetadata, request);
 
     for (size_t i = 0; i < request->num_output_buffers; i++) {
@@ -1932,7 +1939,8 @@ QCamera3HardwareInterface::translateFromHalMetadata(
                                  metadata_buffer_t *metadata,
                                  nsecs_t timestamp,
                                  int32_t request_id,
-                                 const CameraMetadata& jpegMetadata)
+                                 const CameraMetadata& jpegMetadata,
+                                 uint8_t pipeline_depth)
 {
     CameraMetadata camMetadata;
     camera_metadata_t* resultMetadata;
@@ -1942,6 +1950,7 @@ QCamera3HardwareInterface::translateFromHalMetadata(
 
     camMetadata.update(ANDROID_SENSOR_TIMESTAMP, &timestamp, 1);
     camMetadata.update(ANDROID_REQUEST_ID, &request_id, 1);
+    camMetadata.update(ANDROID_REQUEST_PIPELINE_DEPTH, &pipeline_depth, 1);
 
     uint8_t curr_entry = GET_FIRST_PARAM_ID(metadata);
     uint8_t next_entry;
@@ -3473,7 +3482,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       avail_testpattern_modes,
                       size);
 
-    uint8_t max_pipeline_depth = kMaxInFlight;
+    uint8_t max_pipeline_depth = kMaxInFlight + EMPTY_PIPELINE_DELAY;
     staticInfo.update(ANDROID_REQUEST_PIPELINE_MAX_DEPTH,
                       &max_pipeline_depth,
                       1);

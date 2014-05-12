@@ -139,7 +139,7 @@ public:
 
     camera_metadata_t* translateFromHalMetadata(metadata_buffer_t *metadata,
                             nsecs_t timestamp, int32_t request_id,
-                            const CameraMetadata& jpegMetadata);
+                            const CameraMetadata& jpegMetadata, uint8_t pipeline_depth);
     int getJpegSettings(const camera_metadata_t *settings);
     int initParameters();
     void deinitParameters();
@@ -234,6 +234,7 @@ private:
         uint8_t bNotified;
         int input_buffer_present;
         CameraMetadata jpegMetadata;
+        uint8_t pipeline_depth;
     } PendingRequestInfo;
     typedef struct {
         uint32_t frame_number;
