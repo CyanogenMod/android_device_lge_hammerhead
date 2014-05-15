@@ -462,7 +462,7 @@ typedef union {
     INCLUDE(CAM_INTF_PARM_EV_STEP,                  	cam_rational_type_t,         1);
     INCLUDE(CAM_INTF_PARM_AEC_LOCK,                 	uint8_t,                     1);
     INCLUDE(CAM_INTF_PARM_FPS_RANGE,                	cam_fps_range_t,             1);
-    INCLUDE(CAM_INTF_PARM_AWB_LOCK,                 	int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_AWB_LOCK,                 	uint8_t,                     1);
     INCLUDE(CAM_INTF_PARM_EFFECT,                   	int32_t,                     1);
     INCLUDE(CAM_INTF_META_AEC_PRECAPTURE_TRIGGER,   	cam_trigger_t,               1);
     INCLUDE(CAM_INTF_META_AF_TRIGGER,               	cam_trigger_t,               1);

@@ -2016,6 +2016,7 @@ QCamera3HardwareInterface::translateFromHalMetadata(
          case CAM_INTF_PARM_WHITE_BALANCE:
          case CAM_INTF_META_AWB_REGIONS:
          case CAM_INTF_META_AWB_STATE:
+         case CAM_INTF_PARM_AWB_LOCK:
          case CAM_INTF_META_MODE: {
            ALOGV("%s: 3A metadata: %d, do not process", __func__, curr_entry);
            break;
@@ -2408,8 +2409,8 @@ QCamera3HardwareInterface::translateFromHalMetadata(
  *==========================================================================*/
 camera_metadata_t*
 QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
-                                (metadata_buffer_t *metadata) {
-
+                                (metadata_buffer_t *metadata)
+{
     CameraMetadata camMetadata;
     camera_metadata_t* resultMetadata;
 
@@ -2520,6 +2521,13 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
            camMetadata.update(ANDROID_CONTROL_AWB_STATE, whiteBalanceState, 1);
            ALOGV("%s: urgent Metadata : ANDROID_CONTROL_AWB_STATE", __func__);
            break;
+        }
+        case CAM_INTF_PARM_AWB_LOCK: {
+            uint8_t  *awb_lock =
+              (uint8_t *)POINTER_OF(CAM_INTF_PARM_AWB_LOCK, metadata);
+            camMetadata.update(ANDROID_CONTROL_AWB_LOCK, awb_lock, 1);
+            ALOGV("%s: urgent Metadata : ANDROID_CONTROL_AWB_LOCK", __func__);
+            break;
         }
         case CAM_INTF_META_MODE: {
             uint8_t *mode =(uint8_t *)POINTER_OF(CAM_INTF_META_MODE, metadata);
