@@ -35,7 +35,7 @@ public class DisplayColorCalibration {
     }
 
     public static int getDefValue() {
-        return 217; // 85%
+        return getMaxValue();
     }
 
     public static String getCurColors()  {
