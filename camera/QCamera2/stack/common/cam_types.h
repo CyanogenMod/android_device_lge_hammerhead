@@ -953,8 +953,12 @@ typedef enum {
     CAM_INTF_META_STREAM_INFO,
     /* List of areas to use for metering */
     CAM_INTF_META_AEC_ROI,
-    /* Whether the HAL must trigger precapture metering.*/
+    /* Whether the HAL must trigger precapture metering. Used to sync trigger
+     * value and precapture ID */
     CAM_INTF_META_AEC_PRECAPTURE_TRIGGER,
+    /* Use to report back to the trigger value, triger is requested using
+     * CAM_INTF_META_AEC_PRECAPTURE_TRIGGER */
+    CAM_INTF_META_PRECAPTURE_TRIGGER,
     /* The ID sent with the latest CAMERA2_TRIGGER_PRECAPTURE_METERING call */
     CAM_INTF_META_AEC_PRECAPTURE_ID,
     /* Current state of AE algorithm */
