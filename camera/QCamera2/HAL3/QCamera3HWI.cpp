@@ -2535,6 +2535,18 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
             ALOGV("%s: urgent Metadata : ANDROID_CONTROL_MODE", __func__);
             break;
         }
+        case CAM_INTF_PARM_BESTSHOT_MODE: {
+            uint8_t *sceneMode =
+                (uint8_t *)POINTER_OF(CAM_INTF_PARM_BESTSHOT_MODE, metadata);
+            uint8_t fwkSceneMode =
+                (uint8_t)lookupFwkName(SCENE_MODES_MAP,
+                sizeof(SCENE_MODES_MAP)/
+                sizeof(SCENE_MODES_MAP[0]), *sceneMode);
+            camMetadata.update(ANDROID_CONTROL_SCENE_MODE,
+                 &fwkSceneMode, 1);
+            ALOGV("%s: urgent Metadata : ANDROID_CONTROL_SCENE_MODE", __func__);
+            break;
+        }
         default:
             ALOGV("%s: Normal Metadata %d, do not process",
               __func__, curr_entry);

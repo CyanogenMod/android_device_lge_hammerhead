@@ -456,7 +456,7 @@ typedef union {
     INCLUDE(CAM_INTF_PARM_VIDEO_HDR,                	int32_t,                     1);
 
     /* HAL3 external control */
-    INCLUDE(CAM_INTF_PARM_BESTSHOT_MODE,                int32_t,                     1);
+    INCLUDE(CAM_INTF_PARM_BESTSHOT_MODE,                uint8_t,                     1);
     INCLUDE(CAM_INTF_PARM_REDEYE_REDUCTION,             int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_EV,                       	int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_EV_STEP,                  	cam_rational_type_t,         1);
