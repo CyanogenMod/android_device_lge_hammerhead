@@ -2287,6 +2287,16 @@ QCamera3HardwareInterface::translateFromHalMetadata(
              camMetadata.update(ANDROID_BLACK_LEVEL_LOCK, blackLevelLock, 1);
              break;
           }
+          case CAM_INTF_PARM_ANTIBANDING: {
+            uint8_t *hal_ab_mode =
+              (uint8_t *)POINTER_OF(CAM_INTF_PARM_ANTIBANDING, metadata);
+            uint8_t fwk_ab_mode = (uint8_t)lookupFwkName(ANTIBANDING_MODES_MAP,
+                     sizeof(ANTIBANDING_MODES_MAP)/sizeof(ANTIBANDING_MODES_MAP[0]),
+                     *hal_ab_mode);
+            camMetadata.update(ANDROID_CONTROL_AE_ANTIBANDING_MODE,
+                &fwk_ab_mode, 1);
+            break;
+          }
           case CAM_INTF_META_SCENE_FLICKER:{
              uint8_t *sceneFlicker = (uint8_t*)
              POINTER_OF(CAM_INTF_META_SCENE_FLICKER, metadata);
@@ -2457,6 +2467,7 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
             camMetadata.update(ANDROID_CONTROL_AE_LOCK,
                                           ae_lock, 1);
             ALOGV("%s: urgent Metadata : ANDROID_CONTROL_AE_LOCK", __func__);
+            break;
         }
         case CAM_INTF_PARM_FPS_RANGE: {
             int32_t fps_range[2];
@@ -2477,6 +2488,7 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
                                           expCompensation, 1);
             ALOGV("%s: urgent Metadata : ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION",
                 __func__);
+            break;
         }
         case CAM_INTF_PARM_FOCUS_MODE:{
             uint8_t  *focusMode =
@@ -2581,10 +2593,12 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
                 af_trigger, 1);
             ALOGV("%s: urgent Metadata : ANDROID_CONTROL_AF_TRIGGER = %d",
                 __func__, *af_trigger);
+            break;
         }
         default:
             ALOGV("%s: Normal Metadata %d, do not process",
               __func__, curr_entry);
+            break;
        }
        next_entry = GET_NEXT_PARAM_ID(curr_entry, metadata);
        curr_entry = next_entry;
