@@ -967,10 +967,13 @@ typedef enum {
     CAM_INTF_META_AF_ROI,
     /* Whether the HAL must trigger autofocus. */
     CAM_INTF_META_AF_TRIGGER,
-    /* Current state of AF algorithm */
-    CAM_INTF_META_AF_STATE,
     /* The ID sent with the latest CAMERA2_TRIGGER_AUTOFOCUS call */
     CAM_INTF_META_AF_TRIGGER_ID,
+    /* Use to report back AF trigger value, trigger is requested using
+     * CAM_INTF_META_AF_TRIGGER and CAM_INTF_META_AF_TRIGGER_ID */
+    CAM_INTF_META_AF_TRIGGER_NOTICE,
+    /* Current state of AF algorithm */
+    CAM_INTF_META_AF_STATE,
     /* List of areas to use for illuminant estimation */
     CAM_INTF_META_AWB_REGIONS,
     /* Current state of AWB algorithm */
