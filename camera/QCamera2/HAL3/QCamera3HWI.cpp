@@ -2018,6 +2018,7 @@ QCamera3HardwareInterface::translateFromHalMetadata(
          case CAM_INTF_META_AWB_STATE:
          case CAM_INTF_PARM_AWB_LOCK:
          case CAM_INTF_META_PRECAPTURE_TRIGGER:
+         case CAM_INTF_META_AF_TRIGGER_NOTICE:
          case CAM_INTF_META_MODE: {
            ALOGV("%s: 3A metadata: %d, do not process", __func__, curr_entry);
            break;
@@ -2556,6 +2557,14 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
             ALOGV("%s: urgent Metadata : ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER",
                 __func__);
             break;
+        }
+        case CAM_INTF_META_AF_TRIGGER_NOTICE: {
+            uint8_t *af_trigger =
+              (uint8_t *)POINTER_OF(CAM_INTF_META_AF_TRIGGER_NOTICE, metadata);
+            camMetadata.update(ANDROID_CONTROL_AF_TRIGGER,
+                af_trigger, 1);
+            ALOGV("%s: urgent Metadata : ANDROID_CONTROL_AF_TRIGGER = %d",
+                __func__, *af_trigger);
         }
         default:
             ALOGV("%s: Normal Metadata %d, do not process",
