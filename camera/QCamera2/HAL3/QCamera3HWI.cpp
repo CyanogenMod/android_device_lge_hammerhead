@@ -2297,6 +2297,14 @@ QCamera3HardwareInterface::translateFromHalMetadata(
                 &fwk_ab_mode, 1);
             break;
           }
+
+          case CAM_INTF_META_CAPTURE_INTENT:{
+             uint8_t *captureIntent = (uint8_t*)
+               POINTER_OF(CAM_INTF_META_CAPTURE_INTENT, metadata);
+             camMetadata.update(ANDROID_CONTROL_CAPTURE_INTENT, captureIntent, 1);
+             break;
+          }
+
           case CAM_INTF_META_SCENE_FLICKER:{
              uint8_t *sceneFlicker = (uint8_t*)
              POINTER_OF(CAM_INTF_META_SCENE_FLICKER, metadata);
