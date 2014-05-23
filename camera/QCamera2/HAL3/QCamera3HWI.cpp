@@ -2005,12 +2005,10 @@ QCamera3HardwareInterface::translateFromHalMetadata(
 
          // 3A state is sent in urgent partial result (uses quirk)
          case CAM_INTF_META_AEC_PRECAPTURE_ID:
-         case CAM_INTF_META_AEC_ROI:
          case CAM_INTF_META_AEC_STATE:
          case CAM_INTF_PARM_AEC_LOCK:
          case CAM_INTF_PARM_EV:
          case CAM_INTF_PARM_FOCUS_MODE:
-         case CAM_INTF_META_AF_ROI:
          case CAM_INTF_META_AF_STATE:
          case CAM_INTF_META_AF_TRIGGER_ID:
          case CAM_INTF_PARM_WHITE_BALANCE:
@@ -2131,6 +2129,29 @@ QCamera3HardwareInterface::translateFromHalMetadata(
              scalerCropRegion[3] = hScalerCropRegion->height;
              camMetadata.update(ANDROID_SCALER_CROP_REGION, scalerCropRegion, 4);
              break;
+          }
+          case CAM_INTF_META_AEC_ROI: {
+            cam_area_t  *hAeRegions =
+                (cam_area_t *)POINTER_OF(CAM_INTF_META_AEC_ROI, metadata);
+            int32_t aeRegions[5];
+            convertToRegions(hAeRegions->rect, aeRegions, hAeRegions->weight);
+            camMetadata.update(ANDROID_CONTROL_AE_REGIONS, aeRegions, 5);
+            ALOGV("%s: Metadata : ANDROID_CONTROL_AE_REGIONS: FWK: [%d, %d, %d, %d] HAL: [%d, %d, %d, %d]",
+                __func__, aeRegions[0], aeRegions[1], aeRegions[2], aeRegions[3],
+                hAeRegions->rect.left, hAeRegions->rect.top, hAeRegions->rect.width, hAeRegions->rect.height);
+            break;
+          }
+          case CAM_INTF_META_AF_ROI:{
+            /*af regions*/
+            cam_area_t  *hAfRegions =
+                (cam_area_t *)POINTER_OF(CAM_INTF_META_AF_ROI, metadata);
+            int32_t afRegions[5];
+            convertToRegions(hAfRegions->rect, afRegions, hAfRegions->weight);
+            camMetadata.update(ANDROID_CONTROL_AF_REGIONS, afRegions, 5);
+            ALOGV("%s: Metadata : ANDROID_CONTROL_AF_REGIONS: FWK: [%d, %d, %d, %d] HAL: [%d, %d, %d, %d]",
+                __func__, afRegions[0], afRegions[1], afRegions[2], afRegions[3],
+                hAfRegions->rect.left, hAfRegions->rect.top, hAfRegions->rect.width, hAfRegions->rect.height);
+            break;
           }
           case CAM_INTF_META_SENSOR_EXPOSURE_TIME:{
              int64_t  *sensorExpTime =
@@ -2453,15 +2474,6 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
             ALOGV("%s: urgent Metadata : ANDROID_CONTROL_AE_PRECAPTURE_ID", __func__);
           break;
         }
-        case CAM_INTF_META_AEC_ROI: {
-            cam_area_t  *hAeRegions =
-                (cam_area_t *)POINTER_OF(CAM_INTF_META_AEC_ROI, metadata);
-            int32_t aeRegions[5];
-            convertToRegions(hAeRegions->rect, aeRegions, hAeRegions->weight);
-            camMetadata.update(ANDROID_CONTROL_AE_REGIONS, aeRegions, 5);
-            ALOGV("%s: urgent Metadata : ANDROID_CONTROL_AE_REGIONS", __func__);
-            break;
-        }
         case CAM_INTF_META_AEC_STATE:{
             uint8_t *ae_state =
                 (uint8_t *)POINTER_OF(CAM_INTF_META_AEC_STATE, metadata);
@@ -2505,16 +2517,6 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
                sizeof(FOCUS_MODES_MAP)/sizeof(FOCUS_MODES_MAP[0]), *focusMode);
             camMetadata.update(ANDROID_CONTROL_AF_MODE, &fwkAfMode, 1);
             ALOGV("%s: urgent Metadata : ANDROID_CONTROL_AF_MODE", __func__);
-            break;
-        }
-        case CAM_INTF_META_AF_ROI:{
-            /*af regions*/
-            cam_area_t  *hAfRegions =
-                (cam_area_t *)POINTER_OF(CAM_INTF_META_AF_ROI, metadata);
-            int32_t afRegions[5];
-            convertToRegions(hAfRegions->rect, afRegions, hAfRegions->weight);
-            camMetadata.update(ANDROID_CONTROL_AF_REGIONS, afRegions, 5);
-            ALOGV("%s: urgent Metadata : ANDROID_CONTROL_AF_REGIONS", __func__);
             break;
         }
         case CAM_INTF_META_AF_STATE: {
@@ -3293,7 +3295,9 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_SCALER_AVAILABLE_MAX_DIGITAL_ZOOM,
             &maxZoom, 1);
 
-    int32_t max3aRegions[] = {/*AE*/1,/*AWB*/ 0,/*AF*/ 1};
+    int32_t max3aRegions[3] = {/*AE*/1,/*AWB*/ 0,/*AF*/ 1};
+    if (gCamCapability[cameraId]->supported_focus_modes_cnt == 1)
+        max3aRegions[2] = 0; /* AF not supported */
     staticInfo.update(ANDROID_CONTROL_MAX_REGIONS,
             max3aRegions, 3);
 
