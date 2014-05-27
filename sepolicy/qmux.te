@@ -13,7 +13,7 @@ allow qmux qmuxd_socket:sock_file { create setattr getattr unlink };
 allow qmux radio_device:chr_file rw_file_perms;
 
 # wake lock access
-allow qmux sysfs_wake_lock:file { open append };
+wakelock_use(qmux)
 
 # Access to /sys/devices/virtual/smdpkt/smdcntl*/open_timeout
 allow qmux sysfs_smdcntl_open_timeout:file rw_file_perms;
