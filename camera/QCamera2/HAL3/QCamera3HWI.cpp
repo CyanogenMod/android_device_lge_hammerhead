@@ -2489,6 +2489,18 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
                 __func__, fps_range[0], fps_range[1]);
             break;
         }
+        case CAM_INTF_PARM_FPS_RANGE: {
+            int32_t fps_range[2];
+            cam_fps_range_t * float_range =
+              (cam_fps_range_t *)POINTER_OF(CAM_INTF_PARM_FPS_RANGE, metadata);
+            fps_range[0] = (int32_t)float_range->min_fps;
+            fps_range[1] = (int32_t)float_range->max_fps;
+            camMetadata.update(ANDROID_CONTROL_AE_TARGET_FPS_RANGE,
+                                          fps_range, 2);
+            ALOGV("%s: urgent Metadata : ANDROID_CONTROL_AE_TARGET_FPS_RANGE [%d, %d]",
+                __func__, fps_range[0], fps_range[1]);
+            break;
+        }
         case CAM_INTF_PARM_EV: {
             int32_t  *expCompensation =
               (int32_t *)POINTER_OF(CAM_INTF_PARM_EV, metadata);
