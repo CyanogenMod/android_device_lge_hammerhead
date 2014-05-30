@@ -2016,11 +2016,19 @@ QCamera3HardwareInterface::translateFromHalMetadata(
          case CAM_INTF_META_AWB_STATE:
          case CAM_INTF_PARM_AWB_LOCK:
          case CAM_INTF_META_PRECAPTURE_TRIGGER:
-         case CAM_INTF_META_AF_TRIGGER_NOTICE:
-         case CAM_INTF_META_MODE: {
+         case CAM_INTF_META_AEC_MODE:
+         case CAM_INTF_PARM_LED_MODE:
+         case CAM_INTF_PARM_REDEYE_REDUCTION:
+         case CAM_INTF_META_AF_TRIGGER_NOTICE: {
            ALOGV("%s: 3A metadata: %d, do not process", __func__, curr_entry);
            break;
          }
+
+          case CAM_INTF_META_MODE: {
+             uint8_t *mode =(uint8_t *)POINTER_OF(CAM_INTF_META_MODE, metadata);
+             camMetadata.update(ANDROID_CONTROL_MODE, mode, 1);
+             break;
+          }
 
           case CAM_INTF_META_EDGE_MODE: {
              cam_edge_application_t  *edgeApplication =
@@ -2332,8 +2340,6 @@ QCamera3HardwareInterface::translateFromHalMetadata(
              camMetadata.update(ANDROID_STATISTICS_SCENE_FLICKER, sceneFlicker, 1);
              break;
           }
-          case CAM_INTF_PARM_LED_MODE:
-             break;
           case CAM_INTF_PARM_EFFECT: {
              uint8_t *effectMode = (uint8_t*)
                   POINTER_OF(CAM_INTF_PARM_EFFECT, metadata);
@@ -2351,7 +2357,28 @@ QCamera3HardwareInterface::translateFromHalMetadata(
                      testPatternData->mode);
              camMetadata.update(ANDROID_SENSOR_TEST_PATTERN_MODE,
                      &fwk_testPatternMode, 1);
-             break;
+            int32_t fwk_testPatternData[4];
+            fwk_testPatternData[0] = testPatternData->r;
+            fwk_testPatternData[3] = testPatternData->b;
+            switch (gCamCapability[mCameraId]->color_arrangement) {
+            case CAM_FILTER_ARRANGEMENT_RGGB:
+            case CAM_FILTER_ARRANGEMENT_GRBG:
+                fwk_testPatternData[1] = testPatternData->gr;
+                fwk_testPatternData[2] = testPatternData->gb;
+                break;
+            case CAM_FILTER_ARRANGEMENT_GBRG:
+            case CAM_FILTER_ARRANGEMENT_BGGR:
+                fwk_testPatternData[2] = testPatternData->gr;
+                fwk_testPatternData[1] = testPatternData->gb;
+                break;
+            default:
+                ALOGE("%s: color arrangement %d is not supported", __func__,
+                    gCamCapability[mCameraId]->color_arrangement);
+                break;
+            }
+            camMetadata.update(ANDROID_SENSOR_TEST_PATTERN_DATA, fwk_testPatternData, 4);
+            break;
+
           }
           case CAM_INTF_META_JPEG_GPS_COORDINATES: {
               double *gps_coords = (double *)POINTER_OF(
@@ -2458,6 +2485,9 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
 {
     CameraMetadata camMetadata;
     camera_metadata_t* resultMetadata;
+    uint8_t *aeMode = NULL;
+    int32_t *flashMode = NULL;
+    int32_t *redeye = NULL;
 
     uint8_t partial_result_tag = ANDROID_QUIRKS_PARTIAL_RESULT_PARTIAL;
     camMetadata.update(ANDROID_QUIRKS_PARTIAL_RESULT, &partial_result_tag, 1);
@@ -2555,6 +2585,8 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
            ALOGV("%s: urgent Metadata : ANDROID_CONTROL_AWB_REGIONS", __func__);
            break;
         }
+
+
         case CAM_INTF_META_AWB_STATE: {
            uint8_t  *whiteBalanceState =
               (uint8_t *)POINTER_OF(CAM_INTF_META_AWB_STATE, metadata);
@@ -2562,17 +2594,13 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
            ALOGV("%s: urgent Metadata : ANDROID_CONTROL_AWB_STATE", __func__);
            break;
         }
+
+
         case CAM_INTF_PARM_AWB_LOCK: {
             uint8_t  *awb_lock =
               (uint8_t *)POINTER_OF(CAM_INTF_PARM_AWB_LOCK, metadata);
             camMetadata.update(ANDROID_CONTROL_AWB_LOCK, awb_lock, 1);
             ALOGV("%s: urgent Metadata : ANDROID_CONTROL_AWB_LOCK", __func__);
-            break;
-        }
-        case CAM_INTF_META_MODE: {
-            uint8_t *mode =(uint8_t *)POINTER_OF(CAM_INTF_META_MODE, metadata);
-            camMetadata.update(ANDROID_CONTROL_MODE, mode, 1);
-            ALOGV("%s: urgent Metadata : ANDROID_CONTROL_MODE", __func__);
             break;
         }
         case CAM_INTF_PARM_BESTSHOT_MODE: {
@@ -2605,6 +2633,21 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
                 __func__, *af_trigger);
             break;
         }
+        case CAM_INTF_META_AEC_MODE:{
+            aeMode = (uint8_t*)
+            POINTER_OF(CAM_INTF_META_AEC_MODE, metadata);
+            break;
+        }
+        case CAM_INTF_PARM_LED_MODE:{
+            flashMode = (int32_t*)
+            POINTER_OF(CAM_INTF_PARM_LED_MODE, metadata);
+            break;
+        }
+        case CAM_INTF_PARM_REDEYE_REDUCTION:{
+            redeye = (int32_t*)
+            POINTER_OF(CAM_INTF_PARM_REDEYE_REDUCTION, metadata);
+            break;
+        }
         default:
             ALOGV("%s: Normal Metadata %d, do not process",
               __func__, curr_entry);
@@ -2613,6 +2656,27 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
        next_entry = GET_NEXT_PARAM_ID(curr_entry, metadata);
        curr_entry = next_entry;
     }
+
+    uint8_t fwk_aeMode;
+    if (redeye != NULL && *redeye == 1) {
+        fwk_aeMode = ANDROID_CONTROL_AE_MODE_ON_AUTO_FLASH_REDEYE;
+        camMetadata.update(ANDROID_CONTROL_AE_MODE, &fwk_aeMode, 1);
+    } else if (flashMode != NULL &&
+            ((*flashMode == CAM_FLASH_MODE_AUTO)||
+             (*flashMode == CAM_FLASH_MODE_ON))) {
+        fwk_aeMode = (uint8_t)lookupFwkName(AE_FLASH_MODE_MAP,
+                sizeof(AE_FLASH_MODE_MAP)/sizeof(AE_FLASH_MODE_MAP[0]),*flashMode);
+        camMetadata.update(ANDROID_CONTROL_AE_MODE, &fwk_aeMode, 1);
+    } else if (aeMode != NULL && *aeMode == CAM_AE_MODE_ON) {
+        fwk_aeMode = ANDROID_CONTROL_AE_MODE_ON;
+        camMetadata.update(ANDROID_CONTROL_AE_MODE, &fwk_aeMode, 1);
+    } else if (aeMode != NULL && *aeMode == CAM_AE_MODE_OFF) {
+        fwk_aeMode = ANDROID_CONTROL_AE_MODE_OFF;
+        camMetadata.update(ANDROID_CONTROL_AE_MODE, &fwk_aeMode, 1);
+    } else {
+        ALOGE("%s: Not enough info to deduce ANDROID_CONTROL_AE_MODE redeye:%p, flashMode:%p, aeMode:%p!!!",__func__, redeye, flashMode, aeMode);
+    }
+
     resultMetadata = camMetadata.release();
     return resultMetadata;
 }
