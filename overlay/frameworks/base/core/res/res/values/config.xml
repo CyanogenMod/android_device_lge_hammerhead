@@ -263,6 +263,6 @@
 
     <!--  Maximum number of supported users -->
     <integer name="config_multiuserMaximumUsers">4</integer>
-    <!--  Whether Multiuser UI should be shown -->
-    <bool name="config_enableMultiUserUI">true</bool>
+    <!--  Whether Multiuser UI should be shown. Disabling for lmp-preview. Re-enable when telephony is ready -->
+    <bool name="config_enableMultiUserUI">false</bool>
 </resources>
