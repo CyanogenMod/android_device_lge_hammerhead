@@ -3663,13 +3663,18 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       &partial_result_count,
                        1);
 
-    uint8_t available_capabilities[] =
-        {ANDROID_REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE,
-         ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR,
-         ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_POST_PROCESSING};
+    uint8_t available_capabilities[MAX_AVAILABLE_CAPABILITIES];
+    uint8_t available_capabilities_count = 0;
+    available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE;
+    available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR;
+    available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_POST_PROCESSING;
+
+    if (facingBack) {
+        available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_DNG;
+    }
     staticInfo.update(ANDROID_REQUEST_AVAILABLE_CAPABILITIES,
                       available_capabilities,
-                      3);
+                      available_capabilities_count);
 
     int32_t max_input_streams = 0;
     staticInfo.update(ANDROID_REQUEST_MAX_NUM_INPUT_STREAMS,
