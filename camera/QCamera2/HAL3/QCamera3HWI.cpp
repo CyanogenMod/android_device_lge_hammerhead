@@ -3359,6 +3359,9 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_SCALER_AVAILABLE_MAX_DIGITAL_ZOOM,
             &maxZoom, 1);
 
+    uint8_t croppingType = ANDROID_SCALER_CROPPING_TYPE_FREEFORM;
+    staticInfo.update(ANDROID_SCALER_CROPPING_TYPE, &croppingType, 1);
+
     int32_t max3aRegions[3] = {/*AE*/1,/*AWB*/ 0,/*AF*/ 1};
     if (gCamCapability[cameraId]->supported_focus_modes_cnt == 1)
         max3aRegions[2] = 0; /* AF not supported */
