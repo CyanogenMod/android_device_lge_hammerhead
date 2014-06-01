@@ -215,8 +215,10 @@ private:
 
      //First request yet to be processed after configureStreams
     bool mFirstRequest;
+    bool mRepeatingRequest;
     QCamera3HeapMemory *mParamHeap;
     metadata_buffer_t* mParameters;
+    metadata_buffer_t* mPrevParameters;
     bool m_bWNROn;
 
     /* Data structure to store pending request */
