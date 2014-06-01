@@ -231,8 +231,10 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId,
       mRawChannel(NULL),
       mSupportChannel(NULL),
       mFirstRequest(false),
+      mRepeatingRequest(false),
       mParamHeap(NULL),
       mParameters(NULL),
+      mPrevParameters(NULL),
       mLoopBackResult(NULL),
       mMinProcessedFrameDuration(0),
       mMinJpegFrameDuration(0),
@@ -1651,9 +1653,17 @@ int QCamera3HardwareInterface::processCaptureRequest(
                     pthread_mutex_unlock(&mMutex);
                     return rc;
                 }
-            } else
-                rc = channel->request(output.buffer, frameNumber,
-                            NULL, mParameters);
+            } else{
+                 ALOGV("%s: %d, snapshot request with buffer %p, frame_number %d", __func__,
+                       __LINE__, output.buffer, frameNumber);
+                 if (mRepeatingRequest) {
+                   rc = channel->request(output.buffer, frameNumber,
+                               NULL, mPrevParameters);
+                 } else {
+                    rc = channel->request(output.buffer, frameNumber,
+                               NULL, mParameters);
+                 }
+            }
         } else {
             ALOGV("%s: %d, request with buffer %p, frame_number %d", __func__,
                 __LINE__, output.buffer, frameNumber);
@@ -3137,6 +3147,8 @@ int QCamera3HardwareInterface::initParameters()
     }
 
     mParameters = (metadata_buffer_t*) DATA_PTR(mParamHeap,0);
+
+    mPrevParameters = (metadata_buffer_t*)malloc(sizeof(metadata_buffer_t));
     return rc;
 }
 
@@ -3159,6 +3171,9 @@ void QCamera3HardwareInterface::deinitParameters()
     mParamHeap = NULL;
 
     mParameters = NULL;
+
+    free(mPrevParameters);
+    mPrevParameters = NULL;
 }
 
 /*===========================================================================
@@ -4578,6 +4593,12 @@ int QCamera3HardwareInterface::setFrameParameters(
     /*translate from camera_metadata_t type to parm_type_t*/
     int rc = 0;
     int32_t hal_version = CAM_HAL_V3;
+    if (mRepeatingRequest == true) {
+       //chain of repeating request
+       ALOGV("%s: chain of repeating request", __func__);
+    } else {
+       memcpy(mPrevParameters, mParameters, sizeof(metadata_buffer_t));
+    }
 
     memset(mParameters, 0, sizeof(metadata_buffer_t));
     mParameters->first_flagged_entry = CAM_INTF_PARM_MAX;
@@ -4606,7 +4627,10 @@ int QCamera3HardwareInterface::setFrameParameters(
     }
 
     if(request->settings != NULL){
+        mRepeatingRequest = false;
         rc = translateToHalMetadata(request, mParameters);
+    } else {
+       mRepeatingRequest = true;
     }
 
     /*set the parameters to backend*/
@@ -4666,7 +4690,6 @@ int QCamera3HardwareInterface::setReprocParameters(
         ALOGE("%s: Failed to queue reprocessing metadata", __func__);
         delete reprocParam;
     }
-
     return rc;
 }
 
