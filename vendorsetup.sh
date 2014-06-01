@@ -14,4 +14,4 @@
 # limitations under the License.
 #
 
-add_lunch_combo aosp_hammerhead-userdebug
+add_lunch_combo axxion_hammerhead-userdebug

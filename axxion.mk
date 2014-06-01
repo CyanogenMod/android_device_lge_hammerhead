@@ -2,18 +2,18 @@
 TARGET_SCREEN_HEIGHT := 1920
 TARGET_SCREEN_WIDTH := 1080
 
-# Inherit some common CM stuff.
-$(call inherit-product, vendor/cm/config/common_full_phone.mk)
+# Inherit some common axxion stuff.
+$(call inherit-product, vendor/axxion/config/common_full_phone.mk)
 
 # Enhanced NFC
-$(call inherit-product, vendor/cm/config/nfc_enhanced.mk)
+$(call inherit-product, vendor/axxion/config/nfc_enhanced.mk)
 
 # Inherit device configuration
 $(call inherit-product, device/lge/hammerhead/full_hammerhead.mk)
 
 ## Device identifier. This must come after all inclusions
 PRODUCT_DEVICE := hammerhead
-PRODUCT_NAME := cm_hammerhead
+PRODUCT_NAME := axxion_hammerhead
 PRODUCT_BRAND := google
 PRODUCT_MODEL := Nexus 5
 PRODUCT_MANUFACTURER := LGE
