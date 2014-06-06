@@ -1673,6 +1673,9 @@ int QCamera3HardwareInterface::processCaptureRequest(
             ALOGE("%s: request failed", __func__);
     }
 
+    /*set the parameters to backend*/
+    mCameraHandle->ops->set_parms(mCameraHandle->camera_handle, mParameters);
+
     mFirstRequest = false;
     // Added a timed condition wait
     struct timespec ts;
@@ -4633,8 +4636,6 @@ int QCamera3HardwareInterface::setFrameParameters(
        mRepeatingRequest = true;
     }
 
-    /*set the parameters to backend*/
-    mCameraHandle->ops->set_parms(mCameraHandle->camera_handle, mParameters);
     return rc;
 }
 
