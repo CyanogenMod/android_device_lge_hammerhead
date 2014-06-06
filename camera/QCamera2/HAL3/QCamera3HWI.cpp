@@ -2192,6 +2192,18 @@ QCamera3HardwareInterface::translateFromHalMetadata(
              camMetadata.update(ANDROID_SENSOR_SENSITIVITY, sensorSensitivity, 1);
              break;
           }
+          case CAM_INTF_PARM_BESTSHOT_MODE: {
+              uint8_t *sceneMode =
+                  (uint8_t *)POINTER_OF(CAM_INTF_PARM_BESTSHOT_MODE, metadata);
+              uint8_t fwkSceneMode =
+                  (uint8_t)lookupFwkName(SCENE_MODES_MAP,
+                  sizeof(SCENE_MODES_MAP)/
+                  sizeof(SCENE_MODES_MAP[0]), *sceneMode);
+              camMetadata.update(ANDROID_CONTROL_SCENE_MODE,
+                   &fwkSceneMode, 1);
+              ALOGV("%s: Metadata : ANDROID_CONTROL_SCENE_MODE: %d", __func__, fwkSceneMode);
+              break;
+          }
 
           case CAM_INTF_META_SHADING_MODE: {
              uint8_t  *shadingMode =
@@ -2611,18 +2623,6 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
               (uint8_t *)POINTER_OF(CAM_INTF_PARM_AWB_LOCK, metadata);
             camMetadata.update(ANDROID_CONTROL_AWB_LOCK, awb_lock, 1);
             ALOGV("%s: urgent Metadata : ANDROID_CONTROL_AWB_LOCK", __func__);
-            break;
-        }
-        case CAM_INTF_PARM_BESTSHOT_MODE: {
-            uint8_t *sceneMode =
-                (uint8_t *)POINTER_OF(CAM_INTF_PARM_BESTSHOT_MODE, metadata);
-            uint8_t fwkSceneMode =
-                (uint8_t)lookupFwkName(SCENE_MODES_MAP,
-                sizeof(SCENE_MODES_MAP)/
-                sizeof(SCENE_MODES_MAP[0]), *sceneMode);
-            camMetadata.update(ANDROID_CONTROL_SCENE_MODE,
-                 &fwkSceneMode, 1);
-            ALOGV("%s: urgent Metadata : ANDROID_CONTROL_SCENE_MODE", __func__);
             break;
         }
         case CAM_INTF_META_PRECAPTURE_TRIGGER: {
