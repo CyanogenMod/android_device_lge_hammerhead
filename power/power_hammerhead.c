@@ -369,7 +369,7 @@ static void power_hint( __attribute__((unused)) struct power_module *module,
                      }
                  }
                  // reduces the refresh rate
-                 system("service call SurfaceFlinger 1016");
+                 system("service call SurfaceFlinger 1016 i32 1");
              } else {
                  low_power_mode = false;
                  for (cpu = 0; cpu < TOTAL_CPUS; cpu++) {
@@ -379,7 +379,7 @@ static void power_hint( __attribute__((unused)) struct power_module *module,
                      }
                  }
                  // restores the refresh rate
-                 system("service call SurfaceFlinger 1017");
+                 system("service call SurfaceFlinger 1016 i32 0");
              }
              pthread_mutex_unlock(&low_power_mode_lock);
              break;
