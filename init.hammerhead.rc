@@ -410,7 +410,7 @@ service sdcard /system/bin/sdcard -u 1023 -g 1023 -l /data/media /mnt/shell/emul
 
 service charger /charger
     class charger
-
+    seclabel u:r:healthd:s0
 
 service qcamerasvr /system/bin/mm-qcamera-daemon
     class late_start
