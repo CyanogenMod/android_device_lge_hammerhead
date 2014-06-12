@@ -104,7 +104,7 @@ PRODUCT_COPY_FILES += \
     device/lge/hammerhead/nfc/libnfc-brcm-20791b05.conf:system/etc/libnfc-brcm-20791b05.conf
 
 PRODUCT_COPY_FILES += \
-    device/lge/hammerhead/thermal-engine-hammerhead.conf:system/etc/thermal-engine.conf
+    device/lge/hammerhead/thermal-engine-8974.conf:system/etc/thermal-engine-8974.conf
 
 PRODUCT_TAGS += dalvik.gc.type-precise
 
