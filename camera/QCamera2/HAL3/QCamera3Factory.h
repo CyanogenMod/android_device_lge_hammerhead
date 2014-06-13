@@ -45,6 +45,8 @@ public:
     static int get_number_of_cameras();
     static int get_camera_info(int camera_id, struct camera_info *info);
     static int set_callbacks(const camera_module_callbacks_t *callbacks);
+    static int open_legacy(const struct hw_module_t* module,
+            const char* id, uint32_t halVersion, struct hw_device_t** device);
 
 private:
     int getNumberOfCameras();
