@@ -138,6 +138,25 @@ int QCamera3Factory::set_callbacks(const camera_module_callbacks_t *callbacks)
 }
 
 /*===========================================================================
+ * FUNCTION   : open_legacy
+ *
+ * DESCRIPTION: Function to open older hal version implementation
+ *
+ * PARAMETERS :
+ *   @hw_device : ptr to struct storing camera hardware device info
+ *   @camera_id : camera ID
+ *   @halVersion: Based on camera_module_t.common.module_api_version
+ *
+ * RETURN     : 0  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int QCamera3Factory::open_legacy(const struct hw_module_t* module,
+            const char* id, uint32_t halVersion, struct hw_device_t** device)
+{
+    return -ENOSYS;
+}
+
+/*===========================================================================
  * FUNCTION   : getNumberOfCameras
  *
  * DESCRIPTION: query number of cameras detected
