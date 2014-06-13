@@ -30,7 +30,7 @@ def IncrementalOTA_Assertions(info):
 def AddBootloaderAssertion(info, input_zip):
   android_info = input_zip.read("OTA/android-info.txt")
   m = re.search(r"require\s+version-bootloader\s*=\s*(\S+)", android_info)
-  if m:
+  if m and 'RADIO/bootloader.img' not in input_zip.namelist():
     bootloaders = m.group(1).split("|")
     if "*" not in bootloaders:
       info.script.AssertSomeBootloader(*bootloaders)
