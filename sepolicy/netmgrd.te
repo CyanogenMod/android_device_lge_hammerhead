@@ -31,6 +31,8 @@ allow netmgrd system_file:file rx_file_perms;
 unix_socket_connect(netmgrd, property, init)
 # Set net.rmnet0.* values
 allow netmgrd radio_prop:property_service set;
+auditallow netmgrd radio_prop:property_service set;
+allow netmgrd net_radio_prop:property_service set;
 
 # Access to /proc/sys/net/*
 allow netmgrd proc_net:file write;
