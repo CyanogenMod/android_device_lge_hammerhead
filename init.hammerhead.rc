@@ -44,7 +44,6 @@ on fs
     mount_all ./fstab.hammerhead
     restorecon_recursive /persist
     setprop ro.crypto.fuse_sdcard true
-    write /sys/kernel/boot_adsp/boot 1
 
 on early-boot
     # set RLIMIT_MEMLOCK to 64MB
@@ -146,6 +145,8 @@ on boot
     chmod 664 /sys/class/leds/lcd-backlight/brightness
 
 on post-fs-data
+    write /sys/kernel/boot_adsp/boot 1
+
     mkdir /data/media 0770 media_rw media_rw
 
     # NFC: create data/nfc for nv storage
