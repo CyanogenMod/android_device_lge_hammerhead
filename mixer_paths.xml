@@ -131,6 +131,9 @@
     <ctl name="SLIMBUS_0_RX Audio Mixer MultiMedia4" value="0" />
     <ctl name="SEC_AUX_PCM_RX Audio Mixer MultiMedia4" value="0" />
     <ctl name="AUX PCM SampleRate" value="8000" />
+    <!-- echo reference -->
+    <ctl name="EC_REF_RX" value="NONE" />
+    <!-- echo reference end -->
 
     <!-- These are audio route (FE to BE) specific mixer settings -->
     <path name="deep-buffer-playback">
@@ -413,6 +416,10 @@
         <ctl name="SLIM TX8 MUX" value="DEC8" />
         <ctl name="DEC8 MUX" value="ADC2" />
         <ctl name="SLIM_0_TX Channels" value="Two" />
+    </path>
+
+    <path name="echo-reference">
+        <ctl name="EC_REF_RX" value="SLIM_RX" />
     </path>
 
     <path name="dmic-endfire">
