@@ -343,6 +343,18 @@ PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.input.noresample=1
 
+# Modem debugger
+ifeq ($(TARGET_BUILD_VARIANT), userdebug)
+PRODUCT_PACKAGES += \
+    QXDMLogger
+
+PRODUCT_COPY_FILES += \
+    device/lge/hammerhead/init.hammerhead.diag.rc.userdebug:root/init.hammerhead.diag.rc
+else
+PRODUCT_COPY_FILES += \
+    device/lge/hammerhead/init.hammerhead.diag.rc.user:root/init.hammerhead.diag.rc
+endif
+
 # setup dalvik vm configs.
 $(call inherit-product, frameworks/native/build/phone-xhdpi-2048-dalvik-heap.mk)
 
