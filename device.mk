@@ -344,7 +344,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
     ro.input.noresample=1
 
 # Modem debugger
-ifeq ($(TARGET_BUILD_VARIANT), userdebug)
+ifneq (,$(filter userdebug eng, $(TARGET_BUILD_VARIANT)))
 PRODUCT_PACKAGES += \
     QXDMLogger
 
