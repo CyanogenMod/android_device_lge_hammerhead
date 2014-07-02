@@ -43,7 +43,7 @@
 #define MAX_LENGTH         50
 #define BOOST_SOCKET       "/dev/socket/pb"
 
-#define UEVENT_MSG_LEN 1024
+#define UEVENT_MSG_LEN 2048
 #define TOTAL_CPUS 4
 #define RETRY_TIME_CHANGING_FREQ 20
 #define SLEEP_USEC_BETWN_RETRY 200
