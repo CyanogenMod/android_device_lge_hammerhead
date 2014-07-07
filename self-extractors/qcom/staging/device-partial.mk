@@ -126,7 +126,7 @@ PRODUCT_COPY_FILES := \
     vendor/qcom/hammerhead/proprietary/libizat_core.so:system/vendor/lib/libizat_core.so:qcom \
     vendor/qcom/hammerhead/proprietary/libjpegdhw.so:system/vendor/lib/libjpegdhw.so:qcom \
     vendor/qcom/hammerhead/proprietary/libjpegehw.so:system/vendor/lib/libjpegehw.so:qcom \
-    vendor/qcom/hammerhead/proprietary/libllvm-a3xx.so:system/vendor/lib/libllvm-a3xx.so:qcom \
+    vendor/qcom/hammerhead/proprietary/libllvm-qcom.so:system/vendor/lib/libllvm-qcom.so:qcom \
     vendor/qcom/hammerhead/proprietary/libloc_api_v02.so:system/vendor/lib/libloc_api_v02.so:qcom \
     vendor/qcom/hammerhead/proprietary/libloc_ds_api.so:system/vendor/lib/libloc_ds_api.so:qcom \
     vendor/qcom/hammerhead/proprietary/libmmcamera2_c2d_module.so:system/vendor/lib/libmmcamera2_c2d_module.so:qcom \

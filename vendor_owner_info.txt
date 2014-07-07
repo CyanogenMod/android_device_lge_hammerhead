@@ -184,7 +184,7 @@ system/vendor/lib/libadreno_utils.so:qcom
 system/vendor/lib/libc2d30-a3xx.so:qcom
 system/vendor/lib/libc2d30.so:qcom
 system/vendor/lib/libgsl.so:qcom
-system/vendor/lib/libllvm-a3xx.so:qcom
+system/vendor/lib/libllvm-qcom.so:qcom
 system/vendor/lib/libsc-a3xx.so:qcom
 system/vendor/lib/libCommandSvc.so:qcom
 system/vendor/lib/libacdbrtac.so:qcom
