@@ -194,9 +194,7 @@ PRODUCT_PACKAGES += \
     libgeofence \
     libgps.utils \
     gps.msm8974 \
-    flp.msm8974 \
-    liblbs_core \
-    flp.conf
+    flp.msm8974
 
 # NFC packages
 PRODUCT_PACKAGES += \
