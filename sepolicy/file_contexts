@@ -145,3 +145,6 @@
 
 # Bluetooth
 /sys/devices/platform/bluetooth_rfkill/rfkill/rfkill0/state u:object_r:sysfs_bluetooth_writable:s0
+
+# Thermal engine
+/dev/msm_thermal_query            u:object_r:thermal_engine_device:s0
