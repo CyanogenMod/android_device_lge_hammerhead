@@ -17,6 +17,7 @@ allow rmt self:capability sys_admin;
 
 # Allow reads/writes to modem related block devices
 allow rmt modem_block_device:blk_file rw_file_perms;
+allow rmt ssd_block_device:blk_file rw_file_perms;
 
 # Allow shared memory logging access
 allow rmt shared_log_device:chr_file rw_file_perms;
