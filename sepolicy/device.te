@@ -14,3 +14,6 @@ type power_control_device, dev_type;
 type rtc, dev_type;
 
 type modem_block_device, dev_type;
+
+# Thermal engine
+type thermal_engine_device, dev_type;
