@@ -137,4 +137,8 @@ TARGET_FORCE_HWC_FOR_VIRTUAL_DISPLAYS := true
 
 TARGET_TOUCHBOOST_FREQUENCY:= 1200
 
+ifeq ($(USE_SVELTE_KERNEL),true)
+MALLOC_IMPL := dlmalloc
+endif
+
 -include vendor/lge/hammerhead/BoardConfigVendor.mk
