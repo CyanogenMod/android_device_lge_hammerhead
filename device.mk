@@ -256,27 +256,27 @@ PRODUCT_PROPERTY_OVERRIDES += \
 
 # Set sensor streaming rate
 PRODUCT_PROPERTY_OVERRIDES += \
-    ro.qc.sensors.max_geomag_rotvec=60 \
-    ro.qc.sensors.max_gyro_rate=200 \
-    ro.qc.sensors.max_accel_rate=200 \
-    ro.qc.sensors.max_grav=200 \
-    ro.qc.sensors.max_rotvec=200 \
-    ro.qc.sensors.max_ortn=200 \
-    ro.qc.sensors.max_linacc=200 \
-    ro.qc.sensors.max_gamerv_rate=200
+    ro.qti.sensors.max_geomag_rotvec=60 \
+    ro.qti.sensors.max_gyro_rate=200 \
+    ro.qti.sensors.max_accel_rate=200 \
+    ro.qti.sensors.max_grav=200 \
+    ro.qti.sensors.max_rotvec=200 \
+    ro.qti.sensors.max_orient=200 \
+    ro.qti.sensors.max_linacc=200 \
+    ro.qti.sensors.max_gamerv_rate=200
 
 # Enable optional sensor types
 PRODUCT_PROPERTY_OVERRIDES += \
-    ro.qualcomm.sensors.smd=true \
-    ro.qualcomm.sensors.game_rv=true \
-    ro.qualcomm.sensors.georv=true \
-    ro.qc.sensors.smgr_mag_cal_en=true \
-    ro.qc.sensors.step_detector=true \
-    ro.qc.sensors.step_counter=true
+    ro.qti.sensors.smd=true \
+    ro.qti.sensors.game_rv=true \
+    ro.qti.sensors.georv=true \
+    ro.qti.sensors.smgr_mag_cal_en=true \
+    ro.qti.sensors.step_detector=true \
+    ro.qti.sensors.step_counter=true
 
 # Enable some debug messages by default
 PRODUCT_PROPERTY_OVERRIDES += \
-    debug.qualcomm.sns.hal=w \
+    persist.debug.sensors.hal=w \
     debug.qualcomm.sns.daemon=w \
     debug.qualcomm.sns.libsensor1=w
 
