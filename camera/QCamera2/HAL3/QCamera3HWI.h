@@ -237,6 +237,7 @@ private:
         int input_buffer_present;
         CameraMetadata jpegMetadata;
         uint8_t pipeline_depth;
+        uint32_t partial_result_cnt;
     } PendingRequestInfo;
     typedef struct {
         uint32_t frame_number;
