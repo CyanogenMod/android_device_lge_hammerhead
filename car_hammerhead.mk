@@ -1,5 +1,5 @@
 #
-# Copyright 2013 The Android Open Source Project
+# Copyright 2013 The Android Open-Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,8 +14,15 @@
 # limitations under the License.
 #
 
-PRODUCT_MAKEFILES := \
-    $(LOCAL_DIR)/aosp_hammerhead.mk \
-    $(LOCAL_DIR)/full_hammerhead.mk \
-    $(LOCAL_DIR)/car_hammerhead.mk
+$(call inherit-product, device/lge/hammerhead/aosp_hammerhead.mk)
 
+# Add overlay to enable Bluetooth automotive profiles
+DEVICE_PACKAGE_OVERLAYS += \
+    device/lge/hammerhead/overlay_car
+
+PRODUCT_NAME := car_hammerhead
+PRODUCT_DEVICE := hammerhead
+PRODUCT_BRAND := Android
+PRODUCT_MODEL := Car Hammerhead
+PRODUCT_MANUFACTURER := LGE
+PRODUCT_RESTRICT_VENDOR_FILES := true
