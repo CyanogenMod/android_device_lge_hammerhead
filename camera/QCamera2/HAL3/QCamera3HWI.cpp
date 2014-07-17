@@ -1077,7 +1077,7 @@ void QCamera3HardwareInterface::handleMetadataWithLock(
           __func__, urgent_frame_number, capture_time);
 
         //Recieved an urgent Frame Number, handle it
-        //using HAL3.1 quirk for partial results
+        //using partial results
         for (List<PendingRequestInfo>::iterator i =
             mPendingRequestsList.begin(); i != mPendingRequestsList.end(); i++) {
             camera3_notify_msg_t notify_msg;
@@ -1110,7 +1110,7 @@ void QCamera3HardwareInterface::handleMetadataWithLock(
 
                 i->timestamp = capture_time;
                 i->bNotified = 1;
-
+                i->partial_result_cnt++;
                 // Extract 3A metadata
                 result.result =
                     translateCbUrgentMetadataToResultMetadata(metadata);
@@ -1118,6 +1118,8 @@ void QCamera3HardwareInterface::handleMetadataWithLock(
                 result.frame_number = urgent_frame_number;
                 result.num_output_buffers = 0;
                 result.output_buffers = NULL;
+                result.partial_result = i->partial_result_cnt;
+
                 mCallbackOps->process_capture_result(mCallbackOps, &result);
                 ALOGV("%s: urgent frame_number = %d, capture_time = %lld",
                      __func__, result.frame_number, capture_time);
@@ -1142,6 +1144,9 @@ void QCamera3HardwareInterface::handleMetadataWithLock(
         camera3_capture_result_t result;
         memset(&result, 0, sizeof(camera3_capture_result_t));
         ALOGV("%s: frame_number in the list is %d", __func__, i->frame_number);
+
+        i->partial_result_cnt++;
+        result.partial_result = i->partial_result_cnt;
 
         // Flush out all entries with less or equal frame numbers.
         mPendingRequest--;
@@ -1275,7 +1280,6 @@ void QCamera3HardwareInterface::handleMetadataWithLock(
                 }
             }
             result.output_buffers = result_buffers;
-
             mCallbackOps->process_capture_result(mCallbackOps, &result);
             ALOGV("%s: meta frame_number = %d, capture_time = %lld",
                     __func__, result.frame_number, i->timestamp);
@@ -1336,6 +1340,7 @@ void QCamera3HardwareInterface::handleBufferWithLock(
         result.result = NULL;
         result.frame_number = frame_number;
         result.num_output_buffers = 1;
+        result.partial_result = 0;
         for (List<PendingFrameDropInfo>::iterator m = mPendingFrameDropList.begin();
                 m != mPendingFrameDropList.end(); m++) {
             QCamera3Channel *channel = (QCamera3Channel *)buffer->stream->priv;
@@ -1376,6 +1381,7 @@ void QCamera3HardwareInterface::handleBufferWithLock(
             result.frame_number = frame_number;
             result.num_output_buffers = 1;
             result.output_buffers = buffer;
+            result.partial_result = 0;
             mCallbackOps->process_capture_result(mCallbackOps, &result);
             i = mPendingRequestsList.erase(i);
             mPendingRequest--;
@@ -1586,6 +1592,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
     pendingRequest.bNotified = 0;
     pendingRequest.input_buffer_present = (request->input_buffer != NULL)? 1 : 0;
     pendingRequest.pipeline_depth = 0;
+    pendingRequest.partial_result_cnt = 0;
     extractJpegMetadata(pendingRequest.jpegMetadata, request);
 
     for (size_t i = 0; i < request->num_output_buffers; i++) {
@@ -2520,9 +2527,6 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
     int32_t *flashMode = NULL;
     int32_t *redeye = NULL;
 
-    uint8_t partial_result_tag = ANDROID_QUIRKS_PARTIAL_RESULT_PARTIAL;
-    camMetadata.update(ANDROID_QUIRKS_PARTIAL_RESULT, &partial_result_tag, 1);
-
     uint8_t curr_entry = GET_FIRST_PARAM_ID(metadata);
     uint8_t next_entry;
     while (curr_entry != CAM_INTF_PARM_MAX) {
@@ -3373,11 +3377,6 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES,
                       availableVstabModes, sizeof(availableVstabModes));
 
-    /** Quirk for urgent 3A state until final interface is worked out */
-    uint8_t usePartialResultQuirk = 1;
-    staticInfo.update(ANDROID_QUIRKS_USE_PARTIAL_RESULT,
-                      &usePartialResultQuirk, 1);
-
     /*HAL 1 and HAL 3 common*/
     float maxZoom = 4;
     staticInfo.update(ANDROID_SCALER_AVAILABLE_MAX_DIGITAL_ZOOM,
@@ -3831,7 +3830,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
        ANDROID_JPEG_THUMBNAIL_QUALITY, ANDROID_JPEG_THUMBNAIL_SIZE, ANDROID_LENS_APERTURE,
        ANDROID_LENS_FILTER_DENSITY, ANDROID_LENS_FOCAL_LENGTH, ANDROID_LENS_FOCUS_DISTANCE,
        ANDROID_LENS_FOCUS_RANGE, ANDROID_LENS_STATE, ANDROID_LENS_OPTICAL_STABILIZATION_MODE,
-       ANDROID_NOISE_REDUCTION_MODE, ANDROID_QUIRKS_PARTIAL_RESULT, ANDROID_REQUEST_ID,
+       ANDROID_NOISE_REDUCTION_MODE, ANDROID_REQUEST_ID,
        ANDROID_SCALER_CROP_REGION, ANDROID_SHADING_MODE, ANDROID_SENSOR_EXPOSURE_TIME,
        ANDROID_SENSOR_FRAME_DURATION, ANDROID_SENSOR_SENSITIVITY,
        ANDROID_SENSOR_TIMESTAMP, ANDROID_SENSOR_NEUTRAL_COLOR_POINT,
