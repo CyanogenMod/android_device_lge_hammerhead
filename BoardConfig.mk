@@ -43,7 +43,12 @@ BOARD_USES_ALSA_AUDIO := true
 
 BOARD_HAVE_BLUETOOTH := true
 BOARD_HAVE_BLUETOOTH_BCM := true
+
+ifeq ($(TARGET_PRODUCT),car_hammerhead)
+BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR := device/lge/hammerhead/bluetooth_car
+else
 BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR := device/lge/hammerhead/bluetooth
+endif
 
 # Wifi related defines
 WPA_SUPPLICANT_VERSION      := VER_0_8_X
