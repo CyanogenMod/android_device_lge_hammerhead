@@ -41,7 +41,7 @@ system/vendor/lib/libvss_nv_idl.so:lge
 system/vendor/lib/libvss_nv_iface.so:lge
 system/app/QXDMLogger.apk:google
 system/app/OmaDmclient.apk:lge
-system/app/qcrilmsgtunnel.apk:lge
+system/app/qcrilmsgtunnel/qcrilmsgtunnel.apk:lge
 system/app/SprintDM.apk:lge
 system/lib/libloc_core.so:qcom
 system/vendor/lib/egl/libq3dtools_adreno.so:qcom

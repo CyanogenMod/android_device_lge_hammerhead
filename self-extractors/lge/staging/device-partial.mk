@@ -14,7 +14,7 @@
 
 # LGE blob(s) necessary for Hammerhead hardware
 PRODUCT_COPY_FILES := \
-    vendor/lge/hammerhead/proprietary/qcrilmsgtunnel.apk:system/app/qcrilmsgtunnel.apk:lge \
+    vendor/lge/hammerhead/proprietary/qcrilmsgtunnel.apk:system/app/qcrilmsgtunnel/qcrilmsgtunnel.apk:lge \
     vendor/lge/hammerhead/proprietary/SprintDM.apk:system/app/SprintDM.apk:lge \
     vendor/lge/hammerhead/proprietary/MTP_Bluetooth_cal.acdb:system/etc/MTP_Bluetooth_cal.acdb:lge \
     vendor/lge/hammerhead/proprietary/MTP_General_cal.acdb:system/etc/MTP_General_cal.acdb:lge \
