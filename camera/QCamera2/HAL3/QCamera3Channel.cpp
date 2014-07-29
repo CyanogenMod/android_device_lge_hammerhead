@@ -2281,6 +2281,7 @@ int32_t QCamera3ReprocessChannel::doReprocessOffline(mm_camera_super_buf_t *fram
         metadata_buffer_t *metadata)
 {
     int32_t rc = 0;
+    OfflineBuffer mappedBuffer;
     if (m_numStreams < 1) {
         ALOGE("%s: No reprocess stream is created", __func__);
         return -1;
@@ -2302,10 +2303,16 @@ int32_t QCamera3ReprocessChannel::doReprocessOffline(mm_camera_super_buf_t *fram
                     frame->bufs[i]->fd, frame->bufs[i]->frame_len);
 
             if (rc == NO_ERROR) {
+                memset(&mappedBuffer, 0, sizeof(OfflineBuffer));
+                mappedBuffer.index = buf_idx;
+                mappedBuffer.stream = pStream;
+                mappedBuffer.type = CAM_MAPPING_BUF_TYPE_OFFLINE_INPUT_BUF;
+                mOfflineBuffers.push_back(mappedBuffer);
+
                 cam_stream_parm_buffer_t param;
                 memset(&param, 0, sizeof(cam_stream_parm_buffer_t));
                 param.type = CAM_STREAM_PARAM_TYPE_DO_REPROCESS;
-                param.reprocess.buf_index = frame->bufs[i]->buf_idx;
+                param.reprocess.buf_index = buf_idx;
 
                 param.reprocess.meta_present = 1;
                 char* private_data = (char *)POINTER_OF(
@@ -2335,6 +2342,40 @@ int32_t QCamera3ReprocessChannel::doReprocessOffline(mm_camera_super_buf_t *fram
     return rc;
 }
 
+/*===========================================================================
+* FUNCTION : stop
+*
+* DESCRIPTION: Unmap offline buffers and stop channel
+*
+* PARAMETERS : none
+*
+* RETURN : int32_t type of status
+* NO_ERROR -- success
+* none-zero failure code
+*==========================================================================*/
+int32_t QCamera3ReprocessChannel::stop()
+{
+    if (!mOfflineBuffers.empty()) {
+        QCamera3Stream *stream = NULL;
+        List<OfflineBuffer>::iterator it = mOfflineBuffers.begin();
+        int error = NO_ERROR;
+        for( ; it != mOfflineBuffers.end(); it++) {
+            stream = (*it).stream;
+            if (NULL != stream) {
+                error = stream->unmapBuf((*it).type,
+                        (*it).index,
+                        -1);
+                if (NO_ERROR != error) {
+                    ALOGE("%s: Error during offline buffer unmap %d",
+                            __func__, error);
+                }
+            }
+        }
+        mOfflineBuffers.clear();
+    }
+
+    return QCamera3Channel::stop();
+}
 
 /*===========================================================================
  * FUNCTION   : doReprocess

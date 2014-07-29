@@ -31,6 +31,7 @@
 #define __QCAMERA3_CHANNEL_H__
 
 #include <hardware/camera3.h>
+#include <utils/List.h>
 #include "QCamera3Stream.h"
 #include "QCamera3Mem.h"
 #include "QCamera3PostProc.h"
@@ -65,7 +66,7 @@ public:
                               cam_dimension_t streamDim,
                               uint8_t minStreamBufnum);
     virtual int32_t start();
-    int32_t stop();
+    virtual int32_t stop();
     int32_t bufDone(mm_camera_super_buf_t *recvd_frame);
 
     uint32_t getStreamTypeMask();
@@ -324,6 +325,7 @@ public:
     virtual int32_t initialize();
     virtual void streamCbRoutine(mm_camera_super_buf_t *super_frame,
                             QCamera3Stream *stream);
+    virtual int32_t stop();
     static void dataNotifyCB(mm_camera_super_buf_t *recvd_frame,
                                        void* userdata);
     int32_t addReprocStreamsFromSource(cam_pp_feature_config_t &pp_config,
@@ -338,6 +340,13 @@ public:
 public:
     void *picChHandle;
 private:
+    typedef struct {
+        QCamera3Stream *stream;
+        cam_mapping_buf_type type;
+        int index;
+    } OfflineBuffer;
+
+    android::List<OfflineBuffer> mOfflineBuffers;
     uint32_t mSrcStreamHandles[MAX_STREAM_NUM_IN_BUNDLE];
     QCamera3Channel *m_pSrcChannel; // ptr to source channel for reprocess
     QCamera3Channel *m_pMetaChannel;
