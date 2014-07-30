@@ -292,7 +292,7 @@ on charger
     write /sys/devices/system/cpu/cpu1/online 0
     write /sys/devices/system/cpu/cpu2/online 0
     write /sys/devices/system/cpu/cpu3/online 0
-    start mpdecision
+    write /sys/devices/system/cpu/simple_plug/active 1
 
 on property:init.svc.wpa_supplicant=stopped
     stop dhcpcd
@@ -320,7 +320,7 @@ on property:sys.boot_completed=1
     write /sys/module/msm_pm/modes/cpu1/retention/idle_enabled 1
     write /sys/module/msm_pm/modes/cpu2/retention/idle_enabled 1
     write /sys/module/msm_pm/modes/cpu3/retention/idle_enabled 1
-    start mpdecision
+    write /sys/devices/system/cpu/simple_plug/active 1
 
     # enable slimport detection
     write /sys/module/slimport/parameters/enable_irq 1
@@ -471,12 +471,6 @@ service bugreport /system/bin/dumpstate -d -p -B \
     disabled
     oneshot
     keycodes 114 115 116
-
-service mpdecision /system/bin/mpdecision --avg_comp
-   class main
-   user root
-   group root system
-   disabled
 
 service ssr_ramdump /system/bin/subsystem_ramdump -m -t emmc
     class main
