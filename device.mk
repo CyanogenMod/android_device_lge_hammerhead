@@ -256,7 +256,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
 
 # Set sensor streaming rate
 PRODUCT_PROPERTY_OVERRIDES += \
-    ro.qti.sensors.max_geomag_rotvec=60 \
+    ro.qti.sensors.max_geomag_rotv=60 \
     ro.qti.sensors.max_gyro_rate=200 \
     ro.qti.sensors.max_accel_rate=200 \
     ro.qti.sensors.max_grav=200 \
