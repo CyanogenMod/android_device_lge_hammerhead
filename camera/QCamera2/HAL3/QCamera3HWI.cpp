@@ -524,6 +524,8 @@ int QCamera3HardwareInterface::configureStreams(
         channel->stop();
         (*it)->status = INVALID;
     }
+    if (mSupportChannel)
+        mSupportChannel->stop();
     if (mMetadataChannel) {
         /* If content of mStreamInfo is not 0, there is metadata stream */
         mMetadataChannel->stop();
@@ -595,6 +597,10 @@ int QCamera3HardwareInterface::configureStreams(
     if (mMetadataChannel) {
         delete mMetadataChannel;
         mMetadataChannel = NULL;
+    }
+    if (mSupportChannel) {
+        delete mSupportChannel;
+        mSupportChannel = NULL;
     }
 
     //Create metadata channel and initialize it
