@@ -134,6 +134,8 @@
     <!-- echo reference -->
     <ctl name="EC_REF_RX" value="NONE" />
     <!-- echo reference end -->
+    <ctl name="AFE_PCM_RX_Voice Mixer CSVoice" value="0" />
+    <ctl name="Voice_Tx Mixer AFE_PCM_TX_Voice" value="0" />
 
     <!-- These are audio route (FE to BE) specific mixer settings -->
     <path name="deep-buffer-playback">
@@ -241,6 +243,17 @@
     <path name="voice-call bt-sco-wb">
         <ctl name="AUX PCM SampleRate" value="16000" />
         <path name="voice-call bt-sco" />
+    </path>
+
+    <path name="voice-call afe-proxy">
+        <ctl name="AFE_PCM_RX_Voice Mixer CSVoice" value="1" />
+        <ctl name="Voice_Tx Mixer AFE_PCM_TX_Voice" value="1" />
+    </path>
+
+    <path name="afe-proxy-playback afe-proxy">
+    </path>
+
+    <path name="afe-proxy-record afe-proxy">
     </path>
 
     <!-- These are actual sound device specific mixer settings -->
@@ -511,6 +524,12 @@
     </path>
 
     <path name="bt-sco-headset-wb">
+    </path>
+
+    <path name="voice-rx">
+    </path>
+
+    <path name="voice-tx">
     </path>
 
 </mixer>
