@@ -1,5 +1,5 @@
 #
-# Copyright 2013 The Android Open Source Project
+# Copyright (C) 2015 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,5 +14,11 @@
 # limitations under the License.
 #
 
-add_lunch_combo aosp_hammerhead-userdebug
-add_lunch_combo aosp_hammerhead_fp-userdebug
+PRODUCT_PACKAGES := \
+    fingerprint.hammerhead
+
+PRODUCT_LOCALES := en_US
+$(call inherit-product, device/lge/hammerhead/aosp_hammerhead.mk)
+
+PRODUCT_NAME := aosp_hammerhead_fp
+PRODUCT_DEVICE := hammerhead
