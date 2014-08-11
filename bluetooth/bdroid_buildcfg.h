@@ -19,8 +19,6 @@
 
 #define BTA_DISABLE_DELAY 100 /* in milliseconds */
 
-#define BTM_WBS_INCLUDED TRUE
-#define BTIF_HF_WBS_PREFERRED TRUE
 #define BLE_VND_INCLUDED TRUE
 #define BTM_BLE_ADV_TX_POWER {-21, -15, -7, 1, 9}
 #endif
