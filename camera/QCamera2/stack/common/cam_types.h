@@ -960,16 +960,12 @@ typedef enum {
     /* Use to report back to the trigger value, triger is requested using
      * CAM_INTF_META_AEC_PRECAPTURE_TRIGGER */
     CAM_INTF_META_PRECAPTURE_TRIGGER,
-    /* The ID sent with the latest CAMERA2_TRIGGER_PRECAPTURE_METERING call */
-    CAM_INTF_META_AEC_PRECAPTURE_ID,
     /* Current state of AE algorithm */
     CAM_INTF_META_AEC_STATE,
     /* List of areas to use for focus estimation */
     CAM_INTF_META_AF_ROI,
     /* Whether the HAL must trigger autofocus. */
     CAM_INTF_META_AF_TRIGGER,
-    /* The ID sent with the latest CAMERA2_TRIGGER_AUTOFOCUS call */
-    CAM_INTF_META_AF_TRIGGER_ID,
     /* Use to report back AF trigger value, trigger is requested using
      * CAM_INTF_META_AF_TRIGGER and CAM_INTF_META_AF_TRIGGER_ID */
     CAM_INTF_META_AF_TRIGGER_NOTICE,
@@ -1320,7 +1316,6 @@ typedef struct {
 
 typedef struct {
     uint8_t trigger;
-    int32_t trigger_id;
 } cam_trigger_t;
 
 typedef enum {
