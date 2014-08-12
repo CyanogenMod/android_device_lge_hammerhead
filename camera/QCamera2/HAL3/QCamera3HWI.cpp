@@ -2036,13 +2036,11 @@ QCamera3HardwareInterface::translateFromHalMetadata(
           }
 
          // 3A state is sent in urgent partial result (uses quirk)
-         case CAM_INTF_META_AEC_PRECAPTURE_ID:
          case CAM_INTF_META_AEC_STATE:
          case CAM_INTF_PARM_AEC_LOCK:
          case CAM_INTF_PARM_EV:
          case CAM_INTF_PARM_FOCUS_MODE:
          case CAM_INTF_META_AF_STATE:
-         case CAM_INTF_META_AF_TRIGGER_ID:
          case CAM_INTF_PARM_WHITE_BALANCE:
          case CAM_INTF_META_AWB_REGIONS:
          case CAM_INTF_META_AWB_STATE:
@@ -2537,14 +2535,6 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
     uint8_t next_entry;
     while (curr_entry != CAM_INTF_PARM_MAX) {
       switch (curr_entry) {
-        case CAM_INTF_META_AEC_PRECAPTURE_ID: {
-            int32_t  *ae_precapture_id =
-              (int32_t *)POINTER_OF(CAM_INTF_META_AEC_PRECAPTURE_ID, metadata);
-            camMetadata.update(ANDROID_CONTROL_AE_PRECAPTURE_ID,
-                                          ae_precapture_id, 1);
-            ALOGV("%s: urgent Metadata : ANDROID_CONTROL_AE_PRECAPTURE_ID", __func__);
-          break;
-        }
         case CAM_INTF_META_AEC_STATE:{
             uint8_t *ae_state =
                 (uint8_t *)POINTER_OF(CAM_INTF_META_AEC_STATE, metadata);
@@ -2595,13 +2585,6 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
                (uint8_t *)POINTER_OF(CAM_INTF_META_AF_STATE, metadata);
             camMetadata.update(ANDROID_CONTROL_AF_STATE, afState, 1);
             ALOGV("%s: urgent Metadata : ANDROID_CONTROL_AF_STATE", __func__);
-            break;
-        }
-        case CAM_INTF_META_AF_TRIGGER_ID: {
-            int32_t  *afTriggerId =
-                 (int32_t *)POINTER_OF(CAM_INTF_META_AF_TRIGGER_ID, metadata);
-            camMetadata.update(ANDROID_CONTROL_AF_TRIGGER_ID, afTriggerId, 1);
-            ALOGV("%s: urgent Metadata : ANDROID_CONTROL_AF_TRIGGER_ID", __func__);
             break;
         }
         case CAM_INTF_PARM_WHITE_BALANCE: {
@@ -4934,27 +4917,20 @@ int QCamera3HardwareInterface::translateToHalMetadata
                     sizeof(colorCorrectTransform), &colorCorrectTransform);
     }
 
-    cam_trigger_t aecTrigger;
-    aecTrigger.trigger = CAM_AEC_TRIGGER_IDLE;
-    aecTrigger.trigger_id = -1;
-    if (frame_settings.exists(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER)&&
-        frame_settings.exists(ANDROID_CONTROL_AE_PRECAPTURE_ID)) {
+    if (frame_settings.exists(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER)) {
+        cam_trigger_t aecTrigger;
         aecTrigger.trigger =
             frame_settings.find(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER).data.u8[0];
-        aecTrigger.trigger_id =
-            frame_settings.find(ANDROID_CONTROL_AE_PRECAPTURE_ID).data.i32[0];
         rc = AddSetMetaEntryToBatch(hal_metadata,
                 CAM_INTF_META_AEC_PRECAPTURE_TRIGGER,
                 sizeof(aecTrigger), &aecTrigger);
     }
+
     /*af_trigger must come with a trigger id*/
-    if (frame_settings.exists(ANDROID_CONTROL_AF_TRIGGER) &&
-        frame_settings.exists(ANDROID_CONTROL_AF_TRIGGER_ID)) {
+    if (frame_settings.exists(ANDROID_CONTROL_AF_TRIGGER)) {
         cam_trigger_t af_trigger;
         af_trigger.trigger =
             frame_settings.find(ANDROID_CONTROL_AF_TRIGGER).data.u8[0];
-        af_trigger.trigger_id =
-            frame_settings.find(ANDROID_CONTROL_AF_TRIGGER_ID).data.i32[0];
         rc = AddSetMetaEntryToBatch(hal_metadata,
                 CAM_INTF_META_AF_TRIGGER, sizeof(af_trigger), &af_trigger);
     }

@@ -485,7 +485,6 @@ typedef union {
     INCLUDE(CAM_INTF_META_COLOR_CORRECT_GAINS,          cam_color_correct_gains_t,   1);
     INCLUDE(CAM_INTF_META_PRED_COLOR_CORRECT_TRANSFORM, cam_color_correct_matrix_t,  1);
     INCLUDE(CAM_INTF_META_PRED_COLOR_CORRECT_GAINS,     cam_color_correct_gains_t,   1);
-    INCLUDE(CAM_INTF_META_AEC_PRECAPTURE_ID,            int32_t,                     1);
     INCLUDE(CAM_INTF_META_AEC_MODE,                     uint8_t,                     1);
     INCLUDE(CAM_INTF_META_AEC_ROI,                      cam_area_t,                  5);
     INCLUDE(CAM_INTF_META_AEC_STATE,                    uint8_t,                     1);
