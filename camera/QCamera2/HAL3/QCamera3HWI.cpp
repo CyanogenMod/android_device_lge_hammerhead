@@ -2198,6 +2198,16 @@ QCamera3HardwareInterface::translateFromHalMetadata(
              camMetadata.update(ANDROID_SENSOR_EXPOSURE_TIME , sensorExpTime, 1);
              break;
           }
+          case CAM_INTF_META_SENSOR_ROLLING_SHUTTER_SKEW:{
+             int64_t  *sensorRollingShutterSkew =
+                (int64_t *)POINTER_OF(CAM_INTF_META_SENSOR_ROLLING_SHUTTER_SKEW,
+                  metadata);
+             ALOGV("%s: sensorRollingShutterSkew = %lld", __func__,
+               *sensorRollingShutterSkew);
+             camMetadata.update(ANDROID_SENSOR_ROLLING_SHUTTER_SKEW ,
+               sensorRollingShutterSkew, 1);
+             break;
+          }
           case CAM_INTF_META_SENSOR_FRAME_DURATION:{
              int64_t  *sensorFameDuration =
                 (int64_t *)POINTER_OF(CAM_INTF_META_SENSOR_FRAME_DURATION, metadata);
