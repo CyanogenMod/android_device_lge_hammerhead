@@ -118,6 +118,10 @@ public:
                                             void *userdata);
     static int32_t getScalarFormat(int32_t format);
     static int32_t getSensorSensitivity(int32_t iso_mode);
+
+    static double computeNoiseModelEntryS(int32_t sensitivity);
+    static double computeNoiseModelEntryO(int32_t sensitivity);
+
     static void captureResultCb(mm_camera_super_buf_t *metadata,
                 camera3_stream_buffer_t *buffer, uint32_t frame_number,
                 void *userdata);
