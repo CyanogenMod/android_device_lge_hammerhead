@@ -3243,12 +3243,13 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     int rc = 0;
     CameraMetadata staticInfo;
 
-    /* android.info: hardware level */
-    uint8_t supportedHardwareLevel = ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL_FULL;
+    int facingBack = gCamCapability[cameraId]->position == CAM_POSITION_BACK;
+
+     /* android.info: hardware level */
+    uint8_t supportedHardwareLevel = (facingBack)? ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL_FULL:
+      ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED;
     staticInfo.update(ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL,
         &supportedHardwareLevel, 1);
-
-    int facingBack = gCamCapability[cameraId]->position == CAM_POSITION_BACK;
     /*HAL 3 only*/
     staticInfo.update(ANDROID_LENS_INFO_MINIMUM_FOCUS_DISTANCE,
                     &gCamCapability[cameraId]->min_focus_distance, 1);
@@ -3705,10 +3706,10 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     uint8_t available_capabilities[MAX_AVAILABLE_CAPABILITIES];
     uint8_t available_capabilities_count = 0;
     available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE;
-    available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR;
-    available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_POST_PROCESSING;
 
     if (facingBack) {
+        available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR;
+        available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_POST_PROCESSING;
         available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_RAW;
     }
     staticInfo.update(ANDROID_REQUEST_AVAILABLE_CAPABILITIES,
@@ -3724,7 +3725,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_SCALER_AVAILABLE_INPUT_OUTPUT_FORMATS_MAP,
                       io_format_map, 0);
 
-    int32_t max_latency = ANDROID_SYNC_MAX_LATENCY_PER_FRAME_CONTROL;
+    int32_t max_latency = (facingBack)? ANDROID_SYNC_MAX_LATENCY_PER_FRAME_CONTROL:ANDROID_SYNC_MAX_LATENCY_UNKNOWN;
     staticInfo.update(ANDROID_SYNC_MAX_LATENCY,
                       &max_latency,
                       1);
