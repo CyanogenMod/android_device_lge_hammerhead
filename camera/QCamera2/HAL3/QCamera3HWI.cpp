@@ -2025,7 +2025,6 @@ QCamera3HardwareInterface::translateFromHalMetadata(
                faceRectangles, numFaces*4);
              camMetadata.update(ANDROID_STATISTICS_FACE_LANDMARKS,
                faceLandmarks, numFaces*6);
-
             break;
             }
          case CAM_INTF_META_COLOR_CORRECT_MODE:{
@@ -2216,11 +2215,21 @@ QCamera3HardwareInterface::translateFromHalMetadata(
              break;
           }
           case CAM_INTF_META_SENSOR_SENSITIVITY:{
-             int32_t  *sensorSensitivity =
-                (int32_t *)POINTER_OF(CAM_INTF_META_SENSOR_SENSITIVITY, metadata);
-             ALOGV("%s: sensorSensitivity = %d", __func__, *sensorSensitivity);
-             camMetadata.update(ANDROID_SENSOR_SENSITIVITY, sensorSensitivity, 1);
-             break;
+            int32_t sensorSensitivity =
+               *((int32_t *)POINTER_OF(CAM_INTF_META_SENSOR_SENSITIVITY, metadata));
+            ALOGV("%s: sensorSensitivity = %d", __func__, sensorSensitivity);
+            camMetadata.update(ANDROID_SENSOR_SENSITIVITY, &sensorSensitivity, 1);
+
+            double noise_profile_S = computeNoiseModelEntryS(sensorSensitivity);
+            double noise_profile_O = computeNoiseModelEntryO(sensorSensitivity);
+            double noise_profile[2 * gCamCapability[mCameraId]->num_color_channels];
+            for(int i = 0; i < 2 * gCamCapability[mCameraId]->num_color_channels; i+=2){
+                noise_profile[i]   = noise_profile_S;
+                noise_profile[i+1] = noise_profile_O;
+            }
+            camMetadata.update(ANDROID_SENSOR_NOISE_PROFILE, noise_profile,
+                2 * gCamCapability[mCameraId]->num_color_channels);
+            break;
           }
           case CAM_INTF_PARM_BESTSHOT_MODE: {
               uint8_t *sceneMode =
@@ -4113,6 +4122,39 @@ int32_t QCamera3HardwareInterface::getScalarFormat(int32_t format)
     }
     return halPixelFormat;
 }
+/*===========================================================================
+ * FUNCTION   : computeNoiseModelEntryS
+ *
+ * DESCRIPTION: function to map a given sensitivity to the S noise
+ *              model parameters in the DNG noise model.
+ *
+ * PARAMETERS : sens : the sensor sensitivity
+ *
+ ** RETURN    : S (sensor amplification) noise
+ *
+ *==========================================================================*/
+
+double QCamera3HardwareInterface::computeNoiseModelEntryS(int32_t sens) {
+   double s = 1.693069e-06 * sens + 3.480007e-05;
+   return s < 0.0 ? 0.0 : s;
+}
+
+/*===========================================================================
+ * FUNCTION   : computeNoiseModelEntryO
+ *
+ * DESCRIPTION: function to map a given sensitivity to the O noise
+ *              model parameters in the DNG noise model.
+ *
+ * PARAMETERS : sens : the sensor sensitivity
+ *
+ ** RETURN    : O (sensor readout) noise
+ *
+ *==========================================================================*/
+
+double QCamera3HardwareInterface::computeNoiseModelEntryO(int32_t sens) {
+   double o = 1.301416e-07 * sens + -2.262256e-04;
+   return o < 0.0 ? 0.0 : o
+;}
 
 /*===========================================================================
  * FUNCTION   : getSensorSensitivity

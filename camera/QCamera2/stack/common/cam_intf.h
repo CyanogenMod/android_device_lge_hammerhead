@@ -221,6 +221,7 @@ typedef struct{
     int64_t max_frame_duration;
 
     cam_color_filter_arrangement_t color_arrangement;
+    uint8_t num_color_channels;
 
     float sensor_physical_size[2];
 
