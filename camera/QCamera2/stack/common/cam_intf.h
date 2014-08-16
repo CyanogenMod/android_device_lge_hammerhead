@@ -520,6 +520,7 @@ typedef union {
     INCLUDE(CAM_INTF_META_SENSOR_FRAME_DURATION,        int64_t,                     1);
     INCLUDE(CAM_INTF_META_SENSOR_SENSITIVITY,           int32_t,                     1);
     INCLUDE(CAM_INTF_META_SENSOR_TIMESTAMP,             struct timeval,              1);
+    INCLUDE(CAM_INTF_META_SENSOR_ROLLING_SHUTTER_SKEW,  int64_t,                     1);
     INCLUDE(CAM_INTF_META_SHADING_MODE,                 uint8_t,                     1);
     INCLUDE(CAM_INTF_META_STATS_FACEDETECT_MODE,        uint8_t,                     1);
     INCLUDE(CAM_INTF_META_SCENE_FLICKER,                uint8_t,                     1);
