@@ -276,4 +276,15 @@
 
     <!-- Is the device capable of hot swapping an UICC Card -->
     <bool name="config_hotswapCapable">true</bool>
+
+    <!-- Configure mobile tcp buffer sizes in the form:
+         rat-name:rmem_min,rmem_def,rmem_max,wmem_min,wmem_def,wmem_max
+         If no value is found for the rat-name in use, the system default will be applied.
+    -->
+    <string-array name="config_mobile_tcp_buffers">
+        <item>hsdpa:4094,87380,704512,4096,16384,110208</item>
+        <item>hspa:4094,87380,704512,4096,16384,110208</item>
+        <item>hsupa:4094,87380,704512,4096,16384,110208</item>
+    </string-array>
+
 </resources>
