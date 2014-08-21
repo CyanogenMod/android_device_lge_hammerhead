@@ -175,7 +175,7 @@ private:
                       int len, int hal_name);
 
     int validateCaptureRequest(camera3_capture_request_t *request);
-
+    int validateStreamDimensions(camera3_stream_configuration_t *streamList);
     void deriveMinFrameDuration();
     int64_t getMinFrameDuration(const camera3_capture_request_t *request);
 
