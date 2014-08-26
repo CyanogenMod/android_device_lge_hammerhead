@@ -67,8 +67,8 @@ on boot
     chown bluetooth net_bt_stack /proc/bluetooth/sleep/btwrite
 
     #bluetooth UART dev
-    chown bluetooth net_bt_stack /sys/devices/platform/msm_serial_hs.0/clock
-    chmod 0660 /sys/devices/platform/msm_serial_hs.0/clock
+    chown bluetooth net_bt_stack /sys/devices/f9960000.uart/clock
+    chmod 0660 /sys/devices/f9960000.uart/clock
 
     #Create QMUX deamon socket area
     mkdir /dev/socket/qmux_radio 0770 radio radio
