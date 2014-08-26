@@ -16,7 +16,7 @@
 
 /system/app/qcrilmsgtunnel/qcrilmsgtunnel.apk
 /system/app/shutdownlistener.apk
-/system/app/SprintDM.apk
+/system/app/SprintHiddenMenu/SprintHiddenMenu.apk
 /system/app/TimeService.apk
 /system/bin/bridgemgrd
 /system/bin/diag_klog
