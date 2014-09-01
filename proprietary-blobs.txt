@@ -196,6 +196,7 @@
 /system/vendor/lib/libmmqjpeg_codec.so
 /system/vendor/lib/libnetmgr.so
 /system/vendor/lib/liboemcamera.so
+/system/vendor/lib/libqc-opt.so
 /system/vendor/lib/libqcci_legacy.so
 /system/vendor/lib/libqdi.so
 /system/vendor/lib/libqdp.so
@@ -215,6 +216,8 @@
 /system/vendor/lib/libsensor1.so
 /system/vendor/lib/libsensor_reg.so
 /system/vendor/lib/libsensor_user_cal.so
+/system/vendor/lib/libthermalclient.so
+/system/vendor/lib/libthermalioctl.so
 /system/vendor/lib/libTimeService.so
 /system/vendor/lib/libtime_genoff.so
 /system/vendor/lib/libvdmengine.so
