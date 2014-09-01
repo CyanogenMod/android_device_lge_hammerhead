@@ -4723,7 +4723,7 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
                     gCamCapability[mCameraId]->active_array_size.width,
             gCamCapability[mCameraId]->active_array_size.top +
                     gCamCapability[mCameraId]->active_array_size.height,
-            1};
+            0};
     settings.update(ANDROID_CONTROL_AE_REGIONS, active_region, 5);
     settings.update(ANDROID_CONTROL_AF_REGIONS, active_region, 5);
 
