@@ -109,6 +109,10 @@ PRODUCT_COPY_FILES += \
 PRODUCT_COPY_FILES += \
     device/lge/hammerhead/thermal-engine-8974.conf:system/etc/thermal-engine-8974.conf
 
+# For SPN display
+PRODUCT_COPY_FILES += \
+    device/lge/hammerhead/spn-conf.xml:system/etc/spn-conf.xml
+
 PRODUCT_TAGS += dalvik.gc.type-precise
 
 # This device is xhdpi.  However the platform doesn't
