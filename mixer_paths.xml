@@ -293,6 +293,7 @@
         <ctl name="SLIM_0_RX Channels" value="One" />
         <ctl name="RX7 MIX1 INP1" value="RX1" />
         <ctl name="RX7 Digital Volume" value="88" />
+        <ctl name="COMP0 Switch" value="1" />
         <ctl name="SPK DRV Volume" value="6" />
     </path>
 
@@ -323,6 +324,7 @@
         <ctl name="RX2 MIX1 INP1" value="RX2" />
         <ctl name="CLASS_H_DSM MUX" value="DSM_HPHL_RX1" />
         <ctl name="HPHL DAC Switch" value="1" />
+        <ctl name="COMP1 Switch" value="1" />
         <ctl name="RX1 Digital Volume" value="83" />
         <ctl name="RX2 Digital Volume" value="83" />
         <ctl name="HPHL Volume" value="15" />
@@ -383,6 +385,7 @@
         <ctl name="RX1 Digital Volume" value="81" />
         <ctl name="RX2 Digital Volume" value="81" />
         <ctl name="RX7 MIX1 INP1" value="RX1" />
+        <ctl name="COMP0 Switch" value="1" />
         <ctl name="RX7 Digital Volume" value="88" />
     </path>
 
