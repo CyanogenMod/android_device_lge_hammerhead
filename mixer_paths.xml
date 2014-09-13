@@ -292,9 +292,9 @@
         <ctl name="SLIM RX1 MUX" value="AIF1_PB" />
         <ctl name="SLIM_0_RX Channels" value="One" />
         <ctl name="RX7 MIX1 INP1" value="RX1" />
-        <ctl name="RX7 Digital Volume" value="88" />
         <ctl name="COMP0 Switch" value="1" />
         <ctl name="SPK DRV Volume" value="6" />
+        <ctl name="RX7 Digital Volume" value="88" />
     </path>
 
     <path name="speaker-mic">
