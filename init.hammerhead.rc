@@ -16,6 +16,7 @@
 
 import init.hammerhead.usb.rc
 import init.hammerhead_svelte.rc
+import init.hammerhead.diag.rc
 
 on early-init
     mount debugfs debugfs /sys/kernel/debug
@@ -126,10 +127,6 @@ on boot
     mkdir /data/tombstones/ramdump 0777 system system
     restorecon_recursive /data/tombstones
     write /sys/module/subsystem_restart/parameters/enable_ramdumps 1
-
-    # Modem logging collection
-    mkdir /data/diag_logs 0777 system system
-    chmod 666 /dev/diag
 
     # leds
     chown system system /sys/class/leds/red/on_off_ms
