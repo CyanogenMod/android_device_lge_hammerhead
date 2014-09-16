@@ -13,8 +13,7 @@
 # limitations under the License.
 
 PRODUCT_PACKAGES += \
-    qcrilmsgtunnel \
-    SprintHiddenMenu
+    qcrilmsgtunnel
 
 LOCAL_STEM := hammerhead/device-partial.mk
 
