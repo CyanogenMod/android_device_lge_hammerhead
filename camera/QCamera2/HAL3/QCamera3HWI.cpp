@@ -2734,17 +2734,6 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
             ALOGV("%s: urgent Metadata : ANDROID_CONTROL_AWB_MODE", __func__);
              break;
         }
-        case CAM_INTF_META_AWB_REGIONS: {
-           /*awb regions*/
-           cam_area_t  *hAwbRegions =
-               (cam_area_t *)POINTER_OF(CAM_INTF_META_AWB_REGIONS, metadata);
-           int32_t awbRegions[5];
-           convertToRegions(hAwbRegions->rect, awbRegions,hAwbRegions->weight);
-           camMetadata.update(ANDROID_CONTROL_AWB_REGIONS, awbRegions, 5);
-           ALOGV("%s: urgent Metadata : ANDROID_CONTROL_AWB_REGIONS", __func__);
-           break;
-        }
-
 
         case CAM_INTF_META_AWB_STATE: {
            uint8_t  *whiteBalanceState =
@@ -5442,19 +5431,6 @@ int QCamera3HardwareInterface::translateToHalMetadata
         }
         if (reset) {
             rc = AddSetMetaEntryToBatch(hal_metadata, CAM_INTF_META_AF_ROI,
-                    sizeof(roi), &roi);
-        }
-    }
-
-    if (frame_settings.exists(ANDROID_CONTROL_AWB_REGIONS)) {
-        cam_area_t roi;
-        bool reset = true;
-        convertFromRegions(&roi, request->settings, ANDROID_CONTROL_AWB_REGIONS);
-        if (scalerCropSet) {
-            reset = resetIfNeededROI(&roi, &scalerCropRegion);
-        }
-        if (reset) {
-            rc = AddSetMetaEntryToBatch(hal_metadata, CAM_INTF_META_AWB_REGIONS,
                     sizeof(roi), &roi);
         }
     }
