@@ -3571,6 +3571,11 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     }
     staticInfo.update(ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS,
                       available_stream_configs, idx);
+    static const uint8_t hotpixelMode = ANDROID_HOT_PIXEL_MODE_FAST;
+    staticInfo.update(ANDROID_HOT_PIXEL_MODE, &hotpixelMode, 1);
+
+    static const uint8_t hotPixelMapMode = ANDROID_STATISTICS_HOT_PIXEL_MAP_MODE_OFF;
+    staticInfo.update(ANDROID_STATISTICS_HOT_PIXEL_MAP_MODE, &hotPixelMapMode, 1);
 
     /* android.scaler.availableMinFrameDurations */
     int64_t available_min_durations[max_stream_configs_size];
@@ -3921,7 +3926,8 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
        ANDROID_LENS_OPTICAL_STABILIZATION_MODE, ANDROID_NOISE_REDUCTION_MODE,
        ANDROID_NOISE_REDUCTION_STRENGTH, ANDROID_REQUEST_ID, ANDROID_REQUEST_TYPE,
        ANDROID_SCALER_CROP_REGION, ANDROID_SENSOR_EXPOSURE_TIME,
-       ANDROID_SENSOR_FRAME_DURATION,
+       ANDROID_SENSOR_FRAME_DURATION, ANDROID_HOT_PIXEL_MODE,
+       ANDROID_STATISTICS_HOT_PIXEL_MAP_MODE,
        ANDROID_SENSOR_SENSITIVITY, ANDROID_SHADING_MODE,
        ANDROID_SHADING_STRENGTH, ANDROID_STATISTICS_FACE_DETECT_MODE,
        ANDROID_STATISTICS_HISTOGRAM_MODE, ANDROID_STATISTICS_SHARPNESS_MAP_MODE,
