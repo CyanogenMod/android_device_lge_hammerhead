@@ -3974,7 +3974,9 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
        ANDROID_STATISTICS_PREDICTED_COLOR_GAINS, ANDROID_STATISTICS_PREDICTED_COLOR_TRANSFORM,
        ANDROID_STATISTICS_SCENE_FLICKER, ANDROID_STATISTICS_FACE_IDS,
        ANDROID_STATISTICS_FACE_LANDMARKS, ANDROID_STATISTICS_FACE_RECTANGLES,
-       ANDROID_STATISTICS_FACE_SCORES};
+       ANDROID_STATISTICS_FACE_SCORES,
+       ANDROID_SENSOR_NOISE_PROFILE,
+       ANDROID_SENSOR_GREEN_SPLIT};
     size_t result_keys_cnt =
             sizeof(result_keys_basic)/sizeof(result_keys_basic[0]);
     //NOTE: Please increase available_result_keys array size before
