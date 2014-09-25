@@ -1616,12 +1616,6 @@ int QCamera3HardwareInterface::processCaptureRequest(
                 mParameters);
         }
 
-        ALOGD("%s: Start META Channel", __func__);
-        mMetadataChannel->start();
-
-        if (mSupportChannel)
-            mSupportChannel->start();
-
         //First initialize all streams
         for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
             it != mStreamInfo.end(); it++) {
@@ -1629,14 +1623,32 @@ int QCamera3HardwareInterface::processCaptureRequest(
             rc = channel->initialize();
             if (NO_ERROR != rc) {
                 ALOGE("%s : Channel initialization failed %d", __func__, rc);
-                if (mSupportChannel)
-                    mSupportChannel->stop();
+                pthread_mutex_unlock(&mMutex);
+                return rc;
+            }
+        }
+        if (mSupportChannel) {
+            rc = mSupportChannel->initialize();
+            if (rc < 0) {
+                ALOGE("%s: Support channel initialization failed", __func__);
+                pthread_mutex_unlock(&mMutex);
+                return rc;
+            }
+        }
+
+        //Then start them.
+        ALOGD("%s: Start META Channel", __func__);
+        mMetadataChannel->start();
+
+        if (mSupportChannel) {
+            rc = mSupportChannel->start();
+            if (rc < 0) {
+                ALOGE("%s: Support channel start failed", __func__);
                 mMetadataChannel->stop();
                 pthread_mutex_unlock(&mMutex);
                 return rc;
             }
         }
-        //Then start them.
         for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
             it != mStreamInfo.end(); it++) {
             QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
