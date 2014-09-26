@@ -1082,12 +1082,39 @@ QCamera3PicChannel::QCamera3PicChannel(uint32_t cam_handle,
     }
 }
 
-QCamera3PicChannel::~QCamera3PicChannel()
+/*===========================================================================
+ * FUNCTION   : stop
+ *
+ * DESCRIPTION: stop pic channel, which will stop all streams within, including
+ *              the reprocessing channel in postprocessor and YUV stream.
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCamera3PicChannel::stop()
 {
-    int32_t rc = m_postprocessor.deinit();
+    int32_t rc = NO_ERROR;
+    if(!m_bIsActive) {
+        ALOGE("%s: Attempt to stop inactive channel",__func__);
+        return rc;
+    }
+
+    m_postprocessor.stop();
+    rc = m_postprocessor.deinit();
     if (rc != 0) {
         ALOGE("De-init Postprocessor failed");
     }
+
+    rc |= QCamera3Channel::stop();
+    return rc;
+}
+
+QCamera3PicChannel::~QCamera3PicChannel()
+{
+   stop();
 }
 
 int32_t QCamera3PicChannel::initialize()
