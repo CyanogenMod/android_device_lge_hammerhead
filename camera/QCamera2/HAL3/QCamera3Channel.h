@@ -255,7 +255,7 @@ public:
     ~QCamera3PicChannel();
 
     virtual int32_t initialize();
-
+    virtual int32_t stop();
     virtual int32_t request(buffer_handle_t *buffer,
             uint32_t frameNumber,
             mm_camera_buf_def_t* pInputBuffer,
