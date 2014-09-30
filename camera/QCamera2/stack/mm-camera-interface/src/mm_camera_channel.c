@@ -708,6 +708,7 @@ uint32_t mm_channel_add_stream(mm_channel_t *my_obj)
 
     /* initialize stream object */
     memset(stream_obj, 0, sizeof(mm_stream_t));
+    stream_obj->fd = -1;
     stream_obj->my_hdl = mm_camera_util_generate_handler(idx);
     stream_obj->ch_obj = my_obj;
     pthread_mutex_init(&stream_obj->buf_lock, NULL);
