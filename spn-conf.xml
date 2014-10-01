@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <spnOverrides>
-    <spnOverride numeric="28602" spn="Vodafone TR"/>
     <spnOverride numeric="40402" spn="airtel"/>
     <spnOverride numeric="40403" spn="airtel"/>
     <spnOverride numeric="40410" spn="airtel"/>
@@ -23,7 +22,6 @@
     <spnOverride numeric="40554" spn="airtel"/>
     <spnOverride numeric="40555" spn="airtel"/>
     <spnOverride numeric="40556" spn="airtel"/>
-    <spnOverride numeric="42501" spn="Orange-IL"/>
     <spnOverride numeric="42502" spn="Cellcom"/>
     <spnOverride numeric="42503" spn="Pelephone"/>
     <spnOverride numeric="42507" spn="HOT mobile"/>
