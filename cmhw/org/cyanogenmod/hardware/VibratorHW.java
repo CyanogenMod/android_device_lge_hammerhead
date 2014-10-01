@@ -26,27 +26,27 @@ public class VibratorHW {
         return new File(AMP_PATH).exists();
     }
 
-    public static int getMaxIntensity()  {
+    public static int getMaxIntensity() {
         return 100;
     }
 
-    public static int getMinIntensity()  {
+    public static int getMinIntensity() {
         return 0;
     }
 
-    public static int getWarningThreshold()  {
+    public static int getWarningThreshold() {
         return -1;
     }
 
-    public static int getCurIntensity()  {
+    public static int getCurIntensity() {
         return Integer.parseInt(FileUtils.readOneLine(AMP_PATH));
     }
 
-    public static int getDefaultIntensity()  {
+    public static int getDefaultIntensity() {
         return 63;
     }
 
-    public static boolean setIntensity(int intensity)  {
+    public static boolean setIntensity(int intensity) {
         return FileUtils.writeLine(AMP_PATH, String.valueOf(intensity));
     }
 }
