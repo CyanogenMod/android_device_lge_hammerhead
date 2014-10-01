@@ -2579,7 +2579,7 @@ int32_t QCamera3SupportChannel::initialize()
     int32_t rc;
 
     if (mMemory || m_numStreams > 0) {
-        ALOGE("%s: metadata channel already initialized", __func__);
+        ALOGE("%s: Support channel already initialized", __func__);
         return -EINVAL;
     }
 
