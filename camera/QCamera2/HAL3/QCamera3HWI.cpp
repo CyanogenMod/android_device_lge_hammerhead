@@ -2903,7 +2903,7 @@ void QCamera3HardwareInterface::dumpMetadataToFile(tuning_params_t &meta,
                      frameNumber);
             filePath.append(buf);
             int file_fd = open(filePath.string(), O_RDWR | O_CREAT, 0777);
-            if (file_fd > 0) {
+            if (file_fd >= 0) {
                 int written_len = 0;
                 meta.tuning_data_version = TUNING_DATA_VERSION;
                 void *data = (void *)((uint8_t *)&meta.tuning_data_version);
