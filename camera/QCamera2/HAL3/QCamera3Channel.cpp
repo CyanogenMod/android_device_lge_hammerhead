@@ -910,7 +910,7 @@ void QCamera3RawChannel::dumpRawSnapshot(mm_camera_buf_def_t *frame)
             frame->frame_idx, dim.width, dim.height);
 
    int file_fd = open(buf, O_RDWR| O_CREAT, 0777);
-   if (file_fd) {
+   if (file_fd >= 0) {
       int written_len = write(file_fd, frame->buffer, offset.frame_len);
       ALOGE("%s: written number of bytes %d", __func__, written_len);
       close(file_fd);
