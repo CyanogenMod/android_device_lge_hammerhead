@@ -747,17 +747,6 @@ int QCamera3HardwareInterface::configureStreams(
             pthread_mutex_unlock(&mMutex);
             return -ENOMEM;
         }
-
-        rc = mSupportChannel->initialize();
-        if (rc < 0) {
-            ALOGE("%s: dummy channel initialization failed", __func__);
-            delete mSupportChannel;
-            mSupportChannel = NULL;
-            delete mMetadataChannel;
-            mMetadataChannel = NULL;
-            pthread_mutex_unlock(&mMutex);
-            return rc;
-        }
     }
 
     /* Allocate channel objects for the requested streams */
