@@ -199,6 +199,7 @@ on post-fs-data
     write /sys/devices/system/cpu/cpufreq/ondemand/optimal_freq 960000
     write /sys/devices/system/cpu/cpufreq/ondemand/sync_freq 960000
     write /sys/devices/system/cpu/cpufreq/ondemand/up_threshold_any_cpu_load 80
+    restorecon_recursive /sys/devices/system/cpu/cpufreq/ondemand
     write /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq 300000
     write /sys/devices/system/cpu/cpu1/cpufreq/scaling_min_freq 300000
     write /sys/devices/system/cpu/cpu2/cpufreq/scaling_min_freq 300000
