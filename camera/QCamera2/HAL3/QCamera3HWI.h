@@ -264,6 +264,8 @@ private:
         List<PendingBufferInfo> mPendingBufferList;
     } PendingBuffersMap;
 
+    typedef KeyedVector<uint32_t, Vector<PendingBufferInfo> > FlushMap;
+
     List<PendingRequestInfo> mPendingRequestsList;
     List<PendingFrameDropInfo> mPendingFrameDropList;
     PendingBuffersMap mPendingBuffersMap;
