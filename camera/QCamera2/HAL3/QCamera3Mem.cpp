@@ -326,7 +326,7 @@ int QCamera3HeapMemory::allocOneBuffer(QCamera3MemInfo &memInfo, int heap_id, in
     int main_ion_fd = 0;
 
     main_ion_fd = open("/dev/ion", O_RDONLY);
-    if (main_ion_fd <= 0) {
+    if (main_ion_fd < 0) {
         ALOGE("Ion dev open failed: %s\n", strerror(errno));
         goto ION_OPEN_FAILED;
     }
