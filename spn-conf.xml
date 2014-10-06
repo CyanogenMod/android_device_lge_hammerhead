@@ -30,4 +30,5 @@
     <spnOverride numeric="42514" spn="YouPhone"/>
     <spnOverride numeric="42515" spn="Home Cellular"/>
     <spnOverride numeric="42516" spn="Rami Levy"/>
+    <spnOverride numeric="46689" spn="台灣之星"/>
 </spnOverrides>
