@@ -130,5 +130,6 @@ COMMON_GLOBAL_CFLAGS += -DNO_SECURE_DISCARD
 
 # Hardware
 BOARD_HARDWARE_CLASS := device/lge/hammerhead/cmhw
+BOARD_USES_QCOM_HARDWARE := true
 
 -include vendor/lge/hammerhead/BoardConfigVendor.mk
