@@ -9863,10 +9863,10 @@
       type="mms"
   />
 
-  <apn carrier="ATT Nextgenphone"
+  <apn carrier="ATT Phone"
       mcc="310"
       mnc="410"
-      apn="nxtgenphone"
+      apn="phone"
       type="default,mms,supl,fota,hipri"
       mmsc="http://mmsc.mobile.att.net"
       mmsproxy="proxy.mobile.att.net"
