@@ -27989,17 +27989,17 @@
       type="mms"
   />
 
-  <apn carrier="VIBO-vibo"
-      mcc="466"
-      mnc="89"
-      apn="vibo"
-      type="default,supl"
-  />
-
   <apn carrier="T Star-internet"
       mcc="466"
       mnc="89"
       apn="internet"
+      type="default,supl"
+  />
+
+  <apn carrier="VIBO-vibo"
+      mcc="466"
+      mnc="89"
+      apn="vibo"
       type="default,supl"
   />
 
