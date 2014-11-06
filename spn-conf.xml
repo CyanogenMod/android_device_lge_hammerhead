@@ -22,8 +22,6 @@
     <spnOverride numeric="40554" spn="airtel"/>
     <spnOverride numeric="40555" spn="airtel"/>
     <spnOverride numeric="40556" spn="airtel"/>
-    <spnOverride numeric="42502" spn="Cellcom"/>
-    <spnOverride numeric="42503" spn="Pelephone"/>
     <spnOverride numeric="42507" spn="HOT mobile"/>
     <spnOverride numeric="42508" spn="Golan Telecom"/>
     <spnOverride numeric="42510" spn="Orange-IL"/>
