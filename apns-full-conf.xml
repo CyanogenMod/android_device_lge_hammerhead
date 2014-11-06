@@ -6869,31 +6869,6 @@
       type="default,supl"
   />
 
-  <apn carrier="Fido Tethering"
-      mcc="302"
-      mnc="370"
-      apn="ltedata.apn"
-      type="dun"
-      mvno_match_data="DD"
-      mvno_type="gid"
-      protocol="IPV4V6"
-      roaming_protocol="IP"
-  />
-
-  <apn carrier="Fido Internet"
-      mcc="302"
-      mnc="370"
-      apn="ltemobile.apn"
-      type="default,mms,agps,supl,fota,hipri"
-      mmsproxy="mmsproxy.fido.ca"
-      mmsc="http://mms.fido.ca"
-      mmsport="80"
-      mvno_match_data="DD"
-      mvno_type="gid"
-      protocol="IPV4V6"
-      roaming_protocol="IP"
-  />
-
   <apn carrier="MTS"
       mcc="302"
       mnc="370"
@@ -7093,31 +7068,6 @@
       mmsport="80"
       mvno_type="spn"
       mvno_match_data="CITYFONE"
-  />
-
-  <apn carrier="Rogers Tethering"
-      mcc="302"
-      mnc="720"
-      apn="ltedata.apn"
-      type="dun"
-      mvno_match_data="ROGERS"
-      mvno_type="spn"
-      protocol="IPV4V6"
-      roaming_protocol="IP"
-  />
-
-  <apn carrier="Rogers Internet"
-      mcc="302"
-      mnc="720"
-      apn="ltemobile.apn"
-      type="default,mms,agps,supl,fota,hipri"
-      mmsproxy="mmsproxy.rogers.com"
-      mmsc="http://mms.gprs.rogers.com"
-      mmsport="80"
-      mvno_match_data="ROGERS"
-      mvno_type="spn"
-      protocol="IPV4V6"
-      roaming_protocol="IP"
   />
 
   <apn carrier="SaskTel"
