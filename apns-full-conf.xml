@@ -26459,14 +26459,6 @@
       type="default,supl"
   />
 
-  <apn carrier="PC HOT mobile"
-      mcc="425"
-      mnc="07"
-      apn="pc.hotm"
-      type="dun"
-      authtype="0"
-  />
-
   <apn carrier="MMS HOT mobile"
       mcc="425"
       mnc="07"
