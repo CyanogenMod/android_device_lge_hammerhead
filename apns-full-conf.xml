@@ -8919,26 +8919,12 @@
       type="default,supl"
   />
 
-  <!-- Need two APNs for CDMA technologies: a default that is used normally -->
-  <!-- and a second APN to be used when DUN is required.  Even though the -->
-  <!-- parameters appear the same, the profileID sent to the radio when requesting -->
-  <!-- a DUN connection will be different -->
   <!-- 1xRTT - CDMA -->
   <apn carrier="Sprint"
       mcc="310"
       mnc="120"
       apn="sprint"
       type="default,supl,mms,ims,cbs"
-      mmsc="http://mms.sprintpcs.com"
-      mmsproxy="68.28.31.7"
-      mmsport="80"
-      bearer="6"
-  />
-  <apn carrier="Sprint"
-      mcc="310"
-      mnc="120"
-      apn="sprint"
-      type="default,supl,mms,ims,cbs,dun"
       mmsc="http://mms.sprintpcs.com"
       mmsproxy="68.28.31.7"
       mmsport="80"
@@ -8956,16 +8942,6 @@
       mmsport="80"
       bearer="7"
   />
-  <apn carrier="Sprint"
-      mcc="310"
-      mnc="120"
-      apn="sprint"
-      type="default,supl,mms,ims,cbs,dun"
-      mmsc="http://mms.sprintpcs.com"
-      mmsproxy="68.28.31.7"
-      mmsport="80"
-      bearer="7"
-  />
 
   <!-- EVDO_A - CDMA -->
   <apn carrier="Sprint"
@@ -8973,16 +8949,6 @@
       mnc="120"
       apn="sprint"
       type="default,supl,mms,ims,cbs"
-      mmsc="http://mms.sprintpcs.com"
-      mmsproxy="68.28.31.7"
-      mmsport="80"
-      bearer="8"
-  />
-  <apn carrier="Sprint"
-      mcc="310"
-      mnc="120"
-      apn="sprint"
-      type="default,supl,mms,ims,cbs,dun"
       mmsc="http://mms.sprintpcs.com"
       mmsproxy="68.28.31.7"
       mmsport="80"
@@ -9000,16 +8966,6 @@
       mmsport="80"
       bearer="12"
   />
-  <apn carrier="Sprint"
-      mcc="310"
-      mnc="120"
-      apn="sprint"
-      type="default,supl,mms,ims,cbs,dun"
-      mmsc="http://mms.sprintpcs.com"
-      mmsproxy="68.28.31.7"
-      mmsport="80"
-      bearer="12"
-  />
 
   <!-- IS95A - CDMA -->
   <apn carrier="Sprint"
@@ -9017,16 +8973,6 @@
       mnc="120"
       apn="sprint"
       type="default,supl,mms,ims,cbs"
-      mmsc="http://mms.sprintpcs.com"
-      mmsproxy="68.28.31.7"
-      mmsport="80"
-      bearer="4"
-  />
-  <apn carrier="Sprint"
-      mcc="310"
-      mnc="120"
-      apn="sprint"
-      type="default,supl,mms,ims,cbs,dun"
       mmsc="http://mms.sprintpcs.com"
       mmsproxy="68.28.31.7"
       mmsport="80"
@@ -9044,17 +8990,6 @@
       mmsport="80"
       bearer="5"
   />
-  <apn carrier="Sprint"
-      mcc="310"
-      mnc="120"
-      apn="sprint"
-      type="default,supl,mms,ims,cbs,dun"
-      mmsc="http://mms.sprintpcs.com"
-      mmsproxy="68.28.31.7"
-      mmsport="80"
-      bearer="5"
-  />
-
 
   <!-- this APN will be deleted and replaced by a new ia APN by the HFA provisioning process.
        This is just a bootstrap APN to enable HFA -->
