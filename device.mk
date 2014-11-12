@@ -218,8 +218,9 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     bdAddrLoader
 
-PRODUCT_PACKAGES += \
-    power.hammerhead
+# QCOM Perf lib
+PRODUCT_PROPERTY_OVERRIDES += \
+    ro.vendor.extension_library=/vendor/lib/libqc-opt.so
 
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.opengles.version=196608
