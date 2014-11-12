@@ -80,6 +80,8 @@
 /system/lib/liboemcrypto.so
 /system/lib/libQSEEComAPI.so
 /system/lib/libril-qc-qmi-1.so
+/system/lib/librpmb.so
+/system/lib/libssd.so
 /system/lib/libstagefright_hdcp.so
 /system/lib/libWVphoneAPI.so
 /system/lib/libxml.so
