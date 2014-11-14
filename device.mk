@@ -145,7 +145,8 @@ PRODUCT_PACKAGES += \
     audio.a2dp.default \
     audio.usb.default \
     audio.r_submix.default \
-    libaudio-resampler
+    libaudio-resampler \
+    tinymix
 
 # Audio effects
 PRODUCT_PACKAGES += \
