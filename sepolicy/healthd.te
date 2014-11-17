@@ -1,0 +1,5 @@
+allow healthd device:dir open;
+allow healthd device:dir read;
+allow healthd self:capability dac_override;
+allow healthd rtc:chr_file { open read write ioctl };
+allow healthd alarm_device:chr_file { write };
