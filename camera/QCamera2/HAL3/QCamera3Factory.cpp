@@ -281,7 +281,7 @@ int QCamera3Factory::camera_device_open(
 }
 
 struct hw_module_methods_t QCamera3Factory::mModuleMethods = {
-    open: QCamera3Factory::camera_device_open,
+    .open = QCamera3Factory::camera_device_open,
 };
 
 }; // namespace qcamera
