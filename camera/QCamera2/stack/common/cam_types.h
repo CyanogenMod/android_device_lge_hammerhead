@@ -35,7 +35,7 @@
 #include <inttypes.h>
 #include <media/msmb_camera.h>
 
-#define CAM_MAX_NUM_BUFS_PER_STREAM 24
+#define CAM_MAX_NUM_BUFS_PER_STREAM 64
 #define MAX_METADATA_PAYLOAD_SIZE 1024
 
 #define CEILING32(X) (((X) + 0x0001F) & 0xFFFFFFE0)
