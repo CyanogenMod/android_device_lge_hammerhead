@@ -1,2 +1,4 @@
 # Grant access to Qualcomm MSM Interface (QMI) radio sockets to RILD
 qmux_socket(rild)
+
+allow rild radio_data_file:lnk_file read;
