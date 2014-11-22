@@ -501,3 +501,9 @@ service time_daemon /system/bin/time_daemon
     class late_start
     user root
     group root
+
+service qrngd /system/bin/qrngd -f
+    class main
+    user root
+    group root
+    seclabel u:r:qrngd:s0
