@@ -109,6 +109,7 @@
 /system/bin/bdAddrLoader           u:object_r:bluetooth_loader_exec:s0
 /system/bin/bridgemgrd             u:object_r:bridge_exec:s0
 /system/bin/qmuxd                  u:object_r:qmux_exec:s0
+/system/bin/qrngd                  u:object_r:qrngd_exec:s0
 /system/bin/netmgrd                u:object_r:netmgrd_exec:s0
 /system/bin/mpdecision             u:object_r:mpdecision_exec:s0
 /system/bin/sensors\.qcom           u:object_r:sensors_exec:s0

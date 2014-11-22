@@ -130,6 +130,7 @@ BOARD_SEPOLICY_UNION += \
        netmgrd.te \
        platform_app.te \
        qmux.te \
+       qrngd.te \
        radio.te \
        rild.te \
        rmt.te \

@@ -1,0 +1,10 @@
+type qrngd, domain;
+type qrngd_exec, exec_type, file_type;
+
+init_daemon_domain(qrngd)
+
+#============= qrngd ==============
+allow qrngd hw_random_device:chr_file { read open };
+allow qrngd self:capability { sys_admin setuid setgid dac_override };
+
+allow system_server hw_random_device:chr_file r_file_perms;
