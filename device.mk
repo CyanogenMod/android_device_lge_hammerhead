@@ -219,6 +219,10 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     bdAddrLoader
 
+# QRNGD
+PRODUCT_PACKAGES += \
+    qrngd
+
 # QCOM Perf lib
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.vendor.extension_library=/vendor/lib/libqc-opt.so

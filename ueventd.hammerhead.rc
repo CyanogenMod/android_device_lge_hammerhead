@@ -41,3 +41,5 @@
 /dev/jpeg2                0660   system     camera
 /dev/ttyHS99              0660   bluetooth  net_bt_stack
 /sys/devices/virtual/smdpkt/smdcntl*       open_timeout   0664 radio radio
+
+/dev/hw_random            0660   system     system
