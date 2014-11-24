@@ -44,23 +44,23 @@ fi
 
 oat2dex()
 {
-    APK="$1"
+    OFILE="$1"
 
-    OAT="`dirname $APK`/arm/`basename $APK .apk`.odex"
+    OAT="`dirname $OFILE`/arm/`basename $OFILE ."${OFILE##*.}"`.odex"
     if [ ! -e $OAT ]; then
         return 0
     fi
 
     HIT=`r2 -q -c '/ dex\n035' "$OAT" 2>/dev/null | grep hit0_0 | awk '{print $1}'`
     if [ -z "$HIT" ]; then
-        echo "ERROR: Can't find dex header of `basename $APK`"
+        echo "ERROR: Can't find dex header of `basename $OFILE`"
         return 1
     fi
 
     SIZE=`r2 -e scr.color=false -q -c "px 4 @$HIT+32" $OAT 2>/dev/null | tail -n 1 | awk '{print $2 $3}' | sed -e "s/^/0x/" | rax2 -e`
     r2 -q -c "pr $SIZE @$HIT > /tmp/classes.dex" "$OAT" 2>/dev/null
     if [ $? -ne 0 ]; then
-        echo "ERROR: Something went wrong in `basename $APK`"
+        echo "ERROR: Something went wrong in `basename $OFILE`"
     fi
 }
 
@@ -76,12 +76,12 @@ for FILE in `cat proprietary-blobs.txt | grep -v ^# | grep -v ^$ | sed -e 's#^/s
 
     if [ "$SRC" = "adb" ]; then
         adb pull /system/$FILE $BASE/$FILE
-        if [ "${FILE##*.}" = "apk" ]; then
+        if [ "${FILE##*.}" = "apk" ] || [ "${FILE##*.}" = "jar" ]; then
             oat2dex /system/$FILE
         fi
     else
         cp $SRC/system/$FILE $BASE/$FILE
-        if [ "${FILE##*.}" = "apk" ]; then
+        if [ "${FILE##*.}" = "apk" ] || [ "${FILE##*.}" = "jar" ]; then
             oat2dex $SRC/system/$FILE
         fi
     fi
