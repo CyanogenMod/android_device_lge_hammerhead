@@ -72,9 +72,7 @@ DEVICE_PACKAGE_OVERLAYS := vendor/$VENDOR/$DEVICE/overlay
 
 # Apps
 PRODUCT_PACKAGES += \\
-    OmaDmclient \\
     qcrilmsgtunnel \\
-    SprintHiddenMenu \\
     shutdownlistener \\
     TimeService \\
     UpdateSetting
@@ -124,27 +122,7 @@ LOCAL_PATH := \$(call my-dir)
 ifeq (\$(TARGET_DEVICE),hammerhead)
 
 include \$(CLEAR_VARS)
-LOCAL_MODULE := OmaDmclient
-LOCAL_MODULE_OWNER := $VENDOR
-LOCAL_SRC_FILES := app/\$(LOCAL_MODULE)/\$(LOCAL_MODULE).apk
-LOCAL_MODULE_CLASS := APPS
-LOCAL_MODULE_TAGS := optional
-LOCAL_CERTIFICATE := platform
-LOCAL_MODULE_SUFFIX := \$(COMMON_ANDROID_PACKAGE_SUFFIX)
-include \$(BUILD_PREBUILT)
-
-include \$(CLEAR_VARS)
 LOCAL_MODULE := qcrilmsgtunnel
-LOCAL_MODULE_OWNER := $VENDOR
-LOCAL_SRC_FILES := app/\$(LOCAL_MODULE)/\$(LOCAL_MODULE).apk
-LOCAL_MODULE_CLASS := APPS
-LOCAL_MODULE_TAGS := optional
-LOCAL_CERTIFICATE := platform
-LOCAL_MODULE_SUFFIX := \$(COMMON_ANDROID_PACKAGE_SUFFIX)
-include \$(BUILD_PREBUILT)
-
-include \$(CLEAR_VARS)
-LOCAL_MODULE := SprintHiddenMenu
 LOCAL_MODULE_OWNER := $VENDOR
 LOCAL_SRC_FILES := app/\$(LOCAL_MODULE)/\$(LOCAL_MODULE).apk
 LOCAL_MODULE_CLASS := APPS
