@@ -47,5 +47,4 @@ allow mpdecision self:capability sys_nice;
 
 allow mpdecision power_control_device:chr_file rw_file_perms;
 
-allow mpdecision system_data_file:dir rw_dir_perms;
-allow mpdecision system_data_file:file create_file_perms;
+allow mpdecision thermald_socket:sock_file write;
