@@ -21,3 +21,5 @@ allow system_server ramdump_data_file:file r_file_perms;
 allow system_server self:netlink_socket create_socket_perms;
 
 allow system_server rtc:chr_file rw_file_perms;
+
+allow system_server shell_prop:property_service set;
