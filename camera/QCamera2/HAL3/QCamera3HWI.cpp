@@ -498,7 +498,6 @@ int QCamera3HardwareInterface::validateStreamDimensions(
         camera3_stream_configuration_t *streamList)
 {
     int rc = NO_ERROR;
-    int32_t available_processed_sizes[MAX_SIZES_CNT * 2];
 
     /*
     * Loop through all streams requested in configuration
@@ -1130,7 +1129,7 @@ void QCamera3HardwareInterface::deriveMinFrameDuration()
 int64_t QCamera3HardwareInterface::getMinFrameDuration(const camera3_capture_request_t *request)
 {
     bool hasJpegStream = false;
-    bool hasRawStream = false;
+    bool hasRawStream __unused = false;
     for (uint32_t i = 0; i < request->num_output_buffers; i ++) {
         const camera3_stream_t *stream = request->output_buffers[i].stream;
         if (stream->format == HAL_PIXEL_FORMAT_BLOB)
@@ -5519,8 +5518,6 @@ int QCamera3HardwareInterface::translateToHalMetadata
         char gps_methods[GPS_PROCESSING_METHOD_SIZE];
         const char *gps_methods_src = (const char *)
                 frame_settings.find(ANDROID_JPEG_GPS_PROCESSING_METHOD).data.u8;
-        uint32_t count = frame_settings.find(
-                ANDROID_JPEG_GPS_PROCESSING_METHOD).count;
         memset(gps_methods, 0, sizeof(gps_methods));
         strncpy(gps_methods, gps_methods_src, sizeof(gps_methods));
         rc = AddSetMetaEntryToBatch(hal_metadata, CAM_INTF_META_JPEG_GPS_PROC_METHODS, sizeof(gps_methods), gps_methods);
