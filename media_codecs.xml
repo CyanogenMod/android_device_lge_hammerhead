@@ -45,6 +45,7 @@
             <Limit name="blocks-per-second" min="1" max="972000" />
             <Limit name="bitrate" range="1-100000000" />
         </MediaCodec>
+        <!--
         <MediaCodec name="OMX.qcom.video.encoder.vp8" type="video/x-vnd.on2.vp8" >
             <Quirk name="requires-allocate-on-input-ports" />
             <Quirk name="requires-allocate-on-output-ports"/>
@@ -55,6 +56,7 @@
             <Limit name="blocks-per-second" min="1" max="777600" />
             <Limit name="bitrate" range="1-20000000" />
         </MediaCodec>
+        -->
     </Encoders>
     <Decoders>
         <MediaCodec name="OMX.qcom.video.decoder.avc" type="video/avc" >
@@ -99,6 +101,7 @@
             <Limit name="alignment" value="2x2" />
             <Feature name="adaptive-playback" />
         </MediaCodec>
+        <!--
         <MediaCodec name="OMX.qcom.video.decoder.vp8" type="video/x-vnd.on2.vp8" >
             <Quirk name="requires-allocate-on-input-ports" />
             <Quirk name="requires-allocate-on-output-ports" />
@@ -110,6 +113,7 @@
             <Limit name="bitrate" range="1-20000000" />
             <Feature name="adaptive-playback" />
         </MediaCodec>
+        -->
     </Decoders>
     <Include href="media_codecs_google_video.xml" />
 </MediaCodecs>
