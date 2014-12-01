@@ -56,6 +56,7 @@ namespace qcamera {
 #define DATA_PTR(MEM_OBJ,INDEX) MEM_OBJ->getPtr( INDEX )
 
 #define EMPTY_PIPELINE_DELAY 2
+#define CAM_MAX_SYNC_LATENCY 4
 
 cam_capability_t *gCamCapability[MM_CAMERA_MAX_NUM_SENSORS];
 const camera_metadata_t *gStaticMetadata[MM_CAMERA_MAX_NUM_SENSORS];
@@ -3862,7 +3863,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_SCALER_AVAILABLE_INPUT_OUTPUT_FORMATS_MAP,
                       io_format_map, 0);
 
-    int32_t max_latency = (facingBack)? ANDROID_SYNC_MAX_LATENCY_PER_FRAME_CONTROL:ANDROID_SYNC_MAX_LATENCY_UNKNOWN;
+    int32_t max_latency = (facingBack)? ANDROID_SYNC_MAX_LATENCY_PER_FRAME_CONTROL:CAM_MAX_SYNC_LATENCY;
     staticInfo.update(ANDROID_SYNC_MAX_LATENCY,
                       &max_latency,
                       1);
