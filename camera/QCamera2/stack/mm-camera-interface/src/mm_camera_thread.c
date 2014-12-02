@@ -213,6 +213,8 @@ static void mm_camera_poll_proc_pipe(mm_camera_poll_thread_t *poll_cb)
     read_len = read(poll_cb->pfds[0], &cmd_evt, sizeof(cmd_evt));
     CDBG("%s: read_fd = %d, read_len = %d, expect_len = %d cmd = %d",
          __func__, poll_cb->pfds[0], (int)read_len, (int)sizeof(cmd_evt), cmd_evt.cmd);
+    // read_len is unused if not debugging.
+    (void)read_len;
     switch (cmd_evt.cmd) {
     case MM_CAMERA_PIPE_CMD_POLL_ENTRIES_UPDATED:
     case MM_CAMERA_PIPE_CMD_POLL_ENTRIES_UPDATED_ASYNC:
