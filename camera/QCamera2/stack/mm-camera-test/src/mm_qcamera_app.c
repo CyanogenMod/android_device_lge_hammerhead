@@ -753,7 +753,9 @@ int main(int argc, char **argv)
     int c;
     int rc;
     int run_tc = 0;
+#if 0
     int run_dual_tc = 0;
+#endif
     mm_camera_app_t my_cam_app;
 
     CDBG("\nCamera Test Application\n");
@@ -764,7 +766,9 @@ int main(int argc, char **argv)
                run_tc = 1;
                break;
            case 'd':
+#if 0
                run_dual_tc = 1;
+#endif
                break;
            case 'h':
            default:
