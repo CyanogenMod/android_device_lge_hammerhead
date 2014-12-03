@@ -4716,38 +4716,15 @@
       type="mms"
   />
 
-  <apn carrier="Tele2 Internet"
+  <apn carrier="Tele2"
       mcc="240"
       mnc="07"
-      apn="4g.tele2.se"
-      type="default,supl"
-  />
-
-  <apn carrier="Tele2 MMS"
-      mcc="240"
-      mnc="07"
-      apn="4g.tele2.se"
-      mmsc="http://mmsc.tele2.se"
-      mmsproxy="130.244.202.30"
+      apn="internet.tele2.no"
+      mmsc="http://mmsc.tele2.no"
+      mmsproxy="193.12.40.14"
       mmsport="8080"
-      type="mms"
-  />
-
-  <apn carrier="Tele2 Internet 3G"
-      mcc="240"
-      mnc="07"
-      apn="internet.tele2.se"
-      type="default,supl"
-  />
-
-  <apn carrier="Tele2 MMS 3G"
-      mcc="240"
-      mnc="07"
-      apn="internet.tele2.se"
-      mmsc="http://mmsc.tele2.se"
-      mmsproxy="130.244.202.30"
-      mmsport="8080"
-      type="mms"
+      protocol="IP"
+      type="default,supl,mms"
   />
 
   <apn carrier="Tele2 Internet"
@@ -7031,7 +7008,7 @@
       mvno_type="gid"
   />
 
-  <apn carrier="PC mobile"
+  <apn carrier="Mobile Internet"
       mcc="302"
       mnc="220"
       apn="sp.mb.com"
@@ -26077,15 +26054,7 @@
       mcc="419"
       mnc="03"
       apn="action.wataniya.com"
-      type="default,supl"
-  />
-
-  <apn carrier="WAPAction"
-      mcc="419"
-      mnc="03"
-      apn="wap.wataniya.com"
-      proxy="194.126.53.64"
-      port="8080"
+      authtype="0"
       type="default,supl"
   />
 
@@ -26096,6 +26065,7 @@
       mmsc="http://action.wataniya.com"
       mmsproxy="194.126.53.64"
       mmsport="8080"
+      authtype="0"
       type="mms"
   />
 
@@ -27111,12 +27081,12 @@
       mcc="440"
       mnc="20"
       apn="plus.acs.jp"
-      user="plusw6q9tattkmpk"
-      password="msfbbam83bsdetxb"
-      mmsproxy="andmms.plusacs.ne.jp"
+      user="ym"
+      password="ym"
+      mmsproxy="andmms.plus.acs.ne.jp"
       mmsport="8080"
       mmsc="http://mms-s"
-      type="default,mms,supl"
+      type="default,mms,supl,hipri"
       authtype="2"
   />
 
