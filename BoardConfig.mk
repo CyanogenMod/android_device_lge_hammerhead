@@ -141,6 +141,9 @@ ifeq ($(USE_SVELTE_KERNEL),true)
 MALLOC_IMPL := dlmalloc
 endif
 
+# Hardware
+BOARD_HARDWARE_CLASS := device/lge/hammerhead/cmhw
+
 -include vendor/lge/hammerhead/BoardConfigVendor.mk
 
 # Enable Minikin text layout engine (will be the default soon)
