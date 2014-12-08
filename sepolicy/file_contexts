@@ -79,6 +79,7 @@
 /dev/msm_amrnb.*                   u:object_r:audio_device:s0
 /dev/msm_amrwb.*                   u:object_r:audio_device:s0
 /dev/msm_aac.*                     u:object_r:audio_device:s0
+/dev/tfa9887l			   u:object_r:audio_device:s0
 
 # MSM Dedicated Sensors Processor Subsystem
 /dev/msm_dsps                          u:object_r:sensors_device:s0
@@ -151,3 +152,8 @@
 
 # Thermal engine
 /dev/msm_thermal_query            u:object_r:thermal_engine_device:s0
+
+# Hardware tunables
+/sys/devices/platform/kcal_ctrl.0(/.*)?		u:object_r:kcal_dev:s0
+/sys/bus/platform/drivers/kcal_ctrl(/.*)?	u:object_r:kcal_dev:s0
+/sys/class/timed_output/vibrator/amp            u:object_r:vibe_dev:s0

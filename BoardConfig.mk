@@ -124,6 +124,7 @@ BOARD_SEPOLICY_UNION += \
        healthd.te \
        hostapd.te \
        irsc_util.te \
+       kcal_dev.te \
        mediaserver.te \
        mpdecision.te \
        netmgrd.te \
@@ -135,11 +136,13 @@ BOARD_SEPOLICY_UNION += \
        sensors.te \
        ssr.te \
        surfaceflinger.te \
+       system_app.te \
        system_server.te \
        tee.te \
        thermald.te \
        time.te \
        ueventd.te \
+       vibe_dev.te \
        vss.te \
        wpa.te \
        file_contexts \
