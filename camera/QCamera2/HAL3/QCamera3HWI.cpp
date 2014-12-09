@@ -141,6 +141,7 @@ const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::FLASH_MOD
 
 const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::FACEDETECT_MODES_MAP[] = {
     { ANDROID_STATISTICS_FACE_DETECT_MODE_OFF,    CAM_FACE_DETECT_MODE_OFF     },
+    { ANDROID_STATISTICS_FACE_DETECT_MODE_SIMPLE, CAM_FACE_DETECT_MODE_SIMPLE  },
     { ANDROID_STATISTICS_FACE_DETECT_MODE_FULL,   CAM_FACE_DETECT_MODE_FULL    }
 };
 
@@ -2142,31 +2143,25 @@ QCamera3HardwareInterface::translateFromHalMetadata(
              int32_t faceIds[MAX_ROI];
              uint8_t faceScores[MAX_ROI];
              int32_t faceRectangles[MAX_ROI * 4];
-             int32_t faceLandmarks[MAX_ROI * 6];
-             int j = 0, k = 0;
+             int j = 0;
              for (int i = 0; i < numFaces; i++) {
                  faceIds[i] = faceDetectionInfo->faces[i].face_id;
                  faceScores[i] = faceDetectionInfo->faces[i].score;
                  convertToRegions(faceDetectionInfo->faces[i].face_boundary,
                          faceRectangles+j, -1);
-                 convertLandmarks(faceDetectionInfo->faces[i], faceLandmarks+k);
                  j+= 4;
-                 k+= 6;
              }
 
              if (numFaces <= 0) {
                 memset(faceIds, 0, sizeof(int32_t) * MAX_ROI);
                 memset(faceScores, 0, sizeof(uint8_t) * MAX_ROI);
                 memset(faceRectangles, 0, sizeof(int32_t) * MAX_ROI * 4);
-                memset(faceLandmarks, 0, sizeof(int32_t) * MAX_ROI * 6);
              }
 
              camMetadata.update(ANDROID_STATISTICS_FACE_IDS, faceIds, numFaces);
              camMetadata.update(ANDROID_STATISTICS_FACE_SCORES, faceScores, numFaces);
              camMetadata.update(ANDROID_STATISTICS_FACE_RECTANGLES,
                faceRectangles, numFaces*4);
-             camMetadata.update(ANDROID_STATISTICS_FACE_LANDMARKS,
-               faceLandmarks, numFaces*6);
             break;
             }
          case CAM_INTF_META_COLOR_CORRECT_MODE:{
@@ -2406,6 +2401,10 @@ QCamera3HardwareInterface::translateFromHalMetadata(
              uint8_t fwk_faceDetectMode = (uint8_t)lookupFwkName(FACEDETECT_MODES_MAP,
                                                         sizeof(FACEDETECT_MODES_MAP)/sizeof(FACEDETECT_MODES_MAP[0]),
                                                         *faceDetectMode);
+             /* Downgrade to simple mode */
+             if (fwk_faceDetectMode == ANDROID_STATISTICS_FACE_DETECT_MODE_FULL) {
+                 fwk_faceDetectMode = ANDROID_STATISTICS_FACE_DETECT_MODE_SIMPLE;
+             }
              camMetadata.update(ANDROID_STATISTICS_FACE_DETECT_MODE, &fwk_faceDetectMode, 1);
              break;
           }
@@ -3538,7 +3537,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
 
     uint8_t availableFaceDetectModes[] = {
             ANDROID_STATISTICS_FACE_DETECT_MODE_OFF,
-            ANDROID_STATISTICS_FACE_DETECT_MODE_FULL };
+            ANDROID_STATISTICS_FACE_DETECT_MODE_SIMPLE };
     staticInfo.update(ANDROID_STATISTICS_INFO_AVAILABLE_FACE_DETECT_MODES,
                       availableFaceDetectModes,
                       sizeof(availableFaceDetectModes));
@@ -4653,7 +4652,7 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
     static const int32_t testpatternMode = ANDROID_SENSOR_TEST_PATTERN_MODE_OFF;
     settings.update(ANDROID_SENSOR_TEST_PATTERN_MODE, &testpatternMode, 1);
 
-    static const uint8_t faceDetectMode = ANDROID_STATISTICS_FACE_DETECT_MODE_FULL;
+    static const uint8_t faceDetectMode = ANDROID_STATISTICS_FACE_DETECT_MODE_OFF;
     settings.update(ANDROID_STATISTICS_FACE_DETECT_MODE, &faceDetectMode, 1);
 
     static const uint8_t histogramMode = ANDROID_STATISTICS_HISTOGRAM_MODE_OFF;
@@ -4714,7 +4713,7 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
     scaler_crop_region[3] = gCamCapability[mCameraId]->active_array_size.height;
     settings.update(ANDROID_SCALER_CROP_REGION, scaler_crop_region, 4);
 
-    static const uint8_t antibanding_mode = ANDROID_CONTROL_AE_ANTIBANDING_MODE_60HZ;
+    static const uint8_t antibanding_mode = ANDROID_CONTROL_AE_ANTIBANDING_MODE_AUTO;
     settings.update(ANDROID_CONTROL_AE_ANTIBANDING_MODE, &antibanding_mode, 1);
 
     static const uint8_t vs_mode = ANDROID_CONTROL_VIDEO_STABILIZATION_MODE_OFF;
@@ -4783,10 +4782,6 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
     /* black level lock */
     uint8_t blacklevel_lock = ANDROID_BLACK_LEVEL_LOCK_OFF;
     settings.update(ANDROID_BLACK_LEVEL_LOCK, &blacklevel_lock, 1);
-
-    /* face detect mode */
-    uint8_t facedetect_mode = ANDROID_STATISTICS_FACE_DETECT_MODE_OFF;
-    settings.update(ANDROID_STATISTICS_FACE_DETECT_MODE, &facedetect_mode, 1);
 
     //special defaults for manual template
     if (type == CAMERA3_TEMPLATE_MANUAL) {
