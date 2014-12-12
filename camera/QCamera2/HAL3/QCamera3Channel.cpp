@@ -243,6 +243,11 @@ int32_t QCamera3Channel::start()
         return NO_INIT;
     }
 
+    if(m_bIsActive) {
+        ALOGD("%s: Attempt to start active channel", __func__);
+        return rc;
+    }
+
     for (int i = 0; i < m_numStreams; i++) {
         if (mStreams[i] != NULL) {
             mStreams[i]->start();
