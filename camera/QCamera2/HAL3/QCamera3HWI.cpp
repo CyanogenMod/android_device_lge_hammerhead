@@ -238,6 +238,7 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId,
       mParameters(NULL),
       mPrevParameters(NULL),
       mLoopBackResult(NULL),
+      mFlush(false),
       mMinProcessedFrameDuration(0),
       mMinJpegFrameDuration(0),
       mMinRawFrameDuration(0),
@@ -1736,6 +1737,11 @@ int QCamera3HardwareInterface::processCaptureRequest(
 
     mPendingRequestsList.push_back(pendingRequest);
 
+    if (mFlush) {
+        pthread_mutex_unlock(&mMutex);
+        return NO_ERROR;
+    }
+
     // Notify metadata channel we receive a request
     mMetadataChannel->request(NULL, frameNumber);
 
@@ -1883,6 +1889,10 @@ int QCamera3HardwareInterface::flush()
     FlushMap flushMap;
 
     ALOGV("%s: Unblocking Process Capture Request", __func__);
+
+    pthread_mutex_lock(&mMutex);
+    mFlush = true;
+    pthread_mutex_unlock(&mMutex);
 
     memset(&result, 0, sizeof(camera3_capture_result_t));
 
@@ -2048,6 +2058,8 @@ int QCamera3HardwareInterface::flush()
     mPendingBuffersMap.num_buffers = 0;
     mPendingBuffersMap.mPendingBufferList.clear();
     ALOGV("%s: Cleared all the pending buffers ", __func__);
+
+    mFlush = false;
 
     mFirstRequest = true;
 

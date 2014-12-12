@@ -227,6 +227,12 @@ int32_t QCamera3PostProcessor::stop()
 {
     m_dataProcTh.sendCmd(CAMERA_CMD_TYPE_STOP_DATA_PROC, TRUE, TRUE);
 
+    if (m_pReprocChannel != NULL) {
+        m_pReprocChannel->stop();
+        delete m_pReprocChannel;
+        m_pReprocChannel = NULL;
+    }
+
     return NO_ERROR;
 }
 
