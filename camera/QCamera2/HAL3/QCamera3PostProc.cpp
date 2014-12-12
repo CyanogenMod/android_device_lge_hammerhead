@@ -1027,6 +1027,15 @@ void *QCamera3PostProcessor::dataProcessRoutine(void *data)
             ALOGD("%s: start data proc", __func__);
             is_active = TRUE;
             needNewSess = TRUE;
+
+            pme->m_ongoingPPQ.init();
+            pme->m_inputJpegQ.init();
+            pme->m_inputPPQ.init();
+            pme->m_inputRawQ.init();
+            pme->m_inputMetaQ.init();
+            pme->m_ongoingJpegQ.init();
+            pme->m_jpegSettingsQ.init();
+
             break;
         case CAMERA_CMD_TYPE_STOP_DATA_PROC:
             {
