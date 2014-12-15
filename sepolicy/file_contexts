@@ -149,5 +149,9 @@
 # Bluetooth
 /sys/devices/platform/bluetooth_rfkill/rfkill/rfkill0/state u:object_r:sysfs_bluetooth_writable:s0
 
+# Hardware tunables
+/sys/devices/platform/kcal_ctrl.0/kcal         -- u:object_r:sysfs_hardware:s0
+/sys/class/timed_output/vibrator/amp           -- u:object_r:sysfs_hardware:s0
+
 # Thermal engine
 /dev/msm_thermal_query            u:object_r:thermal_engine_device:s0

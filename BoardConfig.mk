@@ -135,6 +135,7 @@ BOARD_SEPOLICY_UNION += \
        sensors.te \
        ssr.te \
        surfaceflinger.te \
+       system_app.te \
        system_server.te \
        tee.te \
        thermald.te \
