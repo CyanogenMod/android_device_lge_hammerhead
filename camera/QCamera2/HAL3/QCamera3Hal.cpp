@@ -49,5 +49,6 @@ camera_module_t HAL_MODULE_INFO_SYM = {
     set_callbacks: qcamera::QCamera3Factory::set_callbacks,
     get_vendor_tag_ops: qcamera::QCamera3VendorTags::get_vendor_tag_ops,
     open_legacy: qcamera::QCamera3Factory::open_legacy,
+    set_torch_mode: NULL,
     reserved: {0}
 };
