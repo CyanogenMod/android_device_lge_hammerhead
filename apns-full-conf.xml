@@ -7008,15 +7008,6 @@
       mvno_type="gid"
   />
 
-  <apn carrier="Tethered Mobile Internet"
-      mcc="302"
-      mnc="220"
-      apn="isp.mb.com"
-      type="dun"
-      mvno_type="gid"
-      mvno_match_data="50"
-  />
-
   <apn carrier="Mobile Internet"
        mcc="302"
        mnc="220"
@@ -7027,24 +7018,6 @@
        mmsport="80"
        mvno_type="gid"
        mvno_match_data="4D4F"
-  />
-
-  <apn carrier="Tethered Mobile Internet"
-      mcc="302"
-      mnc="220"
-      apn="isp.mb.com"
-      type="dun"
-      mvno_type="gid"
-      mvno_match_data="4D4F"
-  />
-
-  <apn carrier="TELUS ISP"
-      mcc="302"
-      mnc="220"
-      apn="isp.telus.com"
-      type="dun"
-      mvno_type="gid"
-      mvno_match_data="54"
   />
 
   <apn carrier="TELUS"
@@ -7133,17 +7106,6 @@
       mvno_type="gid"
   />
 
-  <apn carrier="MTS Tethering S"
-      mcc="302"
-      mnc="370"
-      apn="internet.mts"
-      type="dun"
-      protocol="IPV4V6"
-      roaming_protocol="IP"
-      mvno_type="gid"
-      mvno_match_data="2C"
-  />
-
   <apn carrier="Fido LTE"
       mcc="302"
       mnc="370"
@@ -7220,17 +7182,6 @@
       mvno_type="gid"
   />
 
-  <apn carrier="MTS Tethering"
-      mcc="302"
-      mnc="660"
-      apn="internet.mts"
-      type="dun"
-      protocol="IPV4V6"
-      roaming_protocol="IP"
-      mvno_type="gid"
-      mvno_match_data="2C"
-  />
-
   <apn carrier="Rogers LTE"
       mcc="302"
       mnc="720"
@@ -7259,28 +7210,6 @@
       mvno_type="imsi"
   />
 
-  <apn carrier="Chatr Tethering"
-      mcc="302"
-      mnc="720"
-      apn="chatrisp.apn"
-      type="dun"
-      mvno_type="imsi"
-      mvno_match_data="302720x94"
-      protocol="IPV4V6"
-      roaming_protocol="IP"
-  />
-
-  <apn carrier="Tbaytel Tethering"
-      mcc="302"
-      mnc="720"
-      apn="ltedata.apn"
-      type="dun"
-      protocol="IPV4V6"
-      roaming_protocol="IP"
-      mvno_type="gid"
-      mvno_match_data="BA"
-  />
-
   <apn carrier="Tbaytel Internet"
       mnc="720"
       mcc="302"
@@ -7293,17 +7222,6 @@
       mmsport="80"
       mvno_type="gid"
       mvno_match_data="BA"
-  />
-
-  <apn carrier="Cityfone Tethering"
-      mcc="302"
-      mnc="720"
-      apn="ltedata.apn"
-      type="dun"
-      protocol="IPV4V6"
-      roaming_protocol="IP"
-      mvno_type="spn"
-      mvno_match_data="CITYFONE"
   />
 
   <apn carrier="Cityfone Internet"
