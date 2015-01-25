@@ -296,6 +296,7 @@
         <item>hspa:4094,87380,704512,4096,16384,110208</item>
         <item>hsupa:4094,87380,704512,4096,16384,110208</item>
     </string-array>
+    
     <!-- Screen brightness when dozing -->
     <integer name="config_screenBrightnessDoze">17</integer>
 
@@ -306,4 +307,7 @@
 
     <!-- Wether doze feature is enabled by default in settings. -->
     <bool name="config_doze_enabled_by_default">true</bool>
+    <bool name="config_dozeAfterScreenOff">true</bool>
+    <bool name="doze_pulse_on_significant_motion">true</bool>
+    <bool name="doze_display_state_supported">true</bool>
 </resources>
