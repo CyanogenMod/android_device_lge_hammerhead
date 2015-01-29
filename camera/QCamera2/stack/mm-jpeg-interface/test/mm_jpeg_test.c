@@ -30,6 +30,7 @@
 #include "mm_jpeg_interface.h"
 #include "mm_jpeg_ionbuf.h"
 #include <sys/time.h>
+#include <stdlib.h>
 
 /** DUMP_TO_FILE:
  *  @filename: file name
