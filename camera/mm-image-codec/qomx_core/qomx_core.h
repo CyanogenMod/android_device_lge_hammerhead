@@ -29,6 +29,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #define QOMX_CORE_H
 
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #include <malloc.h>
 #include <pthread.h>
