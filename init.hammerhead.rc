@@ -122,12 +122,6 @@ on boot
     #venus
     write /sys/bus/msm_subsys/devices/subsys2/restart_level "related"
 
-    # Subsytem Ramdump collection
-    mkdir /data/tombstones 0777 system system
-    mkdir /data/tombstones/ramdump 0777 system system
-    restorecon_recursive /data/tombstones
-    write /sys/module/subsystem_restart/parameters/enable_ramdumps 1
-
     # leds
     chown system system /sys/class/leds/red/on_off_ms
     chown system system /sys/class/leds/green/on_off_ms
@@ -139,6 +133,10 @@ on post-fs-data
     write /sys/kernel/boot_adsp/boot 1
 
     mkdir /data/media 0770 media_rw media_rw
+
+    # Subsytem Ramdump collection
+    mkdir /data/tombstones/ramdump 0777 system system
+    write /sys/module/subsystem_restart/parameters/enable_ramdumps 1
 
     # NFC: create data/nfc for nv storage
     mkdir /data/nfc 0770 nfc nfc
