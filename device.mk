@@ -282,6 +282,10 @@ PRODUCT_PROPERTY_OVERRIDES += \
     ro.qti.sensors.pam=false \
     ro.qti.sdk.sensors.gestures=false
 
+# Doze mode
+PRODUCT_PACKAGES += \
+    HammerheadDoze
+
 # Enable some debug messages by default
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.debug.sensors.hal=w \

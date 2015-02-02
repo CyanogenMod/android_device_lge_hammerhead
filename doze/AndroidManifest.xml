@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.cyanogenmod.doze"
+    android:versionCode="1"
+    android:versionName="1.0"
+    android:sharedUserId="android.uid.system">
+
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <application android:label="HammerheadDoze"
+                 android:persistent="true">
+
+        <receiver android:name="org.cyanogenmod.doze.hammerhead.BootCompletedReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </receiver>
+
+        <service android:name="org.cyanogenmod.doze.hammerhead.DozeService"
+                 android:permission="HammerheadDozeService">
+        </service>
+
+        <activity android:name="HammerheadDoze"
+                  android:label="HammerheadDoze"
+                  android:excludeFromRecents="true"
+                  android:launchMode="singleInstance"
+                  android:screenOrientation="portrait"
+                  android:theme="@style/HammerheadDozeTheme"
+                  android:windowAnimationStyle="@null">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
+
+    </application>
+</manifest>
