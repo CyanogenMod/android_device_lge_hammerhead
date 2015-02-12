@@ -1097,6 +1097,9 @@ typedef enum {
     CAM_INTF_META_PROFILE_TONE_CURVE,
     CAM_INTF_META_NEUTRAL_COL_POINT,
 
+    CAM_INTF_META_FRAMES_STALLED,
+    /* Buffer Circulation stopped */
+
     CAM_INTF_PARM_MAX
 } cam_intf_parm_type_t;
 
