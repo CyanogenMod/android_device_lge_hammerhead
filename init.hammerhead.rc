@@ -24,16 +24,17 @@ on early-init
     write /sys/block/mmcblk0/bdi/read_ahead_kb 512
 
 on init
-    chmod 0701 /mnt/media_rw
-    mkdir /mnt/media_rw/usbdisk 0775 system system
     # See storage config details at http://source.android.com/tech/storage/
+    chmod 0701 /mnt/media_rw
     mkdir /mnt/shell/emulated 0700 shell shell
     mkdir /storage/emulated 0555 root root
+
+    mkdir /mnt/media_rw/usbdisk 0700 media_rw media_rw
+    mkdir /storage/usbdisk 0700 root root
 
     # Set permissions for persist partition
     mkdir /persist 0771 system system
     mkdir /firmware 0771 system system
-    mkdir /storage/usbdisk 0000 system system
 
     export EXTERNAL_STORAGE /storage/emulated/legacy
     export EMULATED_STORAGE_SOURCE /mnt/shell/emulated
@@ -454,7 +455,7 @@ service qseecomd /system/bin/qseecomd
 service sdcard /system/bin/sdcard -u 1023 -g 1023 -l /data/media /mnt/shell/emulated
     class late_start
 
-service fuse_usbdisk /system/bin/sdcard -u 1023 -g 1023 /mnt/media_rw/usbdisk /storage/usbdisk
+service fuse_usbdisk /system/bin/sdcard -u 1023 -g 1023 -w 1023 -d /mnt/media_rw/usbdisk /storage/usbdisk
     class late_start
     disabled
 
