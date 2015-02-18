@@ -309,4 +309,5 @@
     <bool name="config_doze_enabled_by_default">true</bool>
     <bool name="config_dozeAfterScreenOff">true</bool>
     <bool name="doze_pulse_on_significant_motion">true</bool>
+    <bool name="doze_display_state_supported">true</bool>
 </resources>
