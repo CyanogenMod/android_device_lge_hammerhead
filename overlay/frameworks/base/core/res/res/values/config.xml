@@ -302,12 +302,11 @@
 
     <!-- Dream of notifications -->
     <string name="config_dozeComponent">com.android.systemui/com.android.systemui.doze.DozeService</string>
+    <bool name="config_dozeAfterScreenOff">true</bool>
     <bool name="config_powerDecoupleAutoSuspendModeFromDisplay">true</bool>
     <bool name="config_powerDecoupleInteractiveModeFromDisplay">true</bool>
 
     <!-- Wether doze feature is enabled by default in settings. -->
     <bool name="config_doze_enabled_by_default">true</bool>
-    <bool name="config_dozeAfterScreenOff">true</bool>
-    <bool name="doze_pulse_on_significant_motion">true</bool>
-    <bool name="doze_display_state_supported">true</bool>
+    
 </resources>
