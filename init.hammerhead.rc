@@ -202,12 +202,10 @@ on post-fs-data
     write /dev/cpuctl/apps/cpu.notify_on_migrate 1
 
     # Hardware tunables
-    chown root system /sys/class/timed_output/vibrator/amp
-    chown root system /sys/devices/platform/kcal_ctrl.0/kcal
-    chmod 0664 /sys/class/timed_output/vibrator/amp
-    chmod 0664 /sys/devices/platform/kcal_ctrl.0/kcal
-    restorecon /sys/class/timed_output/vibrator/amp
-    restorecon /sys/devices/platform/kcal_ctrl.0/kcal
+    chown system system /sys/devices/virtual/timed_output/vibrator/amp
+    chmod 0664 /sys/devices/virtual/timed_output/vibrator/amp
+    chown system system /sys/devices/virtual/graphics/fb0/rgb
+    chmod 0664 /sys/devices/virtual/graphics/fb0/rgb
 
 on charger
     # Booting modem
