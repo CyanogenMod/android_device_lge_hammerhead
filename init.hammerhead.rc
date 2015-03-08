@@ -183,8 +183,6 @@ on post-fs-data
     mkdir /data/misc/radio 0770 radio radio
     symlink /system/etc/qcril.db /data/misc/radio/qcril.db
 
-    setprop vold.post_fs_data_done 1
-
     # Set the CPU Freq Sampling rates
     write /sys/module/msm_thermal/core_control/enabled 0
     write /sys/devices/system/cpu/cpu1/online 1
@@ -250,6 +248,8 @@ on post-fs-data
     chmod 0664 /sys/devices/platform/kcal_ctrl.0/kcal
     restorecon /sys/class/timed_output/vibrator/amp
     restorecon /sys/devices/platform/kcal_ctrl.0/kcal
+
+    setprop vold.post_fs_data_done 1
 
 on charger
     # Booting modem

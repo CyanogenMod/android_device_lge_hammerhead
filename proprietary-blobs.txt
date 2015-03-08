@@ -83,7 +83,6 @@
 /system/lib/libmm-color-convertor.so
 /system/lib/libmmQSM.so
 /system/lib/liboemcrypto.so
-/system/lib/libQSEEComAPI.so
 /system/lib/libril-qc-qmi-1.so
 /system/lib/librpmb.so
 /system/lib/libssd.so
@@ -200,6 +199,7 @@
 /system/vendor/lib/liboemcamera.so
 /system/vendor/lib/libqcci_legacy.so
 /system/vendor/lib/libqc-opt.so
+/system/vendor/lib/libQSEEComAPI.so
 /system/vendor/lib/libqdi.so
 /system/vendor/lib/libqdp.so
 /system/vendor/lib/libqmi_cci.so
