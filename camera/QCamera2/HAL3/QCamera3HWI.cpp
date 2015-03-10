@@ -56,6 +56,7 @@ namespace qcamera {
 #define DATA_PTR(MEM_OBJ,INDEX) MEM_OBJ->getPtr( INDEX )
 
 #define EMPTY_PIPELINE_DELAY 2
+#define CAM_MAX_SYNC_LATENCY 4
 
 cam_capability_t *gCamCapability[MM_CAMERA_MAX_NUM_SENSORS];
 const camera_metadata_t *gStaticMetadata[MM_CAMERA_MAX_NUM_SENSORS];
@@ -140,6 +141,7 @@ const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::FLASH_MOD
 
 const QCamera3HardwareInterface::QCameraMap QCamera3HardwareInterface::FACEDETECT_MODES_MAP[] = {
     { ANDROID_STATISTICS_FACE_DETECT_MODE_OFF,    CAM_FACE_DETECT_MODE_OFF     },
+    { ANDROID_STATISTICS_FACE_DETECT_MODE_SIMPLE, CAM_FACE_DETECT_MODE_SIMPLE  },
     { ANDROID_STATISTICS_FACE_DETECT_MODE_FULL,   CAM_FACE_DETECT_MODE_FULL    }
 };
 
@@ -236,6 +238,7 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId,
       mParameters(NULL),
       mPrevParameters(NULL),
       mLoopBackResult(NULL),
+      mFlush(false),
       mMinProcessedFrameDuration(0),
       mMinJpegFrameDuration(0),
       mMinRawFrameDuration(0),
@@ -1297,8 +1300,24 @@ void QCamera3HardwareInterface::handleMetadataWithLock(
                     &(i->request_id), 1);
             result.result = dummyMetadata.release();
         } else {
-            result.result = translateFromHalMetadata(metadata,
-                    i->timestamp, i->request_id, i->jpegMetadata, i->pipeline_depth);
+            uint8_t bufferStalled = *((uint8_t *)
+                    POINTER_OF(CAM_INTF_META_FRAMES_STALLED, metadata));
+
+            if (bufferStalled) {
+                result.result = NULL; //Metadata should not be sent in this case
+                camera3_notify_msg_t notify_msg;
+                memset(&notify_msg, 0, sizeof(camera3_notify_msg_t));
+                notify_msg.type = CAMERA3_MSG_ERROR;
+                notify_msg.message.error.frame_number = i->frame_number;
+                notify_msg.message.error.error_code = CAMERA3_MSG_ERROR_REQUEST;
+                notify_msg.message.error.error_stream = NULL;
+                ALOGE("%s: Buffer stall observed reporting error", __func__);
+                mCallbackOps->notify(mCallbackOps, &notify_msg);
+            } else {
+                result.result = translateFromHalMetadata(metadata,
+                        i->timestamp, i->request_id, i->jpegMetadata,
+                        i->pipeline_depth);
+            }
 
             if (i->blob_request) {
                 {
@@ -1734,6 +1753,11 @@ int QCamera3HardwareInterface::processCaptureRequest(
 
     mPendingRequestsList.push_back(pendingRequest);
 
+    if (mFlush) {
+        pthread_mutex_unlock(&mMutex);
+        return NO_ERROR;
+    }
+
     // Notify metadata channel we receive a request
     mMetadataChannel->request(NULL, frameNumber);
 
@@ -1881,6 +1905,10 @@ int QCamera3HardwareInterface::flush()
     FlushMap flushMap;
 
     ALOGV("%s: Unblocking Process Capture Request", __func__);
+
+    pthread_mutex_lock(&mMutex);
+    mFlush = true;
+    pthread_mutex_unlock(&mMutex);
 
     memset(&result, 0, sizeof(camera3_capture_result_t));
 
@@ -2047,7 +2075,24 @@ int QCamera3HardwareInterface::flush()
     mPendingBuffersMap.mPendingBufferList.clear();
     ALOGV("%s: Cleared all the pending buffers ", __func__);
 
+    mFlush = false;
+
     mFirstRequest = true;
+
+    // Start the Streams/Channels
+    if (mMetadataChannel) {
+        /* If content of mStreamInfo is not 0, there is metadata stream */
+        mMetadataChannel->start();
+    }
+    for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
+        it != mStreamInfo.end(); it++) {
+        QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
+        channel->start();
+    }
+    if (mSupportChannel) {
+        mSupportChannel->start();
+    }
+
     pthread_mutex_unlock(&mMutex);
     return 0;
 }
@@ -2141,31 +2186,25 @@ QCamera3HardwareInterface::translateFromHalMetadata(
              int32_t faceIds[MAX_ROI];
              uint8_t faceScores[MAX_ROI];
              int32_t faceRectangles[MAX_ROI * 4];
-             int32_t faceLandmarks[MAX_ROI * 6];
-             int j = 0, k = 0;
+             int j = 0;
              for (int i = 0; i < numFaces; i++) {
                  faceIds[i] = faceDetectionInfo->faces[i].face_id;
                  faceScores[i] = faceDetectionInfo->faces[i].score;
                  convertToRegions(faceDetectionInfo->faces[i].face_boundary,
                          faceRectangles+j, -1);
-                 convertLandmarks(faceDetectionInfo->faces[i], faceLandmarks+k);
                  j+= 4;
-                 k+= 6;
              }
 
              if (numFaces <= 0) {
                 memset(faceIds, 0, sizeof(int32_t) * MAX_ROI);
                 memset(faceScores, 0, sizeof(uint8_t) * MAX_ROI);
                 memset(faceRectangles, 0, sizeof(int32_t) * MAX_ROI * 4);
-                memset(faceLandmarks, 0, sizeof(int32_t) * MAX_ROI * 6);
              }
 
              camMetadata.update(ANDROID_STATISTICS_FACE_IDS, faceIds, numFaces);
              camMetadata.update(ANDROID_STATISTICS_FACE_SCORES, faceScores, numFaces);
              camMetadata.update(ANDROID_STATISTICS_FACE_RECTANGLES,
                faceRectangles, numFaces*4);
-             camMetadata.update(ANDROID_STATISTICS_FACE_LANDMARKS,
-               faceLandmarks, numFaces*6);
             break;
             }
          case CAM_INTF_META_COLOR_CORRECT_MODE:{
@@ -2405,6 +2444,10 @@ QCamera3HardwareInterface::translateFromHalMetadata(
              uint8_t fwk_faceDetectMode = (uint8_t)lookupFwkName(FACEDETECT_MODES_MAP,
                                                         sizeof(FACEDETECT_MODES_MAP)/sizeof(FACEDETECT_MODES_MAP[0]),
                                                         *faceDetectMode);
+             /* Downgrade to simple mode */
+             if (fwk_faceDetectMode == ANDROID_STATISTICS_FACE_DETECT_MODE_FULL) {
+                 fwk_faceDetectMode = ANDROID_STATISTICS_FACE_DETECT_MODE_SIMPLE;
+             }
              camMetadata.update(ANDROID_STATISTICS_FACE_DETECT_MODE, &fwk_faceDetectMode, 1);
              break;
           }
@@ -3537,7 +3580,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
 
     uint8_t availableFaceDetectModes[] = {
             ANDROID_STATISTICS_FACE_DETECT_MODE_OFF,
-            ANDROID_STATISTICS_FACE_DETECT_MODE_FULL };
+            ANDROID_STATISTICS_FACE_DETECT_MODE_SIMPLE };
     staticInfo.update(ANDROID_STATISTICS_INFO_AVAILABLE_FACE_DETECT_MODES,
                       availableFaceDetectModes,
                       sizeof(availableFaceDetectModes));
@@ -3843,6 +3886,8 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE;
     available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR;
     available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_POST_PROCESSING;
+    available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_READ_SENSOR_SETTINGS;
+    available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_BURST_CAPTURE;
     if (facingBack) {
         available_capabilities[available_capabilities_count++] = ANDROID_REQUEST_AVAILABLE_CAPABILITIES_RAW;
     }
@@ -3859,7 +3904,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_SCALER_AVAILABLE_INPUT_OUTPUT_FORMATS_MAP,
                       io_format_map, 0);
 
-    int32_t max_latency = (facingBack)? ANDROID_SYNC_MAX_LATENCY_PER_FRAME_CONTROL:ANDROID_SYNC_MAX_LATENCY_UNKNOWN;
+    int32_t max_latency = (facingBack)? ANDROID_SYNC_MAX_LATENCY_PER_FRAME_CONTROL:CAM_MAX_SYNC_LATENCY;
     staticInfo.update(ANDROID_SYNC_MAX_LATENCY,
                       &max_latency,
                       1);
@@ -4650,7 +4695,7 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
     static const int32_t testpatternMode = ANDROID_SENSOR_TEST_PATTERN_MODE_OFF;
     settings.update(ANDROID_SENSOR_TEST_PATTERN_MODE, &testpatternMode, 1);
 
-    static const uint8_t faceDetectMode = ANDROID_STATISTICS_FACE_DETECT_MODE_FULL;
+    static const uint8_t faceDetectMode = ANDROID_STATISTICS_FACE_DETECT_MODE_OFF;
     settings.update(ANDROID_STATISTICS_FACE_DETECT_MODE, &faceDetectMode, 1);
 
     static const uint8_t histogramMode = ANDROID_STATISTICS_HISTOGRAM_MODE_OFF;
@@ -4711,7 +4756,7 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
     scaler_crop_region[3] = gCamCapability[mCameraId]->active_array_size.height;
     settings.update(ANDROID_SCALER_CROP_REGION, scaler_crop_region, 4);
 
-    static const uint8_t antibanding_mode = ANDROID_CONTROL_AE_ANTIBANDING_MODE_60HZ;
+    static const uint8_t antibanding_mode = ANDROID_CONTROL_AE_ANTIBANDING_MODE_AUTO;
     settings.update(ANDROID_CONTROL_AE_ANTIBANDING_MODE, &antibanding_mode, 1);
 
     static const uint8_t vs_mode = ANDROID_CONTROL_VIDEO_STABILIZATION_MODE_OFF;
@@ -4780,10 +4825,6 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
     /* black level lock */
     uint8_t blacklevel_lock = ANDROID_BLACK_LEVEL_LOCK_OFF;
     settings.update(ANDROID_BLACK_LEVEL_LOCK, &blacklevel_lock, 1);
-
-    /* face detect mode */
-    uint8_t facedetect_mode = ANDROID_STATISTICS_FACE_DETECT_MODE_OFF;
-    settings.update(ANDROID_STATISTICS_FACE_DETECT_MODE, &facedetect_mode, 1);
 
     //special defaults for manual template
     if (type == CAMERA3_TEMPLATE_MANUAL) {
