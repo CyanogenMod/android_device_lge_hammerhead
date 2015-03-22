@@ -221,7 +221,7 @@ on post-fs-data
     write /sys/devices/system/cpu/cpufreq/interactive/timer_slack 30000
 
     # cpu-boost
-    write /sys/module/cpu_boost/parameters/boost_ms 20
+    # write /sys/module/cpu_boost/parameters/boost_ms 20
     write /sys/module/cpu_boost/parameters/sync_threshold 1728000
     write /sys/module/cpu_boost/parameters/input_boost_freq 1190400
     write /sys/module/cpu_boost/parameters/input_boost_ms 500
