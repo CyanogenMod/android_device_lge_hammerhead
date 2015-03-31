@@ -28,6 +28,8 @@ def IncrementalOTA_Assertions(info):
 
 
 def AddBootloaderAssertion(info, input_zip):
+  if FindBootloader(input_zip):
+    return
   android_info = input_zip.read("OTA/android-info.txt")
   m = re.search(r"require\s+version-bootloader\s*=\s*(\S+)", android_info)
   if m:
@@ -35,6 +37,13 @@ def AddBootloaderAssertion(info, input_zip):
     if "*" not in bootloaders:
       info.script.AssertSomeBootloader(*bootloaders)
     info.metadata["pre-bootloader"] = m.group(1)
+
+
+def FindBootloader(zipfile):
+  try:
+    return zipfile.read("RADIO/bootloader.img")
+  except KeyError:
+    return None
 
 
 def FindRadio(zipfile):
