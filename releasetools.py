@@ -28,6 +28,8 @@ def IncrementalOTA_Assertions(info):
 
 
 def AddBootloaderAssertion(info, input_zip):
+  if FindRadio(input_zip):
+    return
   android_info = input_zip.read("OTA/android-info.txt")
   m = re.search(r"require\s+version-bootloader\s*=\s*(\S+)", android_info)
   if m:
