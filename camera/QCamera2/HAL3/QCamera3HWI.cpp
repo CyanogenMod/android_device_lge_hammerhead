@@ -1587,7 +1587,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
     if (rc != NO_ERROR) {
         ALOGE("%s: incoming request is not valid", __func__);
         pthread_mutex_unlock(&mMutex);
-        return rc;
+        return -EINVAL;
     }
 
     meta = request->settings;
@@ -1631,7 +1631,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
             if (NO_ERROR != rc) {
                 ALOGE("%s : Channel initialization failed %d", __func__, rc);
                 pthread_mutex_unlock(&mMutex);
-                return rc;
+                return -ENODEV;
             }
         }
         if (mSupportChannel) {
@@ -1639,13 +1639,18 @@ int QCamera3HardwareInterface::processCaptureRequest(
             if (rc < 0) {
                 ALOGE("%s: Support channel initialization failed", __func__);
                 pthread_mutex_unlock(&mMutex);
-                return rc;
+                return -ENODEV;
             }
         }
 
         //Then start them.
         ALOGD("%s: Start META Channel", __func__);
-        mMetadataChannel->start();
+        rc = mMetadataChannel->start();
+        if (rc < 0) {
+            ALOGE("%s: Metadata channel start failed", __func__);
+            pthread_mutex_unlock(&mMutex);
+            return -ENODEV;
+        }
 
         if (mSupportChannel) {
             rc = mSupportChannel->start();
@@ -1653,14 +1658,22 @@ int QCamera3HardwareInterface::processCaptureRequest(
                 ALOGE("%s: Support channel start failed", __func__);
                 mMetadataChannel->stop();
                 pthread_mutex_unlock(&mMutex);
-                return rc;
+                return -ENODEV;
             }
         }
         for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
             it != mStreamInfo.end(); it++) {
             QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
             ALOGD("%s: Start Regular Channel mask=%d", __func__, channel->getStreamTypeMask());
-            channel->start();
+            rc = channel->start();
+            if (rc < 0) {
+                ALOGE("%s: Start Regular Channel failed mask=%d", __func__, channel->getStreamTypeMask());
+                if (mSupportChannel)
+                    mSupportChannel->stop();
+                mMetadataChannel->stop();
+                pthread_mutex_unlock(&mMutex);
+                return -ENODEV;
+            }
         }
     }
 
@@ -1674,7 +1687,8 @@ int QCamera3HardwareInterface::processCaptureRequest(
     } else if (mFirstRequest || mCurrentRequestId == -1){
         ALOGE("%s: Unable to find request id field, \
                 & no previous id available", __func__);
-        return NAME_NOT_FOUND;
+        pthread_mutex_unlock(&mMutex);
+        return -EINVAL;
     } else {
         ALOGV("%s: Re-using old request id", __func__);
         request_id = mCurrentRequestId;
@@ -1821,8 +1835,11 @@ int QCamera3HardwareInterface::processCaptureRequest(
                 __LINE__, output.buffer, frameNumber);
            rc = channel->request(output.buffer, frameNumber);
         }
-        if (rc < 0)
-            ALOGE("%s: request failed", __func__);
+        if (rc < 0) {
+            ALOGE("%s: Fail to issue channel request", __func__);
+            pthread_mutex_unlock(&mMutex);
+            return -ENODEV;
+        }
     }
 
     /*set the parameters to backend*/
