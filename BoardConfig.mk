@@ -103,41 +103,7 @@ TARGET_RELEASETOOLS_EXTENSIONS := device/lge/hammerhead
 
 BOARD_HAL_STATIC_LIBRARIES := libdumpstate.hammerhead
 
-BOARD_SEPOLICY_DIRS += \
-       device/lge/hammerhead/sepolicy
-
-BOARD_SEPOLICY_UNION += \
-       app.te \
-       bluetooth_loader.te \
-       bridge.te \
-       camera.te \
-       device.te \
-       domain.te \
-       file.te \
-       hostapd.te \
-       init.te \
-       irsc_util.te \
-       mediaserver.te \
-       mpdecision.te \
-       netmgrd.te \
-       platform_app.te \
-       qmux.te \
-       radio.te \
-       rild.te \
-       rmt.te \
-       sensors.te \
-       ssr.te \
-       surfaceflinger.te \
-       system_server.te \
-       tee.te \
-       thermald.te \
-       time.te \
-       ueventd.te \
-       vss.te \
-       wpa.te \
-       file_contexts \
-       genfs_contexts \
-       te_macros
+BOARD_SEPOLICY_DIRS += device/lge/hammerhead/sepolicy
 
 ifneq ($(filter hammerhead_fp aosp_hammerhead_fp,$(TARGET_PRODUCT)),)
 BOARD_SEPOLICY_DIRS += \
