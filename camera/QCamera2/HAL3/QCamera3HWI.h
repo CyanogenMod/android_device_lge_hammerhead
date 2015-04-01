@@ -274,6 +274,7 @@ private:
     int32_t mCurrentRequestId;
     camera3_capture_result_t *mLoopBackResult;
     nsecs_t mLoopBackTimestamp;
+    bool mFlush;
 
     //mutex for serialized access to camera3_device_ops_t functions
     pthread_mutex_t mMutex;
