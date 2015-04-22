@@ -70,8 +70,8 @@ def IncrementalOTA_InstallEnd(info):
     if not sf or common.OPTIONS.full_radio:
       # failed to read SOURCE radio image or one has specified the option to
       # include the whole target radio image.
-      print "no radio image in source target_files or full_radio specified; "
-            "installing complete image"
+      print("no radio image in source target_files or full_radio specified; "
+            "installing complete image")
       WriteRadio(info, tf.data)
     else:
       sf = common.File("radio.img", sf)
