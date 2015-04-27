@@ -342,6 +342,11 @@ PRODUCT_PROPERTY_OVERRIDES += \
     persist.audio.fluence.voicerec=false \
     persist.audio.fluence.speaker=false
 
+# Near-ultrasound support in the default audio and speaker paths.
+PRODUCT_PROPERTY_OVERRIDES += \
+    persist.audio.spkr.ultrasound=true \
+    persist.audio.mic.ultrasound=true
+
 # Setup custom emergency number list based on the MCC. This is needed by RIL
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.radio.custom_ecc=1
