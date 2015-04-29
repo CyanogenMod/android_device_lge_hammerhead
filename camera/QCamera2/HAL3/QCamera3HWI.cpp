@@ -3802,6 +3802,11 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       avail_awb_modes,
                       size);
 
+    uint8_t awbLockAvailable = ANDROID_CONTROL_AWB_LOCK_AVAILABLE_TRUE;
+    staticInfo.update(ANDROID_CONTROL_AWB_LOCK_AVAILABLE,
+                      &awbLockAvailable,
+                      1);
+
     uint8_t available_flash_levels[CAM_FLASH_FIRING_LEVEL_MAX];
     for (int i = 0; i < gCamCapability[cameraId]->supported_flash_firing_level_cnt; i++)
       available_flash_levels[i] = gCamCapability[cameraId]->supported_firing_levels[i];
@@ -3832,6 +3837,11 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_CONTROL_AE_AVAILABLE_MODES,
                       avail_ae_modes,
                       size);
+
+    uint8_t aeLockAvailable = ANDROID_CONTROL_AE_LOCK_AVAILABLE_TRUE;
+    staticInfo.update(ANDROID_CONTROL_AE_LOCK_AVAILABLE,
+                      &aeLockAvailable,
+                      1);
 
     int32_t sensitivity_range[2];
     sensitivity_range[0] = gCamCapability[cameraId]->sensitivity_range.min_sensitivity;
