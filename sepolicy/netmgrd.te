@@ -27,12 +27,10 @@ allow netmgrd shell_exec:file rx_file_perms;
 # Runs /system/bin/ip addr flush dev <device> commands.
 allow netmgrd system_file:file rx_file_perms;
 
-# Talk to init over the property socket
-unix_socket_connect(netmgrd, property, init)
 # Set net.rmnet0.* values
-allow netmgrd radio_prop:property_service set;
+set_prop(netmgrd, radio_prop)
 auditallow netmgrd radio_prop:property_service set;
-allow netmgrd net_radio_prop:property_service set;
+set_prop(netmgrd, net_radio_prop)
 
 # Access to /proc/sys/net/*
 allow netmgrd proc_net:file rw_file_perms;
