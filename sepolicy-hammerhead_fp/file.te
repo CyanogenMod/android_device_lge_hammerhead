@@ -1,0 +1,2 @@
+# sysfs directory file
+type sysfs_fingerprintd, fs_type, sysfs_type;
