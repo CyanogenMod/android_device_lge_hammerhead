@@ -5,7 +5,7 @@ type time_exec, exec_type, file_type;
 init_daemon_domain(time)
 
 # Is r_file_perms sufficient for /dev/rtc0 ?
-allow time rtc:chr_file rw_file_perms;
+allow time rtc_device:chr_file rw_file_perms;
 
 allow time time_data_file:dir rw_dir_perms;
 allow time time_data_file:file create_file_perms;

@@ -97,7 +97,6 @@
 /dev/socket/sensor_ctl_socket          u:object_r:sensors_socket:s0
 
 /dev/cpu_dma_latency               u:object_r:power_control_device:s0
-/dev/rtc0                          u:object_r:rtc:s0
 
 /data/cam_socket[0-9]              u:object_r:camera_socket:s0
 /data/diag_logs(/.*)?              u:object_r:diag_logs:s0
