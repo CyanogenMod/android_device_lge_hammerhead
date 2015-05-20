@@ -1,3 +1,0 @@
-# turn on ioctl whitelisting for this source/target/class. Allow all - 0x89ff
-# is not used
-allow netdomain self:{ udp_socket tcp_socket } { 0x8900-0x89fe 0x8b00-0x8bff };
