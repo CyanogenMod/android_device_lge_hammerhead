@@ -1,2 +1,0 @@
-# Fingerprint device
-allow system_server fpc1020:chr_file rw_file_perms;

@@ -1,2 +1,2 @@
 # Fingerprint device
-/dev/fpc1020   u:object_r:fpc1020:s0
+/dev/fpc1020 u:object_r:fpc1020_device:s0

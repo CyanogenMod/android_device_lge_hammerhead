@@ -18,5 +18,6 @@ on boot
     chown system system /dev/fpc1020
     chmod 660 /dev/fpc1020
 
-on post-fs-data
-    mkdir /data/fpc_tpl 770 system system
+service fingerprintd /system/bin/fingerprintd
+    class late_start
+    user system
