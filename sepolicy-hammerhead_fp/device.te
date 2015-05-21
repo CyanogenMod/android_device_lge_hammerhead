@@ -1,2 +1,2 @@
 # Fingerprint device
-type fpc1020, dev_type;
+type fpc1020_device, dev_type;
