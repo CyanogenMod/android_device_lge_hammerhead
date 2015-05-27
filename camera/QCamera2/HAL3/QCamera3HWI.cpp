@@ -3956,6 +3956,19 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       available_hot_pixel_modes,
                       2);
 
+    uint8_t available_shading_modes[] = {ANDROID_SHADING_MODE_OFF,
+                                         ANDROID_SHADING_MODE_FAST,
+                                         ANDROID_SHADING_MODE_HIGH_QUALITY};
+    staticInfo.update(ANDROID_SHADING_AVAILABLE_MODES,
+                      available_shading_modes,
+                      3);
+
+    uint8_t available_lens_shading_map_modes[] = {ANDROID_STATISTICS_LENS_SHADING_MAP_MODE_OFF,
+                                                  ANDROID_STATISTICS_LENS_SHADING_MAP_MODE_ON};
+    staticInfo.update(ANDROID_STATISTICS_INFO_AVAILABLE_LENS_SHADING_MAP_MODES,
+                      available_lens_shading_map_modes,
+                      2);
+
     uint8_t available_edge_modes[] = {ANDROID_EDGE_MODE_OFF,
                                       ANDROID_EDGE_MODE_FAST,
                                       ANDROID_EDGE_MODE_HIGH_QUALITY};
@@ -4154,8 +4167,14 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
        ANDROID_NOISE_REDUCTION_AVAILABLE_NOISE_REDUCTION_MODES,
        ANDROID_TONEMAP_AVAILABLE_TONE_MAP_MODES,
        ANDROID_STATISTICS_INFO_AVAILABLE_HOT_PIXEL_MAP_MODES,
-       ANDROID_TONEMAP_MAX_CURVE_POINTS, ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL,
-       ANDROID_SYNC_MAX_LATENCY };
+       ANDROID_TONEMAP_MAX_CURVE_POINTS,
+       ANDROID_SYNC_MAX_LATENCY,
+       ANDROID_CONTROL_AVAILABLE_MODES,
+       ANDROID_CONTROL_AE_LOCK_AVAILABLE,
+       ANDROID_CONTROL_AWB_LOCK_AVAILABLE,
+       ANDROID_STATISTICS_INFO_AVAILABLE_LENS_SHADING_MAP_MODES,
+       ANDROID_SHADING_AVAILABLE_MODES,
+       ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL };
     staticInfo.update(ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS,
                       available_characteristics_keys,
                       sizeof(available_characteristics_keys)/sizeof(int32_t));
