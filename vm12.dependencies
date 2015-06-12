@@ -8,5 +8,10 @@
    "repository": "VM12/android_device_qcom_common",
    "target_path": "device/qcom/common",
    "branch":      "vm12"
- }
+ },
+ {
+    "repository": "TheMuppets/proprietary_vendor_lge",
+    "target_path": "vendor/lge",
+    "branch":      "cm-12.1"
+  }  
 ]
