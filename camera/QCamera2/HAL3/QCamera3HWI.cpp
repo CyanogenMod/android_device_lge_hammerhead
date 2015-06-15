@@ -39,7 +39,7 @@
 #include <stdint.h>
 #include <utils/Log.h>
 #include <utils/Errors.h>
-#include <ui/Fence.h>
+#include <sync/sync.h>
 #include <gralloc_priv.h>
 #include "QCamera3HWI.h"
 #include "QCamera3Mem.h"
@@ -57,6 +57,7 @@ namespace qcamera {
 
 #define EMPTY_PIPELINE_DELAY 2
 #define CAM_MAX_SYNC_LATENCY 4
+#define TIMEOUT_NEVER -1
 
 cam_capability_t *gCamCapability[MM_CAMERA_MAX_NUM_SENSORS];
 const camera_metadata_t *gStaticMetadata[MM_CAMERA_MAX_NUM_SENSORS];
@@ -1705,18 +1706,18 @@ int QCamera3HardwareInterface::processCaptureRequest(
     for (size_t i = 0; i < request->num_output_buffers; i++) {
         const camera3_stream_buffer_t& output = request->output_buffers[i];
         QCamera3Channel *channel = (QCamera3Channel *)output.stream->priv;
-        sp<Fence> acquireFence = new Fence(output.acquire_fence);
 
         if (output.stream->format == HAL_PIXEL_FORMAT_BLOB) {
             //Call function to store local copy of jpeg data for encode params.
             blob_request = 1;
         }
-
-        rc = acquireFence->wait(Fence::TIMEOUT_NEVER);
-        if (rc != OK) {
-            ALOGE("%s: fence wait failed %d", __func__, rc);
-            pthread_mutex_unlock(&mMutex);
-            return rc;
+        if (output.acquire_fence != -1) {
+            rc = sync_wait(output.acquire_fence, TIMEOUT_NEVER);
+            if (rc != OK) {
+               ALOGE("%s: sync wait failed %d", __func__, rc);
+               pthread_mutex_unlock(&mMutex);
+               return rc;
+            }
         }
 
         streamID.streamID[streamID.num_streams] =
