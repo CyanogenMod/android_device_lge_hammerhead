@@ -1713,6 +1713,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
         }
         if (output.acquire_fence != -1) {
             rc = sync_wait(output.acquire_fence, TIMEOUT_NEVER);
+            close(output.acquire_fence);
             if (rc != OK) {
                ALOGE("%s: sync wait failed %d", __func__, rc);
                pthread_mutex_unlock(&mMutex);
