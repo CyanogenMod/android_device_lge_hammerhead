@@ -239,6 +239,7 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId,
       mParameters(NULL),
       mPrevParameters(NULL),
       mLoopBackResult(NULL),
+      mAfState(0),
       mFlush(false),
       mMinProcessedFrameDuration(0),
       mMinJpegFrameDuration(0),
@@ -2810,6 +2811,7 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
         case CAM_INTF_META_AF_STATE: {
             uint8_t  *afState =
                (uint8_t *)POINTER_OF(CAM_INTF_META_AF_STATE, metadata);
+            mAfState = *afState;
             camMetadata.update(ANDROID_CONTROL_AF_STATE, afState, 1);
             ALOGV("%s: urgent Metadata : ANDROID_CONTROL_AF_STATE", __func__);
             break;
@@ -2884,6 +2886,8 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
        next_entry = GET_NEXT_PARAM_ID(curr_entry, metadata);
        curr_entry = next_entry;
     }
+
+    camMetadata.update(ANDROID_CONTROL_AF_STATE, &mAfState, 1);
 
     uint8_t fwk_aeMode;
     if (redeye != NULL && *redeye == 1) {
