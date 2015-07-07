@@ -695,6 +695,27 @@
       mvno_type="spn"
   />
 
+  <apn carrier="HOT mobile Internet"
+      mcc="204"
+      mnc="04"
+      apn="net.hotm"
+      type="default,supl"
+      mvno_match_data="HOT mobile"
+      mvno_type="spn"
+  />
+
+  <apn carrier="HOT mobile MMS"
+      mcc="204"
+      mnc="04"
+      apn="mms.hotm"
+      mmsc="http://mms.hotmobile.co.il"
+      mmsproxy="80.246.131.99"
+      mmsport="80"
+      type="mms"
+      mvno_match_data="HOT mobile"
+      mvno_type="spn"
+  />
+
   <apn carrier="UPC mobiel internet"
       mcc="204"
       mnc="08"
@@ -3603,6 +3624,17 @@
       mnc="12"
       apn="webapn.at"
       type="default,supl"
+  />
+
+  <apn carrier="UPC mobiles Internet"
+      mcc="232"
+      mnc="13"
+      apn="Internet.at.upcmobile.com"
+      type="default"
+      mvno_type="imsi"
+      mvno_match_data="23213xxxxxxxxxx"
+      protocol="IP"
+      authtype="0"
   />
 
   <apn carrier="UBIQUISYS"
@@ -18966,6 +18998,13 @@
       type="mms"
   />
 
+  <apn carrier="ALTEL INTERNET"
+      mcc="401"
+      mnc="07"
+      apn="internet"
+      type="default,supl"
+  />
+
   <apn carrier="Tele2 Internet"
       mcc="401"
       mnc="77"
@@ -27890,6 +27929,15 @@
       type="default,supl"
   />
 
+  <apn carrier="GT Internet"
+      mcc="466"
+      mnc="05"
+      apn="gtnet"
+      type="default,supl"
+      protocol="IPV4V6"
+      roaming_protocol="IPV4V6"
+  />
+
   <apn carrier="和信電訊(KGT-Online) (Internet)"
       mcc="466"
       mnc="88"
@@ -29033,6 +29081,17 @@
       mmsproxy="10.12.1.80"
       mmsport="80"
       type="mms"
+  />
+
+  <apn carrier="GT Roaming"
+      mcc="525"
+      mnc="05"
+      apn="gtnet"
+      mvno_type="imsi"
+      mvno_match_data="525053095xxxxxx"
+      type="default,supl"
+      roaming_protocol="IPV4V6"
+      protocol="IPV4V6"
   />
 
   <apn carrier="B-Mobile"
