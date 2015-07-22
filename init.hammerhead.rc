@@ -231,11 +231,7 @@ on post-fs-data
     write /sys/devices/system/cpu/cpu2/cpufreq/scaling_min_freq 300000
     write /sys/devices/system/cpu/cpu3/cpufreq/scaling_min_freq 300000
     write /sys/module/msm_thermal/core_control/enabled 1
-    chown root.system /sys/devices/system/cpu/mfreq
     chmod 220 /sys/devices/system/cpu/mfreq
-    chown system system /sys/devices/system/cpu/cpu1/online
-    chown system system /sys/devices/system/cpu/cpu2/online
-    chown system system /sys/devices/system/cpu/cpu3/online
     chmod 664 /sys/devices/system/cpu/cpu1/online
     chmod 664 /sys/devices/system/cpu/cpu2/online
     chmod 664 /sys/devices/system/cpu/cpu3/online
