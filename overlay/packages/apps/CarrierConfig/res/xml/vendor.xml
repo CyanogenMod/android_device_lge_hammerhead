@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='utf-8' standalone='yes' ?>
+<carrier_config_list>
+<carrier_config mcc="440" mnc="20">
+<boolean name="config_cellBroadcastAppLinks" value="false" />
+</carrier_config>
+</carrier_config_list>
