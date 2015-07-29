@@ -156,3 +156,6 @@
 
 # Thermal engine
 /dev/msm_thermal_query            u:object_r:thermal_engine_device:s0
+
+# wifi mac address
+/sys/devices/msm_sdcc\.2/mmc_host/mmc0/mmc0:0001/mmc0:0001:2/net/wlan0/address    u:object_r:sysfs_mac_address:s0
