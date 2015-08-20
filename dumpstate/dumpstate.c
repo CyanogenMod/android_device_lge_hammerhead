@@ -26,6 +26,7 @@ void dumpstate_board()
     dump_file("SMD PKT Log", "/d/ipc_logging/smd_pkt/log");
     dump_file("IPC Router Log", "/d/ipc_logging/ipc_router/log");
     run_command("ION HEAPS", 5, SU_PATH, "root", "/system/bin/sh", "-c", "for f in $(ls /d/ion/*); do echo $f; cat $f; done", NULL);
+    dump_file("RPM Master Stats", "/d/rpm_master_stats");
     dump_file("RPM stats", "/d/rpm_stats");
     run_command("RPM log", 5, SU_PATH, "root", "/system/bin/sh", "-c", "head -1024 /d/rpm_log", NULL);
 };
