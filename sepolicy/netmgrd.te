@@ -27,6 +27,10 @@ allow netmgrd shell_exec:file rx_file_perms;
 # Runs /system/bin/ip addr flush dev <device> commands.
 allow netmgrd system_file:file rx_file_perms;
 
+# XXX Run toolbox.  Might not be needed.
+allow netmgrd toolbox_exec:file rx_file_perms;
+auditallow netmgrd toolbox_exec:file rx_file_perms;
+
 # Set net.rmnet0.* values
 set_prop(netmgrd, radio_prop)
 auditallow netmgrd radio_prop:property_service set;
