@@ -4,3 +4,15 @@ on boot
     # Modem logging collection
     mkdir /data/diag_logs 0777 system system
     chmod 666 /dev/diag
+
+on property:vold.post_fs_data_done=1
+    # Subsytem Restart
+    #adsp
+    write /sys/bus/msm_subsys/devices/subsys0/restart_level "SYSTEM"
+    #modem
+    write /sys/bus/msm_subsys/devices/subsys1/restart_level "SYSTEM"
+    #venus
+    write /sys/bus/msm_subsys/devices/subsys2/restart_level "SYSTEM"
+
+    write /sys/module/lge_handle_panic/parameters/enable 1
+    write /sys/module/subsystem_restart/parameters/enable_ramdumps 0
