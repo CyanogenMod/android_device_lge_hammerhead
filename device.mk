@@ -213,6 +213,10 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     bdAddrLoader
 
+# I/O Scheduler
+PRODUCT_PROPERTY_OVERRIDES += \
+    sys.io.scheduler=cfq
+
 # QCOM Perf lib
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.vendor.extension_library=/vendor/lib/libqc-opt.so
