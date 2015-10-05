@@ -107,7 +107,6 @@ private:
     cam_frame_len_offset_t mFrameLenOffset;
     cam_padding_info_t mPaddingInfo;
     QCamera3Channel *mChannel;
-    bool m_bActive; // if stream mProcTh is active
 
     static int32_t get_bufs(
                      cam_frame_len_offset_t *offset,

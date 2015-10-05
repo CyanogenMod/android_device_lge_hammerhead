@@ -49,7 +49,6 @@ PRODUCT_COPY_FILES += \
     frameworks/av/media/libstagefright/data/media_codecs_google_audio.xml:system/etc/media_codecs_google_audio.xml \
     frameworks/av/media/libstagefright/data/media_codecs_google_telephony.xml:system/etc/media_codecs_google_telephony.xml \
     frameworks/av/media/libstagefright/data/media_codecs_google_video.xml:system/etc/media_codecs_google_video.xml \
-    frameworks/av/media/libstagefright/data/media_codecs_ffmpeg.xml:system/etc/media_codecs_ffmpeg.xml \
     device/lge/hammerhead/media_codecs.xml:system/etc/media_codecs.xml \
     device/lge/hammerhead/media_profiles.xml:system/etc/media_profiles.xml
 
@@ -100,11 +99,7 @@ PRODUCT_COPY_FILES += \
 PRODUCT_COPY_FILES += \
     device/lge/hammerhead/spn-conf.xml:system/etc/spn-conf.xml
 
-# This device is xhdpi.  However the platform doesn't
-# currently contain all of the bitmaps at xhdpi density so
-# we do this little trick to fall back to the hdpi version
-# if the xhdpi doesn't exist.
-PRODUCT_AAPT_CONFIG := normal hdpi xhdpi xxhdpi
+PRODUCT_AAPT_CONFIG := normal
 PRODUCT_AAPT_PREF_CONFIG := xxhdpi
 
 PRODUCT_CHARACTERISTICS := nosdcard
@@ -218,6 +213,10 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     bdAddrLoader
 
+# I/O Scheduler
+PRODUCT_PROPERTY_OVERRIDES += \
+    sys.io.scheduler=cfq
+
 # QCOM Perf lib
 PRODUCT_PROPERTY_OVERRIDES += \
     ro.vendor.extension_library=/vendor/lib/libqc-opt.so
@@ -265,7 +264,16 @@ PRODUCT_PROPERTY_OVERRIDES += \
     ro.qti.sensors.georv=true \
     ro.qti.sensors.smgr_mag_cal_en=true \
     ro.qti.sensors.step_detector=true \
-    ro.qti.sensors.step_counter=true
+    ro.qti.sensors.step_counter=true \
+    ro.qti.sensors.tap=false \
+    ro.qti.sensors.facing=false \
+    ro.qti.sensors.tilt=false \
+    ro.qti.sensors.amd=false \
+    ro.qti.sensors.rmd=false \
+    ro.qti.sensors.vmd=false \
+    ro.qti.sensors.pedometer=false \
+    ro.qti.sensors.pam=false \
+    ro.qti.sdk.sensors.gestures=false
 
 # Enable some debug messages by default
 PRODUCT_PROPERTY_OVERRIDES += \
@@ -291,6 +299,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
 
 # LTE, CDMA, GSM/WCDMA
 PRODUCT_PROPERTY_OVERRIDES += \
+    ro.ril.force_eri_from_xml=true \
     ro.telephony.default_network=10 \
     telephony.lteOnCdmaDevice=1 \
     persist.radio.mode_pref_nv10=1

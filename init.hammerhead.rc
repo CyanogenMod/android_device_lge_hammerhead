@@ -131,7 +131,7 @@ on boot
     mkdir /data/tombstones 0777 system system
     mkdir /data/tombstones/ramdump 0777 system system
     restorecon_recursive /data/tombstones
-    write /sys/module/subsystem_restart/parameters/enable_ramdumps 1
+    write /sys/module/subsystem_restart/parameters/enable_ramdumps 0
 
     # leds
     chown system system /sys/class/leds/red/on_off_ms
@@ -231,11 +231,7 @@ on post-fs-data
     write /sys/devices/system/cpu/cpu2/cpufreq/scaling_min_freq 300000
     write /sys/devices/system/cpu/cpu3/cpufreq/scaling_min_freq 300000
     write /sys/module/msm_thermal/core_control/enabled 1
-    chown root.system /sys/devices/system/cpu/mfreq
     chmod 220 /sys/devices/system/cpu/mfreq
-    chown system system /sys/devices/system/cpu/cpu1/online
-    chown system system /sys/devices/system/cpu/cpu2/online
-    chown system system /sys/devices/system/cpu/cpu3/online
     chmod 664 /sys/devices/system/cpu/cpu1/online
     chmod 664 /sys/devices/system/cpu/cpu2/online
     chmod 664 /sys/devices/system/cpu/cpu3/online
@@ -453,7 +449,7 @@ service qseecomd /system/bin/qseecomd
 service sdcard /system/bin/sdcard -u 1023 -g 1023 -l /data/media /mnt/shell/emulated
     class late_start
 
-service fuse_usbdisk /system/bin/sdcard -u 1023 -g 1023 -w 1023 -d /mnt/media_rw/usbdisk /storage/usbdisk
+service fuse_usbdisk /system/bin/sdcard -u 1023 -g 1023 -w 1023 /mnt/media_rw/usbdisk /storage/usbdisk
     class late_start
     disabled
 
@@ -472,14 +468,6 @@ service bdAddrLoader /system/bin/bdAddrLoader -f /persist/bluetooth/.bdaddr -h -
     user bluetooth
     group system bluetooth
     oneshot
-
-# bugreport is triggered by holding down volume down, volume up and power
-service bugreport /system/bin/dumpstate -d -p -B \
-        -o /data/data/com.android.shell/files/bugreports/bugreport
-    class main
-    disabled
-    oneshot
-    keycodes 114 115 116
 
 service mpdecision /system/bin/mpdecision --avg_comp
    class main

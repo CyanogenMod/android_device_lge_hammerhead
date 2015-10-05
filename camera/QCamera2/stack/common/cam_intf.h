@@ -430,6 +430,7 @@ typedef union {
     INCLUDE(CAM_INTF_META_URGENT_FRAME_NUMBER,          uint32_t,                    1);
     INCLUDE(CAM_INTF_META_COLOR_CORRECT_MODE,           uint8_t,                     1);
     INCLUDE(CAM_INTF_META_AWB_REGIONS,                  cam_area_t,                  5);
+    INCLUDE(CAM_INTF_META_FRAMES_STALLED,               uint8_t,                     1);
     /* HAL1 only control */
     INCLUDE(CAM_INTF_PARM_SHARPNESS,                	int32_t,                     1);
     INCLUDE(CAM_INTF_PARM_CONTRAST,                 	int32_t,                     1);

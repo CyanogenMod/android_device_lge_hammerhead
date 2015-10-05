@@ -19,4 +19,4 @@
 /dev/block/platform/msm_sdcc.1/by-name/aboot        /aboot          emmc    defaults                                                        defaults
 /dev/block/platform/msm_sdcc.1/by-name/imgdata      /imgdata        emmc    defaults                                                        defaults
 
-/devices/platform/xhci-hcd*                         auto            auto    defaults                                                        voldmanaged=usbdisk:auto
+/devices/platform/xhci-hcd*                         auto            auto    defaults                                                        voldmanaged=usbdisk:auto,noemulatedsd
