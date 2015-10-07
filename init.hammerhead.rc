@@ -24,32 +24,17 @@ on early-init
     write /sys/block/mmcblk0/bdi/read_ahead_kb 512
 
 on init
-    # See storage config details at http://source.android.com/tech/storage/
-    chmod 0701 /mnt/media_rw
-    mkdir /mnt/shell/emulated 0700 shell shell
-    mkdir /storage/emulated 0555 root root
-
-    mkdir /mnt/media_rw/usbdisk 0700 media_rw media_rw
-    mkdir /storage/usbdisk 0700 root root
-
     # Set permissions for persist partition
     mkdir /persist 0771 system system
     mkdir /firmware 0771 system system
 
-    export EXTERNAL_STORAGE /storage/emulated/legacy
-    export EMULATED_STORAGE_SOURCE /mnt/shell/emulated
-    export EMULATED_STORAGE_TARGET /storage/emulated
-
     # Support legacy paths
-    symlink /storage/emulated/legacy /sdcard
-    symlink /storage/emulated/legacy /mnt/sdcard
-    symlink /storage/emulated/legacy /storage/sdcard0
-    symlink /mnt/shell/emulated/0 /storage/emulated/legacy
+    symlink /sdcard /mnt/sdcard
+    symlink /sdcard /storage/sdcard0
 
 on fs
     mount_all ./fstab.hammerhead
     restorecon_recursive /persist
-    setprop ro.crypto.fuse_sdcard true
 
 on early-boot
     # set RLIMIT_MEMLOCK to 64MB
@@ -127,12 +112,6 @@ on boot
     #venus
     write /sys/bus/msm_subsys/devices/subsys2/restart_level "related"
 
-    # Subsytem Ramdump collection
-    mkdir /data/tombstones 0777 system system
-    mkdir /data/tombstones/ramdump 0777 system system
-    restorecon_recursive /data/tombstones
-    write /sys/module/subsystem_restart/parameters/enable_ramdumps 0
-
     # leds
     chown system system /sys/class/leds/red/on_off_ms
     chown system system /sys/class/leds/green/on_off_ms
@@ -143,7 +122,9 @@ on boot
 on post-fs-data
     write /sys/kernel/boot_adsp/boot 1
 
-    mkdir /data/media 0770 media_rw media_rw
+    # Subsytem Ramdump collection
+    mkdir /data/tombstones/ramdump 0777 system system
+    write /sys/module/subsystem_restart/parameters/enable_ramdumps 0
 
     # NFC: create data/nfc for nv storage
     mkdir /data/nfc 0770 nfc nfc
@@ -204,6 +185,7 @@ on post-fs-data
     write /sys/devices/system/cpu/cpufreq/ondemand/optimal_freq 960000
     write /sys/devices/system/cpu/cpufreq/ondemand/sync_freq 960000
     write /sys/devices/system/cpu/cpufreq/ondemand/up_threshold_any_cpu_load 85
+    restorecon_recursive /sys/devices/system/cpu/cpufreq/ondemand
 
     # interactive
     write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor "interactive"
@@ -219,6 +201,7 @@ on post-fs-data
     write /sys/devices/system/cpu/cpufreq/interactive/timer_rate 30000
     write /sys/devices/system/cpu/cpufreq/interactive/max_freq_hysteresis 100000
     write /sys/devices/system/cpu/cpufreq/interactive/timer_slack 30000
+    restorecon_recursive /sys/devices/system/cpu/cpufreq/interactive
 
     # cpu-boost
     # write /sys/module/cpu_boost/parameters/boost_ms 20
@@ -444,14 +427,6 @@ service qseecomd /system/bin/qseecomd
     class core
     user root
     group root
-
-# virtual sdcard daemon running as media_rw (1023)
-service sdcard /system/bin/sdcard -u 1023 -g 1023 -l /data/media /mnt/shell/emulated
-    class late_start
-
-service fuse_usbdisk /system/bin/sdcard -u 1023 -g 1023 -w 1023 /mnt/media_rw/usbdisk /storage/usbdisk
-    class late_start
-    disabled
 
 service charger /sbin/healthd -c
     class charger

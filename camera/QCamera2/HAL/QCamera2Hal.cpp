@@ -48,5 +48,7 @@ camera_module_t HAL_MODULE_INFO_SYM = {
     .set_callbacks = NULL,
     .get_vendor_tag_ops = NULL,
     .open_legacy = NULL,
+    .set_torch_mode = NULL,
+    .init = NULL,
     .reserved = {0}
 };

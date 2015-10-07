@@ -21,6 +21,8 @@
     <item name="none">0</item>
     <item name="screen.on">82.75</item>
     <item name="screen.full">201.16</item>
+    <item name="camera.avg">804.85</item>
+    <item name="camera.flashlight">546.37</item>
     <item name="bluetooth.active">51.55</item>
     <item name="bluetooth.on">0.79</item>
     <item name="wifi.on">3.5</item>
@@ -28,6 +30,7 @@
     <item name="wifi.scan">75.48</item>
     <item name="dsp.audio">0.1</item>
     <item name="dsp.video">0.1</item>
+    <item name="camera.flashlight">542.0</item>
     <item name="gps.on">76.23</item>
     <item name="radio.active">185.19</item>
     <!-- The current consumed by the radio when it is scanning for a signal -->

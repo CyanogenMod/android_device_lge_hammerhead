@@ -39,7 +39,7 @@
 #include <stdint.h>
 #include <utils/Log.h>
 #include <utils/Errors.h>
-#include <ui/Fence.h>
+#include <sync/sync.h>
 #include <gralloc_priv.h>
 #include "QCamera3HWI.h"
 #include "QCamera3Mem.h"
@@ -57,6 +57,7 @@ namespace qcamera {
 
 #define EMPTY_PIPELINE_DELAY 2
 #define CAM_MAX_SYNC_LATENCY 4
+#define TIMEOUT_NEVER -1
 
 cam_capability_t *gCamCapability[MM_CAMERA_MAX_NUM_SENSORS];
 const camera_metadata_t *gStaticMetadata[MM_CAMERA_MAX_NUM_SENSORS];
@@ -238,6 +239,7 @@ QCamera3HardwareInterface::QCamera3HardwareInterface(int cameraId,
       mParameters(NULL),
       mPrevParameters(NULL),
       mLoopBackResult(NULL),
+      mAfState(0),
       mFlush(false),
       mMinProcessedFrameDuration(0),
       mMinJpegFrameDuration(0),
@@ -1587,7 +1589,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
     if (rc != NO_ERROR) {
         ALOGE("%s: incoming request is not valid", __func__);
         pthread_mutex_unlock(&mMutex);
-        return rc;
+        return -EINVAL;
     }
 
     meta = request->settings;
@@ -1631,7 +1633,7 @@ int QCamera3HardwareInterface::processCaptureRequest(
             if (NO_ERROR != rc) {
                 ALOGE("%s : Channel initialization failed %d", __func__, rc);
                 pthread_mutex_unlock(&mMutex);
-                return rc;
+                return -ENODEV;
             }
         }
         if (mSupportChannel) {
@@ -1639,13 +1641,18 @@ int QCamera3HardwareInterface::processCaptureRequest(
             if (rc < 0) {
                 ALOGE("%s: Support channel initialization failed", __func__);
                 pthread_mutex_unlock(&mMutex);
-                return rc;
+                return -ENODEV;
             }
         }
 
         //Then start them.
         ALOGD("%s: Start META Channel", __func__);
-        mMetadataChannel->start();
+        rc = mMetadataChannel->start();
+        if (rc < 0) {
+            ALOGE("%s: Metadata channel start failed", __func__);
+            pthread_mutex_unlock(&mMutex);
+            return -ENODEV;
+        }
 
         if (mSupportChannel) {
             rc = mSupportChannel->start();
@@ -1653,14 +1660,22 @@ int QCamera3HardwareInterface::processCaptureRequest(
                 ALOGE("%s: Support channel start failed", __func__);
                 mMetadataChannel->stop();
                 pthread_mutex_unlock(&mMutex);
-                return rc;
+                return -ENODEV;
             }
         }
         for (List<stream_info_t *>::iterator it = mStreamInfo.begin();
             it != mStreamInfo.end(); it++) {
             QCamera3Channel *channel = (QCamera3Channel *)(*it)->stream->priv;
             ALOGD("%s: Start Regular Channel mask=%d", __func__, channel->getStreamTypeMask());
-            channel->start();
+            rc = channel->start();
+            if (rc < 0) {
+                ALOGE("%s: Start Regular Channel failed mask=%d", __func__, channel->getStreamTypeMask());
+                if (mSupportChannel)
+                    mSupportChannel->stop();
+                mMetadataChannel->stop();
+                pthread_mutex_unlock(&mMutex);
+                return -ENODEV;
+            }
         }
     }
 
@@ -1674,7 +1689,8 @@ int QCamera3HardwareInterface::processCaptureRequest(
     } else if (mFirstRequest || mCurrentRequestId == -1){
         ALOGE("%s: Unable to find request id field, \
                 & no previous id available", __func__);
-        return NAME_NOT_FOUND;
+        pthread_mutex_unlock(&mMutex);
+        return -EINVAL;
     } else {
         ALOGV("%s: Re-using old request id", __func__);
         request_id = mCurrentRequestId;
@@ -1691,18 +1707,19 @@ int QCamera3HardwareInterface::processCaptureRequest(
     for (size_t i = 0; i < request->num_output_buffers; i++) {
         const camera3_stream_buffer_t& output = request->output_buffers[i];
         QCamera3Channel *channel = (QCamera3Channel *)output.stream->priv;
-        sp<Fence> acquireFence = new Fence(output.acquire_fence);
 
         if (output.stream->format == HAL_PIXEL_FORMAT_BLOB) {
             //Call function to store local copy of jpeg data for encode params.
             blob_request = 1;
         }
-
-        rc = acquireFence->wait(Fence::TIMEOUT_NEVER);
-        if (rc != OK) {
-            ALOGE("%s: fence wait failed %d", __func__, rc);
-            pthread_mutex_unlock(&mMutex);
-            return rc;
+        if (output.acquire_fence != -1) {
+            rc = sync_wait(output.acquire_fence, TIMEOUT_NEVER);
+            close(output.acquire_fence);
+            if (rc != OK) {
+               ALOGE("%s: sync wait failed %d", __func__, rc);
+               pthread_mutex_unlock(&mMutex);
+               return rc;
+            }
         }
 
         streamID.streamID[streamID.num_streams] =
@@ -1821,8 +1838,11 @@ int QCamera3HardwareInterface::processCaptureRequest(
                 __LINE__, output.buffer, frameNumber);
            rc = channel->request(output.buffer, frameNumber);
         }
-        if (rc < 0)
-            ALOGE("%s: request failed", __func__);
+        if (rc < 0) {
+            ALOGE("%s: Fail to issue channel request", __func__);
+            pthread_mutex_unlock(&mMutex);
+            return -ENODEV;
+        }
     }
 
     /*set the parameters to backend*/
@@ -2791,6 +2811,7 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
         case CAM_INTF_META_AF_STATE: {
             uint8_t  *afState =
                (uint8_t *)POINTER_OF(CAM_INTF_META_AF_STATE, metadata);
+            mAfState = *afState;
             camMetadata.update(ANDROID_CONTROL_AF_STATE, afState, 1);
             ALOGV("%s: urgent Metadata : ANDROID_CONTROL_AF_STATE", __func__);
             break;
@@ -2865,6 +2886,8 @@ QCamera3HardwareInterface::translateCbUrgentMetadataToResultMetadata
        next_entry = GET_NEXT_PARAM_ID(curr_entry, metadata);
        curr_entry = next_entry;
     }
+
+    camMetadata.update(ANDROID_CONTROL_AF_STATE, &mAfState, 1);
 
     uint8_t fwk_aeMode;
     if (redeye != NULL && *redeye == 1) {
@@ -3108,10 +3131,25 @@ void QCamera3HardwareInterface::extractJpegMetadata(
                 frame_settings.find(ANDROID_JPEG_THUMBNAIL_QUALITY).data.u8,
                 frame_settings.find(ANDROID_JPEG_THUMBNAIL_QUALITY).count);
 
-    if (frame_settings.exists(ANDROID_JPEG_THUMBNAIL_SIZE))
-        jpegMetadata.update(ANDROID_JPEG_THUMBNAIL_SIZE,
-                frame_settings.find(ANDROID_JPEG_THUMBNAIL_SIZE).data.i32,
+    if (frame_settings.exists(ANDROID_JPEG_THUMBNAIL_SIZE)) {
+        int32_t thumbnail_size[2];
+        thumbnail_size[0] = frame_settings.find(ANDROID_JPEG_THUMBNAIL_SIZE).data.i32[0];
+        thumbnail_size[1] = frame_settings.find(ANDROID_JPEG_THUMBNAIL_SIZE).data.i32[1];
+        if (frame_settings.exists(ANDROID_JPEG_ORIENTATION)) {
+            int32_t orientation =
+                  frame_settings.find(ANDROID_JPEG_ORIENTATION).data.i32[0];
+            if ((orientation == 90) || (orientation == 270)) {
+               //swap thumbnail dimensions for rotations 90 and 270 in jpeg metadata.
+               int32_t temp;
+               temp = thumbnail_size[0];
+               thumbnail_size[0] = thumbnail_size[1];
+               thumbnail_size[1] = temp;
+            }
+         }
+         jpegMetadata.update(ANDROID_JPEG_THUMBNAIL_SIZE,
+                thumbnail_size,
                 frame_settings.find(ANDROID_JPEG_THUMBNAIL_SIZE).count);
+    }
 }
 
 /*===========================================================================
@@ -3448,10 +3486,6 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       (uint8_t*)gCamCapability[cameraId]->optical_stab_modes,
                       gCamCapability[cameraId]->optical_stab_modes_count);
 
-    staticInfo.update(ANDROID_LENS_POSITION,
-                      gCamCapability[cameraId]->lens_position,
-                      sizeof(gCamCapability[cameraId]->lens_position)/ sizeof(float));
-
     int32_t lens_shading_map_size[] = {gCamCapability[cameraId]->lens_shading_map_size.width,
                                        gCamCapability[cameraId]->lens_shading_map_size.height};
     staticInfo.update(ANDROID_LENS_INFO_SHADING_MAP_SIZE,
@@ -3743,6 +3777,13 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       scene_mode_overrides,
                       supported_scene_modes_cnt*3);
 
+    uint8_t available_control_modes[] = {ANDROID_CONTROL_MODE_OFF,
+                                         ANDROID_CONTROL_MODE_AUTO,
+                                         ANDROID_CONTROL_MODE_USE_SCENE_MODE};
+    staticInfo.update(ANDROID_CONTROL_AVAILABLE_MODES,
+            available_control_modes,
+            3);
+
     uint8_t avail_antibanding_modes[CAM_ANTIBANDING_MODE_MAX];
     size = 0;
     for (int i = 0; i < gCamCapability[cameraId]->supported_antibandings_cnt; i++) {
@@ -3788,6 +3829,16 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_CONTROL_AWB_AVAILABLE_MODES,
                       avail_awb_modes,
                       size);
+    uint8_t awbLockAvailable = ANDROID_CONTROL_AWB_LOCK_AVAILABLE_TRUE;
+    staticInfo.update(ANDROID_CONTROL_AWB_LOCK_AVAILABLE,
+            &awbLockAvailable,
+            1);
+
+    uint8_t aeLockAvailable = ANDROID_CONTROL_AE_LOCK_AVAILABLE_TRUE;
+    staticInfo.update(ANDROID_CONTROL_AE_LOCK_AVAILABLE,
+            &aeLockAvailable,
+            1);
+
 
     uint8_t available_flash_levels[CAM_FLASH_FIRING_LEVEL_MAX];
     for (int i = 0; i < gCamCapability[cameraId]->supported_flash_firing_level_cnt; i++)
@@ -3819,6 +3870,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
     staticInfo.update(ANDROID_CONTROL_AE_AVAILABLE_MODES,
                       avail_ae_modes,
                       size);
+
 
     int32_t sensitivity_range[2];
     sensitivity_range[0] = gCamCapability[cameraId]->sensitivity_range.min_sensitivity;
@@ -3909,35 +3961,45 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
                       &max_latency,
                       1);
 
-    float optical_axis_angle[2];
-    optical_axis_angle[0] = 0; //need to verify
-    optical_axis_angle[1] = 0; //need to verify
-    staticInfo.update(ANDROID_LENS_OPTICAL_AXIS_ANGLE,
-                      optical_axis_angle,
-                      2);
-
-    uint8_t available_hot_pixel_modes[] = {ANDROID_HOT_PIXEL_MODE_FAST};
+    uint8_t available_hot_pixel_modes[] = {ANDROID_HOT_PIXEL_MODE_FAST,
+                                           ANDROID_HOT_PIXEL_MODE_HIGH_QUALITY};
     staticInfo.update(ANDROID_HOT_PIXEL_AVAILABLE_HOT_PIXEL_MODES,
                       available_hot_pixel_modes,
-                      1);
+                      2);
+
+    uint8_t available_shading_modes[] = {ANDROID_SHADING_MODE_OFF,
+                                         ANDROID_SHADING_MODE_FAST,
+                                         ANDROID_SHADING_MODE_HIGH_QUALITY};
+    staticInfo.update(ANDROID_SHADING_AVAILABLE_MODES,
+                      available_shading_modes,
+                      3);
+
+    uint8_t available_lens_shading_map_modes[] = {ANDROID_STATISTICS_LENS_SHADING_MAP_MODE_OFF,
+                                                  ANDROID_STATISTICS_LENS_SHADING_MAP_MODE_ON};
+    staticInfo.update(ANDROID_STATISTICS_INFO_AVAILABLE_LENS_SHADING_MAP_MODES,
+                      available_lens_shading_map_modes,
+                      2);
 
     uint8_t available_edge_modes[] = {ANDROID_EDGE_MODE_OFF,
-                                      ANDROID_EDGE_MODE_FAST};
+                                      ANDROID_EDGE_MODE_FAST,
+                                      ANDROID_EDGE_MODE_HIGH_QUALITY};
     staticInfo.update(ANDROID_EDGE_AVAILABLE_EDGE_MODES,
                       available_edge_modes,
-                      2);
+                      3);
 
     uint8_t available_noise_red_modes[] = {ANDROID_NOISE_REDUCTION_MODE_OFF,
-                                           ANDROID_NOISE_REDUCTION_MODE_FAST};
+                                           ANDROID_NOISE_REDUCTION_MODE_FAST,
+                                           ANDROID_NOISE_REDUCTION_MODE_HIGH_QUALITY};
     staticInfo.update(ANDROID_NOISE_REDUCTION_AVAILABLE_NOISE_REDUCTION_MODES,
                       available_noise_red_modes,
-                      2);
+                      3);
 
     uint8_t available_tonemap_modes[] = {ANDROID_TONEMAP_MODE_CONTRAST_CURVE,
-                                         ANDROID_TONEMAP_MODE_FAST};
+                                         ANDROID_TONEMAP_MODE_FAST,
+                                         ANDROID_TONEMAP_MODE_HIGH_QUALITY};
     staticInfo.update(ANDROID_TONEMAP_AVAILABLE_TONE_MAP_MODES,
                       available_tonemap_modes,
-                      2);
+                      3);
 
     uint8_t available_hot_pixel_map_modes[] = {ANDROID_STATISTICS_HOT_PIXEL_MAP_MODE_OFF};
     staticInfo.update(ANDROID_STATISTICS_INFO_AVAILABLE_HOT_PIXEL_MAP_MODES,
@@ -4085,7 +4147,7 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
        ANDROID_LENS_INFO_AVAILABLE_OPTICAL_STABILIZATION,
        ANDROID_LENS_INFO_HYPERFOCAL_DISTANCE, ANDROID_LENS_INFO_MINIMUM_FOCUS_DISTANCE,
        ANDROID_LENS_INFO_SHADING_MAP_SIZE, ANDROID_LENS_INFO_FOCUS_DISTANCE_CALIBRATION,
-       ANDROID_LENS_FACING, ANDROID_LENS_OPTICAL_AXIS_ANGLE,ANDROID_LENS_POSITION,
+       ANDROID_LENS_FACING,
        ANDROID_REQUEST_MAX_NUM_OUTPUT_STREAMS, ANDROID_REQUEST_MAX_NUM_INPUT_STREAMS,
        ANDROID_REQUEST_PIPELINE_MAX_DEPTH, ANDROID_REQUEST_AVAILABLE_CAPABILITIES,
        ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS, ANDROID_REQUEST_AVAILABLE_RESULT_KEYS,
@@ -4116,8 +4178,14 @@ int QCamera3HardwareInterface::initStaticMetadata(int cameraId)
        ANDROID_NOISE_REDUCTION_AVAILABLE_NOISE_REDUCTION_MODES,
        ANDROID_TONEMAP_AVAILABLE_TONE_MAP_MODES,
        ANDROID_STATISTICS_INFO_AVAILABLE_HOT_PIXEL_MAP_MODES,
-       ANDROID_TONEMAP_MAX_CURVE_POINTS, ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL,
-       ANDROID_SYNC_MAX_LATENCY };
+       ANDROID_TONEMAP_MAX_CURVE_POINTS,
+       ANDROID_SYNC_MAX_LATENCY,
+       ANDROID_CONTROL_AVAILABLE_MODES,
+       ANDROID_CONTROL_AE_LOCK_AVAILABLE,
+       ANDROID_CONTROL_AWB_LOCK_AVAILABLE,
+       ANDROID_STATISTICS_INFO_AVAILABLE_LENS_SHADING_MAP_MODES,
+       ANDROID_SHADING_AVAILABLE_MODES,
+       ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL };
     staticInfo.update(ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS,
                       available_characteristics_keys,
                       sizeof(available_characteristics_keys)/sizeof(int32_t));
@@ -4342,8 +4410,8 @@ int32_t QCamera3HardwareInterface::getScalarFormat(int32_t format)
  *==========================================================================*/
 
 double QCamera3HardwareInterface::computeNoiseModelEntryS(int32_t sens) {
-   double s = 1.693069e-06 * sens + 3.480007e-05;
-   return s < 0.0 ? 0.0 : s;
+    double s = 1.691405e-06 * sens + 2.694004e-06;
+    return s < 0.0 ? 0.0 : s;
 }
 
 /*===========================================================================
@@ -4359,8 +4427,10 @@ double QCamera3HardwareInterface::computeNoiseModelEntryS(int32_t sens) {
  *==========================================================================*/
 
 double QCamera3HardwareInterface::computeNoiseModelEntryO(int32_t sens) {
-   double o = 1.301416e-07 * sens + -2.262256e-04;
-   return o < 0.0 ? 0.0 : o
+    double digital_gain = sens / 800.0;
+    digital_gain = digital_gain < 1.0 ? 1.0 : digital_gain;
+    double o = 1.445877e-11 * sens * sens + 2.506080e-07 * digital_gain * digital_gain;
+    return o < 0.0 ? 0.0 : o
 ;}
 
 /*===========================================================================
@@ -4602,32 +4672,56 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
 
     uint8_t controlIntent = 0;
     uint8_t focusMode;
+    uint8_t edge_mode;
+    uint8_t noise_red_mode;
+    uint8_t tonemap_mode;
     switch (type) {
       case CAMERA3_TEMPLATE_PREVIEW:
         controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW;
         focusMode = ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE;
+        edge_mode = ANDROID_EDGE_MODE_FAST;
+        noise_red_mode = ANDROID_NOISE_REDUCTION_MODE_FAST;
+        tonemap_mode = ANDROID_TONEMAP_MODE_FAST;
         break;
       case CAMERA3_TEMPLATE_STILL_CAPTURE:
         controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE;
         focusMode = ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE;
+        edge_mode = ANDROID_EDGE_MODE_HIGH_QUALITY;
+        noise_red_mode = ANDROID_NOISE_REDUCTION_MODE_HIGH_QUALITY;
+        tonemap_mode = ANDROID_TONEMAP_MODE_HIGH_QUALITY;
         break;
       case CAMERA3_TEMPLATE_VIDEO_RECORD:
         controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD;
         focusMode = ANDROID_CONTROL_AF_MODE_CONTINUOUS_VIDEO;
+        edge_mode = ANDROID_EDGE_MODE_FAST;
+        noise_red_mode = ANDROID_NOISE_REDUCTION_MODE_FAST;
+        tonemap_mode = ANDROID_TONEMAP_MODE_FAST;
         break;
       case CAMERA3_TEMPLATE_VIDEO_SNAPSHOT:
         controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT;
         focusMode = ANDROID_CONTROL_AF_MODE_CONTINUOUS_VIDEO;
+        edge_mode = ANDROID_EDGE_MODE_FAST;
+        noise_red_mode = ANDROID_NOISE_REDUCTION_MODE_FAST;
+        tonemap_mode = ANDROID_TONEMAP_MODE_FAST;
         break;
       case CAMERA3_TEMPLATE_ZERO_SHUTTER_LAG:
         controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_ZERO_SHUTTER_LAG;
         focusMode = ANDROID_CONTROL_AF_MODE_CONTINUOUS_PICTURE;
+        edge_mode = ANDROID_EDGE_MODE_FAST;
+        noise_red_mode = ANDROID_NOISE_REDUCTION_MODE_FAST;
+        tonemap_mode = ANDROID_TONEMAP_MODE_FAST;
         break;
       case CAMERA3_TEMPLATE_MANUAL:
+        edge_mode = ANDROID_EDGE_MODE_FAST;
+        noise_red_mode = ANDROID_NOISE_REDUCTION_MODE_FAST;
+        tonemap_mode = ANDROID_TONEMAP_MODE_FAST;
         controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_MANUAL;
         focusMode = ANDROID_CONTROL_AF_MODE_OFF;
         break;
       default:
+        edge_mode = ANDROID_EDGE_MODE_FAST;
+        noise_red_mode = ANDROID_NOISE_REDUCTION_MODE_FAST;
+        tonemap_mode = ANDROID_TONEMAP_MODE_FAST;
         controlIntent = ANDROID_CONTROL_CAPTURE_INTENT_CUSTOM;
         break;
     }
@@ -4731,11 +4825,9 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
     settings.update(ANDROID_SENSOR_SENSITIVITY, &default_sensitivity, 1);
 
     /*edge mode*/
-    static const uint8_t edge_mode = ANDROID_EDGE_MODE_FAST;
     settings.update(ANDROID_EDGE_MODE, &edge_mode, 1);
 
     /*noise reduction mode*/
-    static const uint8_t noise_red_mode = ANDROID_NOISE_REDUCTION_MODE_FAST;
     settings.update(ANDROID_NOISE_REDUCTION_MODE, &noise_red_mode, 1);
 
     /*color correction mode*/
@@ -4743,7 +4835,6 @@ camera_metadata_t* QCamera3HardwareInterface::translateCapabilityToMetadata(int 
     settings.update(ANDROID_COLOR_CORRECTION_MODE, &color_correct_mode, 1);
 
     /*transform matrix mode*/
-    static const uint8_t tonemap_mode = ANDROID_TONEMAP_MODE_FAST;
     settings.update(ANDROID_TONEMAP_MODE, &tonemap_mode, 1);
 
     uint8_t edge_strength = (uint8_t)gCamCapability[mCameraId]->sharpness_ctrl.def_value;

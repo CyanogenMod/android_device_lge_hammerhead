@@ -70,6 +70,11 @@ def FullOTA_InstallEnd(info):
 
 def IncrementalOTA_VerifyEnd(info):
   target_radio_img = FindRadio(info.target_zip)
+  if common.OPTIONS.full_radio:
+    if not target_radio_img:
+      assert False, "full radio option specified but no radio img found"
+    else:
+      return
   source_radio_img = FindRadio(info.source_zip)
   if not target_radio_img or not source_radio_img: return
   if source_radio_img != target_radio_img:
@@ -79,6 +84,13 @@ def IncrementalOTA_VerifyEnd(info):
         radio_type, radio_device,
         len(source_radio_img), common.sha1(source_radio_img).hexdigest(),
         len(target_radio_img), common.sha1(target_radio_img).hexdigest()))
+
+
+def IncrementalOTA_InstallBegin(info):
+  # Reduce the space taken by the journal.
+  info.script.Unmount("/system")
+  info.script.TunePartition("/system", "-O", "^has_journal")
+  info.script.Mount("/system")
 
 
 def IncrementalOTA_InstallEnd(info):
@@ -100,13 +112,18 @@ def IncrementalOTA_InstallEnd(info):
   if not tf:
     # failed to read TARGET radio image: don't include any radio in update.
     print "no radio.img in target target_files; skipping install"
+    # we have checked the existence of the radio image in
+    # IncrementalOTA_VerifyEnd(), so it won't reach here.
+    assert common.OPTIONS.full_radio == False
   else:
     tf = common.File("radio.img", tf)
 
     sf = FindRadio(info.source_zip)
-    if not sf:
-      # failed to read SOURCE radio image: include the whole target
-      # radio image.
+    if not sf or common.OPTIONS.full_radio:
+      # failed to read SOURCE radio image or one has specified the option to
+      # include the whole target radio image.
+      print("no radio image in source target_files or full_radio specified; "
+            "installing complete image")
       WriteRadio(info, tf.data)
     else:
       sf = common.File("radio.img", sf)

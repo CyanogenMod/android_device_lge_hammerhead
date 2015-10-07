@@ -6,7 +6,7 @@ type sensors_socket, file_type;
 type camera_socket, file_type;
 type thermald_socket, file_type;
 
-type diag_logs, file_type, data_file_type;
+type diag_logs, file_type, data_file_type, mlstrustedobject;
 type sensors_data_file, file_type, data_file_type;
 type time_data_file, file_type, data_file_type;
 type ramdump_data_file, file_type, data_file_type;
