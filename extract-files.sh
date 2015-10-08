@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (C) 2013, 2014 The CyanogenMod Project
+# Copyright (C) 2013-2015 The CyanogenMod Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -46,9 +46,13 @@ oat2dex()
 {
     OFILE="$1"
 
-    OAT="`dirname $OFILE`/arm/`basename $OFILE ."${OFILE##*.}"`.odex"
+    OAT="`dirname $OFILE`/oat/arm/`basename $OFILE ."${OFILE##*.}"`.odex"
     if [ ! -e $OAT ]; then
-        return 0
+        # Fallback to pre M directory
+        OAT="`dirname $OFILE`/arm/`basename $OFILE ."${OFILE##*.}"`.odex"
+        if [ ! -e $OAT ]; then
+            return 0
+        fi
     fi
 
     HIT=`r2 -q -c '/ dex\n035' "$OAT" 2>/dev/null | grep hit0_0 | awk '{print $1}'`
@@ -75,14 +79,22 @@ for FILE in `cat proprietary-blobs.txt | grep -v ^# | grep -v ^$ | sed -e 's#^/s
     fi
 
     if [ "$SRC" = "adb" ]; then
-        adb pull /system/$FILE $BASE/$FILE
+        if ! adb shell ls /system/$FILE | grep "No such file" &>/dev/null; then
+            adb pull /system/$FILE $BASE/$FILE
+        else
+            echo "ERROR: Pull file /system/$FILE from a device running CyanogenMod"
+        fi
         if [ "${FILE##*.}" = "apk" ] || [ "${FILE##*.}" = "jar" ]; then
             oat2dex /system/$FILE
         fi
     else
-        cp $SRC/system/$FILE $BASE/$FILE
+        if [ -e $SRC/$FILE ]; then
+            cp $SRC/$FILE $BASE/$FILE
+        else
+            echo "ERROR: Pull file /system/$FILE from a device running CyanogenMod"
+        fi
         if [ "${FILE##*.}" = "apk" ] || [ "${FILE##*.}" = "jar" ]; then
-            oat2dex $SRC/system/$FILE
+            oat2dex $SRC/$FILE
         fi
     fi
 
