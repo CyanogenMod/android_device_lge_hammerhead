@@ -6,7 +6,7 @@ OUTDIR=vendor/$VENDOR/$DEVICE
 MAKEFILE=../../../$OUTDIR/$DEVICE-vendor-blobs.mk
 
 (cat << EOF) > $MAKEFILE
-# Copyright (C) 2014 The CyanogenMod Project
+# Copyright (C) 2015 The CyanogenMod Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ for FILE in `cat proprietary-blobs.txt | grep -v ^# | grep -v ^$ | sed -e 's#^/s
 done
 
 (cat << EOF) > ../../../$OUTDIR/$DEVICE-vendor.mk
-# Copyright (C) 2014 The CyanogenMod Project
+# Copyright (C) 2015 The CyanogenMod Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -72,8 +72,10 @@ DEVICE_PACKAGE_OVERLAYS := vendor/$VENDOR/$DEVICE/overlay
 
 # Apps
 PRODUCT_PACKAGES += \\
+    OmaDmclient \\
     qcrilmsgtunnel \\
     shutdownlistener \\
+    SprintHiddenMenu \\
     TimeService \\
     UpdateSetting
 
@@ -81,7 +83,7 @@ PRODUCT_PACKAGES += \\
 EOF
 
 (cat << EOF) > ../../../$OUTDIR/BoardConfigVendor.mk
-# Copyright (C) 2014 The CyanogenMod Project
+# Copyright (C) 2015 The CyanogenMod Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -101,7 +103,7 @@ USE_CAMERA_STUB := false
 EOF
 
 (cat << EOF) > ../../../$OUTDIR/proprietary/Android.mk
-# Copyright (C) 2014 The CyanogenMod Project
+# Copyright (C) 2015 The CyanogenMod Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -122,6 +124,16 @@ LOCAL_PATH := \$(call my-dir)
 ifeq (\$(TARGET_DEVICE),hammerhead)
 
 include \$(CLEAR_VARS)
+LOCAL_MODULE := OmaDmclient
+LOCAL_MODULE_OWNER := $VENDOR
+LOCAL_SRC_FILES := priv-app/\$(LOCAL_MODULE)/\$(LOCAL_MODULE).apk
+LOCAL_MODULE_CLASS := APPS
+LOCAL_MODULE_TAGS := optional
+LOCAL_CERTIFICATE := platform
+LOCAL_MODULE_SUFFIX := \$(COMMON_ANDROID_PACKAGE_SUFFIX)
+include \$(BUILD_PREBUILT)
+
+include \$(CLEAR_VARS)
 LOCAL_MODULE := qcrilmsgtunnel
 LOCAL_MODULE_OWNER := $VENDOR
 LOCAL_SRC_FILES := app/\$(LOCAL_MODULE)/\$(LOCAL_MODULE).apk
@@ -135,6 +147,16 @@ include \$(CLEAR_VARS)
 LOCAL_MODULE := shutdownlistener
 LOCAL_MODULE_OWNER := $VENDOR
 LOCAL_SRC_FILES := app/\$(LOCAL_MODULE)/\$(LOCAL_MODULE).apk
+LOCAL_MODULE_CLASS := APPS
+LOCAL_MODULE_TAGS := optional
+LOCAL_CERTIFICATE := platform
+LOCAL_MODULE_SUFFIX := \$(COMMON_ANDROID_PACKAGE_SUFFIX)
+include \$(BUILD_PREBUILT)
+
+include \$(CLEAR_VARS)
+LOCAL_MODULE := SprintHiddenMenu
+LOCAL_MODULE_OWNER := $VENDOR
+LOCAL_SRC_FILES := priv-app/\$(LOCAL_MODULE)/\$(LOCAL_MODULE).apk
 LOCAL_MODULE_CLASS := APPS
 LOCAL_MODULE_TAGS := optional
 LOCAL_CERTIFICATE := platform
