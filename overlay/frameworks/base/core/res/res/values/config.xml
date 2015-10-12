@@ -335,4 +335,7 @@
          config to 7.
     <integer name="config_deviceHardwareWakeKeys">64</integer> -->
 
+    <!-- enable doze powersaving mode -->
+    <bool name="config_enableAutoPowerModes">true</bool>
+
 </resources>
