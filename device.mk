@@ -332,7 +332,9 @@ PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
 # If data_no_toggle is 1 then active and dormancy enable at all times.
 # If data_no_toggle is 0 there are no reports if the screen is off.
 # Leaving this property unset defaults to '0'
-#PRODUCT_PROPERTY_OVERRIDES += \
+# Due to RIL changes, setting this to 1 now enables toggling of limited
+# system indications and does not impact data state changes.
+PRODUCT_PROPERTY_OVERRIDES += \
     persist.radio.data_no_toggle=1
 
 # Audio Configuration
