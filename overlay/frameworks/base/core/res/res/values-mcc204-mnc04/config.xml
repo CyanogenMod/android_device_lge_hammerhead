@@ -26,7 +26,6 @@
          Or string format of ApnSettingV3.
          note that empty fields can be ommitted: "name,apn,,,,,,,,,310,260,,DUN" -->
     <string-array translatable="false" name="config_tether_apndata">
-        <item>[ApnSettingV3]SaskTel Tethering,inet.stm.sk.ca,,,,,,,,,204,04,,DUN,,,true,0,,,,,,,gid,5A</item>
         <item>[ApnSettingV3]HOT mobile PC,pc.hotm,,,,,,,,,204,04,,DUN,,,true,0,,,,,,,spn,HOT mobile</item>
     </string-array>
 
