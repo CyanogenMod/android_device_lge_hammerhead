@@ -1467,27 +1467,6 @@
       mvno_type="gid"
   />
 
-  <apn carrier="Tele2 WAP"
-      mcc="208"
-      mnc="01"
-      apn="ofnew.fr"
-      user="orange"
-      password="orange"
-      type="default,supl"
-  />
-
-  <apn carrier="Tele2 MMS"
-      mcc="208"
-      mnc="01"
-      apn="orange.acte"
-      user="orange"
-      password="orange"
-      mmsc="http://mms.orange.fr"
-      mmsproxy="192.168.10.200"
-      mmsport="8080"
-      type="mms"
-  />
-
   <apn carrier="SFR webphone"
       mcc="208"
       mnc="09"
@@ -1605,6 +1584,15 @@
       type="mms"
       mvno_match_data="LeclercMobile"
       mvno_type="spn"
+  />
+
+  <apn carrier="Coriolis WAP"
+      mcc="208"
+      mnc="10"
+      apn=""
+      type="ia"
+      mvno_match_data="12"
+      mvno_type="gid"
   />
 
   <apn carrier="Coriolis WAP"
@@ -5063,6 +5051,8 @@
       mnc="03"
       apn="internet"
       type="default,supl"
+      protocol="IPV4V6"
+      roaming_protocol="IPV4"
   />
 
   <apn carrier="DNA MMS"
@@ -5156,6 +5146,8 @@
       mnc="12"
       apn="internet"
       type="default,supl"
+      protocol="IPV4V6"
+      roaming_protocol="IPV4"
   />
 
   <apn carrier="DNA MMS"
@@ -5727,8 +5719,6 @@
       mnc="03"
       apn="internet.tele2.ee"
       type="default,supl"
-      mvno_match_data="24803005x"
-      mvno_type="imsi"
   />
 
   <apn carrier="Tele2 MMS"
@@ -5739,8 +5729,6 @@
       mmsproxy="193.12.40.6"
       mmsport="8080"
       type="mms"
-      mvno_match_data="24803005x"
-      mvno_type="imsi"
   />
 
   <apn carrier="Smart/Ultra MMS"
@@ -5751,8 +5739,6 @@
       mmsproxy="193.12.40.6"
       mmsport="8080"
       type="mms"
-      mvno_match_data="24803005x"
-      mvno_type="imsi"
   />
 
   <apn carrier="Tele2 Internet"
@@ -5760,8 +5746,8 @@
       mnc="03"
       apn="internet.tele2.ee"
       type="default,supl"
-      mvno_match_data="24803000x"
-      mvno_type="imsi"
+      mvno_match_data="Tele2"
+      mvno_type="spn"
   />
 
   <apn carrier="Smart/Ultra MMS"
@@ -5772,8 +5758,8 @@
       mmsproxy="193.12.40.6"
       mmsport="8080"
       type="mms"
-      mvno_match_data="24803000x"
-      mvno_type="imsi"
+      mvno_match_data="Tele2"
+      mvno_type="spn"
   />
 
   <apn carrier="MTS Internet"
@@ -6940,6 +6926,8 @@
       mcc="293"
       mnc="70"
       apn="telemach.net"
+      user="telemach"
+      password="internet"
       mmsc="http://mms.telemach.net:8002"
       mmsproxy="91.185.221.85"
       mmsport="8080"
@@ -26385,14 +26373,14 @@
       type="mms"
   />
 
-  <apn carrier="Internet HOT mobile"
+  <apn carrier="HOT mobile Internet"
       mcc="425"
       mnc="07"
       apn="net.hotm"
       type="default,supl"
   />
 
-  <apn carrier="MMS HOT mobile"
+  <apn carrier="HOT mobile MMS"
       mcc="425"
       mnc="07"
       apn="mms.hotm"
@@ -28776,13 +28764,6 @@
       mcc="515"
       mnc="05"
       apn="fbband"
-      type="default,supl"
-  />
-
-  <apn carrier="Sun Streaming"
-      mcc="515"
-      mnc="05"
-      apn="minternet"
       type="default,supl"
   />
 
@@ -32324,16 +32305,6 @@
       password="datos"
       authtype="1"
       type="default,supl"
-  />
-
-  <apn carrier="Argentina:Personal:DUN"
-      mcc="722"
-      mnc="34"
-      apn="internet.personal.com"
-      type="dun"
-      user="internet"
-      password="internet"
-      authtype="0"
   />
 
   <apn carrier="Personal MMS"
