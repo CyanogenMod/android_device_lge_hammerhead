@@ -1,5 +1,2 @@
 # Talk to qmuxd (/dev/socket/qmux_radio)
 qmux_socket(radio)
-
-# text relocation in /system/vendor/lib/libvdmengine.so
-allow radio system_file:file execmod;
