@@ -10394,52 +10394,7 @@
       mmsport="9201"
       type="mms"
   />
-
-  <apn carrier="T-Mobile US 580"
-      mcc="310"
-      mnc="580"
-      apn=""
-      type="ia"
-      protocol="IPV6"
-      roaming_protocol="IP"
-      mtu="1440"
-  />
-
-  <apn carrier="T-Mobile US 580"
-      mcc="310"
-      mnc="580"
-      apn="fast.t-mobile.com"
-      mmsc="http://mms.msg.eng.t-mobile.com/mms/wapenc"
-      type="default,supl,mms"
-      protocol="IPV6"
-      roaming_protocol="IP"
-      mtu="1440"
-  />
-
-  <apn carrier="T-Mobile US 580 DUN"
-      mcc="310"
-      mnc="580"
-      apn="pcweb.tmobile.com"
-      user="none"
-      server="*"
-      password="none"
-      protocol="IP"
-      type="dun"
-      mtu="1440"
-  />
-
-  <apn carrier="MetroPCS 580"
-      mcc="310"
-      mnc="580"
-      apn="fast.metropcs.com"
-      mmsc="http://metropcs.mmsmvno.com/mms/wapenc"
-      type="default,supl,mms"
-      protocol="IPV6"
-      roaming_protocol="IP"
-      mvno_match_data="6D"
-      mvno_type="gid"
-  />
-
+  
   <apn carrier="inland"
       mcc="310"
       mnc="580"
