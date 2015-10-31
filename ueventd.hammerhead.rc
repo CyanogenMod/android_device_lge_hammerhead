@@ -41,3 +41,6 @@
 /dev/jpeg2                0660   system     camera
 /dev/ttyHS99              0660   bluetooth  net_bt_stack
 /sys/devices/virtual/smdpkt/smdcntl*       open_timeout   0664 radio radio
+
+# cpufreq
+/sys/devices/system/cpu/cpufreq            interactive/go_hispeed_load   0664 system system
