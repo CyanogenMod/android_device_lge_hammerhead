@@ -1,4 +1,4 @@
-type time, domain, mlstrustedsubject;
+type time, domain, domain_deprecated, mlstrustedsubject;
 type time_exec, exec_type, file_type;
 
 # Started by init
