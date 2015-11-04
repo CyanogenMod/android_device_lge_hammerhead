@@ -1,4 +1,4 @@
-type vss, domain;
+type vss, domain, domain_deprecated;
 type vss_exec, exec_type, file_type;
 
 # Started by init

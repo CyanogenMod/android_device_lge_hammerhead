@@ -1,4 +1,4 @@
-type ssr, domain;
+type ssr, domain, domain_deprecated;
 type ssr_exec, exec_type, file_type;
 
 # Started by init
