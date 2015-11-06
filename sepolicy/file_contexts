@@ -42,6 +42,7 @@
 /dev/block/platform/msm_sdcc\.1/by-name/fsc         u:object_r:modem_block_device:s0
 /dev/block/platform/msm_sdcc\.1/by-name/fsg         u:object_r:modem_block_device:s0
 /dev/block/platform/msm_sdcc\.1/by-name/ssd         u:object_r:ssd_block_device:s0
+/dev/block/platform/msm_sdcc\.1/by-name/misc        u:object_r:misc_block_device:s0
 
 # CPU governor controls
 /dev/socket/mpdecision(/.*)?           u:object_r:mpdecision_socket:s0
