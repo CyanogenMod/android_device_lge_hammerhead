@@ -421,7 +421,7 @@ service bugreport /system/bin/dumpstate -d -p -B \
 service mpdecision /system/bin/mpdecision --no_sleep --avg_comp
    class main
    user root
-   group root system
+   group root system readproc
    disabled
 
 service ssr_ramdump /system/bin/subsystem_ramdump -m -t emmc
