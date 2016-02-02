@@ -19,7 +19,7 @@ PRODUCT_BRAND := google
 PRODUCT_MODEL := Nexus 5
 PRODUCT_MANUFACTURER := LGE
 
-PRODUCT_BUILD_PROP_OVERRIDES += PRODUCT_NAME=hammerhead BUILD_FINGERPRINT=google/hammerhead/hammerhead:4.4/KRT16M/893803:user/release-keys PRIVATE_BUILD_DESC="hammerhead-user 4.4 KRT16M 893803 release-keys"
-
-# Enable Torch
-PRODUCT_PACKAGES += Torch
+PRODUCT_BUILD_PROP_OVERRIDES += \
+    PRODUCT_NAME=hammerhead \
+    BUILD_FINGERPRINT=google/hammerhead/hammerhead:6.0.1/MMB29Q/2480792:user/release-keys \
+    PRIVATE_BUILD_DESC="hammerhead-user 6.0.1 MMB29Q 2480792 release-keys"
