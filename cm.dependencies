@@ -1,6 +1,7 @@
 [
  {
    "repository": "android_kernel_lge_hammerhead",
+   "branch": "cm-13.0",
    "target_path": "kernel/lge/hammerhead"
  }
 ]
