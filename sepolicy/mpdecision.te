@@ -4,7 +4,7 @@ type mpdecision_exec, exec_type, file_type;
 
 # DAC overrides
 allow mpdecision self:capability dac_override;
-auditallow mpdecision self:capability dac_override;
+#auditallow mpdecision self:capability dac_override;
 
 # Started by init
 init_daemon_domain(mpdecision)
@@ -21,6 +21,7 @@ allow mpdecision mpdecision_socket:sock_file create_file_perms;
 type_transition mpdecision socket_device:sock_file mpdecision_socket;
 allow mpdecision self:capability chown;
 allow mpdecision socket_device:dir w_dir_perms;
+allow mpdecision socket_device:sock_file create_file_perms;
 
 # By-product of setting owner on sock_file (don't allow)
 dontaudit mpdecision self:capability fsetid;
@@ -44,3 +45,7 @@ r_dir_file(mpdecision, system_server)
 r_dir_file(mpdecision, mediaserver)
 
 allow mpdecision self:capability sys_nice;
+
+allow mpdecision power_control_device:chr_file rw_file_perms;
+allow mpdecision system_data_file:dir rw_dir_perms;
+allow mpdecision system_data_file:file r_file_perms;
