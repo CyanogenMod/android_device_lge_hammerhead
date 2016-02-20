@@ -84,6 +84,8 @@
 /system/lib/libril-qc-qmi-1.so
 /system/lib/libstagefright_hdcp.so
 /system/lib/libxml.so
+/system/lib/librpmb.so
+/system/lib/libssd.so
 /system/vendor/bin/vss_init
 /system/vendor/firmware/a330_pfp.fw
 /system/vendor/firmware/a330_pm4.fw
