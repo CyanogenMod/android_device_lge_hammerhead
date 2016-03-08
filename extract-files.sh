@@ -35,6 +35,11 @@ fi
 BASE=../../../vendor/$VENDOR/$DEVICE/proprietary
 rm -rf $BASE/*
 
+echo "WARNING: If your phone isn't in Permissive SELinux mode, there is possibilities that some files will not be found."
+echo "If it happens, open an adb shell (adb shell), then enter in a root session (su) and then set SELinux in Permissive mode (setenforce 0)"
+echo "Then retry."
+echo "After, restart but with setenforce 1 to re-enable SELinux."
+sleep 2
 
 for FILE in `cat proprietary-blobs.txt | grep -v ^# | grep -v ^$ | sed -e 's#^/system/##g' | sed -e "s#^-/system/##g"`; do
     DIR=`dirname $FILE`
