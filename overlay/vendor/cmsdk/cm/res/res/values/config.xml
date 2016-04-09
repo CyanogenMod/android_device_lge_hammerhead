@@ -27,4 +27,12 @@
     <integer name="config_dayColorTemperature">6600</integer>
     <integer name="config_nightColorTemperature">5000</integer>
 
+    <!-- Enable the option to check proximity sensor when deciding whether to
+         turn the screen on
+         NOTE ! - Enable for devices that have a fast response proximity sensor
+    -->
+    <bool name="config_proximityCheckOnWake">true</bool>
+    <integer name="config_proximityCheckTimeout">100</integer>
+    <bool name="config_proximityCheckOnWakeEnabledByDefault">false</bool>
+
 </resources>
