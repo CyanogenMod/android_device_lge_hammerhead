@@ -45,7 +45,7 @@ system/app/qcrilmsgtunnel/qcrilmsgtunnel.apk:lge
 system/lib/libloc_core.so:qcom
 system/vendor/lib/egl/libq3dtools_adreno.so:qcom
 system/etc/acdbdata/MTP/MTP_Speaker_cal.acdb:lge
-system/app/TimeService.apk:qcom
+system/app/TimeService/TimeService.apk:qcom
 system/vendor/firmware/bcm2079x-b5_firmware.ncd:broadcom
 system/vendor/firmware/bcm2079x-b5_pre_firmware.ncd:broadcom
 system/vendor/firmware/bcm4335c0.hcd:broadcom
@@ -146,7 +146,7 @@ system/bin/radish:qcom
 system/bin/rmt_storage:qcom
 system/vendor/lib/hw/sensors.msm8974.so:qcom
 system/bin/sensors.qcom:qcom
-system/app/shutdownlistener.apk:qcom
+system/app/shutdownlistener/shutdownlistener.apk:qcom
 system/bin/subsystem_ramdump:qcom
 system/bin/thermal-engine-hh:qcom
 system/bin/time_daemon:qcom
