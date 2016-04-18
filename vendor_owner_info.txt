@@ -45,10 +45,12 @@ system/app/qcrilmsgtunnel/qcrilmsgtunnel.apk:lge
 system/lib/libloc_core.so:qcom
 system/vendor/lib/egl/libq3dtools_adreno.so:qcom
 system/etc/acdbdata/MTP/MTP_Speaker_cal.acdb:lge
-system/app/TimeService.apk:qcom
+system/app/TimeService/TimeService.apk:qcom
 system/vendor/firmware/bcm2079x-b5_firmware.ncd:broadcom
 system/vendor/firmware/bcm2079x-b5_pre_firmware.ncd:broadcom
 system/vendor/firmware/bcm4335c0.hcd:broadcom
+system/vendor/firmware/fw_bcmdhd.bin:broadcom
+system/vendor/firmware/fw_bcmdhd_apsta.bin:broadcom
 system/bin/bridgemgrd:qcom
 system/etc/firmware/cpp_firmware_v1_1_1.fw:qcom
 system/etc/firmware/cpp_firmware_v1_1_6.fw:qcom
@@ -76,6 +78,7 @@ system/lib/libQSEEComAPI.so:qcom
 system/vendor/lib/libTimeService.so:qcom
 system/vendor/lib/libacdbloader.so:qcom
 system/lib/libadsprpc.so:qcom
+system/lib/libalsautils.so:qcom
 system/vendor/lib/libaudcal.so:qcom
 system/lib/libchromatix_imx179_common.so:qcom
 system/lib/libchromatix_imx179_default_video.so:qcom
@@ -146,7 +149,7 @@ system/bin/radish:qcom
 system/bin/rmt_storage:qcom
 system/vendor/lib/hw/sensors.msm8974.so:qcom
 system/bin/sensors.qcom:qcom
-system/app/shutdownlistener.apk:qcom
+system/app/shutdownlistener/shutdownlistener.apk:qcom
 system/bin/subsystem_ramdump:qcom
 system/bin/thermal-engine-hh:qcom
 system/bin/time_daemon:qcom
@@ -200,3 +203,6 @@ system/vendor/lib/libqmi_client_qmux.so:qcom
 system/vendor/lib/libsensor_reg.so:qcom
 system/vendor/lib/libtime_genoff.so:qcom
 system/vendor/lib/libqdi.so:qcom
+/system/vendor/lib/soundfx/libqcbassboost.so:qcom
+/system/vendor/lib/soundfx/libqcreverb.so:qcom
+/system/vendor/lib/soundfx/libqcvirt.so:qcom
