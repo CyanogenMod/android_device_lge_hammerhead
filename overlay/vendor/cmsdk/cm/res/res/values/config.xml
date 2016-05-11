@@ -19,10 +19,6 @@
 
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
 
-    <!-- Performance profiles -->
-    <string name="config_perf_profile_prop">powerhal</string>
-    <string name="config_perf_profile_default_entry">1</string>
-
     <!-- Default values for display color temperature -->
     <integer name="config_dayColorTemperature">6600</integer>
     <integer name="config_nightColorTemperature">5000</integer>
