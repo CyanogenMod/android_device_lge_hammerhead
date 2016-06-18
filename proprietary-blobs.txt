@@ -237,3 +237,6 @@
 /system/vendor/lib/libWVStreamControlAPI_L1.so
 /system/vendor/lib/drm/libdrmwvmplugin.so
 /system/vendor/lib/mediadrm/libwvdrmengine.so
+/system/vendor/lib/soundfx/libqcbassboost.so
+/system/vendor/lib/soundfx/libqcreverb.so
+/system/vendor/lib/soundfx/libqcvirt.so
