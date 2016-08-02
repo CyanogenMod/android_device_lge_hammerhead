@@ -1,19 +1,36 @@
 #!/bin/bash
 #
-# Copyright (C) 2013-2015 The CyanogenMod Project
+# Copyright (C) 2016 The CyanogenMod Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#      http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
-
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 set -e
 
 VENDOR=lge
 DEVICE=hammerhead
+
+# Load extractutils and do some sanity checks
+MY_DIR="${BASH_SOURCE%/*}"
+if [[ ! -d "$MY_DIR" ]]; then MY_DIR="$PWD"; fi
+
+CM_ROOT="$MY_DIR"/../../..
+
+HELPER="$CM_ROOT"/vendor/cm/build/tools/extract_utils.sh
+if [ ! -f "$HELPER" ]; then
+    echo "Unable to find helper script at $HELPER"
+    exit 1
+fi
+. "$HELPER"
 
 if [ $# -eq 0 ]; then
   SRC=adb
@@ -31,30 +48,9 @@ else
   fi
 fi
 
+# Initialize the helper
+setup_vendor "$DEVICE" "$VENDOR" "$CM_ROOT"
 
-BASE=../../../vendor/$VENDOR/$DEVICE/proprietary
-rm -rf $BASE/*
+extract "$MY_DIR"/proprietary-blobs.txt "$SRC"
 
-
-for FILE in `cat proprietary-blobs.txt | grep -v ^# | grep -v ^$ | sed -e 's#^/system/##g' | sed -e "s#^-/system/##g"`; do
-    DIR=`dirname $FILE`
-    if [ ! -d $BASE/$DIR ]; then
-        mkdir -p $BASE/$DIR
-    fi
-
-    if [ "$SRC" = "adb" ]; then
-        if ! adb shell ls /system/$FILE | grep "No such file" &>/dev/null; then
-            adb pull /system/$FILE $BASE/$FILE
-        else
-            echo "ERROR: Pull file /system/$FILE from a device running CyanogenMod"
-        fi
-    else
-        if [ -e $SRC/$FILE ]; then
-            cp $SRC/$FILE $BASE/$FILE
-        else
-            echo "ERROR: Pull file /system/$FILE from a device running CyanogenMod"
-        fi
-    fi
-done
-
-./setup-makefiles.sh
+"$MY_DIR"/setup-makefiles.sh
