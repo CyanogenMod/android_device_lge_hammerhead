@@ -175,10 +175,6 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     power.msm8974
 
-# Gello
-PRODUCT_PACKAGES += \
-    Gello
-
 # GPS configuration
 PRODUCT_COPY_FILES += \
     device/lge/hammerhead/gps.conf:system/etc/gps.conf

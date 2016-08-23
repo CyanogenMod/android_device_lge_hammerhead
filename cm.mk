@@ -12,6 +12,10 @@ $(call inherit-product, vendor/cm/config/nfc_enhanced.mk)
 # Inherit device configuration
 $(call inherit-product, device/lge/hammerhead/full_hammerhead.mk)
 
+# Gello
+PRODUCT_PACKAGES += \
+    Gello
+
 ## Device identifier. This must come after all inclusions
 PRODUCT_DEVICE := hammerhead
 PRODUCT_NAME := cm_hammerhead
