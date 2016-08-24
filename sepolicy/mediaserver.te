@@ -9,4 +9,4 @@ unix_socket_send(mediaserver, mpdecision, mpdecision)
 allow mediaserver self:socket create_socket_perms;
 
 # For text relocations in /system/vendor/lib/libmmjpeg.so
-allow mediaserver system_file:file execmod;
+#allow mediaserver system_file:file execmod;
