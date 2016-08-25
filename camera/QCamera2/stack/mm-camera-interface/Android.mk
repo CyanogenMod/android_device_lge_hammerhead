@@ -28,7 +28,7 @@ LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/inc \
     $(LOCAL_PATH)/../common
 
-LOCAL_C_INCLUDES += hardware/qcom/media/mm-core/inc
+LOCAL_C_INCLUDES += hardware/qcom/media/default/msm8974/mm-core/inc
 
 LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
 LOCAL_ADDITIONAL_DEPENDENCIES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
