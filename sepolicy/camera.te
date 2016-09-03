@@ -30,3 +30,21 @@ allow camera sensors_device:chr_file rw_file_perms;
 # Read camera files from persist filesystem
 allow camera persist_file:dir search;
 r_dir_file(camera, persist_camera_file)
+
+allow camera system_file:file execmod;
+allow camera cameraserver:fd { use };
+
+# Interact with ion
+allow camera ion_device:chr_file { getattr ioctl read write open };
+
+# Interact with sysfs
+allow camera sysfs:file { getattr read write open };
+
+# Interact with /data
+allow camera apk_data_file:dir { getattr read write open search };
+allow camera storage_file:dir { getattr read write open search };
+allow camera storage_file:lnk_file { getattr read write open };
+allow camera mnt_user_file:dir { getattr read write open search };
+allow camera mnt_user_file:lnk_file { getattr read write open };
+allow camera fuse:dir { getattr read write open search };
+
