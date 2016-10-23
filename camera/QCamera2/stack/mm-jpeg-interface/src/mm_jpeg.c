@@ -1288,7 +1288,7 @@ OMX_BOOL mm_jpeg_session_abort(mm_jpeg_job_session_t *p_session)
  *       Get job index by client id
  *
  **/
-inline int mm_jpeg_get_new_session_idx(mm_jpeg_obj *my_obj, int client_idx,
+static inline int mm_jpeg_get_new_session_idx(mm_jpeg_obj *my_obj, int client_idx,
   mm_jpeg_job_session_t **pp_session)
 {
   int i = 0;
@@ -1320,7 +1320,7 @@ inline int mm_jpeg_get_new_session_idx(mm_jpeg_obj *my_obj, int client_idx,
  *       Get job index by client id
  *
  **/
-inline void mm_jpeg_remove_session_idx(mm_jpeg_obj *my_obj, uint32_t job_id)
+static inline void mm_jpeg_remove_session_idx(mm_jpeg_obj *my_obj, uint32_t job_id)
 {
   int client_idx =  GET_CLIENT_IDX(job_id);
   int session_idx= GET_SESSION_IDX(job_id);
@@ -1344,7 +1344,7 @@ inline void mm_jpeg_remove_session_idx(mm_jpeg_obj *my_obj, uint32_t job_id)
  *       Get job index by client id
  *
  **/
-inline mm_jpeg_job_session_t *mm_jpeg_get_session(mm_jpeg_obj *my_obj, uint32_t job_id)
+static inline mm_jpeg_job_session_t *mm_jpeg_get_session(mm_jpeg_obj *my_obj, uint32_t job_id)
 {
   mm_jpeg_job_session_t *p_session = NULL;
   int client_idx =  GET_CLIENT_IDX(job_id);

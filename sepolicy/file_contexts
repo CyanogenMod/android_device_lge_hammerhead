@@ -42,6 +42,7 @@
 /dev/block/platform/msm_sdcc\.1/by-name/fsc         u:object_r:modem_block_device:s0
 /dev/block/platform/msm_sdcc\.1/by-name/fsg         u:object_r:modem_block_device:s0
 /dev/block/platform/msm_sdcc\.1/by-name/ssd         u:object_r:ssd_block_device:s0
+/dev/block/platform/msm_sdcc\.1/by-name/misc        u:object_r:misc_block_device:s0
 
 # CPU governor controls
 /dev/socket/mpdecision(/.*)?           u:object_r:mpdecision_socket:s0
@@ -69,13 +70,12 @@
 /dev/ttyUSB0                           u:object_r:radio_device:s0
 
 # Jpeg Engine support
-/dev/gemini.*                          u:object_r:camera_device:s0
+/dev/gemini.*                          u:object_r:video_device:s0
 # MSM camera related
-/dev/v4l-subdev.*                      u:object_r:camera_device:s0
-/dev/video([0-9])+                     u:object_r:camera_device:s0
-/dev/msm_camera(/.*)?                  u:object_r:camera_device:s0
-/dev/media([0-9])+                     u:object_r:camera_device:s0
-/dev/jpeg([0-9])+                      u:object_r:camera_device:s0
+/dev/v4l-subdev.*                      u:object_r:video_device:s0
+/dev/msm_camera(/.*)?                  u:object_r:video_device:s0
+/dev/media([0-9])+                     u:object_r:video_device:s0
+/dev/jpeg([0-9])+                      u:object_r:video_device:s0
 
 # Qualcomm MSM Audio devices
 /dev/msm_acdb                      u:object_r:audio_device:s0
@@ -148,6 +148,10 @@
 /sys/devices/virtual/graphics/fb1/vendor_name  -- u:object_r:sysfs_surfaceflinger:s0
 /sys/devices/virtual/graphics/fb1/product_description       -- u:object_r:sysfs_surfaceflinger:s0
 
+/sys/devices/fdb00000\.qcom,kgsl-3d0/kgsl/kgsl-3d0/gpuclk        u:object_r:sysfs_thermal:s0
+/sys/devices/fdb00000\.qcom,kgsl-3d0/kgsl/kgsl-3d0/max_gpuclk    u:object_r:sysfs_thermal:s0
+/sys/devices/f9923000\.i2c/i2c-84/84-0036/power_supply/battery/capacity   u:object_r:sysfs_batteryinfo:s0
+
 # Sysfs files used by qmuxd
 /sys/devices/virtual/smdpkt/smdcntl([0-9])+/open_timeout u:object_r:sysfs_smdcntl_open_timeout:s0
 
@@ -159,3 +163,6 @@
 
 # Thermal engine
 /dev/msm_thermal_query            u:object_r:thermal_engine_device:s0
+
+# wifi mac address
+/sys/devices/msm_sdcc\.2/mmc_host/mmc0/mmc0:0001/mmc0:0001:2/net/wlan0/address    u:object_r:sysfs_mac_address:s0

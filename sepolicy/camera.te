@@ -1,13 +1,13 @@
 # Qualcomm MSM camera
-type camera, domain;
+type camera, domain, domain_deprecated;
 type camera_exec, exec_type, file_type;
 
 # Started by init
 init_daemon_domain(camera)
 
 # Interact with other media devices
-allow camera camera_device:dir search;
-allow camera { gpu_device video_device camera_device }:chr_file rw_file_perms;
+allow camera video_device:dir search;
+allow camera { gpu_device video_device }:chr_file rw_file_perms;
 allow camera { surfaceflinger mediaserver }:fd use;
 
 # Create front and back camera sockets (/data/cam_socket[12])

@@ -1,5 +1,5 @@
 # Bluetooth executables and scripts
-type bluetooth_loader, domain;
+type bluetooth_loader, domain, domain_deprecated;
 type bluetooth_loader_exec, exec_type, file_type;
 
 # Start bdAddrLoader from init
@@ -9,7 +9,5 @@ init_daemon_domain(bluetooth_loader)
 allow bluetooth_loader persist_file:dir search;
 r_dir_file(bluetooth_loader, persist_bluetooth_file)
 
-# Talk to init over the property socket
-unix_socket_connect(bluetooth_loader, property, init)
 # Set persist.service.bdroid.* and bluetooth.* property values
-allow bluetooth_loader bluetooth_prop:property_service set;
+set_prop(bluetooth_loader, bluetooth_prop)
