@@ -138,7 +138,7 @@ USE_DEVICE_SPECIFIC_QCOM_PROPRIETARY:= true
 USE_DEVICE_SPECIFIC_CAMERA:= true
 
 ifeq ($(USE_SVELTE_KERNEL),true)
-MALLOC_IMPL := dlmalloc
+MALLOC_SVELTE := true
 endif
 
 # Hardware
@@ -148,6 +148,8 @@ BOARD_HARDWARE_CLASS := device/lge/hammerhead/cmhw
 RECOVERY_FSTAB_VERSION := 2
 BOARD_HAS_NO_SELECT_BUTTON := true
 BOARD_USE_CUSTOM_RECOVERY_FONT := \"roboto_23x41.h\"
+
+USE_CLANG_PLATFORM_BUILD := true
 
 -include vendor/lge/hammerhead/BoardConfigVendor.mk
 

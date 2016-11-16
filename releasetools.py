@@ -45,7 +45,8 @@ def IncrementalOTA_InstallBegin(info):
   # Reduce the space taken by the journal.
   info.script.Unmount("/system")
   info.script.TunePartition("/system", "-O", "^has_journal")
-  info.script.Mount("/system")
+  recovery_mount_options = info.info_dict.get("recovery_mount_options")
+  info.script.Mount("/system", recovery_mount_options)
 
 
 def IncrementalOTA_InstallEnd(info):
