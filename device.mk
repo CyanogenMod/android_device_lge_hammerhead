@@ -99,10 +99,6 @@ PRODUCT_COPY_FILES += \
 PRODUCT_COPY_FILES += \
     device/lge/hammerhead/thermal-engine-8974.conf:system/etc/thermal-engine-8974.conf
 
-# For SPN display
-PRODUCT_COPY_FILES += \
-    device/lge/hammerhead/spn-conf.xml:system/etc/spn-conf.xml
-
 PRODUCT_AAPT_CONFIG := normal
 PRODUCT_AAPT_PREF_CONFIG := xxhdpi
 
