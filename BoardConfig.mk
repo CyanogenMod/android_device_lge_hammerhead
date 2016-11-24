@@ -147,7 +147,8 @@ MALLOC_SVELTE := true
 endif
 
 # Hardware
-BOARD_HARDWARE_CLASS := device/lge/hammerhead/cmhw
+BOARD_USES_CYANOGEN_HARDWARE := true
+BOARD_HARDWARE_CLASS := hardware/cyanogen/cmhw
 
 # Recovery
 RECOVERY_FSTAB_VERSION := 2
