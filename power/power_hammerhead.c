@@ -339,7 +339,7 @@ static void power_set_interactive(__attribute__((unused)) struct power_module *m
 }
 
 static void power_hint( __attribute__((unused)) struct power_module *module,
-                      power_hint_t hint, __attribute__((unused)) void *data)
+                      power_hint_t hint, *data)
 {
     int cpu, ret;
 
@@ -359,7 +359,7 @@ static void power_hint( __attribute__((unused)) struct power_module *module,
 
         case POWER_HINT_LOW_POWER:
              pthread_mutex_lock(&low_power_mode_lock);
-             if (data) {
+             if (*data) {
                  low_power_mode = true;
                  for (cpu = 0; cpu < TOTAL_CPUS; cpu++) {
                      sysfs_write(cpu_path_min[cpu], LOW_POWER_MIN_FREQ);
